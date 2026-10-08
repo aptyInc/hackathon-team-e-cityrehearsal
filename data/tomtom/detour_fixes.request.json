@@ -1,0 +1,452 @@
+{
+  "jobName": "CityRehearsal detour fixes",
+  "distanceUnit": "KILOMETERS",
+  "acceptMode": "AUTO",
+  "routes": [
+    {
+      "name": "YMCA | NE Narayanaguda Road - in (retry)",
+      "start": {
+        "latitude": 17.39704,
+        "longitude": 78.49201
+      },
+      "end": {
+        "latitude": 17.39545,
+        "longitude": 78.49045
+      },
+      "fullTraversal": false,
+      "zoneId": "Asia/Kolkata",
+      "probeSource": "ALL"
+    },
+    {
+      "name": "Cyber Towers | NE Kukatpally Road - in (retry)",
+      "start": {
+        "latitude": 17.45272,
+        "longitude": 78.38242
+      },
+      "end": {
+        "latitude": 17.45149,
+        "longitude": 78.38126
+      },
+      "fullTraversal": false,
+      "zoneId": "Asia/Kolkata",
+      "probeSource": "ALL"
+    }
+  ],
+  "dateRanges": [
+    {
+      "name": "July 2026 (trial allows 1-31 Jul only)",
+      "from": "2026-07-01",
+      "to": "2026-07-31"
+    }
+  ],
+  "timeSets": [
+    {
+      "name": "Weekday 00:00-01:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "00:00-01:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 01:00-02:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "01:00-02:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 02:00-03:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "02:00-03:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 03:00-04:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "03:00-04:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 04:00-05:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "04:00-05:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 05:00-06:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "05:00-06:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 06:00-07:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "06:00-07:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 07:00-08:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "07:00-08:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 08:00-09:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "08:00-09:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 09:00-10:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "09:00-10:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 10:00-11:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "10:00-11:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 11:00-12:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "11:00-12:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 12:00-13:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "12:00-13:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 13:00-14:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "13:00-14:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 14:00-15:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "14:00-15:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 15:00-16:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "15:00-16:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 16:00-17:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "16:00-17:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 17:00-18:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "17:00-18:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 18:00-19:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "18:00-19:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 19:00-20:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "19:00-20:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 20:00-21:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "20:00-21:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 21:00-22:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "21:00-22:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 22:00-23:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "22:00-23:00"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Weekday 23:00-24:00",
+      "timeGroups": [
+        {
+          "days": [
+            "MON",
+            "TUE",
+            "WED",
+            "THU",
+            "FRI"
+          ],
+          "times": [
+            "23:00-24:00"
+          ]
+        }
+      ]
+    }
+  ]
+}
