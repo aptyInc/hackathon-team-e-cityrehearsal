@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "C3 Variant spec (agent -> scenarios)",
+  "type": "object",
+  "required": ["variant_id", "template", "params"],
+  "properties": {
+    "variant_id": {"type": "string"},
+    "template": {"enum": ["baseline", "signal_retime", "junction_redesign", "bus_lane", "widening", "flyover"]},
+    "params": {"type": "object", "description": "template-specific, e.g. flyover: lanes, length_m, landing_edge"}
+  }
+}

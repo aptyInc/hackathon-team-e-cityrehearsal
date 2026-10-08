@@ -1,0 +1,73 @@
+{
+  "baseline": {
+    "run_id": "r_sample_baseline",
+    "variant_id": "baseline",
+    "junctions": [
+      {
+        "id": "ymca_circle",
+        "avg_delay_s": 96.0,
+        "max_queue_m": 420
+      },
+      {
+        "id": "next_junction_north",
+        "avg_delay_s": 38.0,
+        "max_queue_m": 140
+      }
+    ],
+    "corridor_travel_time_s": 640,
+    "warnings": [],
+    "inputs": {
+      "counts_source": "published_study",
+      "label": "estimated",
+      "volume_scale": 1.0
+    }
+  },
+  "signal_retime_90s": {
+    "run_id": "r_sample_signal",
+    "variant_id": "signal_retime_90s",
+    "junctions": [
+      {
+        "id": "ymca_circle",
+        "avg_delay_s": 71.0,
+        "max_queue_m": 300
+      },
+      {
+        "id": "next_junction_north",
+        "avg_delay_s": 40.0,
+        "max_queue_m": 150
+      }
+    ],
+    "corridor_travel_time_s": 560,
+    "warnings": [],
+    "inputs": {
+      "counts_source": "published_study",
+      "label": "estimated",
+      "volume_scale": 1.0
+    }
+  },
+  "flyover_3lane_400m": {
+    "run_id": "r_sample_flyover",
+    "variant_id": "flyover_3lane_400m",
+    "junctions": [
+      {
+        "id": "ymca_circle",
+        "avg_delay_s": 42.0,
+        "max_queue_m": 160
+      },
+      {
+        "id": "next_junction_north",
+        "avg_delay_s": 81.0,
+        "max_queue_m": 360
+      }
+    ],
+    "corridor_travel_time_s": 505,
+    "warnings": [
+      "lane_drop_3_to_2 at edge e45"
+    ],
+    "inputs": {
+      "counts_source": "published_study",
+      "label": "estimated",
+      "volume_scale": 1.0
+    }
+  }
+}
