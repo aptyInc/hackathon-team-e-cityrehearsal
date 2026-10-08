@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "C2 Run result (sim -> agent, frontend, db)",
+  "type": "object",
+  "required": ["run_id", "variant_id", "junctions", "corridor_travel_time_s", "warnings", "inputs"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "variant_id": {"type": "string"},
+    "junctions": {"type": "array", "items": {"type": "object",
+      "required": ["id", "avg_delay_s", "max_queue_m"],
+      "properties": {"id": {"type": "string"}, "avg_delay_s": {"type": "number"}, "max_queue_m": {"type": "number"}}}},
+    "corridor_travel_time_s": {"type": "number"},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "inputs": {"type": "object", "required": ["counts_source", "volume_scale"],
+      "properties": {
+        "counts_source": {"type": "string", "description": "e.g. published_study, tomtom_calibrated, estimated"},
+        "label": {"enum": ["counted", "estimated", "assumed"]},
+        "volume_scale": {"type": "number", "description": "1.0 = base demand; 0.8 = sensitivity test"}}}
+  }
+}

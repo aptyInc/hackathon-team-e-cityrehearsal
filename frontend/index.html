@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CityRehearsal — Team E</title>
+<!-- Starter shell. Owner: Frontend and 3D workstream. Replace freely, keep the C1/C2/C4 contracts. -->
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  #panel { position: absolute; top: 12px; left: 12px; width: 340px; background: #fff; border-radius: 10px;
+           padding: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.15); font-size: 14px; }
+  button { padding: 8px 12px; border: 0; border-radius: 6px; background: #c4561c; color: #fff; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  td, th { text-align: left; padding: 4px; border-bottom: 1px solid #eee; }
+  .warn { color: #b00020; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="panel">
+  <b>CityRehearsal · YMCA Circle</b><br/>
+  <small id="status">API: checking…</small><br/><br/>
+  <button id="go">Run demo case</button>
+  <div id="results"></div>
+</div>
+<script>
+const API = "http://localhost:8000";
+const COLORS = { two_wheeler: [232,116,59], car: [47,111,159], auto: [240,200,40], bus: [40,160,90], truck: [120,120,120] };
+
+const map = new maplibregl.Map({
+  container: "map",
+  style: "https://tiles.openfreemap.org/styles/liberty", // free style with 3D buildings
+  center: [78.4877, 17.3946], zoom: 16.5, pitch: 60, bearing: -20
+});
+const overlay = new deck.MapboxOverlay({ interleaved: true, layers: [] });
+map.addControl(overlay);
+
+function drawFrame(frame) {
+  overlay.setProps({ layers: [ new deck.ScatterplotLayer({
+    id: "vehicles", data: frame.vehicles,
+    getPosition: v => [v.lon, v.lat, v.z], getFillColor: v => COLORS[v.type] || [0,0,0],
+    getRadius: v => v.type === "bus" ? 4 : 2.5, radiusUnits: "meters"
+  }) ] });
+}
+
+async function post(path, body) {
+  const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return r.json();
+}
+
+fetch(API + "/health").then(r => r.json())
+  .then(h => document.getElementById("status").textContent = `API: ok (mock=${h.mock})`)
+  .catch(() => document.getElementById("status").textContent = "API: not running — run `make dev`");
+
+document.getElementById("go").onclick = async () => {
+  const kase = await post("/cases", { junction_id: "ymca_circle", title: "Peak-hour jam" });
+  const variants = [["baseline","baseline",{}], ["signal_retime_90s","signal_retime",{cycle_s:90}],
+                    ["flyover_3lane_400m","flyover",{lanes:3,length_m:400,landing_edge:"e45"}]];
+  let rows = "";
+  for (const [id, tpl, params] of variants) {
+    await post("/variants", { case_id: kase.id, variant_id: id, template: tpl, params });
+    const r = await post("/runs", { case_id: kase.id, variant_id: id });
+    const j = r.junctions;
+    rows += `<tr><td>${id}</td><td>${j[0].avg_delay_s}s</td><td>${j[1] ? j[1].avg_delay_s + "s" : "-"}</td></tr>`
+          + (r.warnings.length ? `<tr><td colspan=3 class=warn>⚠ ${r.warnings.join(", ")}</td></tr>` : "");
+  }
+  document.getElementById("results").innerHTML =
+    `<table><tr><th>Option</th><th>YMCA delay</th><th>Next junction</th></tr>${rows}</table>
+     <small>Sample data (mock mode) — illustrative, not results.</small>`;
+  const ws = new WebSocket(API.replace("http", "ws") + "/stream/demo");
+  ws.onmessage = e => drawFrame(JSON.parse(e.data));
+};
+</script>
+</body>
+</html>
