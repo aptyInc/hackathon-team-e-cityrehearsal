@@ -2,12 +2,14 @@
 
 Cases
   A  Load: no errors, 13 markers (A, 1..11, B), time choices with weekday names, TomTom strip (REAL), route drawn,
-     3 quick demo buttons, live junction panel hidden when the API has no /corridor/junctions/live
+     4 quick demo buttons with tooltips, live junction panel hidden when the API has no /corridor/junctions/live;
+     the 6 junctions the main road already crosses on a flyover marked in the picker ("(flyover exists)") and on the map
   B  When: choosing a Sunday shortens the measured trip
   C  Changes: controls per kind match sim/templates/corridor.py (flyover lanes/length, signal cycle + main-road share
      slider, widening, one-way with its note, U-turn disabled); add, update (same junction and kind), add another, remove;
      markers highlight changed junctions; flyovers at Nanal Nagar and Rethibowli merge into one 1.2 km flyover (note),
-     and the "one flyover over both" button
+     and the "one flyover over both" button; a flyover/underpass (or signal change) where the main road already runs on a
+     flyover gets a short note before simulating, and can still be added
   D  Simulate today: journey strip from the API or the sample fallback, junction table, sample tag when sample
   E  Simulate with changes: third strip, total and per-leg deltas, knock-on, before/after table, warnings
   F  Camera: table row, map marker, strip block and "Whole corridor" move the map
@@ -19,7 +21,8 @@ Cases
   J  Live junctions (GET /corridor/junctions/live mocked): worst approaches, delay vs usual, queue, REAL, LIVE map
      badges, refresh, popup
   L  Long runs: presets fill the list and simulate; elapsed counter + "usually under 2 minutes" while waiting; the rest of
-     the page stays usable; preset bodies (Khajaguda 70% main road, one flyover j08 1200 m)
+     the page stays usable; preset bodies (DLF 30% main road, one flyover j08 1200 m, flyovers j01 and j02 600 m);
+     a flyover where one exists: note before, then the result's warning in plain words in the trip panel, nothing drawn
   M  Errors: HTTP 500 plain text and FastAPI {"detail"} shown as the message (no silent fallback), buttons back
   O  3D: pitched camera, buildings loaded per junction in view (mocked GET /corridor/buildings/{id}), vehicles culled to the
      view and raised on the flyover (z), flyover structure drawn with ramps and piers, follow a test car, orbit, night,
@@ -269,6 +272,11 @@ def mock_api(pg, live_body, bodies, mode, counts, real_shape=False):
         r.pop("sample", None)
         r["run_id"] = "r_test_" + r["variant_id"]
         r["interventions"] = body.get("interventions", [])
+        dup = [iv for iv in r["interventions"] if iv["junction_id"] == "j06" and iv["kind"] in ("flyover", "underpass")]
+        if dup:   # as sim/templates/corridor.py answers at a junction the main road already crosses on a flyover
+            r = dict(json.loads(json.dumps(SAMPLE["baseline"])), run_id="r_test_dup", variant_id="dup", interventions=r["interventions"])
+            r.pop("sample", None)
+            r["warnings"] = [f"j06 {dup[0]['kind']}: j06 already has a flyover: the corridor crosses Narne Rd jn Shaikpet on the Shaikpet Flyover; nothing built"]
         r["frames_path"] = "test"
         r["inputs"] = {"counts_source": "test", "label": "estimated", "volume_scale": 1.0}
         route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(r))
@@ -350,9 +358,21 @@ with sync_playwright() as p:
     check("REAL speeds" in pg.inner_text("#route-src") and [round(k, 1) for _, k in route_data(pg)] == TYPICAL_KMH, f"route coloured by TomTom speed: {pg.inner_text('#route-src')}")
     z = pg.evaluate("() => map.getZoom()")
     check(10.5 < z < 13.5, f"map framed on the whole corridor (zoom {z:.1f})")
-    pre = pg.eval_on_selector_all("#presets button", "els => els.map(e => e.textContent)")
-    check(len(pre) == 3 and "Flyover at Tolichowki" in pre[0] and "Retime Khajaguda signal (70% main road)" in pre[1]
-          and "One flyover over Nanal Nagar + Rethibowli" in pre[2], f"3 quick demo buttons: {pre}")
+    pre = pg.eval_on_selector_all("#presets button", "els => els.map(e => [e.id, e.textContent.replace('▶', ''), e.title])")
+    check([x[:2] for x in pre] == [["p-nallagandla", "Flyover at Nallagandla"], ["p-dlf", "Flyover at ISB Rd / DLF"],
+                                   ["p-nanal", "One flyover over Nanal Nagar + Rethibowli"], ["p-dlf-retime", "Give DLF's side roads more green (watch the ripple)"]],
+          f"4 quick demo buttons: {[x[1] for x in pre]}")
+    check(all(len(x[2]) > 40 and "Replaces your list of changes" in x[2] for x in pre) and "420 m" in pre[2][2] and "70%" in pre[3][2], "each demo explained in a tooltip")
+    check(pg.evaluate("() => Object.keys(PRESETS).length === 4 && !document.getElementById('p-tolichowki') && !document.getElementById('p-khajaguda')"), "Tolichowki and Khajaguda demos gone")
+    # junctions where the main road already runs on a flyover: marked in the picker, on the map, in the popup
+    jopts = dict(pg.eval_on_selector_all("#iv-j option", "els => els.map(e => [e.value, e.textContent])"))
+    fly_ids = ["j03", "j04", "j06", "j07", "j10", "j11"]
+    check(jopts["j07"] == "7 · Tolichowki (flyover exists)" and all(jopts[j].endswith("(flyover exists)") for j in fly_ids)
+          and not any(jopts[j].endswith("(flyover exists)") for j in ("j01", "j02", "j05", "j08", "j09")), f"picker marks the 6 flyover junctions: {list(jopts.values())}")
+    check(pg.input_value("#iv-j") == "j02" and pg.is_hidden("#iv-exists"), f"picker starts at a ground signal (ISB Rd / DLF), no note: {pg.input_value('#iv-j')}")
+    fly_pins = pg.eval_on_selector_all(".pin.fly", "els => els.map(e => e.textContent)")
+    check(fly_pins == ["3", "4", "6", "7", "10", "11"] and "Tolichowki Flyover" in pg.get_attribute(".pin.fly >> nth=3", "title"), f"map pins 3, 4, 6, 7, 10, 11 marked: {fly_pins}")
+    check("flyover already built" in pg.inner_text("#right"), "map key explains the mark")
     if api_status("/corridor/junctions/live") != 200:
         check(pg.is_hidden("#live-box") and not pg.eval_on_selector_all(".pin.live", "els => els.length"), "no live endpoint: live panel and badges hidden")
     else:
@@ -390,7 +410,22 @@ with sync_playwright() as p:
     pg.select_option("#iv-kind", "one_way"); pg.wait_for_timeout(100)
     check(keys() == [] and "closes the smallest side road in one direction" in pg.inner_text("#iv-help").lower(), f"one-way: no choices, note: {pg.inner_text('#iv-help')}")
 
+    # a flyover where the main road already has one: a note before simulating (still allowed)
+    pg.select_option("#iv-kind", "flyover"); pg.select_option("#iv-j", "j07"); pg.wait_for_timeout(100)
+    check(pg.is_visible("#iv-exists") and pg.inner_text("#iv-exists") == "The main road already crosses Tolichowki on the Tolichowki Flyover; this would duplicate it.",
+          f"duplicate-flyover note: {pg.inner_text('#iv-exists')}")
+    pg.select_option("#iv-kind", "underpass"); pg.wait_for_timeout(100)
+    check("would duplicate it" in pg.inner_text("#iv-exists"), "same note for an underpass")
+    pg.select_option("#iv-kind", "signal_retime"); pg.wait_for_timeout(100)
+    check("meets no signal here" in pg.inner_text("#iv-exists"), f"signal note at a flyover junction: {pg.inner_text('#iv-exists')}")
+    pg.select_option("#iv-kind", "widening"); pg.wait_for_timeout(100)
+    check(pg.is_hidden("#iv-exists"), "no note for widening")
+    pg.select_option("#iv-kind", "flyover"); pg.select_option("#iv-j", "j04"); pg.wait_for_timeout(100)
+    check("Bio-Diversity Park Level 1 Flyover" in pg.inner_text("#iv-exists"), f"Biodiversity note: {pg.inner_text('#iv-exists')}")
+    pg.select_option("#iv-j", "j05"); pg.wait_for_timeout(100)
+    check(pg.is_hidden("#iv-exists"), "no note at a ground signal (Khajaguda)")
     add_iv(pg, "j07", "flyover", {"lanes": 3, "length_m": 400})
+    check(pg.is_visible("#iv-exists") and ivs(pg) == ["7 · Tolichowki: Flyover, 3 lanes, 400 m"], "still allowed to add it")
     add_iv(pg, "j03", "signal_retime", {"cycle_s": 150, "corridor_green_share": 70})
     add_iv(pg, "j07", "flyover", {"lanes": 2, "length_m": 600})
     v = ivs(pg)
@@ -473,7 +508,10 @@ with sync_playwright() as p:
     ok, c = center_near(pg, "j08")
     check(ok and pg.evaluate("() => map.getZoom()") > 15, f"table row flies to Nanal Nagar (off by {c['lng']:.0f}, {c['lat']:.0f} px)")
     check(pg.input_value("#iv-j") == "j08" and pg.eval_on_selector_all(".pin.sel", "els => els.map(e => e.textContent)") == ["8"], "junction selected in step 2 and on the map")
-    check("Nanal Nagar" in pg.inner_text(".maplibregl-popup"), f"popup: {pg.inner_text('.maplibregl-popup')[:80]}")
+    check("Nanal Nagar" in pg.inner_text(".maplibregl-popup") and "Flyover exists" not in pg.inner_text(".maplibregl-popup"), f"popup: {pg.inner_text('.maplibregl-popup')[:80]}")
+    pg.click("#jt tr[data-id=j06]"); pg.wait_for_timeout(600)
+    check("Flyover exists: the main road crosses on the Shaikpet Flyover" in pg.inner_text(".maplibregl-popup") and pg.input_value("#iv-j") == "j06"
+          and "(flyover exists)" in pg.inner_text("#jt tr[data-id=j06]"), f"popup and table mark the existing flyover: {pg.inner_text('.maplibregl-popup')[:120]!r}")
     pg.click("#overview"); pg.wait_for_timeout(1600)
     pg.locator(".pin", has_text="3").first.click(); pg.wait_for_timeout(2200)
     ok, c = center_near(pg, "j03")
@@ -612,19 +650,19 @@ with sync_playwright() as p:
     case = "L long runs"; print(case)
     pg.evaluate("() => { window.__delayRuns = 3500; }")
     n0 = len(bodies)
-    pg.click("#p-khajaguda"); pg.wait_for_timeout(300)
+    pg.click("#p-dlf-retime"); pg.wait_for_timeout(300)
     check(pg.is_visible("#busy") and RUN_MSG in pg.inner_text("#busy"), f"waiting note: {pg.inner_text('#busy')}")
     e1 = pg.inner_text("#elapsed"); pg.wait_for_timeout(2100); e2 = pg.inner_text("#elapsed")
     check(e1 == "0:00" and e2 in ("0:02", "0:03"), f"elapsed counter ticks: {e1} → {e2}")
-    check(all(pg.is_disabled(x) for x in ("#sim-today", "#sim-changes", "#p-tolichowki", "#p-nanal")), "run buttons wait while simulating")
+    check(all(pg.is_disabled(x) for x in ("#sim-today", "#sim-changes", "#p-nallagandla", "#p-dlf", "#p-nanal", "#p-dlf-retime")), "run buttons wait while simulating")
     check(not pg.is_disabled("#iv-add") and not pg.is_disabled("#when") and not pg.is_disabled("#overview"), "the rest stays usable")
     pg.select_option("#when", "2026-07-05..2026-07-05 8:00-20:00"); pg.wait_for_timeout(200)
     check("Sun 5 Jul" in pg.inner_text("#strips"), "changed the day while waiting")
-    check(ivs(pg) == ["5 · Khajaguda X Roads: Signal timing, 120 s cycle, 70% green to main road"] and pg.input_value("#iv-j") == "j05", f"preset filled the list: {ivs(pg)}")
+    check(ivs(pg) == ["2 · ISB Rd / DLF jn: Signal timing, 120 s cycle, 30% green to main road"] and pg.input_value("#iv-j") == "j02", f"preset filled the list: {ivs(pg)}")
     st, dt = wait_status(pg, ["simulated", "failed"], 30)
     check("simulated in 0:0" in st and pg.is_hidden("#busy"), f"done, time taken shown, note gone: {st}")
-    check(len(bodies) == n0 + 1 and bodies[-1]["interventions"] == [{"junction_id": "j05", "kind": "signal_retime", "params": {"cycle_s": 120, "corridor_green_share": 0.7}}],
-          f"Khajaguda body (today's run reused): {bodies[n0:]}")
+    check(len(bodies) == n0 + 1 and bodies[-1]["interventions"] == [{"junction_id": "j02", "kind": "signal_retime", "params": {"cycle_s": 120, "corridor_green_share": 0.3}}],
+          f"DLF side-road green body (today's run reused): {bodies[n0:]}")
     pg.evaluate("() => { window.__delayRuns = 0; }")
     pg.click("#p-nanal"); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(300)
     check(bodies[-1]["interventions"] == [{"junction_id": "j08", "kind": "flyover", "params": {"lanes": 2, "length_m": 1200}}], f"Nanal Nagar + Rethibowli body: {bodies[-1]}")
@@ -633,8 +671,21 @@ with sync_playwright() as p:
     check(mid and abs(mid[0] - 1200) < 30 and PTS["j08"]["lon"] < mid[1] < PTS["j09"]["lon"], f"one 1.2 km flyover drawn centred between Nanal Nagar and Rethibowli: {mid}")
     check("420 m apart" in pg.inner_text("#iv-merge") and has_pins(pg) == ["8", "9"], "one flyover note, markers 8 and 9")
     check("flyover, 2 lanes, 1200 m, over nanal nagar + rethibowli" in pg.inner_text("#deltas").lower(), f"headline names the change: {pg.inner_text('#deltas .headline')[:120]}")
-    pg.click("#p-tolichowki"); wait_status(pg, ["simulated", "failed"], 30)
-    check(bodies[-1]["interventions"] == [{"junction_id": "j07", "kind": "flyover", "params": {"lanes": 2, "length_m": 600}}], f"Tolichowki body: {bodies[-1]}")
+    for pid, jid in (("#p-nallagandla", "j01"), ("#p-dlf", "j02")):
+        pg.click(pid); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(200)
+        check(bodies[-1]["interventions"] == [{"junction_id": jid, "kind": "flyover", "params": {"lanes": 2, "length_m": 600}}] and pg.input_value("#iv-j") == jid
+              and pg.is_hidden("#iv-merge") and pg.is_hidden("#iv-exists"), f"{pid} body: {bodies[-1]}")
+    # a flyover where one already exists: note first, then the result's warning, readable, in the trip panel and step 3
+    clear_ivs(pg)
+    pg.select_option("#iv-kind", "flyover"); pg.select_option("#iv-j", "j06"); pg.wait_for_timeout(100)
+    check(pg.inner_text("#iv-exists") == "The main road already crosses Narne Rd jn Shaikpet on the Shaikpet Flyover; this would duplicate it.", f"note: {pg.inner_text('#iv-exists')}")
+    pg.click("#iv-add"); pg.wait_for_timeout(100)
+    simulate(pg, "#sim-changes", "with 1 change")
+    want = "6 · Narne Rd jn Shaikpet, flyover: already has a flyover. The corridor crosses Narne Rd jn Shaikpet on the Shaikpet Flyover; nothing built"
+    check(pg.is_visible("#run-warn .warn") and want in pg.inner_text("#run-warn") and "Warnings for this run" in pg.inner_text("#run-warn"), f"warning in the trip panel: {pg.inner_text('#run-warn')!r}")
+    check(want in pg.inner_text("#warnings") and "j06" not in pg.inner_text("#warnings"), f"and under the junction table, junction named: {pg.inner_text('#warnings')!r}")
+    check("±0.0 min" in pg.inner_text("#deltas .headline") and not pg.evaluate("() => structures(changed).length"), "nothing built: no change, no structure drawn")
+    pg.screenshot(path=str(OUT / "corridor_L_dup.png"))
 
     case = "M errors"; print(case)
     mode["fail"] = "plain"
@@ -643,7 +694,7 @@ with sync_playwright() as p:
     check("HTTP 500" in st and "simulation failed: test" in st and "SAMPLE DATA" not in pg.inner_text("body"), f"a failed simulation is shown, not replaced by the sample: {st[:100]}")
     check("last results stay" in pg.inner_text("#run-note") and pg.is_hidden("#busy") and not pg.is_disabled("#sim-today"), "error in step 3, buttons back")
     mode["fail"] = "json"
-    pg.click("#p-khajaguda")
+    pg.click("#p-dlf-retime")
     st, _ = wait_status(pg, ["failed", "simulated"], 30)
     check("netconvert failed at j08: test" in st and "{" not in st, f"FastAPI detail shown as plain text: {st[:100]}")
     pg.close()
@@ -662,7 +713,7 @@ with sync_playwright() as p:
           "real GET /corridor shape: per-leg route features used as they are, tomtom.periods read")
     j8 = live_rows(pg, "j08")
     check(j8[0] == ["NH163 N-bound", "100 s", "80 s", "75 s", "150 m"] and "TomTom 17:20" in pg.inner_text("#live .lj[data-id=j08]"), f"flat rows: latest shown, hour averaged: {j8}")
-    pg.click("#p-tolichowki"); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(2500)
+    pg.click("#p-dlf"); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(2500)
     check([x[0] for x in strips(pg)] == ["base", "tomtom", "changed"], "presets work on a phone")
     pg.evaluate("() => window.scrollTo(0, 0)")
     pg.screenshot(path=str(OUT / "corridor_N.png"), full_page=True)
