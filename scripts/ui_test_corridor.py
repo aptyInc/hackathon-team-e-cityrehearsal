@@ -27,8 +27,21 @@ Cases
   O  3D: pitched camera, buildings loaded per junction in view (mocked GET /corridor/buildings/{id}), vehicles culled to the
      view and raised on the flyover (z), flyover structure drawn with ramps and piers, follow a test car, orbit, night,
      dots instead of boxes from the whole-corridor view
-  N  Narrow screen (390 px): panels stacked under the map, no sideways scroll, live panel from flat snapshot rows,
-     GET /corridor in the backend's real shape (tomtom.periods, per-leg route features)
+  N  Narrow screen (390 px): mode switch on top, panels stacked under the map, no sideways scroll, live panel from flat
+     snapshot rows, GET /corridor in the backend's real shape (tomtom.periods, per-leg route features); Live now on a phone
+     without approach shapes (404: queues stay in the panel); an API that takes `hour` enables the hour picker
+  P  Two modes: "July typical day" by default (trip rows, simulation, assistant), "Live now" (TomTom live traffic layer on,
+     live panel, nothing simulated on screen), remembered in the URL (#mode=live / #mode=july), also after a reload
+  Q  Watch from minute: the result's frames_window sets the slider (0 .. total - 5); another start asks POST /corridor/runs
+     for the same run with frames_from_min / frames_minutes 5 (progress while waiting), plays it, keeps it (no second request)
+  R  Follow a car and ride a test car's whole trip (GET /runs/{id}/probes mocked): highlighted car (colour, halo, trail), info
+     card (speed, stretch, minutes since Lingampally, flyover), test cars listed with direction and departure, click a vehicle
+     to follow it; the ride runs Lingampally -> Lakdikapul at 10-60x with other traffic only inside the recorded window
+  S  Labels: trip rows "Simulated typical July day, roads as they are / with your changes", footnote with the route lengths
+     (GET /corridor/calibration tomtom_basis_detail), date note, clock "minute M of the simulated period" (no clock time),
+     hour picker next to the day: disabled ("hourly TomTom data arriving tonight") with no hourly data and the API answering 422;
+     with GET /corridor tomtom.hourly (N) it sets the measured row (24-hour sparkline, days from tomtom.hourly.days), and once
+     POST /corridor/runs takes `day` + `hour` (mocked in N) the simulation too, labelled "Simulated Wed 8 Jul, 18:00–19:00"
   K  No page errors at any point
 
 The first page talks to the real API on :8000 (if running) except POST /corridor/runs, which is answered 404 so the
@@ -239,6 +252,56 @@ def live_flat():
     return rows
 
 
+def approach_line(jid, k, length=2000, n=20):
+    """A straight 2 km approach into a junction, ordered towards it (GET /corridor/junctions/geometry)."""
+    p = PTS[jid]
+    ang = math.radians(k * 72 + 10)
+    dlat, dlon = math.cos(ang) / 111320, math.sin(ang) / (111320 * math.cos(math.radians(p["lat"])))
+    return [[p["lon"] + dlon * length * (1 - i / n), p["lat"] + dlat * length * (1 - i / n)] for i in range(n + 1)]
+
+
+def geometry_body():
+    return [{"junction_id": j["id"], "approaches": [{"approach_id": a["approach_id"], "name": a["name"], "coordinates": approach_line(j["id"], k)}
+                                                     for k, a in enumerate(j["approaches"])]} for j in live_nested({})["junctions"]]
+
+
+def probe_tracks():
+    """GET /runs/{id}/probes: one test car each way over the whole corridor (12 legs, 10 points a leg)."""
+    fwd, n = [], len(ORDER) - 1
+    for k, (a, z) in enumerate(zip(ORDER, ORDER[1:])):
+        pa, pz = PTS[a], PTS[z]
+        for i in range(10):
+            f = i / 10
+            fwd.append({"t": 600 + 3300 * (k + f) / n, "lon": pa["lon"] + (pz["lon"] - pa["lon"]) * f, "lat": pa["lat"] + (pz["lat"] - pa["lat"]) * f,
+                        "z": 0.0, "speed": 7.0, "leg": k})
+    fwd.append({"t": 3900, "lon": PTS[ORDER[-1]]["lon"], "lat": PTS[ORDER[-1]]["lat"], "z": 0.0, "speed": 0.0, "leg": n - 1})
+    rev = [dict(q, t=660 + (3900 - q["t"])) for q in reversed(fwd)]
+    return [{"id": "probe_fwd_1", "direction": "fwd", "depart_s": 600, "arrive_s": 3900, "total_s": 3300, "points": fwd},
+            {"id": "probe_rev_1", "direction": "rev", "depart_s": 660, "arrive_s": 3960, "total_s": 3300, "points": rev}]
+
+
+CALIBRATION = {"tomtom_basis": "test", "tomtom_basis_detail": {"simulated_route_km": 21.65, "calibration_tomtom_min": 56.2, "tomtom_route_km": 22.42,
+                                                               "tomtom_route_min": 58.2, "tomtom_period": "Typical July day (06-23)", "data_label": "measured speeds, simulated distances"}}
+FOOT = ("Our simulated route is 21.6 km (TomTom's: 22.4 km). Over the same 21.6 km TomTom measured 56 min; the simulation gives 98 min. "
+        "Compare the two simulated rows to see what a change does.")
+HF = {"july": lambda h: 0.7 + 0.03 * h, "2026-07-08": lambda h: 0.8 + 0.03 * h, "2026-07-20": lambda h: 0.75 + 0.02 * h}   # trip time by hour (test profile)
+HSRC = {"july": TYPICAL, "2026-07-08": "2026-07-08..2026-07-08 8:00-20:00", "2026-07-20": TYPICAL}
+
+
+def hourly_body():
+    """GET /corridor tomtom.hourly, as the backend sends it: legs, days, hours, by_day {day: {"h": {total_s, legs_s}}}."""
+    legs = lambda d: [x for x in API_LEGS if x["period"] == HSRC[d]]
+    prof = lambda d: {str(h): {"total_s": sum(x["time_s"] for x in legs(d)) * HF[d](h), "legs_s": [x["time_s"] * HF[d](h) for x in legs(d)]} for h in range(24)}
+    return {"source": "test", "data_label": "measured", "legs": [{"from_id": x["from_id"], "to_id": x["to_id"], "distance_m": x["distance_m"]} for x in legs("july")],
+            "days": [{"day": "july", "label": "Typical July day"}, {"day": "2026-07-08", "label": "Wed 8 Jul"}, {"day": "2026-07-20", "label": "Mon 20 Jul"}],
+            "hours": list(range(24)), "by_day": {d: prof(d) for d in HF}}
+
+
+def hourly_min(d, h):
+    return round(sum(x["time_s"] for x in API_LEGS if x["period"] == HSRC[d]) * HF[d](h) / 60)
+
+
+FLY_J07 = [{"junction_id": "j07", "kind": "flyover", "params": {"lanes": 2, "length_m": 600}}]
 CORS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS"}
 STREAM_JS = """(() => {
   const FRAMES = %s, Real = window.WebSocket;
@@ -257,12 +320,17 @@ STREAM_JS = """(() => {
 })();"""
 
 
-def mock_api(pg, live_body, bodies, mode, counts, real_shape=False):
-    """Corridor endpoints answered in the browser: GET /corridor (route + TomTom legs), live junctions, runs, roads."""
+def mock_api(pg, live_body, bodies, mode, counts, real_shape=False, geometry=False, probes=False):
+    """Corridor endpoints answered in the browser: GET /corridor (route + TomTom legs), live junctions (and their approach
+    shapes), calibration, runs (frames_window; another recorded window; `hour` 422 unless mode["hour_ok"]), roads, probes."""
     def corridor_runs(route):
         if route.request.method == "OPTIONS":
             return route.fulfill(status=204, headers=CORS)
         body = json.loads(route.request.post_data or "{}")
+        if "hour" in body:   # the page asks once whether the API takes `day` + `hour`
+            counts["hour"] = counts.get("hour", 0) + 1
+            if not mode.get("hour_ok"):
+                return route.fulfill(status=422, headers=CORS, content_type="application/json", body=json.dumps({"detail": "hourly data not available yet"}))
         bodies.append(body)
         if mode["fail"] == "plain":
             return route.fulfill(status=500, headers=CORS, body="simulation failed: test")
@@ -279,6 +347,14 @@ def mock_api(pg, live_body, bodies, mode, counts, real_shape=False):
             r["warnings"] = [f"j06 {dup[0]['kind']}: j06 already has a flyover: the corridor crosses Narne Rd jn Shaikpet on the Shaikpet Flyover; nothing built"]
         r["frames_path"] = "test"
         r["inputs"] = {"counts_source": "test", "label": "estimated", "volume_scale": 1.0}
+        m = body.get("frames_from_min", 15)   # the recorded 5 minutes (frames t count from 0 here: the page adds from_s)
+        r["frames_window"] = {"from_s": m * 60, "to_s": m * 60 + 300, "step_s": 4, "sim_minutes_total": 54}
+        if "frames_from_min" in body:
+            r["run_id"] += f"_w{m}"
+        r["journey"]["tomtom_total_s"] = 3373   # TomTom's July speeds over the simulated route (56 min)
+        if "hour" in body:   # the simulated day and hour, echoed
+            r["time"] = dict(r["time"], day=body.get("day"), hour=body["hour"])
+            r["run_id"] += f"_{body.get('day')}_{body['hour']}"
         route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(r))
 
     def live(route):
@@ -291,13 +367,18 @@ def mock_api(pg, live_body, bodies, mode, counts, real_shape=False):
         feats = [{"type": "Feature", "properties": {"kind": "route", "direction": "A->B"}, "geometry": {"type": "LineString", "coordinates": rt}}]
         feats += [{"type": "Feature", "properties": {"kind": "leg", "direction": "A->B", "from_id": a, "to_id": z}, "geometry": {"type": "LineString", "coordinates": rt[k * 12:k * 12 + 13]}}
                   for k, (a, z) in enumerate(zip(ORDER, ORDER[1:]))]
-        corridor = dict(CORRIDOR, tomtom={"source": "test", "periods": per}, route={"type": "FeatureCollection", "features": feats})
+        corridor = dict(CORRIDOR, tomtom={"source": "test", "periods": per, "hourly": hourly_body()}, route={"type": "FeatureCollection", "features": feats})
     else:            # other shapes the page also accepts: legs rows with a period, one bendy line per direction (cut by the page)
         corridor = dict(CORRIDOR, legs=API_LEGS, route=route_geojson())
     pg.route("http://localhost:8000/corridor/runs", corridor_runs)
     pg.route("http://localhost:8000/corridor/junctions/live", live)
     pg.route("http://localhost:8000/corridor", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(corridor)))
     pg.route("http://localhost:8000/runs/*/roads", lambda r: r.fulfill(status=404, headers=CORS, body="no roads"))
+    pg.route("http://localhost:8000/corridor/calibration", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(CALIBRATION)))
+    pg.route("http://localhost:8000/corridor/junctions/geometry", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(geometry_body()))
+             if geometry else r.fulfill(status=404, headers=CORS, body="not here"))
+    pg.route("http://localhost:8000/runs/*/probes", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(probe_tracks()))
+             if probes else r.fulfill(status=404, headers=CORS, body="not here"))
 
     def bld(route):
         pid = route.request.url.rsplit("/", 1)[-1]
@@ -324,6 +405,18 @@ def goto(pg, wait=2500):
     pg.wait_for_timeout(wait)
 
 
+def traffic_vis(pg):
+    return pg.evaluate("() => map.getLayer('tomtom-traffic') ? map.getLayoutProperty('tomtom-traffic', 'visibility') : null")
+
+
+def badges(pg):
+    return pg.eval_on_selector_all(".pin[data-badge]", "els => els.map(e => [e.textContent, e.dataset.badge, e.dataset.sev, getComputedStyle(e, '::after').content, getComputedStyle(e, '::after').backgroundColor])")
+
+
+def set_win(pg, m):
+    pg.evaluate(f"() => {{ const s = document.getElementById('win'); s.value = {m}; s.dispatchEvent(new Event('input')); s.dispatchEvent(new Event('change')); }}")
+
+
 def api_status(path):
     try:
         return urllib.request.urlopen("http://localhost:8000" + path, timeout=3).status
@@ -348,7 +441,8 @@ with sync_playwright() as p:
     check(pins == ["A"] + [str(i) for i in range(1, 12)] + ["B"], f"13 markers: {pins}")
     whens = pg.eval_on_selector_all("#when option", "els => els.map(e => e.textContent)")
     if True:   # measured legs from GET /corridor, else the CSV / embedded copy: the same 16 periods
-        check(len(whens) == 16 and whens[0].startswith("Typical July day") and pg.input_value("#when").startswith("2026-07-01..2026-07-31"), f"16 time choices, typical first: {whens[0]}")
+        check(len(whens) >= 16 and whens[0].startswith("Typical July day") and pg.input_value("#when").startswith("2026-07-01..2026-07-31"), f"{len(whens)} days, typical first: {whens[0]}")
+        check(len(whens) == 16 or all(w.endswith("by the hour") for w in whens[16:]), f"days TomTom has only by the hour: {whens[16:]}")
     check(any(w.startswith("Sun 5 Jul") for w in whens) and any(w.startswith("Wed 1 Jul") or w.startswith("Wed 8 Jul") for w in whens), f"weekday names: {whens[1:3]}")
     s = strips(pg)
     check(len(s) == 1 and s[0][0] == "tomtom" and s[0][1] == 12, f"TomTom strip with 12 legs before any run: {s}")
@@ -373,20 +467,51 @@ with sync_playwright() as p:
     fly_pins = pg.eval_on_selector_all(".pin.fly", "els => els.map(e => e.textContent)")
     check(fly_pins == ["3", "4", "6", "7", "10", "11"] and "Tolichowki Flyover" in pg.get_attribute(".pin.fly >> nth=3", "title"), f"map pins 3, 4, 6, 7, 10, 11 marked: {fly_pins}")
     check("flyover already built" in pg.inner_text("#right"), "map key explains the mark")
-    if api_status("/corridor/junctions/live") != 200:
-        check(pg.is_hidden("#live-box") and not pg.eval_on_selector_all(".pin.live", "els => els.length"), "no live endpoint: live panel and badges hidden")
+    check(pg.get_attribute("#mode-july", "aria-selected") == "true" and pg.inner_text("#mode-head").startswith("July typical day: TomTom's July average, and our simulation of it"),
+          f"July typical day by default, with its header: {pg.inner_text('#mode-head')!r}")
+    mb, mp = pg.evaluate("() => [document.getElementById('modebar').getBoundingClientRect().toJSON(), document.getElementById('left').getBoundingClientRect().toJSON()]")
+    check(pg.is_visible("#mode-live") and mb["top"] < 70 and mb["bottom"] <= mp["top"], f"mode switch at the top, above the panel ({mb['top']:.0f}-{mb['bottom']:.0f} px, panel from {mp['top']:.0f})")
+    check(pg.is_hidden("#live-box") and pg.is_visible("#journey") and pg.is_visible("#sim-today") and not badges(pg)[:0], "July: trip rows and simulation, no live panel")
+    live_st = api_status("/corridor/junctions/live")
+    if live_st != 200:
+        check(pg.is_hidden("#live-link"), "no live endpoint: no link to Live now")
     else:
-        n = pg.eval_on_selector_all("#live .lj", "els => els.length")
-        check(pg.is_visible("#live-box") and n >= 1 and pg.eval_on_selector_all(".pin.live", "els => els.length") == n, f"real API: {n} live junctions shown and marked on the map")
+        check(pg.is_visible("#live-link") and "see Live now" in pg.inner_text("#live-link"), f"July: a small link to Live now: {pg.inner_text('#live-link')!r}")
+        check(all(b[3] in ("none", "normal") for b in badges(pg)), "July: no live badges drawn on the pins")
     if api_status("/corridor") == 200:
         check("Drawn on the real road" in pg.inner_text("#route-src") and all(n > 2 for n, _ in route_data(pg)), f"real API: route on the road ({[n for n, _ in route_data(pg)]} vertices)")
     pg.screenshot(path=str(OUT / "corridor_A.png"))
+
+    case = "P modes"; print(case)
+    pg.click("#mode-live"); pg.wait_for_timeout(800)
+    check(pg.url.endswith("#mode=live") and pg.get_attribute("#mode-live", "aria-selected") == "true", f"URL remembers Live now: {pg.url}")
+    check(pg.inner_text("#mode-head").startswith("Live now: what TomTom measures on these roads right now"), f"header: {pg.inner_text('#mode-head')!r}")
+    gone = [x for x in ("#journey", "#ask-open", "#sim-today", "#presets", "#play", "#t-vehicles", "#t-roads", "#when", "#iv-add", "#case-send", "#status") if not pg.is_hidden(x)]
+    check(pg.inner_text("#status-live").startswith("API"), f"Live now has its own status line: {pg.inner_text('#status-live')!r}")
+    check(not gone and pg.is_visible("#live-box"), f"Live now: nothing simulated on screen, live panel shown (still visible: {gone})")
+    check(layer(pg, "vehicles") == -1 and layer(pg, "vehicle-dots") == -1 and layer(pg, "roads") == -1 and layer(pg, "structures") == -1, "no simulated layers on the map")
+    if not pg.is_disabled("#t-traffic"):
+        check(pg.is_checked("#t-traffic") and traffic_vis(pg) == "visible", "TomTom live traffic layer on")
+    if live_st == 200:
+        n = pg.eval_on_selector_all("#live .lj", "els => els.length")
+        bs = badges(pg)
+        check(n >= 1 and len(bs) == n and all(b[3].endswith(' s"') for b in bs), f"real API: {n} live junctions, each pin shows its worst delay now: {[b[:3] for b in bs]}")
+    pg.reload(wait_until="load")
+    pg.wait_for_function("() => typeof overlay !== 'undefined' && overlay && document.querySelectorAll('.pin').length > 0", timeout=30000)
+    pg.wait_for_timeout(1500)
+    check(pg.get_attribute("#mode-live", "aria-selected") == "true" and pg.is_hidden("#journey"), "reload keeps Live now (#mode=live)")
+    pg.screenshot(path=str(OUT / "corridor_P_live.png"))
+    pg.click("#mode-july"); pg.wait_for_timeout(800)
+    check(pg.url.endswith("#mode=july") and pg.is_visible("#journey") and pg.is_hidden("#live-box") and traffic_vis(pg) in (None, "none"),
+          f"back to July typical day: trip rows, live traffic layer off ({pg.url})")
+    check(pg.get_attribute("#cr-nav a[data-page=corridor]", "href") == "corridor.html", "the nav link opens the corridor (July by default)")
 
     case = "B when"; print(case)
     pg.select_option("#when", "2026-07-05..2026-07-05 8:00-20:00"); pg.wait_for_timeout(300)
     s = strips(pg)
     check(s[0][2] == "49 min" and "Sun 5 Jul" in s[0][3], f"Sunday 5 Jul: {s[0][2]}, {s[0][3]}")
     check("Sundays (5 and 12 Jul)" in pg.inner_text("#when-note"), f"note: {pg.inner_text('#when-note')[:110]}")
+    check("Changes the measured (TomTom) row only; the simulation is the typical July day." in pg.inner_text("#when-note"), "date note: only the measured row changes")
     pg.select_option("#when", "2026-07-08..2026-07-08 8:00-20:00"); pg.wait_for_timeout(300)
     check(strips(pg)[0][2] == "65 min", f"Wed 8 Jul weekday: {strips(pg)[0][2]}")
 
@@ -468,6 +593,7 @@ with sync_playwright() as p:
     simulate(pg, "#sim-today", "today's roads")
     s = strips(pg)
     check([x[0] for x in s] == ["base", "tomtom"] and s[0][1] == 12, f"simulated strip above the TomTom strip: {[(x[0], x[2]) for x in s]}")
+    check(s[0][3].startswith("Simulated typical July day, roads as they are") and s[1][3].startswith("Measured by TomTom"), f"row labels: {[x[3] for x in s]}")
     sample = "SAMPLE DATA" in pg.inner_text("#journey")
     print("      (results are", "sample data)" if sample else "from the API)")
     if sample:
@@ -483,6 +609,7 @@ with sync_playwright() as p:
     simulate(pg, "#sim-changes", "with 1 change")
     s = strips(pg)
     check([x[0] for x in s] == ["base", "tomtom", "changed"], f"third strip for the changed trip: {[(x[0], x[2]) for x in s]}")
+    check(s[2][3].startswith("Simulated typical July day, with your changes"), f"with-changes row label: {s[2][3]!r}")
     head = pg.inner_text("#deltas .headline")
     check("Whole trip:" in head and "→" in head and " min, " in head, f"total delta: {head[:90]}")
     chips = pg.eval_on_selector_all("#deltas .delta", "els => els.map(e => [e.className, e.textContent])")
@@ -529,16 +656,19 @@ with sync_playwright() as p:
     pg.check("#t-route"); pg.wait_for_timeout(200); on = layer(pg, "route")
     check(off == -1 and on == 12, f"route off/on: {off} / {on}")
     if not pg.is_disabled("#t-traffic"):
-        pg.check("#t-traffic"); pg.wait_for_timeout(300)
-        check(pg.evaluate("() => map.getLayer('tomtom-traffic') && map.getLayoutProperty('tomtom-traffic', 'visibility') === 'visible'"), "TomTom live traffic on")
+        check(pg.is_hidden("#t-traffic") and traffic_vis(pg) == "none", "July: no live traffic layer (it belongs to Live now)")
+        pg.click("#mode-live"); pg.wait_for_timeout(400)
         pg.uncheck("#t-traffic"); pg.wait_for_timeout(200)
-        check(pg.evaluate("() => map.getLayoutProperty('tomtom-traffic', 'visibility')") == "none", "TomTom live traffic off")
+        check(traffic_vis(pg) == "none", "Live now: TomTom live traffic off")
+        pg.check("#t-traffic"); pg.wait_for_timeout(200)
+        check(traffic_vis(pg) == "visible", "Live now: TomTom live traffic on")
+        pg.click("#mode-july"); pg.wait_for_timeout(300)
     pg.close()
 
     # ---------------- corridor API answering (mocked in the browser): route, live junctions, runs, frames ----------------
     bodies, mode, counts = [], {"fail": None}, {}
     pg = open_page(b, {"width": 1500, "height": 950}, STREAM_JS % (json.dumps(frames_3d()), 2000))
-    mock_api(pg, live_nested, bodies, mode, counts)
+    mock_api(pg, live_nested, bodies, mode, counts, geometry=True, probes=True)
     goto(pg)
 
     case = "I route"; print(case)
@@ -553,7 +683,9 @@ with sync_playwright() as p:
     check(len(whens) == 3 and whens[0].startswith("Typical July day") and strips(pg)[0][2] == "58 min", f"TomTom legs per period from GET /corridor: {whens}")
 
     case = "J live"; print(case)
-    check(pg.is_visible("#live-box") and "REAL" in pg.inner_text("#live-box h2"), "live panel shown, tagged REAL")
+    check(pg.is_hidden("#live-box") and "see Live now" in pg.inner_text("#live-link"), "July: the live panel is a link to Live now")
+    pg.click("#see-live"); pg.wait_for_timeout(800)
+    check(pg.url.endswith("#mode=live") and pg.is_visible("#live-box") and "REAL" in pg.inner_text("#live-box h2"), "the link opens Live now: live panel shown, tagged REAL")
     cards = pg.eval_on_selector_all("#live .lj", "els => els.map(e => [e.dataset.id, e.querySelectorAll('.ap').length, e.innerText])")
     check([c[0] for c in cards] == ["j07", "j08", "j09"] and all(c[1] == 3 for c in cards), f"3 live junctions, worst 3 approaches each: {[(c[0], c[1]) for c in cards]}")
     j8 = live_rows(pg, "j08")
@@ -564,17 +696,29 @@ with sync_playwright() as p:
     check(pg.eval_on_selector_all("#live .lj[data-id=j08] th", "els => els.map(e => e.textContent)") == ["Worst approaches", "Delay", "Usual", "Last hr", "Queue"], "column heads")
     check(pg.eval_on_selector("#live .lj[data-id=j08] .ap b", "e => e.classList.contains('bad')"), "much worse than usual: red")
     check("estimated by TomTom" in pg.inner_text("#live-note") and "every 2 s" in pg.inner_text("#live-note"), f"note: {pg.inner_text('#live-note')}")
-    check(pg.eval_on_selector_all(".pin.live", "els => els.map(e => e.textContent)") == ["7", "8", "9"], "LIVE badges on markers 7, 8, 9")
-    check(pg.eval_on_selector(".pin.live", "e => getComputedStyle(e, '::after').backgroundColor") == "rgb(26, 127, 55)" and pg.is_visible("#live-note .livedot"),
-          "green live dot on the markers, explained in the panel")
+    bs = badges(pg)
+    check([b[:3] for b in bs] == [["7", "33 s", "mid"], ["8", "108 s", "bad"], ["9", "178 s", "bad"]], f"pins 7, 8, 9 carry their worst delay now, coloured vs usual: {[b[:3] for b in bs]}")
+    check(bs[0][3] == '"33 s"' and bs[0][4] == "rgb(178, 106, 0)" and bs[1][4] == "rgb(176, 0, 32)", f"badge drawn on the pin: {bs[0][3:]} / {bs[1][3:]}")
+    check("Mehdipatnam Road West Bound" not in pg.get_attribute(".pin[data-id=j08]", "title") and "worst delay 108 s on NH163 North Bound (usually 80 s)" in pg.get_attribute(".pin[data-id=j08]", "title"),
+          f"pin tooltip: {pg.get_attribute('.pin[data-id=j08]', 'title')}")
+    q = pg.evaluate("() => { const l = overlay._deck.props.layers.find(l => l.id === 'live-queues'); return l ? l.props.data.map(d => [d.jid, d.name, Math.round(d.path.slice(1).reduce((s, p, i) => s + metres(d.path[i], p), 0)), d.path[d.path.length - 1]]) : null; }")
+    mq = [x for x in (q or []) if x[0] == "j08" and x[1] == "Mehdipatnam Road West Bound"]
+    check(q and len(q) == 11 and mq and abs(mq[0][2] - 751) <= 3, f"11 measured queues drawn on the road (approaches with no queue skipped); Mehdipatnam Rd into Nanal Nagar 751 m: {mq}")
+    check(mq and abs(mq[0][3][0] - PTS["j08"]["lon"]) < 1e-6 and abs(mq[0][3][1] - PTS["j08"]["lat"]) < 1e-6, "each queue line ends at its junction")
+    check(layer(pg, "live-queues-casing") == 11 and pg.is_hidden("#geo-note"), "white casing under the red queue lines")
+    pg.uncheck("#t-queues"); pg.wait_for_timeout(200)
+    check(layer(pg, "live-queues") == -1, "queues layer toggles off")
+    pg.check("#t-queues"); pg.wait_for_timeout(200)
     n_live = counts.get("live", 0); counts["v2"] = True
     pg.wait_for_timeout(2600)
     check(counts.get("live", 0) > n_live and live_rows(pg, "j08")[0][1] == "131 s", f"refreshed ({counts.get('live')} calls): new NH163 delay shown")
     pg.click("#live .lj[data-id=j09] .hd"); pg.wait_for_timeout(2000)
     pop = pg.inner_text(".maplibregl-popup")
-    check(center_near(pg, "j09")[0] and "Live now: 178 s delay (usual 131 s)" in pop and "REAL" in pop, f"live card flies to Rethibowli, popup: {pop[:120]!r}")
+    check(center_near(pg, "j09")[0] and "Live now: 178 s delay (usual 131 s)" in pop and "REAL" in pop and "SIMULATED" not in pop, f"live card flies to Rethibowli, popup: {pop[:120]!r}")
     pg.click("#overview"); pg.wait_for_timeout(1300)
     pg.screenshot(path=str(OUT / "corridor_J.png"))
+    pg.click("#mode-july"); pg.wait_for_timeout(600)
+    check(pg.url.endswith("#mode=july") and all(b[3] in ("none", "normal") for b in badges(pg)) and layer(pg, "live-queues") == -1, "back in July: no live badges or queues")
 
     case = "H api + playback"; print(case)
     add_iv(pg, "j07", "flyover", {"lanes": 2, "length_m": 600})
@@ -587,11 +731,22 @@ with sync_playwright() as p:
     sim_kmh = [l["speed_kmh"] for l in SAMPLE["flyover_j07"]["journey"]["legs"]]
     check([k for _, k in route_data(pg)] == sim_kmh and "SIMULATED speeds" in pg.inner_text("#route-src"), "after the run: legs coloured by simulated speed")
     check("traffic input: estimated" in pg.inner_text("#run-note"), f"input label: {pg.inner_text('#run-note')[:80]}")
+    case = "S labels"; print(case)
+    names = [x[3] for x in strips(pg)]
+    check(names[0].startswith("Simulated typical July day, roads as they are") and names[2].startswith("Simulated typical July day, with your changes"), f"row labels: {names}")
+    check(pg.inner_text("#trip-foot") == FOOT, f"footnote from the result and the calibration: {pg.inner_text('#trip-foot')!r}")
+    check(counts.get("hour") == 1 and pg.is_disabled("#hour") and pg.get_attribute("#hour-box", "title") == "hourly TomTom data arriving tonight"
+          and pg.inner_text("#hour-note") == "Hour: hourly TomTom data arriving tonight.", f"hour picker next to the day: asked the API once (422), disabled until hourly data ({counts.get('hour')} probe)")
+    hours = pg.eval_on_selector_all("#hour option", "els => els.map(e => e.textContent)")
+    check(hours[0] == "All day" and hours[1] == "06:00–07:00" and hours[-1] == "22:00–23:00" and len(hours) == 18, f"hours 06-23: {hours[:2]} … {hours[-1]}")
+    case = "H api + playback"
     pg.wait_for_timeout(3500)
     v = layer(pg, "vehicles")
     check(v > 0, f"vehicles drawn from WS frames: {v}")
     check(pg.evaluate("() => map.getZoom()") > 14 and center_near(pg, "j07", 80)[0], "camera flew to the changed junction for playback")
-    check("simulated" in pg.inner_text("#clock") and "frames" in pg.inner_text("#playinfo"), f"clock and frames: {pg.inner_text('#clock')} · {pg.inner_text('#playinfo')}")
+    ck = pg.inner_text("#clock")
+    check(ck.startswith("Simulated typical July day · minute 15 of the simulated period") and "08:" not in ck and "frames" in pg.inner_text("#playinfo"),
+          f"clock: minute of the simulated period, no clock time: {ck} · {pg.inner_text('#playinfo')}")
     pg.screenshot(path=str(OUT / "corridor_H.png"))
     if "Pause" not in pg.inner_text("#play"):
         pg.click("#play")
@@ -602,6 +757,28 @@ with sync_playwright() as p:
     pg.wait_for_timeout(300)
     check(pg.evaluate("() => Math.round(pos)") == pg.evaluate("() => Math.floor(Number(document.getElementById('scrub').max) / 2)"), f"scrub to the middle: {pg.inner_text('#clock')}")
     check(not pg.is_disabled("#sim-today") and not pg.is_disabled("#iv-add"), "panel usable during playback")
+
+    case = "Q window"; print(case)
+    check(pg.is_visible("#win-box") and pg.get_attribute("#win", "max") == "49" and pg.input_value("#win") == "15" and "minutes 15–20 of the 54 simulated" in pg.inner_text("#win-note"),
+          f"Watch from minute: 0..49, at 15: {pg.inner_text('#win-note')[:80]!r}")
+    totals = [x[2] for x in strips(pg)]
+    n0 = len(bodies)
+    pg.evaluate("() => { window.__delayRuns = 2500; }")
+    set_win(pg, 30); pg.wait_for_timeout(700)
+    check(pg.is_visible("#win-busy") and "Recording minutes 30–35" in pg.inner_text("#win-busy") and pg.is_disabled("#win"), f"progress while recording: {pg.inner_text('#win-busy')!r}")
+    pg.wait_for_timeout(3000)
+    pg.evaluate("() => { window.__delayRuns = 0; }")
+    check(len(bodies) == n0 + 1 and bodies[-1] == {"interventions": FLY_J07, "volume_scale": 1.0, "frames_from_min": 30, "frames_minutes": 5}, f"the same run asked for minutes 30-35: {bodies[n0:]}")
+    pg.wait_for_timeout(1500)
+    check("minute 30 of the simulated period" in pg.inner_text("#clock") and pg.input_value("#win") == "30" and pg.is_hidden("#win-busy") and not pg.is_disabled("#win"),
+          f"plays minutes 30-35: {pg.inner_text('#clock')}")
+    check([x[2] for x in strips(pg)] == totals and layer(pg, "vehicles") > 0, "results unchanged, vehicles of the new window drawn")
+    set_win(pg, 15); pg.wait_for_timeout(1800)
+    check(len(bodies) == n0 + 1 and "minute 15 of the simulated period" in pg.inner_text("#clock"), f"back to minute 15: no new request ({pg.inner_text('#clock')})")
+    set_win(pg, 30); pg.wait_for_timeout(1800)
+    check(len(bodies) == n0 + 1 and "minute 30" in pg.inner_text("#clock"), "minute 30 again: kept from before, no new request")
+    set_win(pg, 15); pg.wait_for_timeout(1500)
+    case = "H api + playback"
     pg.click("#watch-base"); pg.wait_for_timeout(3000)
     check(layer(pg, "vehicles") > 0 and "r_test" not in pg.inner_text("#status"), f"watch today's run: {pg.inner_text('#playinfo')}")
 
@@ -630,9 +807,59 @@ with sync_playwright() as p:
     pg.click("#follow"); pg.wait_for_timeout(1200)
     pr = pg.evaluate("() => { const v = vehicleAt('probe_fwd_1'), c = map.getCenter(); return [v.lon, v.lat, c.lng, c.lat, map.getPitch()]; }")
     check(abs(pr[0] - pr[2]) < 2e-4 and abs(pr[1] - pr[3]) < 2e-4 and pr[4] > 55, f"camera follows the test car: {pr}")
-    check("Stop following" in pg.inner_text("#follow") and "Following test car probe_fwd_1" in pg.inner_text("#playinfo"), f"follow state: {pg.inner_text('#playinfo')}")
+    card = pg.inner_text("#follow-card")
+    check("Stop following" in pg.inner_text("#follow") and "Following test car fwd-1" in pg.inner_text("#playinfo"), f"follow state: {pg.inner_text('#playinfo')}")
+    check(card.startswith("Test car fwd-1 · 32 km/h · stretch ") and " → " in card and "min since Lingampally" in card and "SIMULATED" in card, f"info card: {card!r}")
+    hl = layer_props(pg, "vehicles", "l => { const v = l.props.data.find(v => v.id === 'probe_fwd_1'); return v ? l.props.getFillColor(v) : null; }")
+    trail = pg.evaluate("() => { const l = overlay._deck.props.layers.find(l => l.id === 'follow-trail'); return l ? l.props.data[0].path.length : 0; }")
+    check(hl == [255, 196, 0] and layer(pg, "follow-halo") == 1 and trail >= 2, f"followed car highlighted: colour {hl}, halo, trail of {trail} points")
+    opts = pg.eval_on_selector_all("#follow-pick option", "els => els.map(e => e.textContent)")
+    check("fwd-1 · towards Lakdikapul · leaves minute 10" in opts and "rev-1 · towards Lingampally · leaves minute 11" in opts and pg.input_value("#follow-pick") == "probe_fwd_1",
+          f"test cars listed with direction and departure, the followed one selected: {opts}")
     pg.click("#follow"); pg.wait_for_timeout(200)
-    check("Follow a test car" in pg.inner_text("#follow"), "stop following")
+    check("Follow a test car" in pg.inner_text("#follow") and pg.is_hidden("#follow-card") and layer(pg, "follow-halo") == -1, "stop following: card and highlight gone")
+    # click any vehicle on the map to follow it
+    if "Pause" in pg.inner_text("#play"):
+        pg.click("#play")
+    pg.wait_for_timeout(300)
+    pg.evaluate("() => { flyToPoint('j07'); }"); pg.wait_for_timeout(2200)
+    pg.evaluate("() => { if (popup) popup.remove(); }")
+    hit = pg.evaluate("""() => { const vp = overlay._deck.getViewports()[0], r = map.getCanvas().getBoundingClientRect(), W = r.width, H = r.height;
+        const l = overlay._deck.props.layers.find(l => l.id === 'vehicles'); if (!l) return [0, 0, null];
+        const cands = l.props.data.map(v => { const [x, y] = vp.project([v.lon, v.lat, (v.z || 0) + 0.8]); return { v, x, y }; })
+          .filter(c => c.x > 420 && c.x < W - 300 && c.y > 80 && c.y < H - 280 && document.elementFromPoint(c.x + r.left, c.y + r.top) === map.getCanvas()).sort((a, b) => (b.v.z || 0) - (a.v.z || 0));
+        for (const c of cands) { const o = overlay.pickObject({ x: c.x, y: c.y, radius: 2 }); if (o && o.object && o.object.id === c.v.id) return [c.x + r.left, c.y + r.top, c.v.id]; }
+        return [0, 0, null]; }""")
+    pg.mouse.click(hit[0], hit[1]); pg.wait_for_timeout(700)
+    fol = pg.evaluate("() => following")
+    card = pg.inner_text("#follow-card") if pg.is_visible("#follow-card") else ""
+    check(hit[2] and fol == hit[2], f"clicking a vehicle follows it: picked {hit[2]}, following {fol}")
+    if fol and fol.startswith("fly"):
+        check(card.startswith("Car " + fol) and "on the Tolichowki Flyover" in card, f"card for an ordinary car on the existing flyover: {card!r}")
+    pg.click("#follow"); pg.wait_for_timeout(200)
+
+    case = "R ride"; print(case)
+    check(pg.is_visible("#ride-row") and pg.inner_text("#ride") == "Ride the whole trip", "Ride the whole trip offered (GET /runs/{id}/probes)")
+    pg.select_option("#ride-speed", "60")
+    pg.click("#ride"); pg.wait_for_timeout(1500)
+    st = pg.evaluate("() => ride && [ride.probe.id, ride.t, ride.inWin]")
+    check(st and st[0] == "probe_fwd_1" and 620 < st[1] < 800 and st[2] is False, f"riding test car fwd-1 from Lingampally at 60x: {st}")
+    note = pg.inner_text("#ride-note")
+    check("Other traffic is shown only while the ride is inside the recorded window (minutes 15–16)" in note and "55 min" in note, f"says when other traffic shows: {note!r}")
+    check(layer(pg, "vehicles") == -1 and layer(pg, "vehicle-dots") == -1 and layer(pg, "ride-car") == 1 and layer(pg, "follow-halo") == 1, "outside the recorded window: the test car alone, highlighted")
+    cam = pg.evaluate("() => { const v = probeAt(ride.probe, ride.t), c = map.getCenter(); return [v.lon - c.lng, v.lat - c.lat, map.getPitch()]; }")
+    check(abs(cam[0]) < 3e-4 and abs(cam[1]) < 3e-4 and cam[2] > 55, f"camera rides with the car: {cam}")
+    card = pg.inner_text("#follow-card")
+    check(card.startswith("Test car fwd-1 · 25 km/h · stretch Lingampally → Nallagandla Rd jn · ") and "min since Lingampally" in card, f"ride card: {card!r}")
+    check("riding at 60×" in pg.inner_text("#clock") and "outside the recorded window" in pg.inner_text("#clock"), f"ride clock: {pg.inner_text('#clock')}")
+    pg.select_option("#ride-speed", "10")
+    pg.evaluate("() => { ride.t = 901; }"); pg.wait_for_timeout(500)
+    ids = layer_props(pg, "vehicles", "l => l.props.data.map(v => v.id)") or []
+    check(pg.evaluate("() => ride.inWin") and layer(pg, "vehicles") >= 0 and "probe_fwd_1" not in ids and layer(pg, "ride-car") == 1, f"inside the recorded window: other traffic shown ({len(ids)}), the test car drawn once")
+    pg.evaluate("() => { ride.t = ride.probe.arrive_s - 2; }"); pg.wait_for_timeout(800)
+    check(pg.evaluate("() => ride === null") and "arrived at Lakdikapul after 55 min" in pg.inner_text("#ride-note") and pg.inner_text("#ride") == "Ride the whole trip",
+          f"arrives: {pg.inner_text('#ride-note')!r}")
+    case = "O 3D"
     b0 = pg.evaluate("() => map.getBearing()"); pg.click("#orbit"); pg.wait_for_timeout(1200); b1 = pg.evaluate("() => map.getBearing()")
     pg.click("#orbit"); pg.wait_for_timeout(300); b2 = pg.evaluate("() => map.getBearing()"); pg.wait_for_timeout(500)
     check(3 < (b1 - b0) % 360 < 20 and abs(pg.evaluate("() => map.getBearing()") - b2) < 0.5, f"orbit turns the camera slowly and stops: {b0:.1f} → {b1:.1f}")
@@ -701,20 +928,62 @@ with sync_playwright() as p:
 
     # ---------------- narrow screen ----------------
     case = "N narrow"; print(case)
-    bodies, mode, counts = [], {"fail": None}, {}
+    bodies, mode, counts = [], {"fail": None, "hour_ok": True}, {}
     pg = open_page(b, {"width": 390, "height": 844}, STREAM_JS % (json.dumps(frames_along("j07", "j08")), 60000))
     mock_api(pg, lambda c: live_flat(), bodies, mode, counts, real_shape=True)
     goto(pg)
+    mb = pg.evaluate("() => [document.getElementById('modebar').getBoundingClientRect().toJSON(), document.getElementById('map').getBoundingClientRect().top]")
+    check(mb[0]["bottom"] <= mb[1] + 1 and mb[0]["width"] > 340 and pg.is_visible("#mode-live") and pg.is_visible("#mode-july"), f"phone: mode switch above the map, full width ({mb[0]['top']:.0f}-{mb[0]['bottom']:.0f}, map at {mb[1]:.0f})")
+    check(counts.get("hour") == 1 and bodies[:1] == [{"interventions": [], "volume_scale": 1.0, "day": "july", "hour": 8}] and not pg.is_disabled("#hour")
+          and pg.is_hidden("#hour-note") and "simulation" in pg.get_attribute("#hour-box", "title"), f"an API that takes day + hour enables the hour picker ({counts.get('hour')} probe)")
+    days = pg.eval_on_selector_all("#when option", "els => els.map(e => e.textContent)")
+    check(len(days) == 4 and days[-1] == "Mon 20 Jul · by the hour" and "The day and hour set both the measured (TomTom) row and the simulation." in pg.inner_text("#when-note"),
+          f"days: the all-day periods plus the days from tomtom.hourly.days; the note says the simulation follows: {days}")
+    pg.select_option("#when", "2026-07-08..2026-07-08 8:00-20:00"); pg.select_option("#hour", "18"); pg.wait_for_timeout(300)
+    s = strips(pg)
+    check(s and s[0][0] == "tomtom" and s[0][3].startswith("Measured by TomTom, Wed 8 Jul, 18:00–19:00") and s[0][2] == f"{hourly_min('2026-07-08', 18)} min",
+          f"measured row for Wed 8 Jul, 18:00-19:00 from tomtom.hourly: {s[0][2:] if s else s}")
+    sp = pg.eval_on_selector_all("#hour-spark rect", "els => els.map(e => e.getAttribute('class'))")
+    check(len(sp) == 24 and sp[18] == "on" and sp[3] == "" and sp[8] == "day pick" and "REAL" in pg.inner_text("#hour-spark"), f"24-hour sparkline, 18:00 marked, 06-22 pickable: {sp[:9]}")
+    pg.click("#hour-spark rect[data-h='9']"); pg.wait_for_timeout(300)
+    check(pg.input_value("#hour") == "9" and strips(pg)[0][2] == f"{hourly_min('2026-07-08', 9)} min", "clicking an hour on the sparkline picks it")
+    pg.select_option("#when", "2026-07-05..2026-07-05 8:00-20:00"); pg.wait_for_timeout(300)
+    check(not strips(pg) and "No hourly TomTom data for Sun 5 Jul, 09:00–10:00 yet" in pg.inner_text("#when-note"), "a day without hourly data: no measured row, said so")
+    pg.select_option("#when", "2026-07-20..2026-07-20"); pg.select_option("#hour", ""); pg.wait_for_timeout(300)
+    check(not strips(pg) and "TomTom has Mon 20 Jul in one-hour slots: pick an hour." in pg.inner_text("#when-note"), "a day known by the hour only asks for an hour")
+    pg.select_option("#when", "2026-07-08..2026-07-08 8:00-20:00"); pg.wait_for_timeout(200)
+    pg.select_option("#hour", "18"); pg.wait_for_timeout(200)
+    n0 = len(bodies)
+    simulate(pg, "#sim-today", "today's roads")
+    check(bodies[n0:] == [{"interventions": [], "volume_scale": 1.0, "day": "2026-07-08", "hour": 18}], f"the simulation asked for Wed 8 Jul, 18:00: {bodies[n0:]}")
+    pg.wait_for_timeout(2500)
+    s = strips(pg)
+    check(s[0][3].startswith("Simulated Wed 8 Jul, 18:00–19:00, roads as they are") and pg.inner_text("#clock").startswith("Simulated Wed 8 Jul, 18:00–19:00 · minute 15 of the simulated period"),
+          f"labelled with the day and hour: {s[0][3]!r} / {pg.inner_text('#clock')!r}")
+    n0 = len(bodies)
+    pg.select_option("#when", TYPICAL); pg.select_option("#hour", "8")
+    st, _ = wait_status(pg, ["08:00–09:00: simulated", "failed"], 30); pg.wait_for_timeout(500)
+    s = strips(pg)
+    check(bodies[n0:] == [{"interventions": [], "volume_scale": 1.0, "day": "july", "hour": 8}] and s[0][3].startswith("Simulated typical July day, 08:00–09:00")
+          and s[1][3].startswith("Measured by TomTom, typical July day, 08:00–09:00") and s[1][2] == f"{hourly_min('july', 8)} min",
+          f"changing day and hour re-simulates once, both rows follow: {bodies[n0:]} {[x[2:] for x in s]}")
     over = pg.evaluate("() => document.documentElement.scrollWidth - window.innerWidth")
     check(over <= 0, f"no sideways scroll ({over} px over)")
     box = pg.evaluate("() => { const m = $('map').getBoundingClientRect(), j = $('journey').getBoundingClientRect(), l = $('left').getBoundingClientRect(); return [m.height, m.bottom, j.top, l.top, l.width]; }")
     check(box[0] > 300 and box[2] >= box[1] and box[3] > box[2] and box[4] > 340, f"map on top, journey then controls below, full width: {box}")
-    check(pg.evaluate("() => Object.keys(legPaths).length === 12 && Object.values(legPaths).every(p => p.length === 13)") and len(pg.eval_on_selector_all("#when option", "e => e")) == 3,
-          "real GET /corridor shape: per-leg route features used as they are, tomtom.periods read")
+    check(pg.evaluate("() => Object.keys(legPaths).length === 12 && Object.values(legPaths).every(p => p.length === 13)") and len(pg.eval_on_selector_all("#when option", "e => e")) == 4,
+          "real GET /corridor shape: per-leg route features used as they are, tomtom.periods and tomtom.hourly read")
     j8 = live_rows(pg, "j08")
     check(j8[0] == ["NH163 N-bound", "100 s", "80 s", "75 s", "150 m"] and "TomTom 17:20" in pg.inner_text("#live .lj[data-id=j08]"), f"flat rows: latest shown, hour averaged: {j8}")
+    pg.click("#mode-live"); pg.wait_for_timeout(1000)
+    over = pg.evaluate("() => document.documentElement.scrollWidth - window.innerWidth")
+    check(pg.is_visible("#live-box") and pg.is_hidden("#journey") and over <= 0 and [b[:3] for b in badges(pg)] == [["8", "100 s", "bad"]], f"Live now on a phone: panel, pin 8 badge, no sideways scroll ({over})")
+    check(pg.is_visible("#geo-note") and layer(pg, "live-queues") == -1, "no approach shapes (404): queues stay in the panel, said so")
+    pg.screenshot(path=str(OUT / "corridor_N_live.png"), full_page=True)
+    pg.click("#mode-july"); pg.wait_for_timeout(600)
     pg.click("#p-dlf"); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(2500)
     check([x[0] for x in strips(pg)] == ["base", "tomtom", "changed"], "presets work on a phone")
+    check(pg.is_hidden("#ride-row"), "no GET /runs/{id}/probes (404): no ride offered")
     pg.evaluate("() => window.scrollTo(0, 0)")
     pg.screenshot(path=str(OUT / "corridor_N.png"), full_page=True)
     b.close()

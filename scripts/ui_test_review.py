@@ -105,6 +105,7 @@ class Backend:
     def __init__(self, off=(), sync_chat=False):
         self.off, self.sync_chat = set(off), sync_chat
         self.calls, self.polls, self.cases, self.turns = [], {}, {}, {}
+        self.hour_probes = 0
 
     def reply(self, route, status=200, body=None):
         if body is None:
@@ -141,6 +142,9 @@ class Backend:
         u = urlparse(req.url)
         path, q = u.path, parse_qs(u.query)
         body = json.loads(req.post_data) if req.method == "POST" and req.post_data else None
+        if path == "/corridor/runs" and body and "hour" in body:   # the page asks once whether the API takes `hour` (not yet: 422)
+            self.hour_probes += 1
+            return self.reply(route, 422, {"detail": "hourly data not available yet"})
         self.calls.append((req.method, path + (("?" + u.query) if u.query else ""), body))
         if path == "/config":
             return self.reply(route, body={"tomtom_maps_key": "", "mock": True})
@@ -290,6 +294,11 @@ with sync_playwright() as p:
     check(pg.eval_on_selector_all("#iv-list .iv span", "els => els.map(e => e.textContent)") == ["7 · Tolichowki: Flyover, 2 lanes, 600 m"] and "edited after" not in pg.inner_text("#deltas"),
           "list of changes matches the run")
     check(len(be.posts("/corridor/runs")) == n_runs and "SIMULATED" in pg.inner_text("#strips") and "Loaded from the assistant" in pg.inner_text("#run-note"), "no new simulation, labels kept")
+    names = pg.eval_on_selector_all("#strips .strip[data-strip] .name", "els => els.map(e => e.textContent)")
+    check(names[0].startswith("Simulated typical July day, roads as they are") and names[2].startswith("Simulated typical July day, with your changes"),
+          f"trip rows say what is simulated: {names}")
+    check(be.hour_probes == 1 and pg.get_attribute("#hour-box", "title") in ("hourly TomTom data arriving tonight", "The hour sets the measured (TomTom) row; the simulation is still the typical July day"),
+          f"hour picker asked the API once (422 now): the simulation stays the typical July day ({be.hour_probes} probe; {pg.get_attribute('#hour-box', 'title')})")
     check(pg.eval_on_selector("#jt tr[data-id=j07]", "e => e.classList.contains('has')") and "85 → 120 s" in pg.inner_text("#jt tr[data-id=j08]"), "junction table before → after")
     check(pg.eval_on_selector("#chat-log .show-run[data-run=r_agent_fly]", "e => e.classList.contains('on')"), "button marks what is shown")
     pg.click("#chat-log .show-run[data-run=r_agent_retime]"); pg.wait_for_timeout(600)
