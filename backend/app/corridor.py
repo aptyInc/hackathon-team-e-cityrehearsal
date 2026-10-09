@@ -249,6 +249,16 @@ def _build_route() -> dict:
             "data_label": "network geometry (not a measurement)"}
 
 
+def sim_capabilities() -> dict:
+    """What POST /corridor/runs can simulate, so the page need not run a simulation to find out."""
+    try:
+        hours = sorted(int(h) for h in json.loads(CALIBRATION_HOURLY.read_text())["hours"]) if CALIBRATION_HOURLY.exists() else []
+    except (ValueError, KeyError, TypeError):
+        hours = []
+    return {"hours": hours, "days": "any July day with TomTom hourly data, fitted on demand (first run 1-2 min, then cached)",
+            "frames_window": True, "probes": True}
+
+
 @router.get("/corridor")
 def get_corridor():
     """Corridor definition + TomTom measured leg times per period + the simulated route's geometry."""
@@ -257,6 +267,7 @@ def get_corridor():
                    "data_label": "REAL: measured (TomTom probe data)", "periods": tomtom_periods(),
                    "hourly": tomtom_hourly()}
     c["route"] = route_geometry()
+    c["sim"] = sim_capabilities()
     c["labels"] = {"points": "reference: team junction list + OpenStreetMap coordinates",
                    "tomtom": "REAL: measured by TomTom (probe vehicles); leg times, speeds and distances",
                    "route": "network geometry the simulation drives on (OpenStreetMap), not a measurement",

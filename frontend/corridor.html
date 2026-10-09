@@ -1701,6 +1701,9 @@ $("ride").onclick = () => { if (ride) stopRide(); else startRide(); };
 
 // ---------- the recorded window ("Watch from minute") and the hour ----------
 const fwin = r => { const w = r?.frames_window; return w && isFinite(w.from_s) && isFinite(w.to_s) ? w : null; };
+// minutes of the measured period; the API's from_s/to_s count from the simulation start (warm-up included)
+const winFrom = w => w.from_min != null ? Math.round(w.from_min) : Math.round(w.from_s / 60);
+const winTo = w => w.from_min != null && w.minutes != null ? Math.round(w.from_min + w.minutes) : Math.round(w.to_s / 60);
 const frameNowS = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.t + tOffset : 0; };
 const winCache = {};   // "<run key>|<from minute>" -> the same run, recorded from that minute
 const runKey = r => `${ivKey(r.interventions || [])}|${volOf(r)}|${runDay(r) ?? ""}|${runHour(r) ?? ""}`;
@@ -1709,11 +1712,11 @@ function renderWindow() {
   const r = playingRun, w = fwin(r);
   $("win-box").hidden = !w || !(w.sim_minutes_total > 5);
   if ($("win-box").hidden) return;
-  const max = Math.max(0, Math.floor(w.sim_minutes_total - 5)), from = Math.round(w.from_s / 60);
+  const max = Math.max(0, Math.floor(w.sim_minutes_total - 5)), from = winFrom(w);
   winCache[`${runKey(r)}|${from}`] ||= r;
   $("win").max = max;
   if (!winBusy) { $("win").value = Math.min(from, max); $("win-val").textContent = $("win").value; }
-  $("win-note").innerHTML = `Recorded: minutes ${from}–${Math.round(w.to_s / 60)} of the ${Math.round(w.sim_minutes_total)} simulated. Pick another start to record 5 minutes from there: the same run, so the results stay identical.`;
+  $("win-note").innerHTML = `Recorded: minutes ${from}–${winTo(w)} of the ${Math.round(w.sim_minutes_total)} simulated. Pick another start to record 5 minutes from there: the same run, so the results stay identical.`;
 }
 $("win").oninput = () => { $("win-val").textContent = $("win").value; };
 $("win").onchange = () => watchFrom(Number($("win").value));
@@ -1721,7 +1724,7 @@ async function watchFrom(m) {
   const r = playingRun, w = fwin(r); if (!r || !w || winBusy) return;
   winPick = m;
   const key = `${runKey(r)}|${m}`;
-  if (Math.round(w.from_s / 60) === m) return;
+  if (winFrom(w) === m) return;
   if (winCache[key]) return play(winCache[key]);
   winBusy = true;
   const t0 = Date.now(), show = () => { $("win-busy").innerHTML = `<span class="spin"></span>Recording minutes ${m}–${m + 5} of this run (usually 30–60 s) · <b id="win-el">${clock((Date.now() - t0) / 1000)}</b>`; };
@@ -1732,7 +1735,7 @@ async function watchFrom(m) {
   try {
     const x = await post("/corridor/runs", { interventions: r.interventions || [], volume_scale: volOf(r), frames_from_min: m, frames_minutes: 5, ...(runHour(r) != null ? { day: runDay(r) || "july", hour: runHour(r) } : {}) });
     const xw = fwin(x);
-    if (!xw || Math.round(xw.from_s / 60) !== m) throw new Error("this API does not record another window yet");
+    if (!xw || winFrom(xw) !== m) throw new Error("this API does not record another window yet");
     x._ivs = r._ivs; winCache[key] = x;
     if (playingRun === r) play(x);
   } catch (e) { err = `Could not record minutes ${m}–${m + 5}: ${e.status ? `HTTP ${e.status} ` : ""}${e.detail || e.message}`; winPick = null; }
@@ -1762,7 +1765,8 @@ function setHourOk(ok) {   // usable once the API simulates hours, or once GET /
   $("hour-note").textContent = on ? "" : "Hour: hourly TomTom data arriving tonight.";
   updateWhenNote();
 }
-async function probeHour() {   // does the API take `hour` yet? Tried once (the answer is kept for 30 minutes in this browser)
+async function probeHour() {   // does the API take `hour` yet? GET /corridor says so (sim.hours); older APIs: try once
+  if (Array.isArray(corridor?.sim?.hours)) return setHourOk(corridor.sim.hours.includes(8));
   const KEY = `cr.hour.${API}`;
   try { const c = JSON.parse(localStorage.getItem(KEY) || "null"); if (c && Date.now() - c.at < 30 * 60000) return setHourOk(!!c.ok); } catch (e) { /* no storage */ }
   let ok = null;
