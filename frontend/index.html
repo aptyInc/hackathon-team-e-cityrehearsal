@@ -17,6 +17,7 @@
   /* live strip */
   #live { margin: 20px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 10px 16px; font-size: 13px; }
   #live .lv-h { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+  #live #live-map { margin-left: auto; font-weight: 600; white-space: nowrap; }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: #1a7f37; box-shadow: 0 0 0 3px rgba(26,127,55,.18); flex: none; }
   .dot.off { background: #9aa3ab; box-shadow: none; }
   #live .lv-item b { font-variant-numeric: tabular-nums; }
@@ -69,6 +70,7 @@
   <div id="live" class="card" aria-live="polite">
     <span class="lv-h"><span class="dot off" id="live-dot"></span>Live at corridor junctions <span class="tag real">REAL</span></span>
     <span id="live-body" class="muted">Loading TomTom live data…</span>
+    <a id="live-map" href="corridor.html#mode=live">See it on the map →</a>
   </div>
 
   <section class="grid">
