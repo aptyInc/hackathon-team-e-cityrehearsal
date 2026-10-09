@@ -3,7 +3,8 @@
 apply(net_path, out, interventions) writes a copy of the corridor network with every intervention built in. Each
 intervention is {"junction_id": "j07", "kind": "flyover", "params": {...}}; kinds follow C5
 (contracts/corridor_result.schema.json). Params per kind (all optional):
-    flyover / underpass  lanes (each direction, default 2), speed_kmh (default 60, or the road's speed if faster),
+    flyover / underpass  (not where the corridor already crosses on a flyover: Gachibowli, Biodiversity, Shaikpet,
+                         Tolichowki, Masab Tank; a warning says so) lanes (each direction, default 2), speed_kmh (default 60, or the road's speed if faster),
                          length_m (whole structure; default: the junction's own span + 400 m, so the ramps start
                          and land ~200 m either side of the junction)
     signal_retime        cycle_s (40-240, default 120), corridor_green_share (alias main_share, 0.1-0.9, default 0.5):
@@ -121,6 +122,17 @@ def split_point(path, k, dist, upstream):
 
 # ---------------------------------------------------------------- flyover / underpass
 
+def existing_structure(ctx, jid, radius=80.0):
+    """Name of the flyover the corridor already crosses junction `jid` on (from the network: a route piece named a
+    flyover, or 5 m or more up, passing within `radius` m of the junction), or None."""
+    p = JUNCTIONS[jid]
+    xy = ctx["net"].convertLonLat2XY(p["lon"], p["lat"])
+    near = [e for path in ctx["paths"].values() for e in path if cn.flyover(e)
+            and geomhelper.distancePointToPolygon(xy, [q[:2] for q in e.getShape()], perpendicular=False) <= radius]
+    named = [e.getName() for e in near if "flyover" in (e.getName() or "").lower()]   # the structure's own name first
+    return named[0] if named else (near[0].getName() or "existing flyover") if near else None
+
+
 def grade_separation(ctx, jid, kind, params):
     """Flyover (+6 m) or underpass (-6 m) carrying the corridor's through traffic past the junction, both ways.
     Cross and turning traffic keep using the ground junction. Returns (edit, warnings)."""
@@ -133,8 +145,9 @@ def grade_separation(ctx, jid, kind, params):
         raise ValueError(f"{kind} length_m must be 100-3000, got {params['length_m']}")
     found = sides(ctx, jid)
     if "fwd" not in found:
-        if jid == "j04":
-            return None, ["j04 already has a flyover (the corridor crosses Biodiversity jn on it); nothing built"]
+        on = existing_structure(ctx, jid)
+        if on:
+            return None, [f"{jid} already has a flyover: the corridor crosses {JUNCTIONS[jid]['name']} on the {on}; nothing built"]
         return None, [f"the corridor does not cross {jid} at ground level; nothing built"]
     if jid in ctx["grade"]:
         return None, [f"{jid} already gets a flyover or underpass in this variant; left out"]
@@ -329,7 +342,8 @@ def signal_retime(ctx, jid, kind, params):
         if not any(tag == t for v in links.values() for t, _ in v):
             notes.append(f"{tag}: the corridor has no signal at this junction in this direction")
     if not links:
-        return None, [f"no signal on the corridor at {jid}; nothing to retime"]
+        on = existing_structure(ctx, jid)
+        return None, [f"no signal on the corridor at {jid}" + (f" (it passes over on the {on})" if on else "") + "; nothing to retime"]
 
     planned = list(notes)
 
