@@ -1,0 +1,35 @@
+{
+  "overall_speed_factor": 0.953,
+  "overall_travel_time_factor": 1.05,
+  "per_leg": {
+    "A_lingampally-j01": 0.953,
+    "j01-j02": 0.953,
+    "j02-j03": 0.953,
+    "j03-j04": 0.833,
+    "j04-j05": 0.953,
+    "j05-j06": 0.953,
+    "j06-j07": 0.953,
+    "j07-j08": 0.953,
+    "j08-j09": 0.953,
+    "j09-j10": 0.953,
+    "j10-j11": 0.953,
+    "j11-B_lakdikapul": 0.953
+  },
+  "per_leg_note": "speed factors: multiply free-flow / max speed on that leg's edges while it rains. Every leg gets the corridor-wide value except legs slower on the rainy day in all 7 same-weekday pairs (only j03-j04 Gachibowli Circle -> Biodiversity jn: +20% mean, +8% median). Low confidence.",
+  "stress_test": {
+    "overall_speed_factor": 0.826,
+    "overall_travel_time_factor": 1.211,
+    "note": "upper end of the 95% confidence range; use for a 'heavy rain' what-if, not as the expected case"
+  },
+  "demand_factor": 1.0,
+  "applies_to": "hours when it is raining (>= 0.5 mm/h), 08:00-20:00, Lingampally -> Lakdikapul",
+  "basis": "TomTom Traffic Stats daily 08:00-20:00 averages, 1-15 July 2026 (15 days) vs Open-Meteo ERA5-based hourly rain (mean of 3 points). Regression trip_min ~ wet_hours + Sat + Sun gives +0.26 min per wet hour (95% CI -0.58 to +1.09), i.e. +5% travel time while raining (95% CI -11% to +21%). Whole-day effect on rainy weekdays not distinguishable from day-to-day noise (61.0 vs 62.0 min). Light-to-moderate monsoon showers only (max 7 mm in a 12-hour window); heavy-rain days (17, 29, 30 July) were not covered.",
+  "confidence": "low: effect not statistically distinguishable from zero with 15 days",
+  "demand_basis": "no evidence either way; keep demand unchanged (assumed)",
+  "label": "estimated",
+  "source_files": [
+    "data/raw/corridor_rain_vs_trip.csv",
+    "data/raw/rain_july_hyderabad.csv",
+    "data/rain/analyse_rain.py"
+  ]
+}
