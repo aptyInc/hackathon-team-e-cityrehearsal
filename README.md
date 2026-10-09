@@ -170,6 +170,7 @@ make dev                  # API at http://localhost:8000 — /health shows {"sta
 make smoke                # in a second terminal: must print SMOKE TEST PASSED
 cd frontend && python3 -m http.server 5174   # screens at http://localhost:5174/ (home), /corridor.html, /ymca.html, /decisions.html, /data.html
 ```
+The screens use one dark design system, "Control room" (`frontend/design/brief.md`). The tokens are in `frontend/tokens.css`, the content-page components in `frontend/app.css` and the top bar in `frontend/nav.js`. Measured TomTom numbers are cyan and tagged REAL, simulated numbers are violet and tagged SIMULATED. Fonts (Geist) and icons (Lucide) are vendored under `frontend/vendor/`, so the screens work offline. Mockups and the component kit: `frontend/design/a-*.html`.
 
 ### 2. Simulation with SUMO (simulation and scenarios laptops, 10 minutes)
 SUMO 1.28 is installed from the official `eclipse-sumo` Python package into `.venv`, so no Homebrew tap, installer or `SUMO_HOME` setup is needed.

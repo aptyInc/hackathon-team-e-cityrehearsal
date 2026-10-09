@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home · Civic clarity (B)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="b.css">
+<style>
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+  .hero { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; padding: 56px 0 40px; align-items: start; }
+  h1 { font: 400 64px/1 var(--serif); letter-spacing: -.02em; margin: 14px 0 18px; }
+  h1 em { color: var(--brand); }
+  .lede { font-size: 17px; line-height: 1.6; color: var(--tx-2); max-width: 540px; margin: 0 0 26px; }
+  .lede b { color: var(--tx); font-weight: 600; }
+  .cta { display: flex; gap: 10px; }
+  .cta .btn { height: 42px; padding: 0 18px; font-size: 14px; }
+  .facts { display: flex; gap: 32px; margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .facts div { display: flex; flex-direction: column; gap: 4px; }
+  .facts b { font-size: 30px; font-weight: 600; letter-spacing: -.035em; line-height: 1; }
+  .facts b small { font-size: 14px; color: var(--tx-3); font-weight: 500; letter-spacing: 0; }
+  .facts span { font-size: 12.5px; color: var(--tx-2); display: flex; gap: 6px; align-items: center; }
+  .live-h { display: flex; align-items: center; gap: 8px; padding: 14px 16px 10px; }
+  .live-h b { font-weight: 600; }
+  .feature { display: grid; grid-template-columns: 1fr 1.1fr; overflow: hidden; margin-bottom: 20px; }
+  .feature .txt { padding: 28px; display: flex; flex-direction: column; gap: 14px; border-right: 1px solid var(--line); }
+  .feature h2 { font: 400 36px/1.05 var(--serif); margin: 0; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .kp { padding: 12px 14px; border-left: 1px solid var(--line); }
+  .kp:first-child { border-left: 0; }
+  .kp .v { font-size: 28px; font-weight: 600; letter-spacing: -.035em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .kp .v small { font-size: 13px; color: var(--tx-3); font-weight: 500; margin-left: 2px; }
+  .kp .l { font-size: 12px; color: var(--tx-3); margin-bottom: 6px; display: flex; gap: 6px; align-items: center; }
+  .feature .viz { position: relative; background: #fbfaf7; min-height: 400px; }
+  .feature .viz .rt { position: absolute; inset: 0; }
+  .feature .viz .lg { position: absolute; left: 18px; bottom: 16px; display: flex; gap: 12px; font-size: 12px; color: var(--tx-2); align-items: center; }
+  .feature .viz .lg i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 5px; vertical-align: 2px; }
+  .hrs { padding-top: 2px; }
+  .hrs .hours { height: 48px; }
+  .hx { display: flex; justify-content: space-between; font-size: 11px; color: var(--tx-3); margin-top: 4px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 48px; }
+  .tile { padding: 22px; display: flex; flex-direction: column; gap: 10px; }
+  .tile h3 { font: 400 26px/1.1 var(--serif); margin: 0; }
+  .tile p { margin: 0; color: var(--tx-2); }
+  .tile a { margin-top: auto; color: var(--tx); font-weight: 500; text-decoration: none; display: inline-flex; gap: 6px; align-items: center; }
+  .how { display: grid; grid-template-columns: 220px 1fr; gap: 32px; padding: 32px 0 64px; border-top: 1px solid var(--line); }
+  .how h2 { font: 400 32px/1.05 var(--serif); margin: 0; }
+  .how ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .how li .n { font: italic 400 44px/1 var(--serif); color: var(--tx-3); }
+  .how li b { display: block; margin: 8px 0 4px; font-weight: 600; }
+  .how li span { color: var(--tx-2); font-size: 13px; }
+  @media (max-width: 760px) {
+    .nav { gap: 10px; padding: 0 14px; } .tabs, .nav .hide-m { display: none; }
+    .wrap { padding: 0 16px; } .hero { grid-template-columns: 1fr; padding: 28px 0 24px; gap: 24px; }
+    h1 { font-size: 44px; } .facts { gap: 18px; flex-wrap: wrap; } .feature { grid-template-columns: 1fr; } .feature .txt { border-right: 0; border-bottom: 1px solid var(--line); padding: 20px; }
+    .feature .viz { min-height: 300px; } .grid3 { grid-template-columns: 1fr; } .how { grid-template-columns: 1fr; } .how ol { grid-template-columns: 1fr 1fr; }
+    .kp .v { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="logo"><span class="mk"><i></i></span>CityRehearsal</div>
+  <div class="tabs"><a class="on" href="#">Overview</a><a href="b-corridor.html">Corridor</a><a href="#">YMCA close-up</a><a href="#">Decisions</a><a href="#">About the data</a></div>
+  <div class="sp"></div>
+  <div class="seg-sw hide-m"><button class="on"><span class="dot"></span>Live now</button><button>July typical day</button></div>
+  <button class="btn ghost hide-m" style="gap:10px"><i data-lucide="search"></i>Ask <span class="kbd">⌘K</span></button>
+  <span class="avatar">CA</span>
+</nav>
+
+<div class="wrap">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Hyderabad · Roads and traffic</div>
+      <h1>Rehearse a road decision <em>before</em> you build it.</h1>
+      <p class="lede"><b>Predict</b> where jams form, <b>mitigate</b> them with low-cost fixes first, <b>build</b> only designs that have been tested, and keep every decision reviewed and recorded.</p>
+      <div class="cta"><a class="btn primary" href="b-corridor.html">Open the corridor <i data-lucide="arrow-right"></i></a><button class="btn">YMCA Circle in 3D</button></div>
+      <div class="facts"><div><b class="num">58.2<small> min</small></b><span>typical July trip <span class="tag real">Real</span></span></div><div><b class="num">10</b><span>junctions live now</span></div><div><b class="num">5</b><span>tested change templates</span></div></div>
+    </div>
+    <div class="card">
+      <div class="live-h"><span class="dot"></span><b>Live at corridor junctions</b><span class="tag real" style="margin-left:auto"><i data-lucide="radio"></i>Real · TomTom</span></div>
+      <table class="t"><thead><tr><th>#</th><th>Junction · worst approach</th><th>Delay</th><th>Usual</th><th>Queue</th></tr></thead><tbody id="live"></tbody></table>
+      <div class="muted" style="font-size:12px;padding:10px 16px;border-top:1px solid var(--line)">10 junctions reporting · updated 21:59 · queue is <span class="tag est" style="height:17px">estimated</span></div>
+    </div>
+  </section>
+
+  <section class="card feature">
+    <div class="txt">
+      <div class="eyebrow">Main demo · corridor</div>
+      <h2>Lingampally to Lakdikapul, junction by junction</h2>
+      <p style="margin:0;color:var(--tx-2)">22.4 km through 11 junctions. Simulate the whole commute, try a flyover, a signal retime or a wider road, and see the knock-on at the next junction.</p>
+      <div class="kpis">
+        <div class="kp"><div class="l">Measured trip <span class="tag real">Real</span></div><div class="v">58.2<small>min</small></div></div>
+        <div class="kp"><div class="l">Model <span class="tag sim">Sim</span></div><div class="v">59.2<small>min</small></div></div>
+        <div class="kp"><div class="l">Best change <span class="tag chg">Sim</span></div><div class="v good">−3.9<small>min</small></div></div>
+      </div>
+      <div class="hrs"><div class="l muted" style="font-size:12px;margin-bottom:6px">Trip time by hour, typical July day <span class="tag real" style="height:17px;margin-left:4px">Real</span></div><div class="hours" id="hours"></div><div class="hx"><span>00</span><span>06</span><span>12</span><span>18 · 66 min</span><span>23</span></div></div>
+      <div><a class="btn primary" href="b-corridor.html">Open the corridor <i data-lucide="arrow-right"></i></a></div>
+    </div>
+    <div class="viz"><div class="rt" id="route"></div>
+      <div class="lg"><span class="tag real">Real speed</span><span><i style="background:var(--fast)"></i>≥ 25 km/h</span><span><i style="background:var(--mid)"></i>15–25</span><span><i style="background:var(--slow)"></i>&lt; 15</span></div></div>
+  </section>
+
+  <section class="grid3">
+    <div class="card tile"><div class="eyebrow">Close-up · 3D</div><h3>YMCA Circle, Narayanaguda</h3><p>Thousands of simulated two-wheelers, cars, autos and buses on one roundabout, with TomTom's live delay on each road.</p><a href="#">Open the close-up <i data-lucide="arrow-right"></i></a></div>
+    <div class="card tile"><div class="eyebrow">Decisions · recorded</div><h3>Decision log</h3><p>Who proposed what, who re-tested it, who decided and why. Append-only, each step fingerprinted (SHA-256).</p><a href="#">Open decisions <i data-lucide="arrow-right"></i></a></div>
+    <div class="card tile"><div class="eyebrow">Trust</div><h3>About the data</h3><p>Every number is labelled: <span class="tag real">Real</span> measured by TomTom, <span class="tag est">Estimated</span>, or <span class="tag sim">Sim</span> from the model.</p><a href="#">See the sources <i data-lucide="arrow-right"></i></a></div>
+  </section>
+
+  <section class="how">
+    <h2>How it works</h2>
+    <ol>
+      <li><div class="n">1</div><b>Predict</b><span>Calibrate to TomTom and see where queues form, at any hour.</span></li>
+      <li><div class="n">2</div><b>Mitigate</b><span>Try cheap fixes first: signal timing, turn bans, bus lanes.</span></li>
+      <li><div class="n">3</div><b>Build</b><span>Only designs that were tested: flyovers, widening, redesigns.</span></li>
+      <li><div class="n">4</div><b>Record</b><span>Review, decide and fingerprint. Every number traceable.</span></li>
+    </ol>
+  </section>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="data.js"></script>
+<script src="kit.js"></script>
+<script>
+  routeSVG(document.getElementById("route"), { fast: "#0f9d58", mid: "#f59e0b", slow: "#dc2626", casing: "#ffffff", node: "#fff", nodeStroke: "#16140f", sel: "#a21caf", endFill: "#16140f", endStroke: "#16140f", endText: "#fff", label: "#57534a" }, { w: 640, h: 420, pad: 60, sw: 5, sel: "j09", labels: true });
+  hourBars(document.getElementById("hours"), {}, 18);
+  liveRows(document.getElementById("live"), 5, { sel: "j09" });
+  lucide.createIcons();
+</script>
+</body>
+</html>
