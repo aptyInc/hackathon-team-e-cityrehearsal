@@ -15,6 +15,6 @@ sim-run:
 junction-data:
 	python3 data/tomtom/fetch_junction_archive.py 2026-10-08
 dev:
-	. .venv/bin/activate && cd backend && MOCK_SIM=$${MOCK_SIM:-1} uvicorn app.main:app --reload --port 8000
+	. .venv/bin/activate && cd backend && MOCK_SIM=$${MOCK_SIM:-1} uvicorn app.main:app --reload --reload-dir . --reload-dir ../sim --port 8000
 smoke:
 	. .venv/bin/activate && python scripts/smoke_test.py
