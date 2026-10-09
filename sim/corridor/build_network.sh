@@ -14,4 +14,4 @@ netconvert --osm-files corridor.osm.xml -o corridor.net.xml \
   --no-turnarounds.except-deadend
 echo "Built sim/corridor/corridor.net.xml"
 python3 corridor_net.py signals
-echo "Signals added at the corridor junctions (assumed, 120 s cycle)"
+echo "Signals at the corridor junctions (assumed two-stage plans, 120 s cycle), corridor lanes linked through"
