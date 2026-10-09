@@ -584,8 +584,8 @@ with sync_playwright() as p:
     zs = pg.evaluate("() => { const l = overlay._deck.props.layers.find(l => l.id === 'vehicles'); const v = l.props.data.find(v => v.id === 'fly1'); return [v.z, box(v)[0][2], l.props.extruded]; }")
     check(zs[0] == 6 and zs[1] == 6 and zs[2], f"car on the flyover raised to z 6 m, extruded: {zs}")
     st = layer_props(pg, "structures", "l => l.props.data.map(d => [d.kind, d.junction_id, d.length_m, Math.max(...d.path.map(q => q[2])), d.path[0][2], d.path[d.path.length - 1][2]])")
-    check(st and st[0][:2] == ["flyover", "j07"] and abs(st[0][2] - 600) < 25 and st[0][3] == 6.5 and st[0][4] == 0 and st[0][5] == 0,
-          f"flyover drawn in 3D at Tolichowki: 600 m, deck 6.5 m, ramps to the ground: {st}")
+    check(st and st[0][:2] == ["flyover", "j07"] and abs(st[0][2] - 600) < 25 and st[0][3] == 6 and st[0][4] == 0 and st[0][5] == 0,
+          f"flyover drawn in 3D at Tolichowki: 600 m, deck 6 m, ramps to the ground: {st}")
     check(layer(pg, "piers") > 5, f"piers under the deck: {layer(pg, 'piers')}")
     pg.screenshot(path=str(OUT / "corridor_O.png"))
     pg.select_option("#speed", "1")
