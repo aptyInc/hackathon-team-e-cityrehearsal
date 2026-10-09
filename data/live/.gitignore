@@ -1,0 +1,4 @@
+# runtime state of GET /corridor/live_trip (budget, frozen now-cast buckets, request log): not committed
+budget.json
+buckets.json
+flow_log.jsonl
