@@ -302,6 +302,59 @@ def cache_lookup(key: str) -> dict | None:
     return res
 
 
+MOCK_SYNTH = os.getenv("CR_MOCK_SYNTH", "0") == "1"   # opt-in: illustrative mock per request (see synth_mock)
+# illustrative effect of each kind in synth mocks: (delay factor at the junction, congestion factor on the leg into it,
+# congestion factor on the leg out of it, delay factor at the next junction). Invented for demos, NOT a model.
+SYNTH = {"signal_retime": (0.8, 0.85, 1.0, 1.05), "widening": (0.75, 0.8, 1.05, 1.1), "one_way": (0.9, 0.92, 1.0, 1.03),
+         "flyover": (0.25, 0.45, 1.35, 1.4), "underpass": (0.3, 0.5, 1.3, 1.35)}
+
+
+def synth_mock(ivs: list[dict], body: CorridorRunIn) -> dict:
+    """CR_MOCK_SYNTH=1: a made-up result shaped like the request (baseline sample, congestion scaled by volume_scale^2,
+    fixed illustrative factors per intervention). Lets the UI and the agent exercise any request without SUMO.
+    Always labelled 'assumed' and carries a MOCK_SIM warning: it is not a simulation."""
+    samples = json.loads((SAMPLES / "corridor_results.sample.json").read_text())
+    res = json.loads(json.dumps(samples["baseline"]))
+    vs2 = body.volume_scale ** 2
+    legs, juncs = res["journey"]["legs"], {j["id"]: j for j in res["junctions"]}
+    free = {id(l): l["distance_m"] / (40 / 3.6) for l in legs}          # free-flow part of each leg at 40 km/h
+    cong = {id(l): max(0.0, l["time_s"] - free[id(l)]) * vs2 for l in legs}
+    for j in juncs.values():
+        j["avg_delay_s"], j["max_queue_m"] = j["avg_delay_s"] * vs2, j["max_queue_m"] * vs2
+    order = [l["to_id"] for l in legs]
+    for iv in ivs:
+        f = SYNTH.get(iv["kind"])
+        if not f:
+            res["warnings"].append(f"{iv['junction_id']} {iv['kind']}: this template is not built yet; the intervention was left out")
+            continue
+        jid = iv["junction_id"]
+        into = next(l for l in legs if l["to_id"] == jid)
+        out = next(l for l in legs if l["from_id"] == jid)
+        cong[id(into)] *= f[1]
+        cong[id(out)] *= f[2]
+        juncs[jid]["avg_delay_s"] *= f[0]
+        juncs[jid]["max_queue_m"] *= f[0]
+        nxt = order[order.index(jid) + 1] if order.index(jid) + 1 < len(order) else None
+        if nxt in juncs:
+            juncs[nxt]["avg_delay_s"] *= f[3]
+            juncs[nxt]["max_queue_m"] *= f[3]
+            if f[3] >= 1.3:
+                res["warnings"].append(f"{jid} {iv['kind']}: traffic released by the structure queues at {juncs[nxt]['name']} "
+                                       "(illustrative mock)")
+    for l in legs:
+        l["time_s"] = round(free[id(l)] + cong[id(l)])
+        l["speed_kmh"] = round(l["distance_m"] / l["time_s"] * 3.6, 1)
+    for j in juncs.values():
+        j["avg_delay_s"], j["max_queue_m"] = round(j["avg_delay_s"], 1), round(j["max_queue_m"])
+    res["journey"]["total_s"] = sum(l["time_s"] for l in legs)
+    res["interventions"] = ivs
+    res["variant_id"] = "_".join(f"{iv['kind']}_{iv['junction_id']}" for iv in ivs) or "baseline"
+    res["inputs"]["volume_scale"] = body.volume_scale
+    res["warnings"].append("MOCK_SIM=1 (CR_MOCK_SYNTH=1): illustrative made-up numbers shaped like your request, not a "
+                           "simulation. Start the API with MOCK_SIM=0 for real runs.")
+    return res
+
+
 def mock_result(ivs: list[dict], body: CorridorRunIn) -> dict:
     samples = json.loads((SAMPLES / "corridor_results.sample.json").read_text())
     res = json.loads(json.dumps(samples["flyover_j07" if ivs else "baseline"]))
@@ -309,6 +362,11 @@ def mock_result(ivs: list[dict], body: CorridorRunIn) -> dict:
     sample = {"interventions": res["interventions"], "volume_scale": res["inputs"]["volume_scale"], "window": None, "minutes": None}
     if [(i["junction_id"], i["kind"]) for i in ivs] != [(i["junction_id"], i["kind"]) for i in sample["interventions"]] \
             or asked["volume_scale"] != sample["volume_scale"] or body.window or body.minutes:
+        if MOCK_SYNTH:
+            res = synth_mock(ivs, body)
+            res["run_id"] = "rc_" + uuid.uuid4().hex[:8]
+            res["requested"] = asked
+            return res
         res["warnings"].append("MOCK_SIM=1: this is the sample result (" + res["variant_id"] + "), not a simulation of your request "
                                f"({json.dumps(asked)}). Start the API with MOCK_SIM=0 for real runs.")
     res["run_id"] = "rc_" + uuid.uuid4().hex[:8]
@@ -417,6 +475,26 @@ def submit(ivs: list[dict], body: CorridorRunIn) -> tuple[str, Future | dict]:
         fut = EXECUTOR.submit(_job, run_id, key, ivs, body)
         INFLIGHT[key] = (run_id, fut)
     return run_id, fut
+
+
+def run_blocking(body: CorridorRunIn) -> dict:
+    """POST /corridor/runs for callers on a worker thread (the AI agent, case reviews): same validation, mock,
+    cache and one-run-at-a-time queue, but blocks until the C5 result is stored. Raises HTTPException (400/500)."""
+    ivs = validate(body)
+    if MOCK:
+        return store(mock_result(ivs, body), body)
+    run_id, job = submit(ivs, body)
+    if isinstance(job, dict):    # cache hit
+        return job
+    try:
+        return job.result()
+    except SimError as e:
+        raise HTTPException(e.status, e.message)
+
+
+def is_cached(body: CorridorRunIn) -> bool:
+    """True when POST /corridor/runs would answer instantly (mock mode, or a stored identical run)."""
+    return MOCK or cache_lookup(cache_key(validate(body), body)) is not None
 
 
 @router.post("/corridor/runs")
