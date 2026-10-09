@@ -102,7 +102,10 @@ baseline's traffic.
 
 Recalibrated (`calibration.json`): 56.6 vs 56.2 min, every leg within 6%; through 1,215 veh/h each way and
 `cross_scale` 0.405 (old: 1,500 and 0.5): the Nanal Nagar (j08) eastbound approach is 2 lanes in OSM and cannot take
-more, and the calibration lowers all traffic together. Runs take 35-60 s with 3 SUMO processes.
+more, and the calibration lowers all traffic together. Hourly (`calibration_hourly.json`): 18 of 18 hours within 3%.
+Runs take 35-60 s with 3 SUMO processes. Noise (imperfection 0.2): paired variant-minus-baseline at seeds 2-4 is
+-3.1 / -3.1 / -2.7 min for a 1.2 km flyover at j08 and +2.2 / +3.3 / +3.6 min for heavy rain, so a one-junction change
+is beyond noise above about +-0.5 min and a corridor-wide one (rain) above about +-1.5 min (`SIGMA_NOTE`).
 
 ## Next steps (Simulation / Scenarios owners)
 1. Templates for `signal_retime`, `bus_lane`, `junction_redesign`, `widening` in `sim/templates/` (same pattern as

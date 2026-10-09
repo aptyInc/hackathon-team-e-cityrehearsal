@@ -169,9 +169,10 @@ VEHICLES = [
 SIGMA_SCALE = float(os.environ.get("CR_SIGMA_SCALE", "0.4"))   # x the doc's imperfection (0.5, fast 0.6): 0.2 / 0.24
 SIGMA_NOTE = ("calibrated (spec 0.5): 0.2, fast riders 0.24. With the spec's 0.5 the Nanal Nagar section (j07-j09, near "
               "capacity) varied 278-404 s between seeds (sd ~70 s: a variant-vs-baseline comparison there would carry about "
-              "+-3 min of noise). At 0.2, on the calibrated model (seeds 2-4): section sd 9-27 s, so a change confined to one "
-              "section is beyond noise above +-0.4-1.3 min (largest at Nanal Nagar, j07-j09); a change to every leg (rain) "
-              "above about +-2.4 min (whole-trip sd 50 s)")
+              "+-3 min of noise). At 0.2, on the calibrated model (seeds 2-4): section sd 9-27 s, whole trip sd 50 s; paired "
+              "variant-minus-baseline at the same seed, measured at seeds 2, 3, 4: flyover j08 -3.1 / -3.1 / -2.7 min (sd "
+              "0.25 min), heavy rain +2.2 / +3.3 / +3.6 min (sd 0.7 min): a one-junction change is beyond noise above about "
+              "+-0.5 min, a change to every leg (rain) above about +-1.5 min")
 YELLOW_GO_S = 4                   # s7: nobody brakes for amber: whoever reaches the line in the 4 s amber goes (assumed)
 RED_SPEED = 11.1                  # s7: red-runners keep their speed, up to 40 km/h (assumed)
 GIVE_WAY_SPEED, GIVE_WAY_PROB = 1.5, 0.3   # s6: noses out in front of a priority vehicle crawling below 1.5 m/s, 30% per 0.5 s (assumed)
