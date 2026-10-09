@@ -62,6 +62,8 @@ class RunIn(BaseModel):
     variant_id: str
     volume_scale: float = 1.0
     run_by: str = "engineer"
+    window: str | None = None   # ISO start (IST) to rebuild a specific time from TomTom junction data; "live" = the last `minutes`
+    minutes: int = 15
 
 
 class SubmitIn(BaseModel):
@@ -83,8 +85,20 @@ TEMPLATES = {"baseline", "signal_retime", "junction_redesign", "bus_lane", "wide
 
 
 # ---------- simulation runner ----------
+def resolve_window(window: str | None, minutes: int) -> str | None:
+    """'live' -> refresh the TomTom junction archive and use the last `minutes`; else pass the ISO start through."""
+    if window != "live":
+        return window
+    import subprocess, sys
+    from datetime import datetime, timedelta, timezone
+    subprocess.run([sys.executable, str(ROOT / "data/tomtom/fetch_junction_archive.py"), "2026-10-08"],
+                   capture_output=True, timeout=120)
+    ist = timezone(timedelta(hours=5, minutes=30))
+    return (datetime.now(ist) - timedelta(minutes=minutes)).replace(second=0, microsecond=0).isoformat(timespec="minutes")
+
+
 def run_simulation(variant_id: str, template: str, volume_scale: float, params: dict | None = None,
-                   run_id: str | None = None) -> dict:
+                   run_id: str | None = None, window: str | None = None, minutes: int = 15) -> dict:
     if MOCK:
         samples = json.loads((SAMPLES / "run_results.sample.json").read_text())
         key = variant_id if variant_id in samples else ("flyover_3lane_400m" if template == "flyover" else "baseline")
@@ -100,7 +114,7 @@ def run_simulation(variant_id: str, template: str, volume_scale: float, params: 
     import runner  # noqa: E402
     try:
         return runner.run({"variant_id": variant_id, "template": template, "params": params or {}},
-                          volume_scale, run_id=run_id)
+                          volume_scale, run_id=run_id, window=resolve_window(window, minutes), minutes=minutes)
     except NotImplementedError as e:
         raise HTTPException(501, str(e))
     except RuntimeError as e:
@@ -280,7 +294,8 @@ def create_run(body: RunIn):
     template = v["template"] if v else "baseline"
     run_id = "r_" + uuid.uuid4().hex[:8]
     result = run_simulation(body.variant_id, template, body.volume_scale,
-                            params=json.loads(v["params"]) if v else {}, run_id=run_id)
+                            params=json.loads(v["params"]) if v else {}, run_id=run_id,
+                            window=body.window, minutes=body.minutes)
     result["run_id"] = run_id
     with db() as c:
         c.execute("INSERT INTO runs VALUES(?,?,?,?,?,?)",

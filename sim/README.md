@@ -62,6 +62,15 @@ per-approach delays run above TomTom's median morning delays because ours averag
 hour and TomTom's is a median over minutes. Speeds are the cleaner comparison, and both references are reported
 in every run result (`tomtom_speed_kmh`, `tomtom_junction_speed_kmh`).
 
+## Simulating a specific moment (TomTom junction data)
+`python sim/runner.py '{...baseline...}' --window 2026-10-09T09:00 --minutes 15` rebuilds the traffic for that quarter
+hour: vehicles per road = TomTom's estimated vehicles/hour then, turns = the turns TomTom measured then (morning
+shares if fewer than 20 vehicles were seen), vehicle mix from the 2020 count. The result carries `tomtom_window`
+(TomTom's delay, queue, volume and speed per road for the same minutes) for a like-for-like check. Any window since
+Thu 8 Oct 23:17 works; the API takes `window: "live"` to refresh the data and simulate the last 15 minutes.
+Labels: volumes `estimated`, turns `measured`, mix `assumed`. The calibration factor is not applied (TomTom's volumes
+are absolute); at 09:00 today the model's speeds were within ~4 km/h of TomTom's on three roads.
+
 ## Next steps (Simulation / Scenarios owners)
 1. Templates for `signal_retime`, `bus_lane`, `junction_redesign`, `widening` in `sim/templates/` (same pattern as
    `flyover.py`: plain-XML edit, rebuild, return the network path and any design warnings), then add them to

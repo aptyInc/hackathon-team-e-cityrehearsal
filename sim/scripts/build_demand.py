@@ -12,6 +12,7 @@ Output: sim/demand/ymca_baseline.rou.xml (vehicle types + one flow per approach,
 Usage: python sim/scripts/build_demand.py [--scale 1.0] [--since HH:MM] [--until HH:MM]
 """
 import argparse, csv, json, math
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from pathlib import Path
 import sumolib
@@ -111,14 +112,48 @@ def angle(e):
     return math.atan2(s[-1][1] - s[0][1], s[-1][0] - s[0][0])
 
 
-def turn_shares(since, until):
+def turn_shares(since, until, window=None):
+    """Probe-weighted turn shares per approach: by time of day (since/until HH:MM) or an absolute window
+    ((start datetime, end datetime), from `window_bounds`). An approach with under 20 probes in the window falls
+    back to the morning shares, so a quiet night window still gets sensible turns."""
     agg, tot = defaultdict(lambda: defaultdict(float)), defaultdict(float)
     for r in csv.DictReader(open(ROOT / "data/raw/tomtom_ymca_turn_ratios.csv")):
-        hhmm = r["time"][11:16]
-        if since and hhmm < since or until and hhmm >= until:
-            continue
+        if window:
+            t = datetime.fromisoformat(r["time"])
+            if not (window[0] <= t < window[1]):
+                continue
+        else:
+            hhmm = r["time"][11:16]
+            if since and hhmm < since or until and hhmm >= until:
+                continue
         p = float(r["probes"]); agg[r["approach"]][r["exit"]] += p; tot[r["approach"]] += p
-    return {a: {x: p / tot[a] for x, p in ex.items()} for a, ex in agg.items()}
+    shares = {a: {x: p / tot[a] for x, p in ex.items()} for a, ex in agg.items() if tot[a] >= 20}
+    if window:
+        morning = turn_shares("08:00", "11:00")
+        for a in morning:
+            shares.setdefault(a, morning[a])
+    return shares
+
+
+def window_bounds(start: str, minutes: int):
+    """Absolute window in IST from an ISO start such as 2026-10-09T09:00 (offset optional)."""
+    t0 = datetime.fromisoformat(start)
+    if t0.tzinfo is None:
+        t0 = t0.replace(tzinfo=timezone(timedelta(hours=5, minutes=30)))
+    return t0, t0 + timedelta(minutes=minutes)
+
+
+def tomtom_window(window):
+    """TomTom Junction Analytics medians per approach inside the window: vehicles/hour (estimated), delay (measured),
+    queue (estimated), travel time (measured)."""
+    import statistics as st
+    rows = defaultdict(lambda: defaultdict(list))
+    for r in csv.DictReader(open(ROOT / "data/raw/tomtom_ymca_junction_live.csv")):
+        t = datetime.fromisoformat(r["time"])
+        if window[0] <= t < window[1]:
+            for k in ("volume_per_hour", "delay_s", "queue_m", "travel_time_s"):
+                rows[r["approach"]][k].append(float(r[k]))
+    return {a: {k: st.median(v) for k, v in ks.items()} | {"minutes": len(ks["delay_s"])} for a, ks in rows.items()}
 
 
 def main():
@@ -128,24 +163,35 @@ def main():
     ap.add_argument("--until", help="... up to this time of day (HH:MM)")
     ap.add_argument("--begin", type=int, default=0); ap.add_argument("--end", type=int, default=4200)
     ap.add_argument("--mix", choices=["study", "tomtom"], default="study", help="split between roads: 2020 study or TomTom's morning shares")
+    ap.add_argument("--window", help="rebuild a specific time: ISO start in IST, e.g. 2026-10-09T09:00; volumes and turns from "
+                                     "TomTom junction data in that window, vehicle mix from the 2020 count")
+    ap.add_argument("--minutes", type=int, default=15, help="window length for --window")
     args = ap.parse_args()
     road_scale = tomtom_road_scale() if args.mix == "tomtom" else dict(ROAD_SCALE)
+    window = window_bounds(args.window, args.minutes) if args.window else None
+    tomtom = tomtom_window(window) if window else {}
 
     net = sumolib.net.readNet(str(NET))
     definition = json.loads((ROOT / "data/tomtom/junction/ymca_definition.json").read_text())
     ins, outs = approach_edges(net, definition)
-    shares = turn_shares(args.since, args.until)
+    shares = turn_shares(args.since, args.until, window)
     counts = {r["approach"]: r for r in csv.DictReader(open(ROOT / "data/raw/ymca_counts.csv"))}
 
+    source = (f'     Window {window[0].isoformat(timespec="minutes")} to {window[1].isoformat(timespec="minutes")}: volumes per road = TomTom '
+              'Junction Analytics median vehicles/hour (estimated); turns from the same window (measured); vehicle mix '
+              'per road from the 2020 study (assumed).' if window else
+              '     Volumes: 2020 study counts per approach and class (counted). Turns: TomTom Junction Analytics,'
+              f' probe-weighted{" " + (args.since or "") + "-" + (args.until or "") if args.since or args.until else ""} (measured).')
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              f'<!-- YMCA Circle baseline traffic, built by sim/scripts/build_demand.py (scale {args.scale}).',
-             '     Volumes: 2020 study counts per approach and class (counted). Turns: TomTom Junction Analytics,'
-             f' probe-weighted{" " + (args.since or "") + "-" + (args.until or "") if args.since or args.until else ""} (measured).',
+             source,
              f'     Assumed: car/auto split {int(CAR_SHARE_OF_LMV*100)}/{int(100-CAR_SHARE_OF_LMV*100)} of light vehicles; heavy = bus;'
-             ' study legs matched to approaches by place name. -->',
+             ' study legs matched to approaches by place name.' + (f' Road split rescaled to TomTom morning shares: ' + ', '.join(f'{a.split()[0]} x{k:.2f}' for a, k in road_scale.items()) if road_scale else '') + ' -->',
              '<routes>', VTYPES]
     for leg, approach in LEG_TO_APPROACH.items():
         c = counts[leg]; k = road_scale.get(approach, 1.0)
+        if window and approach in tomtom:  # TomTom's volume for the window, split into classes with the 2020 proportions
+            k = tomtom[approach]["volume_per_hour"] / float(c["total_vehicles"])
         per_class = {"two_wheeler": float(c["motorcycle"]) * k, "car": float(c["light_motor_vehicle"]) * CAR_SHARE_OF_LMV * k,
                      "auto": float(c["light_motor_vehicle"]) * (1 - CAR_SHARE_OF_LMV) * k, "bus": float(c["heavy_vehicle"]) * k}
         origin = walk(ins[approach], UPSTREAM_M, backwards=True)

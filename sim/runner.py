@@ -71,15 +71,19 @@ def network_for(variant: dict):
                               f"(available: baseline, flyover)")
 
 
-def demand_for(net_path: Path, volume_scale: float, upstream_m: float) -> Path:
-    """Traffic file for C2 `volume_scale` (1.0 = today's calibrated traffic, 0.8 = the 20% sensitivity test)."""
-    scale = round(volume_scale * CALIBRATED_SCALE, 3)
-    out = OUT / "demand" / f"{net_path.stem}_scale{scale:.2f}_up{int(upstream_m)}.rou.xml"
+def demand_for(net_path: Path, volume_scale: float, upstream_m: float, window: str | None = None,
+               minutes: int = 15) -> Path:
+    """Traffic file for C2 `volume_scale` (1.0 = today's calibrated traffic, 0.8 = the 20% sensitivity test).
+    With `window` (ISO start, IST) the volumes and turns come from TomTom's junction data in that window instead:
+    TomTom's vehicles/hour is used as is (estimated), scaled only by `volume_scale`."""
+    scale = round(volume_scale * (1.0 if window else CALIBRATED_SCALE), 3)
+    tag = f"_w{window.replace(':', '').replace('-', '')[:13]}m{minutes}" if window else ""
+    out = OUT / "demand" / f"{net_path.stem}_scale{scale:.2f}_up{int(upstream_m)}{tag}.rou.xml"
     if not out.exists():
         tmp = out.with_suffix(f".{uuid.uuid4().hex[:6]}.tmp")  # written whole, then renamed: safe for parallel runs
         bd.NET, bd.OUT, bd.UPSTREAM_M = net_path, tmp, upstream_m
         sys.argv = ["build_demand.py", "--scale", str(scale), "--since", "08:00", "--until", "11:00",
-                    "--begin", "0", "--end", str(SIM_END)]
+                    "--begin", "0", "--end", str(SIM_END)] + (["--window", window, "--minutes", str(minutes)] if window else [])
         with contextlib.redirect_stdout(io.StringIO()):
             bd.main()
         os.replace(tmp, out)
@@ -225,12 +229,13 @@ def write_roads(net, edgedata: Path, out: Path):
 
 
 def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, seed: int = SEED,
-        upstream_m: float = UPSTREAM_M, frames: bool = True) -> dict:
-    """`frames=False` skips the vehicle-position output (about 150 MB of temporary files per run)."""
+        upstream_m: float = UPSTREAM_M, frames: bool = True, window: str | None = None, minutes: int = 15) -> dict:
+    """`frames=False` skips the vehicle-position output. `window` rebuilds a specific time from TomTom's junction
+    data (see demand_for); the result then also carries TomTom's measured numbers for that window."""
     t0 = time.time()
     run_id = run_id or "r_" + uuid.uuid4().hex[:8]
     net_path, warnings = network_for(variant)
-    rou = demand_for(net_path, volume_scale, upstream_m)
+    rou = demand_for(net_path, volume_scale, upstream_m, window, minutes)
     run_dir = OUT / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "add.xml").write_text(f'<additional><edgeData id="z" file="edgedata.xml" begin="{WARMUP}" end="{SIM_END}"/></additional>')
@@ -249,14 +254,26 @@ def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, see
     n_frames = write_frames(run_dir / "fcd.xml.gz", run_dir / "frames.jsonl") if frames else 0
     write_roads(net, run_dir / "edgedata.xml", run_dir / "roads.geojson")
     (run_dir / "queue.xml").unlink(missing_ok=True)  # measured; 1-2 MB per run otherwise
+    if window:  # TomTom's own measurements for the same minutes, per direction, for a like-for-like comparison
+        w = bd.tomtom_window(bd.window_bounds(window, minutes))
+        lengths = {DIRECTION[a["name"]]: float(a["length"]) for a in json.loads(DEFINITION.read_text())["junctionModel"]["approaches"] if a["name"] in DIRECTION}
+        tomtom_window = {DIRECTION[a]: {"delay_s": v["delay_s"], "queue_m": round(v["queue_m"]), "volume_per_hour": round(v["volume_per_hour"]),
+                                        "speed_kmh": round(lengths[DIRECTION[a]] / v["travel_time_s"] * 3.6, 1) if v["travel_time_s"] else None,
+                                        "minutes": v["minutes"]} for a, v in w.items() if a in DIRECTION}
+        inputs = {"counts_source": "tomtom_junction_volumes + tomtom_turns (window) + 2020 vehicle mix", "label": "estimated",
+                  "volume_scale": volume_scale, "window": window, "minutes": minutes,
+                  "calibration": "volumes per road = TomTom's estimate for the window; turns measured in the window; "
+                                 "vehicle mix from the 2020 count", "seed": seed, "upstream_m": upstream_m}
+    else:
+        tomtom_window = None
+        inputs = {"counts_source": "published_study_2020 + tomtom_turns_2026", "label": "estimated",
+                  "volume_scale": volume_scale, "count_scale": round(volume_scale * CALIBRATED_SCALE, 3),
+                  "calibration": f"2020 counts x {CALIBRATED_SCALE} with close following match TomTom 09:00 "
+                                 "speeds within ~3 km/h (3-seed mean); ~5,700 vehicles/h through the circle",
+                  "seed": seed, "upstream_m": upstream_m}
     result = {"run_id": run_id, "variant_id": variant["variant_id"], "junctions": junctions,
-              "corridor_travel_time_s": travel, "warnings": warnings,
-              "inputs": {"counts_source": "published_study_2020 + tomtom_turns_2026", "label": "estimated",
-                         "volume_scale": volume_scale, "count_scale": round(volume_scale * CALIBRATED_SCALE, 3),
-                         "calibration": f"2020 counts x {CALIBRATED_SCALE} with close following match TomTom 09:00 "
-                                        "speeds within ~3 km/h (3-seed mean); ~5,700 vehicles/h through the circle",
-                         "seed": seed, "upstream_m": upstream_m},
-              "tomtom_junction_speed_kmh": ref_speeds,
+              "corridor_travel_time_s": travel, "warnings": warnings, "inputs": inputs,
+              "tomtom_window": tomtom_window, "tomtom_junction_speed_kmh": ref_speeds,
               "approach_speed_kmh": speeds, "tomtom_speed_kmh": refs,
               "approach_delay_s": delays, "tomtom_delay_s": ref_delays,
               "frames_path": str(run_dir / "frames.jsonl") if frames else None, "frames": n_frames, "trips": trips,
@@ -273,5 +290,6 @@ def _arg(name, default, cast):
 if __name__ == "__main__":
     spec = json.loads(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].startswith("{") else \
         {"variant_id": "baseline", "template": "baseline", "params": {}}
-    res = run(spec, _arg("--scale", 1.0, float), seed=_arg("--seed", SEED, int), upstream_m=_arg("--upstream", UPSTREAM_M, float))
+    res = run(spec, _arg("--scale", 1.0, float), seed=_arg("--seed", SEED, int), upstream_m=_arg("--upstream", UPSTREAM_M, float),
+              window=_arg("--window", None, str), minutes=_arg("--minutes", 15, int))
     print(json.dumps({k: v for k, v in res.items() if k != "frames_path"}, indent=1))
