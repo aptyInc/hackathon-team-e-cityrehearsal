@@ -95,6 +95,29 @@ try:
     if not CALIBRATION_HOURLY.exists():
         r = c.post("/corridor/runs", json={"interventions": [], "hour": 8})
         assert r.status_code == 422 and "hourly data not available yet" in r.json()["detail"], r.text[:200]
+    elif os.environ.get("HOURS", "1") == "1":       # a July hour reproduces its calibration; a single day is fitted on demand
+        hour = int(os.environ.get("HOUR", "18"))
+        entry = json.loads(CALIBRATION_HOURLY.read_text())["hours"][str(hour)]
+        t = time.time()
+        h = c.post("/corridor/runs", json={"interventions": [], "hour": hour})
+        assert h.status_code == 200, h.text[:300]
+        h, out["july_hour_run_s"] = h.json(), round(time.time() - t, 1)
+        assert h["time"]["hour"] == hour and h["time"]["day"] == "july" and h["journey"]["total_s"] == entry["sim_total_s"], (h["time"], h["journey"]["total_s"])
+        day = os.environ.get("DAY", "2026-07-08")
+        t = time.time()
+        dh = c.post("/corridor/runs", json={"interventions": [], "hour": hour, "day": day})
+        assert dh.status_code == 200, dh.text[:300]
+        dh, out["day_hour_first_run_s"] = dh.json(), round(time.time() - t, 1)
+        assert dh["time"]["day"] == day and dh["time"]["window"].startswith(f"{day} {hour:02d}:00"), dh["time"]
+        out[f"july_{hour:02d}"] = {"sim_min": round(h["journey"]["total_s"] / 60, 1), "tomtom_min": round(h["journey"]["tomtom_total_s"] / 60, 1),
+                                   "volume_x": h["inputs"]["hour_volume_scale"], "caps_x": h["inputs"]["hour_cap_scale"]}
+        out[f"{day}_{hour:02d}"] = {"sim_min": round(dh["journey"]["total_s"] / 60, 1), "tomtom_min": round(dh["journey"]["tomtom_total_s"] / 60, 1),
+                                    "volume_x": dh["inputs"]["hour_volume_scale"], "caps_x": dh["inputs"]["hour_cap_scale"],
+                                    "fit": dh["inputs"].get("day_fit"), "label": dh["time"]["label"]}
+        t = time.time()
+        again = c.post("/corridor/runs", json={"interventions": [], "hour": hour, "day": day, "frames_from_min": 0})
+        assert again.status_code == 200 and again.json()["journey"] == dh["journey"], "the day fit is reused; same numbers"
+        out["day_hour_other_window_s"] = round(time.time() - t, 1)
     print(json.dumps(out, indent=1))
     print("PLAYBACK CHECK PASSED")
 finally:

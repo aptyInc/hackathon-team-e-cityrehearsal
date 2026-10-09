@@ -692,6 +692,31 @@ def point_times(v, sec, tag, info):
     return out
 
 
+def thin_track(points, tol_m=2.0, tol_speed=1.5):
+    """Drop the track points that interpolating by t between their neighbours reproduces (within tol_m and
+    tol_speed m/s): standing still at a signal or cruising, a point every PROBE_TRACK_S s says nothing new. Points where
+    the leg changes, and the first and last, are kept. Keeps probes.json small (~2 MB per run)."""
+    if len(points) < 3:
+        return points
+    k = math.cos(math.radians(points[0]["lat"]))
+
+    def fits(a, p, b):      # p as interpolated between a and b by time
+        w = (p["t"] - a["t"]) / max(1e-9, b["t"] - a["t"])
+        off = math.hypot((a["lon"] + w * (b["lon"] - a["lon"]) - p["lon"]) * 111320 * k, (a["lat"] + w * (b["lat"] - a["lat"]) - p["lat"]) * 110540)
+        return off <= tol_m and abs(a["speed"] + w * (b["speed"] - a["speed"]) - p["speed"]) <= tol_speed \
+            and abs(a["z"] + w * (b["z"] - a["z"]) - p["z"]) <= 0.5 and p["leg"] == a["leg"]
+
+    out, skipped = [points[0]], []
+    for p, b in zip(points[1:-1], points[2:]):
+        if all(fits(out[-1], q, b) for q in skipped + [p]):     # every point dropped since the last kept one still fits
+            skipped.append(p)
+        else:
+            out.append(p)
+            skipped = []
+    out.append(points[-1])
+    return out
+
+
 def probe_tracks(net, secs, info, outdir: Path, run_id=""):
     """Every probe car's whole trip, A->B and B->A, written to probes.json; returns (path, summary).
     The sections run side by side on one clock and probe N leaves each section's start at the same time, so a whole
@@ -806,8 +831,7 @@ def probe_tracks(net, secs, info, outdir: Path, run_id=""):
                                  "sim_from_t": round(tau0, 1), "sim_to_t": round(tau1, 1)})
                 clock += t1 - t0
             else:
-                keep = [p for i, p in enumerate(points) if i in (0, len(points) - 1) or not (
-                    (p["lon"], p["lat"]) == (points[i - 1]["lon"], points[i - 1]["lat"]) == (points[i + 1]["lon"], points[i + 1]["lat"]))]
+                keep = thin_track(points)
                 trips.append({"id": f"probe_{tag}.{n}", "direction": direction, "number": n, "depart_s": round(depart, 1),
                               "arrive_s": round(clock, 1), "total_s": round(clock - depart, 1),
                               "legs_s": [round(x, 1) for x in legs], "segments": segments, "points": keep})
