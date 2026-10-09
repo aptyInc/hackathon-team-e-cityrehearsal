@@ -8,6 +8,12 @@
    "key_env": "TOMTOM_JA_KEY_J03"
   },
   {
+   "corridor_id": "j05",
+   "name": "Khajaguda X Roads",
+   "tomtom_id": "6ac8e6e2f7a7fe27a7f34172",
+   "key_env": "TOMTOM_JA_KEY_J05"
+  },
+  {
    "corridor_id": "j07",
    "name": "Tolichowki",
    "tomtom_id": "6ac8c577b7250f79f2ffd2ad",
