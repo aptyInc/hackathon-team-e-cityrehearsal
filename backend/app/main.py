@@ -162,6 +162,68 @@ def run_roads(run_id: str):
     return json.loads(Path(path).read_text())
 
 
+SHORT = {"Narayanguda Road South Bound": "NE", "Raja Bahadur Venkata Rama Reddy Marg West Bound": "E",
+         "Narayanguda Road North Bound": "S", "YMCA to Ramkoti Road East Bound": "W"}
+ROUTE_IN = {"NE Narayanaguda Road - in": "NE", "SE Basant Talkies side - in": "E", "S road - in": "S",
+            "W Narayanguda Main Road - in": "W"}
+
+
+@app.get("/data/junction_history")
+def junction_history(minutes: int = 10):
+    """TomTom Junction Analytics since 8 Oct 23:17, averaged per bucket of `minutes`: delay, queue, volume per road."""
+    import csv
+    from collections import defaultdict
+    path = ROOT / "data/raw/tomtom_ymca_junction_live.csv"
+    if not path.exists():
+        raise HTTPException(404, "run `make junction-data` first")
+    acc = defaultdict(lambda: defaultdict(list))
+    for r in csv.DictReader(open(path)):
+        short = SHORT.get(r["approach"])
+        if not short:
+            continue
+        t = r["time"]
+        bucket = t[:11] + f"{int(t[11:13]):02d}:{(int(t[14:16]) // minutes) * minutes:02d}"
+        for k in ("delay_s", "queue_m", "volume_per_hour"):
+            acc[bucket][(short, k)].append(float(r[k]))
+    out = []
+    for b in sorted(acc):
+        row = {"time": b, "delay_s": {}, "queue_m": {}, "volume_per_hour": {}}
+        for (short, k), v in acc[b].items():
+            row[k][short] = round(sum(v) / len(v), 1)
+        out.append(row)
+    return {"source": "TomTom Junction Analytics, junction 6ac7d6870b461bdaf5cd8158 (measured; volume and queue estimated)",
+            "roads": {"NE": "Narayanguda Rd from north-east", "E": "Raja Bahadur V. R. Reddy Marg from east",
+                      "S": "Narayanguda Rd from south", "W": "Narayanguda Main Rd from west"},
+            "bucket_minutes": minutes, "buckets": out}
+
+
+@app.get("/data/july_speeds")
+def july_speeds():
+    """TomTom Traffic Stats: average speed by hour of day on each road into the circle, weekdays July 2026."""
+    import csv
+    path = ROOT / "data/raw/tomtom_ymca_speeds.csv"
+    if not path.exists():
+        raise HTTPException(404, "data/raw/tomtom_ymca_speeds.csv missing")
+    hours = {k: [None] * 24 for k in ROUTE_IN.values()}
+    for r in csv.DictReader(open(path)):
+        short = ROUTE_IN.get(r["route"])
+        if short:
+            hours[short][int(r["hour"])] = float(r["avg_speed_kmh"])
+    return {"source": "TomTom Traffic Stats job 10048164, weekdays 1-31 Jul 2026 (measured)", "speed_kmh_by_hour": hours}
+
+
+@app.get("/data/counts")
+def counts():
+    """Field counts per road and vehicle class from the 2020 YMCA Circle study, and the calibration applied."""
+    import csv
+    path = ROOT / "data/raw/ymca_counts.csv"
+    if not path.exists():
+        raise HTTPException(404, "data/raw/ymca_counts.csv missing")
+    rows = list(csv.DictReader(open(path)))
+    return {"source": "Sohail, Faheem, Aquil, IJRAR June 2020, Table 2 (counted)", "calibrated_scale": 1.2,
+            "rows": [{k: (int(v) if v.isdigit() else v) for k, v in r.items()} for r in rows]}
+
+
 @app.get("/buildings")
 def buildings():
     path = ROOT / "data/raw/ymca_buildings.geojson"
