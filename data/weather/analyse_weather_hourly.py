@@ -229,7 +229,7 @@ def fit(obs, y, spec, rng, boot=N_BOOT, perm=N_PERM):
 
 
 def pct(x):
-    return round((np.exp(x) - 1) * 100, 1)
+    return float(round((np.exp(x) - 1) * 100, 1)) + 0.0     # + 0.0: no "-0.0"
 
 
 def build_obs(tt, wx):
@@ -365,16 +365,16 @@ def write_results(obs, wx, counts, wet, typical_mm, models, sustained, per_leg, 
                  "times, each day gets another day's whole rain pattern). Effects are on the log scale: pct = exp(effect) - 1",
         "models": models,
         "headline": {
-            "any_rain": pct_ci(a) | {"p": a["p_permutation"], "minutes_on_mean_trip": round(mean_trip_min * (np.exp(a["log_effect"]) - 1), 1)},
-            "by_class": {c: pct_ci(cm[c]) | {"p": cm[c]["p_permutation"], "slots": counts[c],
+            "any_rain": pct_ci(a) | {"p": round(a["p_permutation"], 3), "minutes_on_mean_trip": round(mean_trip_min * (np.exp(a["log_effect"]) - 1), 1)},
+            "by_class": {c: pct_ci(cm[c]) | {"p": round(cm[c]["p_permutation"], 3), "slots": counts[c],
                                              "minutes_on_mean_trip": round(mean_trip_min * (np.exp(cm[c]["log_effect"]) - 1), 1)} for c in wet},
-            "previous_hour_per_mm": pct_ci(cm["rain_prev_mm"]) | {"p": cm["rain_prev_mm"]["p_permutation"]},
+            "previous_hour_per_mm": pct_ci(cm["rain_prev_mm"]) | {"p": round(cm["rain_prev_mm"]["p_permutation"], 3)},
             "sustained": {c: pct_ci(s) | {"typical_mm": s["typical_mm"],
                                           "minutes_on_mean_trip": round(mean_trip_min * (np.exp(s["log_effect"]) - 1), 1)}
                           for c, s in sustained.items()},
-            "within_day_check": {c: pct_ci(models["dayfe"]["effects"][c]) | {"p": models["dayfe"]["effects"][c]["p_permutation"]}
+            "within_day_check": {c: pct_ci(models["dayfe"]["effects"][c]) | {"p": round(models["dayfe"]["effects"][c]["p_permutation"], 3)}
                                  for c in wet + ["rain_prev_mm"]},
-            "linear_per_mm": pct_ci(models["linear"]["effects"]["rain_now_mm"]) | {"p": models["linear"]["effects"]["rain_now_mm"]["p_permutation"]},
+            "linear_per_mm": pct_ci(models["linear"]["effects"]["rain_now_mm"]) | {"p": round(models["linear"]["effects"]["rain_now_mm"]["p_permutation"], 3)},
         },
         "per_leg": [{"leg": l["leg"], "from": l["from"], "to": l["to"], "distance_m": l["distance_m"], "mean_min": l["mean_min"],
                      **{c: pct_ci(l["effects"][c]) | {"pct_shrunk": pct(l["effects"][c]["log_effect_shrunk"]),

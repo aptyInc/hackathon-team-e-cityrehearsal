@@ -386,4 +386,5 @@ app.include_router(agent_router)
 
 # The whole app on one address: http://localhost:8000/ serves frontend/ (the API routes above are matched first).
 from fastapi.staticfiles import StaticFiles  # noqa: E402
+from .weather import router as weather_router; app.include_router(weather_router)  # noqa: E402,E702  (weather: July hourly, now, rain factors)
 app.mount("/", StaticFiles(directory=ROOT / "frontend", html=True), name="frontend")

@@ -249,4 +249,35 @@ r = c.post("/agent/chat", json={"message": "hi"})
 assert r.status_code == 503 and "ANTHROPIC_API_KEY" in r.json()["detail"], r.text
 if _key:
     os.environ["ANTHROPIC_API_KEY"] = _key
+
+# ---- weather (July hourly, now with the network mocked, rain factors) ----
+import app.weather as _wx  # noqa: E402
+wj = c.get("/weather", params={"day": "july", "hour": 17}).json()
+assert wj["label"].startswith("measured") and 0 <= wj["share_of_days_with_rain"] <= 1 and wj["slot"] == "17:00-18:00", wj
+wd = c.get("/weather", params={"day": "2026-07-17", "hour": 15}).json()
+assert wd["rain_class"] in ("dry", "light", "moderate", "heavy") and wd["what_if"] in ("dry", "light_rain", "heavy_rain"), wd
+assert len(c.get("/weather", params={"day": "2026-07-21"}).json()["hours"]) == 24
+for bad in ({"day": "2026-08-01", "hour": 3}, {"hour": 24}, {"day": "yesterday"}):
+    assert c.get("/weather", params=bad).status_code == 400, bad
+wf = c.get("/weather/factors").json()
+assert wf["label"] == "estimated" and set(wf["what_if"]) == {"dry", "light_rain", "heavy_rain"} and len(wf["per_leg"]) == 12, wf.keys()
+_real_fetch = _wx._fetch_now
+_wx._mem.pop("now", None)
+_wx._fetch_now = lambda: {"latitude": 17.4, "longitude": 78.37, "current": {"time": "2026-07-17T15:00", "interval": 900,
+                          "precipitation": 0.2, "rain": 0.2, "temperature_2m": 25.1, "relative_humidity_2m": 90,
+                          "wind_speed_10m": 8.5, "weather_code": 61, "cloud_cover": 100, "is_day": 1}}
+wn = c.get("/weather/now").json()
+assert wn["text"] == "Light rain" and wn["rain_mm_per_hour"] == 0.8 and wn["what_if"] == "light_rain" and not wn["cached"], wn
+assert c.get("/weather/now").json()["cached"], "the current weather is cached for 10 minutes"
+
+
+def _offline():
+    raise RuntimeError("no network")
+
+
+_wx._fetch_now = _offline
+_wx._mem.pop("now", None)
+r = c.get("/weather/now")
+assert r.status_code == 503 and "unavailable" in r.json()["detail"], r.text
+_wx._fetch_now = _real_fetch
 print("SMOKE TEST PASSED")
