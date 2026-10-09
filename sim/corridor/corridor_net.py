@@ -170,21 +170,28 @@ def add_signals(net_path: Path):
 def corridor_lanes(net_path: Path):
     """Give the corridor its full width all the way: OSM leaves some short connector pieces on the route with one lane,
     and at some nodes only one lane of the corridor is linked to the next piece of the route (the rest turn off), which
-    made a single-lane bottleneck at j01, j03, j05-j07, j08, j10, j11 and near both ends. Pieces narrower than 2 lanes
-    get 2; every lane of each route piece is linked on to the next piece, lane by lane (two lanes squeezed into one at Tolichowki). Signal programs are regenerated (run
-    signal_plans afterwards). Returns the number of (widened pieces, added lane links)."""
+    made a single-lane bottleneck at j01, j03, j05-j07, j08, j10, j11 and near both ends. Also, where it meets other
+    roads without a signal, OSM's road ranks made the corridor give way (at ~15 merges and splits). Now the corridor
+    is the main road there, pieces narrower than 2 lanes get 2, and every lane of each route piece is linked on to the
+    next piece, lane by lane (two lanes were squeezed into one at Tolichowki). Signal programs are regenerated (run
+    signal_plans afterwards). Returns the number of (widened pieces, relinked route steps)."""
     net = sumolib.net.readNet(str(net_path))
     paths = [route(net), route(net, reverse=True)]
     # (not the pieces at the route's two ends: their shapes pick the route's first and last edge)
     widen = {e.getID(): 2 for p in paths for e in p[3:-2] if e.getLaneNumber() < 2}
     lanes = lambda e: widen.get(e.getID(), e.getLaneNumber())  # noqa: E731
-    add = []
+    relink = {}         # (from, to) -> lane links replacing the existing ones
     for p in paths:
         for a, b in zip(p[2:-3], p[3:-2]):
             na, nb = lanes(a), lanes(b)
             linked = {(c.getFromLane().getIndex(), c.getToLane().getIndex()) for c in a.getConnections(b)}
             want = {(i, round(i * (nb - 1) / (na - 1)) if na > 1 else 0) for i in range(na)}   # lane by lane
-            add += [(a.getID(), b.getID(), i, j) for i, j in sorted(want - linked)]
+            fans = len({f for f, _ in linked}) < len(linked)     # one lane feeds several: the others must give way
+            if want - linked or (fans and linked != want):
+                relink[(a.getID(), b.getID())] = sorted(want)
+
+    on_path = {e.getID() for p in paths for e in p}
+    top = max(e.getPriority() for e in net.getEdges()) + 1
 
     def edit(prefix):
         tree = ET.parse(f"{prefix}.edg.xml")
@@ -193,18 +200,24 @@ def corridor_lanes(net_path: Path):
                 e.set("numLanes", str(widen[e.get("id")]))
                 for lane in e.findall("lane"):
                     e.remove(lane)
+            if e.get("id") in on_path:      # the corridor is the main road where it meets others without a signal
+                e.set("priority", str(top))
         tree.write(f"{prefix}.edg.xml")
         tree = ET.parse(f"{prefix}.con.xml")
         root = tree.getroot()
-        for a, b, i, j in add:
-            ET.SubElement(root, "connection", **{"from": a, "to": b, "fromLane": str(i), "toLane": str(j)})
+        for c in list(root):
+            if c.tag == "connection" and (c.get("from"), c.get("to")) in relink:
+                root.remove(c)
+        for (a, b), links in relink.items():
+            for i, j in links:
+                ET.SubElement(root, "connection", **{"from": a, "to": b, "fromLane": str(i), "toLane": str(j)})
         for c in list(root):     # lane links on signals change: netconvert makes fresh programs
             if c.get("tl"):
                 c.attrib.pop("tl"); c.attrib.pop("linkIndex", None); c.attrib.pop("linkIndex2", None)
         tree.write(f"{prefix}.con.xml")
         Path(f"{prefix}.tll.xml").write_text("<tlLogics/>\n")
     rebuild(net_path, net_path, edit)
-    return len(widen), len(add)
+    return len(widen), len(relink)
 
 
 def signal_plans(net_path: Path, share=CORRIDOR_GREEN_SHARE, yellow=YELLOW_S):
@@ -267,7 +280,7 @@ if __name__ == "__main__":
     NET = ROOT / "sim/corridor/corridor.net.xml"
     if sys.argv[1:] == ["signals"]:      # build_network.sh, after netconvert
         print("signals at:", add_signals(NET))
-        print("corridor lanes (widened pieces, added lane links):", corridor_lanes(NET))
+        print("corridor lanes (widened pieces, relinked route steps):", corridor_lanes(NET))
         print("two-stage plans:", sorted(set(signal_plans(NET).values())))
     elif sys.argv[1:] == ["plans"]:
         print("two-stage plans:", sorted(set(signal_plans(NET).values())))
