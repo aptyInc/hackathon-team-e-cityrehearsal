@@ -289,4 +289,85 @@ _wx._mem.pop("now", None)
 r = c.get("/weather/now")
 assert r.status_code == 503 and "unavailable" in r.json()["detail"], r.text
 _wx._fetch_now = _real_fetch
+
+# ---- live now-cast (TomTom live flow mocked: no network, no key needed) ----
+import app.live_trip as _lt  # noqa: E402
+_lt.LIVE_DIR = Path(tempfile.mkdtemp())      # budget, frozen buckets, log: not the real ones
+_real_key, _real_lt_fetch = _lt.key, _lt.FETCH
+_lt.key = lambda: "test-key"
+_calls = []
+
+
+def _fake_flow(pt):
+    """TomTom's answer shape: the road along the corridor around the point, half its free-flow speed; one point
+    (p04a, the only one on j04->j05) answers with a side road's class and must be dropped."""
+    _calls.append(pt["id"])
+    line, cum = _lt.route()
+    a = pt["along_m"]
+    coords = [{"latitude": la, "longitude": lo} for (lo, la), d in zip(line, cum) if a - 600 <= d <= a + 600]
+    return {"frc": "FRC5" if pt["id"] == "p04a" else "FRC2", "currentSpeed": 20, "freeFlowSpeed": 40, "currentTravelTime": 120,
+            "freeFlowTravelTime": 60, "confidence": 0.9, "roadClosure": False, "coordinates": {"coordinate": coords}}
+
+
+def _no_flow(pt):
+    raise RuntimeError("no network")
+
+
+def _reset_live():
+    _lt._mem.clear()
+    _lt._frozen.clear()
+    (_lt.LIVE_DIR / "buckets.json").unlink(missing_ok=True)
+
+
+_lt.FETCH = _fake_flow
+_reset_live()
+_sl = c.get("/corridor").json()["sim"]["live"]
+assert _sl["available"] is True and _sl["refresh_s"] == 300, _sl
+lt1 = c.get("/corridor/live_trip")
+assert lt1.status_code == 200, lt1.text[:300]
+lt1 = lt1.json()
+n_pts = len(_lt.points())
+assert len(_calls) == n_pts <= 24 and lt1["requests"]["this_refresh"] == n_pts <= lt1["requests"]["per_refresh_max"] == 24, len(_calls)
+assert lt1["labels"]["speeds"] == "measured (TomTom live flow)" and lt1["trip"]["label"] == "estimated" and not lt1["cached"], lt1["labels"]
+assert len(lt1["legs"]) == 12 and lt1["trip"]["total_s"] == sum(l["time_s"] for l in lt1["legs"]), lt1["trip"]
+assert lt1["trip"]["july_same_hour_total_s"] > 0 and "vs_july_same_hour" in lt1["trip"] and 0 < lt1["trip"]["confidence"] <= 1, lt1["trip"]
+p04 = next(p for p in lt1["points"] if p["id"] == "p04a")
+assert not p04["ok"] and "FRC5" in p04["reason"], p04
+leg4 = lt1["legs"][4]
+assert leg4["basis"].startswith("July same hour") and leg4["confidence"] == 0 and leg4["flow"] is None, leg4
+leg1 = lt1["legs"][1]       # half the free-flow speed, confidence 0.9: F = 0.9 x 2 + 0.1 x the July same-hour factor
+assert leg1["flow"]["label"] == "measured (TomTom live flow)" and abs(leg1["congestion_factor"] - (1.8 + 0.1 * leg1["july_same_hour_factor"])) < 0.01, leg1
+assert leg1["time_s"] >= round(leg1["july_quietest_s"] * leg1["congestion_factor"]) - 1, leg1
+lt2 = c.get("/corridor/live_trip").json()
+assert lt2["cached"] and len(_calls) == n_pts, "the live trip is cached for 5 minutes (no new TomTom requests)"
+_lt.FETCH = _no_flow
+_lt._mem["trip"]["at"] -= 400                     # expired, and TomTom unreachable: the older answer, marked stale
+lt3 = c.get("/corridor/live_trip").json()
+assert lt3["stale"] and lt3["trip"]["total_s"] == lt1["trip"]["total_s"] and any("not refreshed" in w for w in lt3["warnings"]), lt3.get("stale")
+_reset_live()
+r = c.get("/corridor/live_trip")
+assert r.status_code == 503 and "unavailable" in r.json()["detail"], r.text[:200]
+r = c.post("/corridor/runs", json={"interventions": [], "day": "live"})
+assert r.status_code in (503, 422), (r.status_code, r.text[:200])      # 422 only without the hourly calibration
+_lt.FETCH = _fake_flow
+assert c.post("/corridor/runs", json={"interventions": [], "day": "live", "hour": 3}).status_code == 400
+from app.corridor import CorridorRunIn as _LIn, cache_key as _lkey  # noqa: E402
+_a, _b = _LIn(day="live", hour=10), _LIn(day="live", hour=10)
+_a._live, _b._live = {"bucket": "2026-10-10T10:20+05:30", "legs": [{"time_s": 60}]}, {"bucket": "2026-10-10T10:30+05:30", "legs": [{"time_s": 60}]}
+assert _lkey([], _a) != _lkey([], _b) != _lkey([], _LIn(hour=10)), "the 10-minute bucket is part of a now-cast's cache key"
+assert _a.model_copy(update={"frames_from_min": None})._live == _a._live, "copies keep the live trip (numbers_key)"
+if _HOURLY.exists():
+    nc = c.post("/corridor/runs", json={"interventions": [], "day": "live"})
+    assert nc.status_code == 200, nc.text[:300]
+    nc = nc.json()
+    t = nc["time"]
+    assert t["day"] == "live" and t["as_of"] and t["bucket"] and t["label"].startswith("Now-cast") and 6 <= t["hour"] <= 23, t
+    assert nc["inputs"]["live_trip"]["total_s"] == c.get("/corridor/live_trip").json()["trip"]["total_s"], nc["inputs"]["live_trip"]
+    assert ("outside the calibrated" in t["label"]) == nc["inputs"]["live_trip"]["hour_clamped"], t["label"]
+    fl = c.post("/corridor/runs", json={"interventions": [{"junction_id": "j07", "kind": "flyover", "params": {"lanes": 2}}],
+                                        "day": "live", "weather": "heavy_rain"}).json()
+    assert fl["time"]["day"] == "live" and fl["time"]["weather"] == "heavy_rain" and fl["time"]["bucket"], fl["time"]
+    assert len(_calls) == 2 * n_pts, "runs in one bucket share one live estimate (one TomTom refresh)"
+_lt.FETCH, _lt.key = _real_lt_fetch, _real_key
+_reset_live()
 print("SMOKE TEST PASSED")

@@ -56,10 +56,13 @@ are in data/raw/corridor_legs_tomtom.csv), run(hour=h) applies that hour's volum
 speed-cap scale) on top of the all-day calibration. run(hour=h, day="2026-07-08") starts from the typical July hour and
 adjusts it to that day-hour's TomTom trip time on demand (fit_day_hour(): 1-2 baseline runs, kept in
 calibration_days.json and reused).
+Now-cast: run(hour=h, day="live", live={...}) does the same against the live trip estimate (backend/app/live_trip.py:
+TomTom live flow, legs and total; frozen per 10-minute bucket), kept in calibration_live.json per bucket and hour.
 
     python sim/corridor/corridor_runner.py calibrate          # writes sim/corridor/calibration.json
     python sim/corridor/corridor_runner.py calibrate_hourly [8 9 ...]   # writes sim/corridor/calibration_hourly.json
     python sim/corridor/corridor_runner.py fit_day 2026-07-08 18        # one day and hour (calibration_days.json)
+    python sim/corridor/corridor_runner.py fit_live live.json [hour]    # a now-cast: hour's calibration to a live trip
     python sim/corridor/corridor_runner.py run [j07:flyover]  # prints the C5 result summary
 """
 import csv, hashlib, heapq, json, math, os, re, shutil, statistics, subprocess, sys, time, uuid, xml.etree.ElementTree as ET
@@ -114,6 +117,8 @@ PROBE_TRACK_S = 5                 # probe car positions every N s for the whole 
 HOURLY = HERE / "calibration_hourly.json"
 HOURS = range(6, 24)              # hour h = hh:00-hh+1:00: 06:00-07:00 .. 23:00-24:00
 DAYS_FILE = OUT / "calibration_days.json"    # on-demand fits of single days and hours (fit_day_hour): a cache, not committed
+LIVE_FILE = OUT / "calibration_live.json"    # now-cast fits per 10-minute bucket and hour (fit_day_hour, day "live"): a cache
+LIVE_KEEP = 48                    # ... the newest this many are kept
 HOUR_VOLUME = (0.5, 1.6)          # calibrate_hourly(): volume scale limits; beyond them it scales the speed caps
 HOUR_CAP = (0.6, 2.2)             # ... within these limits
 HOUR_MAX_KMH = 80                 # ... and no leg faster than this
@@ -1001,6 +1006,8 @@ def weather_factors(weather, hour=None, day=None):
     refs = wi["reference_time_factors"]
     if hour is None:
         ref, basis = refs["all_day"], "July 2026 all-day (06-23) rain mix"
+    elif day == "live":
+        ref, basis = [1.0] * len(want), "now (TomTom live); the rain right now is not known to the simulation, so taken as dry"
     elif is_july(day):
         ref, basis = refs["hour"][str(hour)], f"rain mix of July 2026 at {hour:02d}:00-{hour + 1:02d}:00"
     else:
@@ -1069,7 +1076,25 @@ def _day_sig(base, d):
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
 
-def hour_settings(hour, day=None):
+def live_tomtom(live):
+    """The live trip estimate (backend live_trip: legs with distance_m and time_s on TomTom's route, total_s) as a
+    tomtom_hours() entry, so fit_day_hour and trip_target treat it like a day-hour's TomTom rows."""
+    legs = {(l["from_id"], l["to_id"]): (float(l["distance_m"]), float(l["time_s"]), float(l["distance_m"]) / float(l["time_s"]) * 3.6)
+            for l in live["legs"]}
+    return {"period": f"TomTom live trip estimate as of {live['as_of']}", "job": "TomTom live flow", "legs": legs,
+            "trip_total_s": float(live["total_s"])}
+
+
+def live_key(live, hour):
+    return f"{live['bucket']} {hour:02d}"
+
+
+def live_fits():
+    """calibration_live.json: now-cast fits ({"fits": {"<bucket> <hour>": {...}}})."""
+    return (json.loads(LIVE_FILE.read_text()) if LIVE_FILE.exists() else {}).get("fits", {})
+
+
+def hour_settings(hour, day=None, live=None):
     """Scales for an hour of the day. `day` None or "july": the typical July hour (calibration_hourly.json). A single
     day ("2026-07-08"): its on-demand fit (calibration_days.json) when that fit still matches the July hour and
     TomTom's numbers, else {"needs_fit": True, "base": July hour, "tomtom": that day-hour's TomTom rows}.
@@ -1088,6 +1113,15 @@ def hour_settings(hour, day=None):
                                 f"{', '.join(f'{k:02d}' for k in have) or 'none'}")
     if is_july(day):
         return dict(e, label=f"{hour_label(hour)} (TomTom hourly calibration)", window=hour_label(hour))
+    if day == "live":
+        if not live or not live.get("legs"):
+            raise ValueError("day 'live' needs the live trip estimate (live={...}: GET /corridor/live_trip, frozen per bucket)")
+        d = live_tomtom(live)
+        sig = _day_sig(e, d)
+        fit = live_fits().get(live_key(live, hour))
+        if fit and fit.get("sig") == sig:
+            return fit
+        return {"needs_fit": True, "base": e, "tomtom": d, "sig": sig, "live": live}
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(day)):
         raise ValueError(f"day must be 'july' or a date like 2026-07-08, got {day!r}")
     d = tomtom_hours(day).get(hour)
@@ -1138,8 +1172,14 @@ def fit_day_hour(day, hour, cfg, final=None, tol=0.03):
         t_est = base["tomtom_total_s"] * (sum(a for a, _ in both) / sum(b for _, b in both) if both else 1.0)
     v_h, cs_h, t_h = float(base["volume_scale"]), float(base.get("cap_scale", 1.0)), float(base["sim_total_s"])
     slope = float(base.get("slope_s_per_volume") or 600.0)       # s of trip per unit of volume scale near the July hour
-    labels = {"label": f"{day_label(day, hour)} (July {hour:02d}:00 calibration adjusted to that day's TomTom trip time)",
-              "window": f"{day} {hour:02d}:00-{hour + 1:02d}:00", "period": d["period"], "job": d["job"], "day": day}
+    lv = cfg.get("live")
+    if lv:       # a now-cast: the July hour adjusted to the live trip estimate
+        labels = {"label": lv.get("label") or f"Now-cast {lv['as_of'][11:16]} IST (TomTom live; July {hour:02d}:00 calibration adjusted)",
+                  "window": f"live {lv['as_of'][11:16]} IST (July {hour:02d}:00 calibration)", "period": d["period"], "job": d["job"],
+                  "day": "live", "as_of": lv["as_of"], "bucket": lv["bucket"]}
+    else:
+        labels = {"label": f"{day_label(day, hour)} (July {hour:02d}:00 calibration adjusted to that day's TomTom trip time)",
+                  "window": f"{day} {hour:02d}:00-{hour + 1:02d}:00", "period": d["period"], "job": d["job"], "day": day}
 
     def step(v, cs, t, target, slope):
         """Volume first (a day differs from the typical July hour by a moderate amount: at most 25% per step); the
@@ -1158,7 +1198,7 @@ def fit_day_hour(day, hour, cfg, final=None, tol=0.03):
         rid = final["run_id"] if final else f"calib_{day}_{hour:02d}_{i}"
         trial = {"volume_scale": v, "cap_scale": cs, "tomtom_total_s": round(t_est), **labels}
         res = run(hour=hour, day=day, hour_cfg=trial, run_id=rid, frames=bool(final and final.get("frames")),
-                  frames_window=final.get("frames_window") if final else None)
+                  frames_window=final.get("frames_window") if final else None, live=lv)
         if not final:
             shutil.rmtree(OUT / rid, ignore_errors=True)
         target, how = trip_target(d, res["journey"]["legs"], base["tomtom_total_s"], ref_trip)
@@ -1176,21 +1216,31 @@ def fit_day_hour(day, hour, cfg, final=None, tol=0.03):
            "tomtom_trip_total_s": d.get("trip_total_s"), "base_hour": {"hour": hour, "volume_scale": v_h, "cap_scale": cs_h,
                                                                        "tomtom_total_s": base["tomtom_total_s"]},
            "trials": trials, "sig": cfg["sig"], **labels, "fitted_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
-    store = json.loads(DAYS_FILE.read_text()) if DAYS_FILE.exists() else {}
-    store.setdefault("fits", {})[f"{day} {hour:02d}"] = fit
-    store["note"] = ("on-demand fits of a single day and hour (fit_day_hour): the typical July hour's scales "
-                     "(calibration_hourly.json) adjusted so the simulated trip matches that day-hour's TomTom trip time")
-    DAYS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    DAYS_FILE.write_text(json.dumps(store, indent=1))
+    path, skey = (LIVE_FILE, live_key(lv, hour)) if lv else (DAYS_FILE, f"{day} {hour:02d}")
+    store = json.loads(path.read_text()) if path.exists() else {}
+    store.setdefault("fits", {})[skey] = fit
+    if lv:
+        for old in sorted(store["fits"])[:-LIVE_KEEP]:
+            store["fits"].pop(old)
+        store["note"] = ("now-cast fits (fit_day_hour, day 'live'): the typical July hour's scales (calibration_hourly.json) "
+                         "adjusted so the simulated trip matches the live trip estimate of that 10-minute bucket")
+    else:
+        store["note"] = ("on-demand fits of a single day and hour (fit_day_hour): the typical July hour's scales "
+                         "(calibration_hourly.json) adjusted so the simulated trip matches that day-hour's TomTom trip time")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(store, indent=1))
     if final:
         res["inputs"]["day_fit"] = {k: fit[k] for k in ("volume_scale", "cap_scale", "ratio", "within_tolerance", "target_basis", "trials")}
+        if lv:
+            res["inputs"]["live_fit"] = res["inputs"]["day_fit"]
         Path(res["roads_path"]).with_name("result.json").write_text(json.dumps(res, indent=1))
         return fit, res
     return fit, None
 
 
 def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None, label="July 2026 average, 6 am-11 pm", through=None,
-        cross_scale=None, shares=None, seed=SEED, tomtom=None, frames_window=None, hour=None, day=None, hour_cfg=None, weather=None):
+        cross_scale=None, shares=None, seed=SEED, tomtom=None, frames_window=None, hour=None, day=None, hour_cfg=None, weather=None,
+        live=None):
     """Simulate the corridor with `interventions` (C5 shape); return the C5 corridor result. `caps` (km/h per leg),
     `through` ({"fwd", "rev"} veh/h), `cross_scale` and `shares` ({junction id: corridor green share}) override the
     calibrated values (calibrate() uses them). `frames_window`: (from_s, to_s) of the C1 frames (default FRAMES; see
@@ -1198,11 +1248,13 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
     `day`: "july" (default, calibration_hourly.json) or a date like "2026-07-08" (fitted on demand from the July hour,
     fit_day_hour(), then reused). HourlyUnavailable without the data. `hour_cfg`: explicit scales (fit_day_hour).
     `weather` ("dry", "light_rain", "heavy_rain"; None = as calibrated): rain what-if, the estimated per-leg speed
-    factors (weather_factors) on the speed caps after the hour's scales; nothing else changes."""
+    factors (weather_factors) on the speed caps after the hour's scales; nothing else changes.
+    `live` (with day="live"): the live trip estimate frozen for a 10-minute bucket ({bucket, as_of, legs: [{from_id,
+    to_id, distance_m, time_s}], total_s, ...}); the July hour is fitted to it on demand (calibration_live.json)."""
     window = tuple(frames_window) if frames_window else FRAMES[:2]
     run_id = run_id or "rc_" + uuid.uuid4().hex[:8]
     if hour is not None and hour_cfg is None:
-        hour_cfg = hour_settings(hour, day)
+        hour_cfg = hour_settings(hour, day, live)
         if hour_cfg.get("needs_fit"):
             plain = not interventions and volume_scale == 1.0 and all(x is None for x in (caps, through, cross_scale, shares, tomtom, weather)) and seed == SEED
             fit, res = fit_day_hour(day, hour, hour_cfg, {"run_id": run_id, "frames": frames, "frames_window": frames_window} if plain else None)
@@ -1271,7 +1323,7 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                          "time_s_sd": round(leg_sd, 1)})       # spread between the probe cars
     if hour_cfg:     # TomTom's times for that hour: its own leg speeds when the hourly rows have every leg, else scaled
         ids = [p["id"] for p in pts]
-        hl = tomtom_hours(day).get(hour, {}).get("legs", {})
+        hl = live_tomtom(live)["legs"] if day == "live" and live else tomtom_hours(day).get(hour, {}).get("legs", {})
         if all(hl.get((a, b), (None, None, None))[2] for a, b in zip(ids, ids[1:])):
             for l in out_legs:
                 l["tomtom_time_s"] = round(l["distance_m"] / (hl[(l["from_id"], l["to_id"])][2] / 3.6))
@@ -1300,7 +1352,10 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                 | ({"weather": weather} if weather else {})
                 | ({"hour": hour, "day": "july" if is_july(day) else day,
                     "data_label": ("calibrated to TomTom's hourly leg times (" if is_july(day) else "July hour adjusted to TomTom's trip time for ")
-                    + str(hour_cfg.get("period", "July 2026")) + (")" if is_july(day) else "")} if hour_cfg else {}),
+                    + str(hour_cfg.get("period", "July 2026")) + (")" if is_july(day) else "")} if hour_cfg else {})
+                | ({"as_of": live["as_of"], "bucket": live["bucket"],
+                    "data_label": f"July {hour:02d}:00 calibration adjusted to the live trip estimate (TomTom live flow, as of "
+                                  f"{live['as_of']}; estimated)"} if hour_cfg and day == "live" and live else {}),
         "interventions": list(interventions),
         "journey": {"total_s": sum(l["time_s"] for l in out_legs), "distance_m": sum(l["distance_m"] for l in out_legs),
                     "tomtom_total_s": sum(l["tomtom_time_s"] for l in out_legs), "legs": out_legs,
@@ -1324,6 +1379,12 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                    "cross_vph_per_approach": round(CROSS_VPH * volume_scale),
                    "corridor_volumes": corridor_volumes(outdir, secs, info["corridor"], approaches),
                    **({"weather": rain} if rain else {}),
+                   **({"live_trip": {k: live.get(k) for k in ("as_of", "bucket", "total_s", "confidence", "confidence_label",
+                                                               "july_same_hour_total_s", "july_same_hour_label", "hour", "now_hour",
+                                                               "hour_clamped", "stale", "data_label")},
+                       "live_fit": {k: hour_cfg.get(k) for k in ("volume_scale", "cap_scale", "tomtom_total_s", "sim_total_s", "ratio",
+                                                                 "within_tolerance", "target_basis")}}
+                      if hour_cfg and day == "live" and live else {}),
                    "sources": sources_note(cal, info) + ([{"input": f"weather what-if: {weather}", "label": "estimated",
                                                            "source": f"{WEATHER_LABEL}: speed caps x per-leg factor relative to "
                                                                      f"{rain['relative_to']}; demand and signals unchanged"}] if rain else [])
@@ -1331,6 +1392,8 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                                                            "source": f"traffic x{hour_cfg.get('volume_scale', 1.0)}, speed caps x{hour_cfg.get('cap_scale', 1.0)} on the all-day "
                                                                      f"calibration, fitted to TomTom {hour_cfg.get('period', 'hourly leg times')} "
                                                                      + ("(calibration_hourly.json)" if is_july(day) else
+                                                                        "(the July hour adjusted to the TomTom live trip estimate, calibration_live.json)"
+                                                                        if day == "live" else
                                                                         "(the July hour adjusted on demand, calibration_days.json)")}] if hour_cfg else []),
                    "calibrated_to": f"TomTom Traffic Stats job {TOMTOM_JOB}, July 2026 06:00-23:00, leg speeds",
                    "speeds_source": "counted (TomTom probe data)", "probes_arrived": min(n_probes), "teleports": teleports,
@@ -1656,6 +1719,10 @@ if __name__ == "__main__":
     elif sys.argv[1:2] == ["fit_day"]:        # fit_day 2026-07-08 18: fit (or reuse) one day and hour, print the result
         res = run(hour=int(sys.argv[3]), day=sys.argv[2], frames=False)
         print(res["time"], round(res["journey"]["total_s"] / 60, 1), "min vs TomTom", round(res["journey"]["tomtom_total_s"] / 60, 1))
+    elif sys.argv[1:2] == ["fit_live"]:      # fit_live live.json [hour]: live.json = a frozen live trip (live_trip.frozen)
+        lv = json.loads(Path(sys.argv[2]).read_text())
+        res = run(hour=int(sys.argv[3]) if len(sys.argv) > 3 else lv["hour"], day="live", live=lv, frames=False)
+        print(res["time"], round(res["journey"]["total_s"] / 60, 1), "min vs live", round(res["journey"]["tomtom_total_s"] / 60, 1))
     elif sys.argv[1:2] == ["run"]:
         ivs = [{"junction_id": a.split(":")[0], "kind": a.split(":")[1], "params": {}} for a in sys.argv[2:]]
         res = run(ivs, frames=False)

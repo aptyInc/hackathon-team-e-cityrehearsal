@@ -9,6 +9,7 @@
     GET  /runs/{run_id}/probes      every test car's whole trip (?direction=A->B|B->A, ?number=n)
     GET  /corridor/junctions/live   latest TomTom Junction Analytics snapshot per configured junction + last-60-min mean
     GET  /corridor/junctions/geometry  each TomTom junction's approaches as lines (to draw live queues)
+    GET  /corridor/live_trip        live trip estimate A->B from TomTom live flow (live_trip.py; cached 5 min, 503 if none)
 
 Frames window: frames_from_min (minutes after warm-up, default 5) and frames_minutes (default 5, 1..10) choose which
 part of the 15 measured minutes the C1 frames cover; the numbers do not change with it (deterministic runs), but it is
@@ -19,6 +20,10 @@ estimated per-leg factors of data/rain/rain_factors.json (relative to the rain a
 the July all-day mix, that July hour's mix, or that day-hour's own rain); demand and signals stay. Part of the cache
 key; the result echoes time.weather and inputs.weather (label "estimated (rain factors from TomTom hourly x Open-Meteo,
 July 2026)").
+day "live" (hour optional: default the current IST hour, clamped to the calibrated 6..23): a now-cast. The July hour's
+calibration is adjusted (as for a single day) so the simulated trip matches GET /corridor/live_trip's estimate, frozen
+per 10-minute bucket (live_trip.frozen: a baseline and its variants in one bucket share the live trip and the fit). The
+bucket is part of the cache key; the result echoes time.day "live", time.as_of, time.bucket and inputs.live_trip.
 
 MOCK_SIM=1: POST returns the contract sample (baseline, or flyover_j07 when any intervention is given), with a
 warning when the request asked for something else. MOCK_SIM=0: sim/corridor/corridor_runner.run in a worker thread
@@ -38,6 +43,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from dotenv import load_dotenv
+from pydantic import PrivateAttr
+
+from . import live_trip as live
 
 # same settings and database as main.py (not imported from it, so this module also loads on its own: no import cycle)
 ROOT = Path(__file__).resolve().parents[2]
@@ -262,7 +270,10 @@ def sim_capabilities() -> dict:
         hours = []
     return {"hours": hours, "days": "any July day with TomTom hourly data, fitted on demand (first run 1-2 min, then cached)",
             "frames_window": True, "probes": True,
-            "weather": list(WEATHER) if RAIN_FACTORS.exists() else [], "weather_label": WEATHER_LABEL}
+            "weather": list(WEATHER) if RAIN_FACTORS.exists() else [], "weather_label": WEATHER_LABEL,
+            "live": {"available": live.available(), "refresh_s": live.REFRESH_S, "bucket_s": live.BUCKET_S,
+                     "hours": f"current IST hour, clamped to the calibrated {HOURS[0]}..{HOURS[-1]}",
+                     "endpoint": "GET /corridor/live_trip", "run": {"day": "live"}}}
 
 
 @router.get("/corridor")
@@ -301,6 +312,7 @@ class CorridorRunIn(BaseModel):
     hour: int | None = None                # 6..23: hh:00-hh+1:00 (needs calibration_hourly.json)
     day: str | None = None                 # with hour: "july" (typical July day, default) or a date like "2026-07-08"
     weather: str | None = None             # rain what-if: "dry" | "light_rain" | "heavy_rain"; none = as calibrated
+    _live: dict | None = PrivateAttr(default=None)   # day "live": the frozen live trip of this bucket (with_live)
 
 
 # mirror of sim/corridor/corridor_runner.py (WARMUP, PROBE_SPAN, FRAMES, FRAMES_MAX_S, HOURS): the API checks a request
@@ -349,9 +361,45 @@ def weather_of(body: CorridorRunIn) -> str | None:
 
 
 def day_of(body: CorridorRunIn) -> str | None:
-    """The request's day: None for the typical July day ("july" or not given), else the ISO date."""
+    """The request's day: None for the typical July day ("july" or not given), "live" for a now-cast, else the ISO date."""
     d = (body.day or "").strip()
-    return None if d.lower() in ("", "july") else d
+    return None if d.lower() in ("", "july") else "live" if d.lower() == "live" else d
+
+
+def with_live(body: CorridorRunIn) -> CorridorRunIn:
+    """day "live": attach the live trip frozen for the current 10-minute bucket (live_trip.frozen) and, without an hour,
+    take the current IST hour, clamped to the calibrated HOURS (the label says so). 503 when there is no live estimate.
+    Changes `body` in place (once) and returns it."""
+    if day_of(body) != "live" or body._live is not None:
+        return body
+    now = live._now()
+    try:
+        est = live.frozen(now)
+    except live.LiveUnavailable as e:
+        raise HTTPException(503, f"live now-cast unavailable: {e}")
+    clamped = False
+    if body.hour is None:
+        body.hour = min(HOURS[-1], max(HOURS[0], now.hour))
+        clamped = body.hour != now.hour
+    as_of = datetime.fromisoformat(est["as_of"])
+    label = f"Now-cast {as_of:%H:%M} IST (TomTom live; July {body.hour:02d}:00 calibration adjusted"
+    label += (f"; {now.hour:02d}:00 is outside the calibrated {HOURS[0]:02d}-{HOURS[-1]:02d}, nearest hour used)" if clamped else ")")
+    trip = est["trip"]
+    body._live = {"bucket": est["bucket"], "as_of": est["as_of"], "now_hour": now.hour, "hour": body.hour,
+                  "hour_clamped": clamped, "label": label, "total_s": trip["total_s"], "confidence": trip["confidence"],
+                  "confidence_label": trip.get("confidence_label"), "july_same_hour_total_s": trip["july_same_hour_total_s"],
+                  "july_same_hour_label": trip.get("july_same_hour_label"), "stale": bool(est.get("stale")),
+                  "legs": [{"from_id": l["from_id"], "to_id": l["to_id"], "distance_m": l["distance_m"], "time_s": l["time_s"]}
+                           for l in est["legs"]],
+                  "data_label": "estimated (TomTom live flow + July 2026 Traffic Stats; GET /corridor/live_trip)"}
+    return body
+
+
+def live_echo(body: CorridorRunIn) -> dict:
+    """inputs.live_trip of a now-cast result: the live trip the run was fitted to."""
+    lv = body._live or {}
+    return {k: lv.get(k) for k in ("as_of", "bucket", "total_s", "confidence", "confidence_label", "july_same_hour_total_s",
+                                   "july_same_hour_label", "hour", "now_hour", "hour_clamped", "stale", "data_label")}
 
 
 def day_rows(day: str, hour: int) -> list[dict]:
@@ -368,8 +416,8 @@ def hourly_entry(hour: int, day: str | None = None) -> dict:
     """That hour's entry in calibration_hourly.json. 400 outside 6..23 or for a bad day, 422 while there is no hourly
     calibration or (for a single day) no TomTom data for that day and hour."""
     import re
-    if day is not None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
-        raise HTTPException(400, f"day must be 'july' (typical July day) or a date like 2026-07-08, got {day!r}")
+    if day is not None and day != "live" and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
+        raise HTTPException(400, f"day must be 'july' (typical July day), 'live' (now-cast) or a date like 2026-07-08, got {day!r}")
     if hour not in HOURS:
         raise HTTPException(400, f"hour must be between {HOURS[0]} and {HOURS[-1]} (meaning hh:00-hh+1:00), got {hour}")
     if not CALIBRATION_HOURLY.exists():
@@ -378,7 +426,7 @@ def hourly_entry(hour: int, day: str | None = None) -> dict:
     if str(hour) not in hours:
         have = ", ".join(f"{int(h):02d}" for h in sorted(hours, key=int)) or "none"
         raise HTTPException(422, f"hourly data not available yet for {hour:02d}:00-{hour + 1:02d}:00 (calibrated hours: {have})")
-    if day is not None and not day_rows(day, hour):
+    if day is not None and day != "live" and not day_rows(day, hour):
         raise HTTPException(422, f"TomTom data for {day} {hour:02d}:00-{hour + 1:02d}:00 not available yet")
     return hours[str(hour)]
 
@@ -401,6 +449,9 @@ def validate(body: CorridorRunIn) -> list[dict]:
     if body.minutes is not None and not 1 <= body.minutes <= 24 * 60:
         raise HTTPException(400, f"minutes must be between 1 and 1440, got {body.minutes}")
     frames_window(body)
+    if body.hour is not None and body.hour not in HOURS:      # before a now-cast asks TomTom
+        hourly_entry(body.hour, None)
+    with_live(body)
     if weather_of(body) is not None and weather_of(body) not in WEATHER:
         raise HTTPException(400, f"weather must be one of {', '.join(WEATHER)} (or left out: as calibrated), got {body.weather!r}")
     if weather_of(body) is not None and not RAIN_FACTORS.exists():
@@ -423,7 +474,10 @@ def cache_key(ivs: list[dict], body: CorridorRunIn) -> str:
     if body.hour is not None:
         blob["hour"] = body.hour
         blob["calibration_hourly"] = CALIBRATION_HOURLY.read_text() if CALIBRATION_HOURLY.exists() else None
-        if day_of(body):     # a single day: fitted from the July hour to that day-hour's TomTom rows
+        if day_of(body) == "live":     # a now-cast: fitted to the live trip frozen for its 10-minute bucket
+            lv = body._live or {}
+            blob["day"], blob["live_bucket"], blob["live_legs"] = "live", lv.get("bucket"), [l["time_s"] for l in lv.get("legs", [])]
+        elif day_of(body):     # a single day: fitted from the July hour to that day-hour's TomTom rows
             blob["day"], blob["day_rows"] = day_of(body), day_rows(day_of(body), body.hour)
     if weather_of(body):     # no weather keeps the key it always had
         blob["weather"], blob["rain_factors"] = weather_of(body), _file_hash(RAIN_FACTORS)
@@ -522,7 +576,13 @@ def _mock_extras(res: dict, body: CorridorRunIn) -> dict:
     recorded in mock mode) and, for an hour, that hour's label. GET /runs/{id}/probes makes illustrative tracks."""
     res["frames_window"] = frames_info(frames_window(body))
     res.setdefault("probe_tracks_path", None)
-    if body.hour is not None:
+    if body.hour is not None and day_of(body) == "live":
+        lv = body._live or {}
+        res["time"] = {**res.get("time", {}), "window": f"live {(lv.get('as_of') or '')[11:16]} IST (July {body.hour:02d}:00 calibration)",
+                       "label": f"{lv.get('label', 'Now-cast')} (MOCK: sample numbers)", "hour": body.hour, "day": "live",
+                       "as_of": lv.get("as_of"), "bucket": lv.get("bucket")}
+        res.setdefault("inputs", {})["live_trip"] = live_echo(body) | {"note": "MOCK_SIM=1: not fitted; the numbers are the sample's"}
+    elif body.hour is not None:
         h, day = body.hour, day_of(body)
         window = f"{day} {h:02d}:00-{h + 1:02d}:00" if day else f"July typical {h:02d}:00-{h + 1:02d}:00"
         res["time"] = {**res.get("time", {}), "window": window, "label": f"{window} (MOCK: sample numbers)", "hour": h,
@@ -610,9 +670,13 @@ def _simulate(run_id: str, key: str, ivs: list[dict], body: CorridorRunIn) -> di
         if body.hour is not None:
             if "hour" not in params or (day_of(body) and "day" not in params):
                 raise SimError(422, HOURLY_MISSING)
+            if day_of(body) == "live" and "live" not in params:
+                raise SimError(422, "the corridor simulation does not take a live now-cast yet (corridor_runner.run has no live)")
             kwargs["hour"] = body.hour
             if day_of(body):
                 kwargs["day"] = day_of(body)
+            if day_of(body) == "live":
+                kwargs["live"] = body._live
         if weather_of(body):
             if "weather" not in params:
                 raise SimError(422, "the corridor simulation does not take a weather what-if yet (corridor_runner.run has no weather)")
@@ -732,6 +796,17 @@ async def corridor_run(body: CorridorRunIn, request: Request):
         return await asyncio.wrap_future(job)
     except SimError as e:
         raise HTTPException(e.status, e.message)
+
+
+@router.get("/corridor/live_trip")
+def corridor_live_trip():
+    """Live trip estimate Lingampally -> Lakdikapul from TomTom's live Traffic Flow (backend/app/live_trip.py: the
+    estimator, the points, the request budget). Cached for 5 minutes; an older answer (stale: true) when TomTom cannot be
+    reached; 503 when there is none."""
+    try:
+        return live.live_trip()
+    except live.LiveUnavailable as e:
+        raise HTTPException(503, f"live trip estimate unavailable: {e}")
 
 
 @router.get("/corridor/calibration")
