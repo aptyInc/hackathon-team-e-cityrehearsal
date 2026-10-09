@@ -1,4 +1,4 @@
-.PHONY: setup setup-sim network sim-test dev smoke
+.PHONY: setup setup-sim network sim-test junction-data dev smoke
 setup:
 	python3 -m venv .venv && . .venv/bin/activate && pip install -r backend/requirements.txt
 setup-sim:
@@ -10,6 +10,8 @@ sim-test:
 	python $$SUMO_HOME/tools/randomTrips.py -n sim/networks/ymca.net.xml -e 600 -p 1.5 --fringe-factor 10 --validate \
 	  -o sim/out/test.trips.xml -r sim/out/test.rou.xml --seed 42 > /dev/null && \
 	sumo -n sim/networks/ymca.net.xml -r sim/out/test.rou.xml --end 900 --no-step-log --duration-log.statistics
+junction-data:
+	python3 data/tomtom/fetch_junction_archive.py 2026-10-08
 dev:
 	. .venv/bin/activate && cd backend && MOCK_SIM=$${MOCK_SIM:-1} uvicorn app.main:app --reload --port 8000
 smoke:
