@@ -23,6 +23,10 @@ window.planner = (() => {
   const pct = v => `${Math.round(Number(v) * 100)}%`;
   const when = t => { const d = new Date(t); return t && !isNaN(d) ? d.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) : ""; };
   const fp = h => h ? `<code class="fp" title="SHA-256 ${esc(h)}">${esc(String(h).slice(0, 10))}</code>` : "";
+  // Text from the API in plain words: "real data" (measured) or simulated, not the data provider's name or the month of the averages.
+  const plain = s => String(s ?? "").replace(/TomTom live( flow)?/g, "real data · live")
+    .replace(/TomTom(['’]s)?( (Traffic Stats|Junction Analytics|probe (data|vehicles)|hourly|data))?/g, "real data")
+    .replace(/([Tt])ypical July day/g, "$1ypical day").replace(/,? ?July 2026/g, "").replace(/\bJuly\b/g, "typical-day");
 
   // ---------- safe markdown: shared with decisions.html (md.js, loaded before this file) ----------
   const { md } = window.crMarkdown;
@@ -63,7 +67,7 @@ window.planner = (() => {
     const what = ivs.length ? `with ${ivs.map(iv => `${ivText(iv).toLowerCase()} at ${short(point(iv.junction_id)?.name || iv.junction_id)}`).join("; ")}` : "today's roads";
     $("status").textContent = `Showing the assistant's run ${r.run_id}: ${what}${runHour(r) != null || runWeather(r) ? ` (${simDay(r).replace(/^Simulated /, "")})` : ""}`;
     $("run-note").innerHTML = `Loaded from the assistant: run <code>${esc(r.run_id)}</code>${vol(r) !== 1 ? ` at <b>${pct(vol(r))}</b> traffic` : ""}${esc(baseNote)} · ` +
-      `traffic input: <b>${esc(r.inputs?.label || "–")}</b> (${esc(r.inputs?.counts_source || "–")})` + wxResultLine(r);
+      `traffic input: <b>${esc(plain(r.inputs?.label) || "–")}</b> (${esc(plain(r.inputs?.counts_source) || "–")})` + wxResultLine(r);
     play(r);
     return r;
   }
@@ -80,7 +84,7 @@ window.planner = (() => {
   function toolName(t) {
     const n = String(t || "step").replace(/^(corridor_|run_)/, "").replace(/_/g, " ");
     return { "simulate corridor": "simulating the corridor", "corridor run": "simulating the corridor", "write brief": "writing the decision brief",
-             "get live junctions": "reading live TomTom junction data", "compare runs": "comparing runs" }[n] || n;
+             "get live junctions": "reading live junction data", "compare runs": "comparing runs" }[n] || n;
   }
   function stepInput(s) {   // the tool input, as an object (a JSON string is parsed)
     if (typeof s.input === "string") { try { return JSON.parse(s.input) || {}; } catch (e) { return {}; } }
@@ -104,7 +108,7 @@ window.planner = (() => {
         return `<li class="run"><span class="spin"></span>Running: ${esc(stepText(s))}… <b class="el">${clock((Date.now() - t0) / 1000)}</b></li>`;
       }
       const bad = isFailed(s, t);
-      return `<li class="${bad ? "bad" : ""}"><span class="ck">${bad ? "✕" : "✓"}</span>${esc(s.summary || stepText(s))}${bad && s.error ? `: ${esc(s.error)}` : ""}` +
+      return `<li class="${bad ? "bad" : ""}"><span class="ck">${bad ? "✕" : "✓"}</span>${esc(plain(s.summary || stepText(s)))}${bad && s.error ? `: ${esc(plain(s.error))}` : ""}` +
         `${s.run_id ? ` <small class="muted">· run ${esc(s.run_id)}</small>` : ""}</li>`;
     }).join("");
   }
@@ -114,7 +118,7 @@ window.planner = (() => {
   }
   function runLabel(t, id) {
     const s = (t.steps || []).find(x => x && x.run_id === id);
-    return s ? (Array.isArray(stepInput(s).interventions) ? stepText(s) : s.summary || id) : id;
+    return s ? (Array.isArray(stepInput(s).interventions) ? stepText(s) : plain(s.summary) || id) : id;
   }
   function drawTurn(t) {
     const el = t.el, steps = (t.steps || []).filter(s => s && typeof s === "object"), log = $("chat-log");
@@ -123,8 +127,8 @@ window.planner = (() => {
       `<div class="working"><span class="spin"></span>${steps.length ? "Working" : "Thinking"} · <b class="el">${clock((Date.now() - t.t0) / 1000)}</b></div>` : "";
     const ids = t.status === "done" ? runIdsOf(t) : [];
     el.innerHTML = (steps.length ? `<ol class="steps">${stepsHtml(steps, t)}</ol>` : "") + live +
-      (t.status === "failed" ? `<div class="bad">The assistant could not finish: ${esc(t.error || "unknown error")}</div>` : "") +
-      (t.reply ? `<div class="md reply">${md(t.reply)}</div>` : "") +
+      (t.status === "failed" ? `<div class="bad">The assistant could not finish: ${esc(plain(t.error || "unknown error"))}</div>` : "") +
+      (t.reply ? `<div class="md reply">${md(plain(t.reply))}</div>` : "") +
       (ids.length ? `<div class="runs"><small class="muted">Runs in this answer <span class="tag sim">SIMULATED</span></small>` +
         ids.map(id => `<div class="rrow"><span>${esc(runLabel(t, id))}</span><button class="secondary show-run" data-run="${esc(id)}">Show on map</button></div>`).join("") + `</div>` : "") +
       (t.brief_id ? `<div class="row"><button class="ghost open-brief" data-brief="${esc(t.brief_id)}">Open the decision brief</button></div>` : "") +
@@ -196,7 +200,7 @@ window.planner = (() => {
     $("brief-body").innerHTML = `<p class="muted">Loading the brief…</p>`; $("brief-meta").innerHTML = "";
     try {
       const b = await get(`/briefs/${encodeURIComponent(id)}`);
-      $("brief-body").innerHTML = md(b.markdown || "*(empty brief)*");
+      $("brief-body").innerHTML = md(plain(b.markdown) || "*(empty brief)*");
       const fps = b.fingerprints || {}, list = Array.isArray(fps) ? fps.map((f, k) => [f.run_id || f.id || (b.run_ids || [])[k] || `#${k + 1}`, f.sha256 || f.fingerprint || f]) : Object.entries(fps);
       $("brief-meta").innerHTML = `Brief <code>${esc(b.brief_id || id)}</code>${b.created_at ? ` · written ${esc(when(b.created_at))}` : ""} · ` +
         `runs: ${(b.run_ids || []).map(r => `<code>${esc(r)}</code>`).join(", ") || "–"}` +
@@ -341,7 +345,7 @@ window.planner = (() => {
       `<div class="role"><b>Reviewer</b> <small class="muted">re-tests the options with more or less traffic</small>
          <div class="row"><input id="rv-name" placeholder="Your name" autocomplete="name" value="${esc(store.get("cr_reviewer"))}"></div>
          <textarea id="rv-note" rows="2" placeholder="Note (optional)"></textarea>
-         <div class="row"><button class="secondary" id="rv-80">Re-test at 80% traffic</button><button class="secondary" id="rv-120">Re-test at 120% traffic</button></div>
+         <div class="row"><button class="secondary" id="rv-80">Re-test at 80% traffic</button><button class="secondary" id="rv-110">Re-test at 110% traffic</button></div>
          <button class="linkbtn" id="rv-note-only">Record the note without a re-test</button></div>
        <div class="role"><b>Decider</b> <small class="muted">${c.stage === "proposed" ? "usually after a reviewer has re-tested" : "approves, rejects or sends back"}</small>
          <div class="row"><input id="dc-name" placeholder="Your name" autocomplete="name" value="${esc(store.get("cr_decider"))}"></div>
@@ -363,7 +367,7 @@ window.planner = (() => {
       caseCall(`/corridor/cases/${encodeURIComponent(c.case_id)}/review`, body, v != null ? `Re-testing both options at ${pct(v)} traffic, usually a few minutes` : "Recording the note",
                { stage: "in_review", who, volume_scale: v, note });
     };
-    $("rv-80").onclick = () => review(0.8); $("rv-120").onclick = () => review(1.2); $("rv-note-only").onclick = () => review(null);
+    $("rv-80").onclick = () => review(0.8); $("rv-110").onclick = () => review(1.1); $("rv-note-only").onclick = () => review(null);
     const decide = d => {
       const who = $("dc-name").value.trim(), reason = $("dc-reason").value.trim();
       if (!who) { $("case-msg").innerHTML = `<span class="bad">Enter the decider's name first.</span>`; $("dc-name").focus(); return; }

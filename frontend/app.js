@@ -1,9 +1,14 @@
 // Terascope AI: small helpers shared by the content pages (index.html, decisions.html, data.html). Owner: Frontend.
-// window.CR = {API, $, esc, get, when, hhmm, pct, POINTS, pointName, ivText, STAGES, stageName, decisionText, fp, lab, apiProblem}
+// window.CR = {API, $, esc, get, when, hhmm, pct, POINTS, pointName, ivText, STAGES, stageName, decisionText, fp, lab, apiProblem, plain}
 window.CR = (() => {
   const API = window.CR_API || "http://localhost:8000";
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  // Text from the API in plain words: the screens say "real data" (measured) or "simulated", not the data provider's name
+  // or the month the saved averages come from. "measured (TomTom live flow)" -> "measured (real data · live)".
+  const plain = s => String(s ?? "").replace(/TomTom live( flow)?/g, "real data · live")
+    .replace(/TomTom(['’]s)?( (Traffic Stats|Junction Analytics|probe (data|vehicles)|hourly|data))?/g, "real data")
+    .replace(/([Tt])ypical July day/g, "$1ypical day").replace(/,? ?July 2026/g, "").replace(/\bJuly\b/g, "typical-day");
   // GET with a timeout. Errors carry .status (the HTTP status; undefined when the API is not reachable) and .detail.
   async function get(path, ms = 10000) {
     const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms);
@@ -46,11 +51,11 @@ window.CR = (() => {
   // An input label (counted / measured / estimated / assumed / calibrated), from text such as "calibrated: speed cap ...".
   function lab(text) {
     const w = String(text || "").trim().toLowerCase().match(/^(counted|measured|estimated|assumed|calibrated)/);
-    return `<span class="lab ${w ? w[1] : "other"}">${esc(w ? w[1] : text || "–")}</span>`;
+    return `<span class="lab ${w ? w[1] : "other"}">${esc(w ? w[1] : plain(text) || "–")}</span>`;
   }
   // A plain-language line for a failed GET.
   const apiProblem = (e, what) => e && e.status === 404 ? `${what} ${what.endsWith("s") ? "are" : "is"} not on this server yet.`
-    : e && e.status ? `${what}: the API answered ${e.status}${e.detail ? ` (${e.detail.slice(0, 120)})` : ""}.`
+    : e && e.status ? `${what}: the API answered ${e.status}${e.detail ? ` (${plain(e.detail).slice(0, 120)})` : ""}.`
     : `${what} need${what.endsWith("s") ? "" : "s"} the API, which is not answering (start it with \`make dev\`).`;
-  return { API, $, esc, get, when, hhmm, pct, POINTS, pointName, KINDS, ivText, STAGES, stageName, decisionText, fp, lab, apiProblem };
+  return { API, $, esc, get, when, hhmm, pct, POINTS, pointName, KINDS, ivText, STAGES, stageName, decisionText, fp, lab, apiProblem, plain };
 })();

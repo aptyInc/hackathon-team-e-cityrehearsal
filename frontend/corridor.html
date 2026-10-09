@@ -20,7 +20,7 @@
   .panel::-webkit-scrollbar { width: 8px; } .panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 8px; }
   #left { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 380px; max-height: calc(100vh - var(--nav-h, 0px) - 24px); overflow: auto; }
   /* the layers panel ends above Ask Terascope AI and the Reset view pill, which sit above the trip panel (viewguard.js sets --reset-bottom) */
-  #right { top: calc(var(--nav-h, 0px) + 12px); right: 12px; width: 256px; max-height: calc(100vh - var(--nav-h, 0px) - var(--reset-bottom, 36px) - 106px); overflow: auto; }
+  #right { top: calc(var(--nav-h, 0px) + 12px); right: 12px; width: 304px; max-height: calc(100vh - var(--nav-h, 0px) - var(--reset-bottom, 36px) - 106px); overflow: auto; }
   body.chat-open #reset-view { right: 438px; }
   #journey > .row:first-of-type { padding-right: 30px; }   /* room for the collapse chevron */
   #left > h1 { padding-right: 30px; }
@@ -130,13 +130,40 @@
   @keyframes pulse { 50% { box-shadow: 0 0 0 6px oklch(0.714 0.143 255 / 0), 0 0 14px var(--real); } }
   /* Live now: each junction pin carries its worst live delay, coloured against the usual delay */
   /* badge fills are fixed brand values the corridor test reads: ok green rgb(0,136,73), mid orange rgb(245,136,50), bad red-orange rgb(226,61,39) */
-  body.mode-live .pin[data-badge]::after { content: attr(data-badge); position: absolute; left: 17px; top: -12px; white-space: nowrap; padding: 0 6px;
+  body.badges-on .pin[data-badge]::after { content: attr(data-badge); position: absolute; left: 17px; top: -12px; white-space: nowrap; padding: 0 6px;
     border-radius: 7px; font: 600 10.5px/17px var(--mono); color: #fff; background: #008849; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 0 12px oklch(0.546 0.145 155 / .55); }
-  body.mode-live .pin[data-sev=mid]::after { background: #f58832; color: #1c1c1c; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 0 12px oklch(0.733 0.163 54 / .55); }
-  body.mode-live .pin[data-sev=bad]::after { background: #e23d27; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 0 14px oklch(0.605 0.205 31 / .7); }
-  /* the two modes: Live now (TomTom, measured) and July typical day (TomTom history + simulation) */
-  body.mode-live .july-only, body.mode-july .live-only { display: none !important; }
-  #modebar { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 380px; padding: 8px 10px 10px; z-index: 3; }
+  body.badges-on .pin[data-sev=mid]::after { background: #f58832; color: #1c1c1c; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 0 12px oklch(0.733 0.163 54 / .55); }
+  body.badges-on .pin[data-sev=bad]::after { background: #e23d27; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 0 14px oklch(0.605 0.205 31 / .7); }
+  /* header card: the corridor and the weather now (real data, live) */
+  #modebar { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 380px; padding: 10px 14px 10px; z-index: 3; }
+  #modebar h1 { margin: 0 0 2px; padding-right: 0; }
+  #hdr-sub { font-size: 12.5px; color: var(--tx-2); }
+  #modebar #wx-now { margin: 7px 0 0; }
+  /* Simulated: modification chips and the weather slider */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+  .chips button { height: 30px; padding: 0 12px; font-size: 12px; font-weight: 500; color: var(--tx-2); background: rgba(255,255,255,.04); border: 1px solid var(--line-2); }
+  .chips button:hover:not(:disabled) { color: var(--tx); border-color: var(--chg-line); filter: none; }
+  .chips button[aria-pressed=true] { color: #1c1c1c; background: var(--chg); border-color: var(--chg); font-weight: 600; }
+  #weather-box { margin: 10px 0 2px; }
+  #weather-box .wx-hd { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--tx-2); }
+  #weather-box .wx-hd b { color: var(--tx); }
+  #weather { margin: 8px 0 2px; }
+  #weather-ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--tx-3); }
+  #weather-ticks span { cursor: pointer; flex: 1; text-align: center; } #weather-ticks span:first-child { text-align: left; } #weather-ticks span:last-child { text-align: right; }
+  #weather-ticks span.on { color: var(--tx); font-weight: 600; }
+  /* right: live junctions accordion */
+  #live .lj { padding: 0; }
+  #live .lj .hd { width: 100%; height: auto; min-height: 34px; padding: 6px 9px; border: 0; border-radius: 10px; background: transparent; color: var(--tx); font: 600 12px var(--f);
+    display: flex; align-items: center; gap: 6px; text-align: left; white-space: normal; box-shadow: none; }
+  #live .lj .hd:hover { background: rgba(255,255,255,.04); filter: none; }
+  #live .lj .hd .nm2 { flex: 1; min-width: 0; }
+  #live .lj .hd small { font-weight: 400; font-size: 10.5px; color: var(--tx-3); white-space: nowrap; }
+  #live .lj .hd::after { content: "▾"; color: var(--tx-3); font-size: 11px; transition: transform .15s; }
+  #live .lj .hd[aria-expanded=true]::after { transform: rotate(180deg); }
+  #live .lj.open { border-color: var(--real-line); background: oklch(0.714 0.143 255 / .09); }
+  #live .lj-body { padding: 0 9px 7px; }
+  #layers-box summary { cursor: pointer; font: 600 11px/1.3 var(--f); color: var(--t-orange); text-transform: uppercase; letter-spacing: .03em; margin: 16px 0 4px; }
+  .lgrp { font: 500 10px var(--mono); color: var(--tx-3); text-transform: uppercase; letter-spacing: .06em; margin: 10px 0 0; }
   #left { top: calc(var(--nav-h, 0px) + 20px + var(--mode-h, 76px)); max-height: calc(100vh - var(--nav-h, 0px) - 32px - var(--mode-h, 76px)); }
   .seg { display: flex; gap: 2px; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 11px; padding: 3px; }
   .seg button { flex: 1; height: 34px; background: transparent; color: var(--tx-2); font-weight: 500; font-size: 13.5px; padding: 0 6px; border-radius: 8px; border: 0; box-shadow: none;
@@ -151,7 +178,7 @@
   .sev { color: #fff; border-radius: 999px; } .sev.ok { background: #008849; } .sev.mid { background: #f58832; color: #1c1c1c; } .sev.bad { background: #e23d27; }
   .qline { display: inline-block; width: 22px; height: 5px; border-radius: 3px; background: var(--slow); box-shadow: 0 0 8px oklch(0.605 0.205 31 / .6); vertical-align: 2px; margin-right: 4px; }
   /* playback pill: top centre of the map, between the side panels (chat open: between the left panel and the chat) */
-  #pb { --pb-r: 280px; top: calc(var(--nav-h, 0px) + 12px); left: 404px; right: var(--pb-r); margin: 0 auto; width: min(600px, calc(100vw - 416px - var(--pb-r)));
+  #pb { --pb-r: 328px; top: calc(var(--nav-h, 0px) + 12px); left: 404px; right: var(--pb-r); margin: 0 auto; width: min(600px, calc(100vw - 416px - var(--pb-r)));
     padding: 7px 12px 8px; border-radius: 20px; display: flex; flex-direction: column; gap: 3px; z-index: 3; }
   #pb[hidden] { display: none !important; }
   body.chat-open #pb { --pb-r: 438px; }
@@ -349,49 +376,16 @@
 </div>
 
 <div id="modebar" class="panel">
-  <div class="seg" role="tablist" aria-label="What the page shows">
-    <button id="mode-live" role="tab" data-mode="live" aria-selected="false" title="What TomTom measures on these roads right now: live traffic, junction delays and queues"><span class="livedot"></span>Live now</button>
-    <button id="mode-july" role="tab" data-mode="july" aria-selected="true" title="TomTom's July average, our simulation of it, and what a change would do">July typical day</button>
-  </div>
-  <div id="mode-head"></div>
+  <h1 id="hdr-title">Lingampally → Lakdikapul</h1>
+  <div id="hdr-sub">22.4 km commute through 11 junctions · <a href="ymca.html">YMCA close-up</a></div>
+  <div id="wx-now" class="wxchip" hidden></div>
 </div>
 
 <div id="left" class="panel">
-  <h1>Lingampally → Lakdikapul</h1>
-  <small>22.4 km commute through 11 junctions · <a href="ymca.html">YMCA Circle close-up</a></small><br>
-  <small id="status" class="july-only">API: checking…</small><small id="status-live" class="live-only">API: checking…</small>
-  <div id="wx-now" class="wxchip live-only" hidden></div>
+  <small id="status">API: checking…</small>
+  <div id="src"></div>
 
-  <div id="nc-box" class="live-only" hidden><!-- shown when GET /corridor sim.live.available -->
-    <div id="lt-box" hidden>
-      <h2>Live trip now, A → B <span class="tag real">REAL</span></h2>
-      <div id="lt"></div>
-      <div id="lt-strip" class="lt-strip" aria-label="Live speed on each stretch"></div>
-      <small id="lt-strip-note" class="muted">Each block is one stretch, as wide as its minutes, coloured by TomTom's live speed. Click to fly there.</small>
-    </div>
-    <small id="lt-off" class="muted" hidden></small>
-    <div class="row"><button id="nc-run" title="Simulates the whole corridor now: the July model for this hour, tuned so its trip matches TomTom's live trip. First run in a 10-minute slot takes up to a minute, then it is instant.">Simulate now</button>
-      <button id="nc-change" class="secondary" hidden title="Runs the same now-cast with a change, so you can compare now vs now with the change">Try a change now</button></div>
-    <div id="nc-busy" hidden></div>
-    <div id="nc-result" hidden></div>
-    <div id="nc-legend" class="note" hidden></div>
-  </div>
-  <div id="src" class="july-only"></div>
-
-  <div id="live-box" class="live-only">
-    <h2>Live now at the junctions <span class="tag real">REAL</span></h2>
-    <div class="note">Each junction pin shows the worst delay TomTom measures there now, coloured against the usual delay for this time.
-      Red lines on the roads are the queues TomTom measures now, drawn back from the junction.</div>
-    <div class="lv-legend"><span class="sev ok">12 s</span> about usual · <span class="sev mid">25 s</span> a little worse · <span class="sev bad">90 s</span> 15 s or more over usual ·
-      <span class="qline"></span>queue now</div>
-    <div id="live-empty" class="note info" hidden></div>
-    <div id="live"></div>
-    <small id="live-note" class="muted"></small>
-    <div id="geo-note" class="note" hidden></div>
-  </div>
-
-  <div class="july-only">
-  <h2>Quick demos</h2>
+  <h2 style="margin-top:12px">Quick actions</h2>
   <div id="presets">
     <button id="p-nallagandla" title="A 600 m, 2-lane flyover lifts the main road over the Nallagandla signal, the first signal of the trip. Replaces your list of changes, then simulates."><b>▶</b>Flyover at Nallagandla</button>
     <button id="p-dlf" title="A 600 m, 2-lane flyover lifts the main road over the busy ISB Rd / DLF signal. Replaces your list of changes, then simulates."><b>▶</b>Flyover at ISB Rd / DLF</button>
@@ -399,30 +393,31 @@
     <button id="p-dlf-retime" title="The DLF signal gives the side roads 70% of the green and the main road 30%. Watch the main-road queue spread back towards the junctions before it. Replaces your list of changes, then simulates."><b>▶</b>Give DLF's side roads more green (watch the ripple)</button>
   </div>
 
-  <h2>1 · When <span class="tag real">TomTom data</span></h2>
-  <div class="row"><select id="when" style="max-width:100%;flex:1 1 190px;min-width:0" title="The day: TomTom's July average, or one day"></select>
-    <label class="muted" id="hour-box" title="hourly TomTom data arriving tonight">Hour <select id="hour" disabled></select></label></div>
-  <div class="row" id="wx-row"><label class="muted" id="weather-box" hidden title="Rain what-if for the simulation: As measured is the simulation as calibrated to TomTom, rain included as it fell">Weather <select id="weather"></select></label>
-    <span id="wx-chip" class="wxchip" hidden></span></div>
-  <small id="weather-note" class="muted"></small>
-  <small id="hour-note" class="mid" style="display:block"></small>
-  <div id="hour-spark" hidden></div>
-  <div id="rain-strip" hidden></div>
-  <small id="when-note" class="muted"></small>
-  <div id="live-link" class="note" hidden></div>
-
-  <h2>2 · Change a junction</h2>
-  <div class="row">
-    <select id="iv-j"></select>
-    <select id="iv-kind">
-      <option value="flyover">Flyover</option>
-      <option value="underpass">Underpass</option>
-      <option value="signal_retime">Signal timing</option>
-      <option value="widening">Road widening</option>
-      <option value="one_way">One-way side road</option>
-      <option value="u_turn" disabled>U-turn change (soon)</option>
-    </select>
+  <div class="row" style="margin-top:12px">
+    <button id="sim-today" title="Simulates a typical day on the roads as they are, then draws the simulated A → B trip on the map">Start engine</button>
+    <button id="sim-changes" class="secondary" title="Simulates the same day with your list of changes, to compare">Run with changes</button>
   </div>
+  <div id="busy" hidden></div>
+  <small id="run-note" class="muted"></small>
+
+  <h2>Simulated <span class="tag sim">simulated data</span></h2>
+  <div class="row"><select id="iv-j" style="flex:1 1 auto;min-width:0" aria-label="Junction"></select></div>
+  <div id="iv-kinds" class="chips" role="group" aria-label="Modification">
+    <button data-kind="flyover" aria-pressed="true">Flyover</button>
+    <button data-kind="underpass" aria-pressed="false">Underpass</button>
+    <button data-kind="signal_retime" aria-pressed="false">Signal retime</button>
+    <button data-kind="widening" aria-pressed="false">Widening</button>
+    <button data-kind="one_way" aria-pressed="false">One-way</button>
+    <button data-kind="u_turn" aria-pressed="false" disabled title="Coming soon">U-turn (soon)</button>
+  </div>
+  <select id="iv-kind" hidden aria-hidden="true" tabindex="-1">
+    <option value="flyover">Flyover</option>
+    <option value="underpass">Underpass</option>
+    <option value="signal_retime">Signal timing</option>
+    <option value="widening">Road widening</option>
+    <option value="one_way">One-way side road</option>
+    <option value="u_turn" disabled>U-turn change (soon)</option>
+  </select>
   <div class="row" id="iv-params"></div>
   <div id="iv-help" class="note"></div>
   <div id="iv-exists" class="note exists" hidden></div>
@@ -431,19 +426,18 @@
   <div id="iv-merge" class="note info" hidden></div>
   <div id="iv-list"><small class="muted">No changes yet: today's roads.</small></div>
 
-  <h2>3 · Simulate <span class="tag sim">simulated</span></h2>
-  <div class="row">
-    <button id="sim-today">Simulate today</button>
-    <button id="sim-changes" class="secondary">Simulate with changes</button>
+  <div id="weather-box" hidden>
+    <div class="wx-hd"><span>Weather</span><b id="weather-val">As measured</b></div>
+    <input type="range" id="weather" min="0" max="3" step="1" value="1" aria-label="Weather, from dry to heavy rain" />
+    <div id="weather-ticks"></div>
+    <small id="weather-note" class="muted"></small>
   </div>
-  <div id="busy" hidden></div>
-  <small id="run-note" class="muted"></small>
 
   <h2>Junctions <span class="tag sim">simulated</span></h2>
-  <div id="jt"><small class="muted">Run a simulation to see delay and queues at each junction. Click a junction to fly there.</small></div>
+  <div id="jt"><small class="muted">Start the engine to see delay and queues at each junction. Click a junction to fly there.</small></div>
   <div id="warnings"></div>
 
-  <h2>4 · Decision <span class="tag rec">RECORDED</span></h2>
+  <h2>Decision <span class="tag rec">RECORDED</span></h2>
   <div id="dec">
     <div id="dec-off" class="note" hidden></div>
     <div id="case-busy" hidden></div>
@@ -457,36 +451,64 @@
     </div>
     <details id="case-list-box" hidden><summary class="muted">Earlier cases</summary><div id="case-list"></div></details>
   </div>
-  </div><!-- /july-only -->
 </div>
 
 <div id="right" class="panel">
-  <h2 style="margin-top:0">Layers</h2>
-  <label class="t live-only"><input type="checkbox" id="t-traffic" /> TomTom live traffic <span class="tag real">real</span></label>
-  <label class="t live-only"><input type="checkbox" id="t-queues" checked title="The queue TomTom measures now on each junction approach, drawn on the road" /> Queues now <span class="tag real">real</span></label>
-  <label class="t"><input type="checkbox" id="t-route" checked /> <span class="july-only">Route coloured by speed</span><span class="live-only">Our route, A → B</span></label>
-  <label class="t july-only"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
-  <label class="t july-only"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
-  <label class="t"><input type="checkbox" id="t-buildings" checked /> 3D buildings</label>
-  <label class="t"><input type="checkbox" id="t-night" checked /> Night map</label>
-  <small id="route-src" class="muted july-only"></small><br class="july-only">
-  <small id="traffic-note" class="muted live-only"></small>
-  <small id="queue-info" class="live-only" style="display:block"></small>
-  <small id="bld-note" class="muted"></small>
-  <div class="row" style="margin-top:8px"><button id="overview" class="ghost">Whole corridor</button><button id="orbit" class="ghost">Orbit</button></div>
-  <div style="margin-top:8px;font-size:11px" class="muted july-only">
-    <span class="chip" style="background:#35c177"></span>≥ 25 km/h
-    <span class="chip" style="background:#f58832"></span>15–25
-    <span class="chip" style="background:#e23d27"></span>&lt; 15<br>
-    <span class="chip" style="background:#f58832"></span>two-wheeler <span class="chip" style="background:#c9c9c9"></span>car
-    <span class="chip" style="background:#fcbf26"></span>auto <span class="chip" style="background:#35c177"></span>bus<br>
-    <span id="fly-key"><span class="chip" style="background:#1c1c1c;border-radius:50%;box-shadow:0 0 0 2px #c9c9c9;margin-left:2px"></span>junction with a flyover already built</span>
+  <div id="nc-box" hidden><!-- shown when GET /corridor sim.live.available -->
+    <div id="lt-box" hidden>
+      <h2 style="margin-top:0">Live trip now, A → B <span class="tag real">Real data · live</span></h2>
+      <div id="lt"></div>
+      <div id="lt-strip" class="lt-strip" aria-label="Live speed on each stretch"></div>
+      <small id="lt-strip-note" class="muted">Each block is one stretch, as wide as its minutes, coloured by its live speed. Click to fly there.</small>
+    </div>
+    <small id="lt-off" class="muted" hidden></small>
+    <div class="row"><button id="nc-run" title="Simulates the whole corridor now: the typical-day model for this hour, tuned so its trip matches the live trip (real data). The first run in a 10-minute slot takes up to a minute, then it is instant.">Simulate now</button>
+      <button id="nc-change" class="secondary" hidden title="Runs the same now-cast with a change, so you can compare now vs now with the change">Try a change now</button></div>
+    <div id="nc-busy" hidden></div>
+    <div id="nc-result" hidden></div>
+    <div id="nc-legend" class="note" hidden></div>
   </div>
+
+  <div id="live-box">
+    <h2>Live junctions <span class="tag real">Real data · live</span></h2>
+    <div class="lv-legend">Worst delay now: <span class="sev ok">12 s</span> usual · <span class="sev mid">25 s</span> worse · <span class="sev bad">90 s</span> 15 s+ over usual</div>
+    <div id="live-empty" class="note info" hidden></div>
+    <div id="live"></div>
+    <small id="live-note" class="muted"></small>
+    <div id="geo-note" class="note" hidden></div>
+  </div>
+
+  <details id="layers-box" open><summary>Layers</summary>
+    <div class="lgrp">Simulated data</div>
+    <label class="t"><input type="checkbox" id="t-route" checked /> A → B trip, coloured by speed</label>
+    <label class="t"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
+    <label class="t"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
+    <div class="lgrp">Real data · live</div>
+    <label class="t"><input type="checkbox" id="t-traffic" /> Live traffic <span class="tag real">real</span></label>
+    <label class="t"><input type="checkbox" id="t-queues" checked title="The queue measured now on each junction approach, drawn on the road" /> Queues now <span class="qline" style="margin-left:4px"></span></label>
+    <label class="t"><input type="checkbox" id="t-badges" checked title="Each junction pin shows its worst delay now, coloured against the usual delay" /> Delay badges on junctions</label>
+    <div class="lgrp">Map</div>
+    <label class="t"><input type="checkbox" id="t-buildings" checked /> 3D buildings</label>
+    <label class="t"><input type="checkbox" id="t-night" checked /> Night map</label>
+    <small id="route-src" class="muted"></small><br>
+    <small id="traffic-note" class="muted"></small>
+    <small id="queue-info" style="display:block"></small>
+    <small id="bld-note" class="muted"></small>
+    <div class="row" style="margin-top:8px"><button id="overview" class="ghost">Whole corridor</button><button id="orbit" class="ghost">Orbit</button></div>
+    <div style="margin-top:8px;font-size:11px" class="muted">
+      <span class="chip" style="background:#35c177"></span>≥ 25 km/h
+      <span class="chip" style="background:#f58832"></span>15–25
+      <span class="chip" style="background:#e23d27"></span>&lt; 15<br>
+      <span class="chip" style="background:#f58832"></span>two-wheeler <span class="chip" style="background:#c9c9c9"></span>car
+      <span class="chip" style="background:#fcbf26"></span>auto <span class="chip" style="background:#35c177"></span>bus<br>
+      <span id="fly-key"><span class="chip" style="background:#1c1c1c;border-radius:50%;box-shadow:0 0 0 2px #c9c9c9;margin-left:2px"></span>junction with a flyover already built</span>
+    </div>
+  </details>
 </div>
 
-<button id="ask-open" class="july-only" aria-controls="chat" aria-expanded="false">Ask Terascope AI</button>
+<button id="ask-open" aria-controls="chat" aria-expanded="false">Ask Terascope AI</button>
 
-<div id="journey" class="panel july-only">
+<div id="journey" class="panel">
   <div class="row" style="margin:0 0 4px;justify-content:space-between">
     <b>The trip, leg by leg <small class="muted" style="font-weight:400">· block width = minutes · click a block to fly there</small></b>
     <span id="journey-tags"></span>
@@ -496,10 +518,10 @@
   <small id="trip-foot" class="muted" style="display:block;margin-top:4px"></small>
 </div>
 
-<div id="chat" class="panel july-only" hidden aria-label="Ask Terascope AI">
+<div id="chat" class="panel" hidden aria-label="Ask Terascope AI">
   <div class="hd"><b>Ask Terascope AI</b>
     <span><button id="chat-new" class="ghost" title="Start a new conversation">New</button> <button id="chat-close" class="ghost" title="Close">✕</button></span></div>
-  <small class="muted">An assistant that runs the corridor simulation for you and explains the results. Its numbers are <span class="tag sim">SIMULATED</span> unless it says TomTom.</small>
+  <small class="muted">An assistant that runs the corridor simulation for you and explains the results. Its numbers are <span class="tag sim">SIMULATED</span> unless it says real data.</small>
   <div id="chat-log" aria-live="polite"></div>
   <div id="chat-sugg"></div>
   <div id="chat-off" class="note info" hidden></div>
@@ -578,15 +600,11 @@ let roads = null, frames = [], playing = false, pos = 0, lastTick = 0, stream = 
 let calib = null;                                       // GET /corridor/calibration (tomtom_basis_detail: route lengths, TomTom over the simulated route)
 const markers = {};
 
-// ---------- two modes: "Live now" (TomTom, measured right now) and "July typical day" (TomTom's July average + our simulation) ----------
-// Kept in the URL hash (#mode=live / #mode=july, next to #case=...); July unless the URL says otherwise.
-const MODE_HEAD = {
-  live: `<b>Live now:</b> what TomTom measures on these roads right now <span class="tag real">REAL</span>`,
-  july: `<b>July typical day:</b> TomTom's July average, and our simulation of it <span class="tag real">REAL</span><span class="tag sim">SIMULATED</span>`,
-};
-const modeFromHash = () => { const m = /(?:^#|&)mode=(live|july)\b/.exec(location.hash || ""); return m ? m[1] : null; };
-let mode = modeFromHash() || "july";
-document.body.classList.add(`mode-${mode}`);
+// ---------- one screen: real data (live junctions, live trip, weather now) next to simulated data (runs, changes) ----------
+document.body.classList.add("badges-on");   // live delay badges on the junction pins (layer "Delay badges on junctions")
+// Visible text never names the data vendor: real data, simulated data. Labels that come from the API are passed through this.
+const plain = t => String(t ?? "").replace(/TomTom live/g, "real data · live").replace(/TomTom['’]s/g, "real data's").replace(/TomTom/g, "real data")
+  .replace(/typical July day/gi, "typical day").replace(/\bJuly 2026 average\b/g, "typical-day average").replace(/\bJuly( 2026)?\b/g, "typical day");
 
 class HttpError extends Error { constructor(status, msg, detail) { super(msg); this.status = status; this.detail = detail; } }
 async function failure(path, r) {   // the server's own message: plain text, or FastAPI's {"detail": ...}
@@ -609,11 +627,11 @@ async function sampleRun(ivs, why) {
 }
 // ===== end SAMPLE FALLBACK =====
 
-// The day (#when: TomTom's July average or one day) and the hour (#hour, 06-22 = 06:00-07:00 .. 22:00-23:00) set the measured
-// row, and the simulation too once the API takes `day` + `hour` (hourOk); until then the simulation is the typical July day.
-// The weather (#weather: "" as measured, or a rain what-if from GET /corridor sim.weather) goes with every simulation request.
-let pickHour = null, hourOk = null, pickWeather = "";
-const simParams = () => ({ ...(hourOk && pickHour != null ? { day: dayId($("when").value), hour: pickHour } : {}), ...(pickWeather ? { weather: pickWeather } : {}) });
+// Always the typical day (the all-day average: no day or hour is sent). The weather slider ("" as measured, or a rain what-if
+// from GET /corridor sim.weather) goes with every simulation request.
+let pickWeather = "";
+const pickHour = null;
+const simParams = () => (pickWeather ? { weather: pickWeather } : {});
 async function corridorRun(ivs) {
   try { return await post("/corridor/runs", { interventions: ivs, volume_scale: 1.0, ...simParams() }); }
   catch (e) {
@@ -629,7 +647,7 @@ const FULLMON = ["January", "February", "March", "April", "May", "June", "July",
 const PERIOD_RE = /^(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})(?:\s+(\d{1,2}):\d{2}-(\d{1,2}):\d{2})?/;
 const isMultiDay = p => { const m = PERIOD_RE.exec(p); return !!m && m[1] !== m[2]; };
 function hoursOf(p) { const m = PERIOD_RE.exec(p); return m && m[3] ? `${m[3].padStart(2, "0")}–${m[4].padStart(2, "0")}` : ""; }
-function typicalName(p) { const m = PERIOD_RE.exec(p); return m ? `typical ${FULLMON[Number(m[1].slice(5, 7)) - 1]} day` : "typical day"; }
+function typicalName(p) { return "typical day"; }
 function periodLabel(p) {
   if (!PERIOD_RE.test(p)) return p;   // a period name the page does not know: show it as is
   const h = hoursOf(p), t = typicalName(p);
@@ -640,12 +658,8 @@ const isHourly = p => { const m = PERIOD_RE.exec(p || ""); return !!(m && m[3] !
 const dayId = p => { const m = PERIOD_RE.exec(p || ""); return !m || m[1] !== m[2] ? "july" : m[1]; };   // the API's `day`: "july" or "2026-07-08"
 const hh = h => `${String(h).padStart(2, "0")}:00`;
 const hourSpan = h => `${hh(h)}–${hh(h + 1)}`;
-function measured() {   // the TomTom period on screen: the chosen day, or that day's chosen hour (null: no hourly data for it)
-  const d = $("when").value, m = PERIOD_RE.exec(d || "");
-  if (pickHour == null || !m) return d;
-  return Object.keys(tomtom).find(x => { const q = PERIOD_RE.exec(x); return q && q[1] === m[1] && q[2] === m[2] && isHourly(x) && Number(q[3]) === pickHour; }) || null;
-}
-function pickLabel() { const d = $("when").value; return `${PERIOD_RE.test(d) ? periodShort(d) : d}${pickHour != null ? `, ${hourSpan(pickHour)}` : ""}`; }
+function measured() { return typical; }   // the measured period on screen: always the typical day (all-day average)
+function pickLabel() { return "typical day"; }
 const sumT = legs => legs.reduce((s, l) => s + l.time_s, 0);
 const mins = s => s / 60;
 const fmtMin = s => { const m = s / 60; return m < 10 ? m.toFixed(1) : m.toFixed(0); };
@@ -677,14 +691,13 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "
 async function init() {
   try { cfg = await get("/config"); apiUp = true; $("status").textContent = `API: ok${cfg.mock ? " (mock mode)" : " (real SUMO runs)"}`; }
   catch (e) { $("status").textContent = "API not running (run `make dev`): the page uses sample data."; }
-  $("status-live").textContent = apiUp ? "API: ok · live data from TomTom through the API" : "API not running (run `make dev`): live TomTom data comes through the API.";
   try { corridor = await get("/corridor"); if (!Array.isArray(corridor?.points) || corridor.points.length < 2) throw 0; } catch (e) { corridor = CORRIDOR_EMBED; }
   points = corridor.points;
   legPaths = cutRoute(corridor.route);
   await loadTomTom(corridor.legs || corridor.tomtom?.periods || corridor.tomtom);
   addHourly(corridor.tomtom?.hourly);
   if (apiUp) { try { calib = await get("/corridor/calibration"); } catch (e) { calib = null; } }
-  fillWhen(); fillJunctions(); fillParams(); fillHours(); fillWeather(); renderIvs(); renderJourney(); renderJunctions();
+  fillJunctions(); fillParams(); fillWeather(); renderIvs(); renderJourney(); renderJunctions();
   loadWxFactors();
 
   const hasKey = !!cfg.tomtom_maps_key;
@@ -706,61 +719,32 @@ async function init() {
     }
     if (best) startFollow(best.v.id);
   });
-  if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; $("t-night").parentElement.title = "Needs the TomTom map key"; }
-  $("traffic-note").textContent = hasKey ? "TomTom's live speeds on every road: green flowing, orange slow, red queuing." : "The TomTom live traffic layer needs the TomTom map key (TOMTOM_MAPS_KEY in .env).";
+  if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; $("t-night").parentElement.title = "Needs the map key"; }
+  $("traffic-note").textContent = hasKey ? "Live traffic: live speeds on every road (real data): green flowing, orange slow, red queuing." : "The live traffic layer needs the map key (in .env).";
   bldNote();
   addMarkers();
   overview(false);
   map.once("load", () => overview(false));
-  setMode(mode, false);
+  startLive();
   render();
   requestAnimationFrame(tick);
   loadLive(); setInterval(loadLive, LIVE_MS);
   loadWxNow(); setInterval(loadWxNow, WX_NOW_MS);
-  if (apiUp) setTimeout(probeHour, 1500);
 }
 
-// ---------- the two modes ----------
-function setMode(m, write = true) {
-  mode = m === "live" ? "live" : "july";
-  document.body.classList.toggle("mode-live", mode === "live"); document.body.classList.toggle("mode-july", mode === "july");
-  ["live", "july"].forEach(k => $(`mode-${k}`).setAttribute("aria-selected", String(k === mode)));
-  $("mode-head").innerHTML = MODE_HEAD[mode];
-  if (write) {   // keep anything else in the hash (#case=...)
-    const q = new URLSearchParams(location.hash.replace(/^#/, "")); q.set("mode", mode);
-    history.replaceState(null, "", "#" + q.toString().replace(/%3D/g, "="));
-  }
-  if (mode === "july" && playingRun?._nowcast) {   // the now-cast's vehicles belong to Live now: drop them in July
-    if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
-    stopRide(); following = null; frames = []; playingRun = null; setPlaying(false); pos = 0; roads = null; $("play").disabled = true; $("scrub").disabled = true; $("clock").textContent = "—";
-  }
-  if (mode === "live") {   // nothing simulated in Live now (unless Simulate now): stop the playback, the follow camera and the assistant
-    if (!nowcastOn()) setPlaying(false);
-    stopRide(); setFollow(false); setOrbit(false);
-    if (document.body.classList.contains("chat-open")) $("chat-close").click();
-    loadGeometry();
-  }
-  if (mode === "live" && cfg.tomtom_maps_key && !trafficTouched) $("t-traffic").checked = true;   // Live now opens with TomTom's live traffic on
-  trafficLayer();
-  syncModeHeight();
-  if (popup) popup.remove();
-  updateMarkers(); renderLive(); render();
-  pbSync(); renderWatch();
-  ltSchedule();
-}
-let trafficTouched = false;   // the viewer switched the live traffic layer off or on: keep their choice
-const trafficShown = () => mode === "live" && $("t-traffic").checked;   // live traffic is a Live now layer only
+// ---------- real data · live, on the same map as the simulation ----------
+function startLive() { loadGeometry(); trafficLayer(); syncModeHeight(); updateMarkers(); renderLive(); render(); pbSync(); renderWatch(); ltSchedule(); }
+let trafficTouched = false;   // the viewer switched the live traffic layer off or on
+const trafficShown = () => $("t-traffic").checked;   // off by default, so the simulated A -> B trip stands out
 function trafficLayer() {
   if (map && map.getLayer("tomtom-traffic")) map.setLayoutProperty("tomtom-traffic", "visibility", trafficShown() ? "visible" : "none");
 }
-function syncModeHeight() {   // the left panel sits under the mode switch
+function syncModeHeight() {   // the left panel sits under the header card
   const h = $("modebar").getBoundingClientRect().height;
   if (h) document.documentElement.style.setProperty("--mode-h", `${Math.ceil(h)}px`);
 }
-$("mode-live").onclick = () => setMode("live");
-$("mode-july").onclick = () => setMode("july");
-window.addEventListener("hashchange", () => { const m = modeFromHash(); if (m && m !== mode) setMode(m, false); });
 window.addEventListener("resize", syncModeHeight);
+if (window.ResizeObserver) new ResizeObserver(syncModeHeight).observe($("modebar"));   // the weather now arrives later and makes the header taller
 
 function parseCsv(text) {
   const split = line => { const out = []; let cur = "", q = false; for (const ch of line) { if (ch === '"') q = !q; else if (ch === "," && !q) { out.push(cur); cur = ""; } else cur += ch; } out.push(cur); return out; };
@@ -897,58 +881,11 @@ function cutRoute(route) {   // {"from|to": path} for each consecutive pair of c
   return paths;
 }
 
-// ---------- 1 · when ----------
-const dayRange = p => { const m = PERIOD_RE.exec(p || ""); return m ? `${m[1]}..${m[2]}` : p; };
-function fillWhen() {   // days only (the all-day periods, plus days TomTom has in one-hour slots only); the hour is picked next to it
-  const all = Object.keys(tomtom).filter(p => !isHourly(p)), have = new Set(all.map(dayRange));
-  const extra = [...new Set([...Object.keys(hourlyDays), ...Object.keys(tomtom).filter(isHourly).map(dayRange)])].filter(d => !have.has(d) && !(isMultiDay(d) && all.some(isMultiDay)));
-  const ps = [...all, ...extra].sort((a, b) => (a === typical ? -1 : b === typical ? 1 : a.localeCompare(b)));
-  $("when").innerHTML = ps.map(p => `<option value="${esc(p)}">${esc(periodLabel(p))} · ${tomtom[p] ? `${Math.round(mins(sumT(tomtom[p])))} min` : "by the hour"}</option>`).join("");
-  $("when").value = typical;
-  updateWhenNote();
-}
-function updateWhenNote() {
-  const daily = Object.keys(tomtom).filter(p => p !== typical && PERIOD_RE.test(p) && !isMultiDay(p) && !isHourly(p));
-  const dow = p => new Date(p.slice(0, 10) + "T12:00:00+05:30").getUTCDay();
-  const sun = daily.filter(p => dow(p) === 0), wk = daily.filter(p => dow(p) > 0 && dow(p) < 6);
-  const avg = ps => ps.length ? Math.round(ps.reduce((s, p) => s + mins(sumT(tomtom[p])), 0) / ps.length) : "–";
-  const p = $("when").value, tot = Math.round(mins(sumT(tomtom[p] || []))), h = hoursOf(p).replace(/(\d+)/g, "$1:00");
-  renderSpark();
-  const when = !PERIOD_RE.test(p) ? `for ${esc(p)}` : isMultiDay(p) ? `on an average ${typicalName(p).replace("typical ", "")}${h ? ", " + h : ""}` : `on ${dayLabel(p.slice(0, 10))}${h ? ", averaged " + h : ""}`;
-  $("when-note").innerHTML = (tomtom[p] ? `TomTom measured the whole trip at <b>${tot} min</b> ${when}. ` : `TomTom has ${esc(periodShort(p))} in one-hour slots: pick an hour. `) +
-    (daily.length ? `Weekdays ≈ ${avg(wk)} min, Sundays (${sun.map(x => Number(x.slice(8, 10))).join(" and ")} ${MON[Number((sun[0] || p).slice(5, 7)) - 1] || ""}) ≈ ${avg(sun)} min. ` : "") +
-    (pickHour != null ? (measured() ? `<br>${esc(pickLabel())}: TomTom measured <b>${Math.round(mins(sumT(tomtom[measured()])))} min</b>.` :
-      `<br><span class="mid">No hourly TomTom data for ${esc(pickLabel())} yet.</span>`) : "") +
-    (hourOk ? `<br><b>The day and hour set both the measured (TomTom) row and the simulation.</b>` :
-      `<br><b>Changes the measured (TomTom) row only; the simulation is the typical July day.</b>`) +
-    (pickWeather ? ` The weather what-if changes the simulation only: the TomTom row stays as measured.` : "");
-  renderWx();
-}
-function hourProfile() {   // [{h, min}] for the chosen day, from its hourly periods
-  const d = dayRange($("when").value), out = [];
-  for (const [p, legs] of Object.entries(tomtom)) {
-    if (!isHourly(p) || dayRange(p) !== d) continue;
-    out.push({ h: Number(PERIOD_RE.exec(p)[3]), min: mins(sumT(legs)) });
-  }
-  return out.sort((a, b) => a.h - b.h);
-}
-function renderSpark() {
-  const prof = hourProfile(), el = $("hour-spark");
-  el.hidden = prof.length < 2;
-  if (el.hidden) { el.innerHTML = ""; return; }
-  const max = Math.max(...prof.map(x => x.min)), lo = prof.reduce((a, b) => (b.min < a.min ? b : a)), hi = prof.reduce((a, b) => (b.min > a.min ? b : a));
-  const bars = prof.map(x => { const ht = Math.max(2, x.min / max * 30), ok = x.h >= 6 && x.h <= 22;
-    return `<rect data-h="${x.h}" class="${x.h === pickHour ? "on" : ok ? "day pick" : ""}" x="${x.h * 10 + 1}" y="${32 - ht}" width="8" height="${ht}"><title>${hourSpan(x.h)}: ${x.min.toFixed(1)} min (TomTom)</title></rect>`; }).join("");
-  el.innerHTML = `<svg viewBox="0 0 240 40" preserveAspectRatio="none" role="img" aria-label="Trip minutes by hour">${bars}` +
-    [0, 6, 12, 18, 23].map(h => `<text x="${h * 10 + 5}" y="40" font-size="7" text-anchor="middle" fill="#929292">${h}</text>`).join("") + `</svg>` +
-    `<div class="cap">Trip by hour, ${esc(periodShort($("when").value))} <span class="tag real">REAL</span>: ${Math.round(lo.min)} min at ${hh(lo.h)}, ${Math.round(hi.min)} min at ${hh(hi.h)}. Click an hour to pick it.</div>`;
-  el.querySelectorAll("rect.pick, rect.on").forEach(r => r.onclick = () => { if ($("hour").disabled) return; $("hour").value = r.dataset.h; $("hour").onchange(); });
-}
-let simKeyRun = "{}", rerunTimer = null;   // the day and hour the shown simulation was asked for
-function pickChanged() {   // the measured row follows at once; the simulation follows too (run again) once the API simulates hours
-  updateWhenNote(); renderJourney(); render();
+let simKeyRun = "{}", rerunTimer = null;   // the weather the shown simulation was asked for
+function pickChanged() {   // the weather changed: the simulation on screen runs again (once)
+  renderJourney(); render();
   clearTimeout(rerunTimer);
-  rerunTimer = setTimeout(function again() {   // quick changes (day, then hour) make one run; a run in progress finishes first
+  rerunTimer = setTimeout(function again() {   // quick changes make one run; a run in progress finishes first
     if (running) { rerunTimer = setTimeout(again, 500); return; }
     if (!base || JSON.stringify(simParams()) === simKeyRun) return;
     const withChanges = !!changed && interventions.length > 0;
@@ -956,9 +893,6 @@ function pickChanged() {   // the measured row follows at once; the simulation f
     simulate(withChanges);
   }, 600);
 }
-$("when").onchange = pickChanged;
-$("hour").onchange = () => { pickHour = $("hour").value === "" ? null : Number($("hour").value); pickChanged(); };
-$("weather").onchange = () => { pickWeather = $("weather").value; updateWeatherNote(); pickChanged(); };
 
 // ---------- weather: the chosen day and hour's weather, the rain what-if, the weather now ----------
 // GET /weather?day=july|2026-07-DD -> {label, source, note, hours: [24 slots]} (measured: Open-Meteo reanalysis, a weather model);
@@ -966,7 +900,7 @@ $("weather").onchange = () => { pickWeather = $("weather").value; updateWeatherN
 // GET /weather/now -> {text, temperature_c, rain_mm_per_hour, is_raining, rain_effect, label} (modelled), 503 when Open-Meteo is down.
 const WX_NAMES = { "": "As measured", dry: "Dry", light_rain: "Light rain", heavy_rain: "Heavy rain" };
 const WX_PLAIN = { dry: "no rain this hour or the hour before", light_rain: "light rain (0.1–1 mm an hour) for an hour or more",
-                   heavy_rain: "the wettest hours July had (1–5 mm an hour) for an hour or more; not a cloudburst" };
+                   heavy_rain: "the wettest hours in the data (1–5 mm an hour) for an hour or more; not a cloudburst" };
 // The hourly July 2026 analysis (data/rain/README.md), used until GET /weather/factors answers
 const WX_FALLBACK = { dry: { trip_time_pct: 0, trip_time_pct_ci95: [0, 0] }, light_rain: { trip_time_pct: 4.0, trip_time_pct_ci95: [0.5, 6.9] },
                       heavy_rain: { trip_time_pct: 7.9, trip_time_pct_ci95: [-3.9, 16.1] } };
@@ -995,97 +929,50 @@ function wxEstimate(w, r) {   // [pct, [lo, hi]] vs dry: from the run (inputs.we
   const s = wxSetting(w); return s && s.trip_time_pct != null ? [s.trip_time_pct, s.trip_time_pct_ci95] : null;
 }
 const estTxt = (e, w) => !e ? "" : `${pctTxt(e[0])}${w !== "dry" && e[1] && e[1][0] != null ? ` (95% range ${pctTxt(e[1][0])} to ${pctTxt(e[1][1])})` : ""}`;
-function fillWeather() {   // the what-if settings GET /corridor sim.weather lists; none (older API, no rain factors): the control stays hidden
+const WX_STEPS = ["dry", "", "light_rain", "heavy_rain"];   // the slider, dry to heavy rain ("": as measured)
+let wxSteps = WX_STEPS;
+function fillWeather() {   // the what-if settings GET /corridor sim.weather lists; none (older API, no rain factors): the slider stays hidden
   wxOptions = (Array.isArray(corridor?.sim?.weather) ? corridor.sim.weather : []).filter(w => typeof w === "string" && w);
-  $("weather").innerHTML = ["", ...wxOptions].map(w => `<option value="${esc(w)}"${WX_PLAIN[w] ? ` title="${esc(WX_PLAIN[w])}"` : ""}>${esc(wxName(w))}</option>`).join("");
-  if (!wxOptions.includes(pickWeather)) pickWeather = "";
-  $("weather").value = pickWeather;
+  wxSteps = WX_STEPS.filter(w => !w || wxOptions.includes(w));
+  if (!wxSteps.includes(pickWeather)) pickWeather = "";
+  $("weather").max = String(wxSteps.length - 1);
+  $("weather").value = String(wxSteps.indexOf(pickWeather));
+  $("weather-ticks").innerHTML = wxSteps.map((w, i) => `<span data-i="${i}"${WX_PLAIN[w] ? ` title="${esc(WX_PLAIN[w])}"` : ""}>${esc(wxName(w))}</span>`).join("");
+  $("weather-ticks").querySelectorAll("span").forEach(el => el.onclick = () => { $("weather").value = el.dataset.i; wxInput(); wxCommit(); });
   $("weather-box").hidden = !wxOptions.length;
-  updateWeatherNote();
+  wxInput();
 }
+const wxAt = () => wxSteps[Number($("weather").value)] ?? "";
+function wxInput() {   // while sliding: the name and what it means
+  const w = wxAt();
+  $("weather-val").textContent = wxName(w);
+  $("weather-ticks").querySelectorAll("span").forEach(el => el.classList.toggle("on", Number(el.dataset.i) === Number($("weather").value)));
+  updateWeatherNote(w);
+}
+function wxCommit() {   // let go: the simulation on screen runs again in that weather
+  const w = wxAt(); if (w === pickWeather) return;
+  pickWeather = w; updateWeatherNote(); pickChanged();
+}
+$("weather").oninput = wxInput;
+$("weather").onchange = wxCommit;
 async function loadWxFactors() {
   if (!apiUp) return;
   try { wxFactors = await get("/weather/factors"); } catch (e) { wxFactors = null; }   // the saved numbers stand in
-  updateWeatherNote();
+  wxInput();
 }
-function updateWeatherNote() {   // what the chosen weather means, with the estimate and its range
-  const el = $("weather-note"), w = pickWeather;
+function updateWeatherNote(w = pickWeather) {   // what the chosen weather means, with the estimate and its range
+  const el = $("weather-note");
   if (!wxOptions.length) { el.innerHTML = ""; return; }
   if (!w) {
-    const d = dayId($("when").value), h = pickHour, s = h != null ? (wxDays[d]?.hours || []).find(x => x.hour === h) : null;
-    el.innerHTML = `<b>As measured:</b> the simulation as calibrated to TomTom, with the rain that actually fell` +
-      (d !== "july" && h != null ? " in that hour" : s && s.share_of_days_with_rain != null ? ` (at ${hh(h)} it rained on ${share(s.share_of_days_with_rain)} of July days)` : " (in a typical July hour it rained on about 4 days in 10)") +
-      `. Pick Dry, Light rain or Heavy rain for a rain what-if.`;
+    el.innerHTML = `<b>As measured:</b> the simulation as calibrated to real data, with the rain that actually fell (on a typical day it rains in about 4 hours in 10). ` +
+      `Slide to Dry, Light rain or Heavy rain for a rain what-if.`;
     return;
   }
   const e = wxEstimate(w);
-  el.innerHTML = `<b>${esc(wxName(w))} what-if:</b> ${esc(WX_PLAIN[w] || wxSetting(w)?.meaning || w)}. ` +
-    (e ? `Trip time vs dry: <b>${estTxt(e, w)}</b> <span class="tag est" title="From TomTom's hourly trip times and Open-Meteo's hourly rain, July 2026 (data/rain/README.md)">estimated</span>` +
+  el.innerHTML = `<b>${esc(wxName(w))} what-if:</b> ${esc(WX_PLAIN[w] || plain(wxSetting(w)?.meaning) || w)}. ` +
+    (e ? `Trip time vs dry: <b>${estTxt(e, w)}</b> <span class="tag est" title="From measured hourly trip times and hourly rain (real data)">estimated</span>` +
       `${w !== "dry" ? " · confidence low to moderate" : ""}. ` : "") +
     `Only road speeds change; traffic and signals stay as they are (assumed).`;
-}
-function wxDay(d) {   // GET /weather?day= once per day
-  if (!apiUp) { wxDays[d] = null; return Promise.resolve(null); }
-  return wxReq[d] ||= get(`/weather?day=${encodeURIComponent(d)}`)
-    .then(x => (wxDays[d] = Array.isArray(x?.hours) && x.hours.length ? x : null))
-    .catch(e => { wxDays[d] = null; return null; });
-}
-function renderWx() {   // the chip next to the day and hour, and the rain strip under the hour sparkline
-  const d = dayId($("when").value), x = wxDays[d];
-  if (x === undefined) {
-    $("wx-chip").hidden = true; $("rain-strip").hidden = true;
-    wxDay(d).then(() => { if (dayId($("when").value) === d && wxDays[d] !== undefined) renderWx(); });
-    return;
-  }
-  renderWxChip(d, x); renderRainStrip(d, x);
-  if (!pickWeather) updateWeatherNote();
-}
-function renderWxChip(d, x) {   // "Fri 17 Jul 15:00 · Rain 2.9 mm · 25°C", "Rain on 42% of July days at 18:00 · 26°C"
-  const el = $("wx-chip"), hrs = x?.hours || [];
-  let html = "", wet = false, code = null;
-  if (pickHour != null) {
-    const s = hrs.find(q => q.hour === pickHour);
-    if (s && d === "july") {
-      wet = /rain|drizzle|shower|thunder/i.test(s.most_common_text || "");
-      html = `Rain on <b>${share(s.share_of_days_with_rain)}</b> of July days at ${hh(pickHour)}${s.temperature_c != null ? ` · ${Math.round(s.temperature_c)}°C` : ""}`;
-    } else if (s) {
-      code = s.weather_code; wet = isWet(null, s.rain_mm);
-      html = `${dayLabel(d)} ${hh(pickHour)} · <b>${esc(s.text)}${wet ? ` ${mmTxt(s.rain_mm)} mm` : ""}</b>${s.temperature_c != null ? ` · ${Math.round(s.temperature_c)}°C` : ""}`;
-    }
-  } else if (hrs.length) {
-    const day = hrs.filter(q => q.hour >= 6 && q.hour <= 22);
-    if (d === "july") {
-      const m = day.reduce((a, q) => a + q.share_of_days_with_rain, 0) / day.length;
-      html = `July, 06–23: rain in <b>${share(m)}</b> of hours`;
-    } else {
-      const tot = day.reduce((a, q) => a + (q.rain_mm || 0), 0), top = day.reduce((a, q) => (q.rain_mm > a.rain_mm ? q : a), day[0]);
-      wet = tot >= 0.1;
-      html = `${dayLabel(d)}, 06–23: <b>${wet ? `${mmTxt(tot)} mm of rain` : "dry"}</b>${wet && top ? `, most at ${hh(top.hour)} (${mmTxt(top.rain_mm)} mm)` : ""}`;
-    }
-  }
-  el.hidden = !html;
-  if (!html) { el.innerHTML = ""; return; }
-  el.classList.toggle("wet", wet);
-  el.innerHTML = `${wxIcon(code, wet)}<span>${html}</span><span class="wx-src">Open-Meteo</span>`;
-  el.title = `${x.label || "measured (Open-Meteo reanalysis)"}: ${x.source || "Open-Meteo"}. ${x.note || ""}`.trim();
-}
-function renderRainStrip(d, x) {   // 24 bars under the TomTom sparkline: mm of rain that day, or the share of July days with rain
-  const el = $("rain-strip"), hrs = x?.hours || [], july = d === "july";
-  el.hidden = $("hour-spark").hidden || hrs.length < 2;
-  if (el.hidden) { el.innerHTML = ""; return; }
-  const v = q => (july ? q.share_of_days_with_rain : q.rain_mm) || 0, max = july ? 1 : Math.max(2, ...hrs.map(v));   // 2 mm or more fills a bar
-  const bars = hrs.map(q => {
-    const ht = v(q) > 0 ? Math.max(1.5, v(q) / max * 15) : 0, ok = q.hour >= 6 && q.hour <= 22;
-    const tip = `${hourSpan(q.hour)}: ${july ? `rain on ${share(v(q))} of July days` : `${mmTxt(v(q))} mm, ${q.text}`} (Open-Meteo)`;
-    return `<g data-h="${q.hour}" class="${q.hour === pickHour ? "on" : ok ? "pick" : ""}"><title>${esc(tip)}</title>` +
-      `<rect class="trk" x="${q.hour * 10 + 1}" y="0" width="8" height="16"/><rect class="rbar" x="${q.hour * 10 + 1}" y="0" width="8" height="${ht.toFixed(1)}"/></g>`;
-  }).join("");
-  const day = hrs.filter(q => q.hour >= 6 && q.hour <= 22), top = day.reduce((a, q) => (v(q) > v(a) ? q : a), day[0]);
-  const tot = day.reduce((a, q) => a + v(q), 0);
-  el.innerHTML = `<svg viewBox="0 0 240 16" preserveAspectRatio="none" role="img" aria-label="Rain by hour">${bars}</svg>` +
-    `<div class="cap">${july ? `Rain by hour, share of July days with rain (Open-Meteo): most often at ${hh(top.hour)} (${share(v(top))}).`
-      : tot >= 0.1 ? `Rain by hour, ${dayLabel(d)} (Open-Meteo): ${mmTxt(tot)} mm from 06:00 to 23:00, most at ${hh(top.hour)}.` : `Rain by hour, ${dayLabel(d)} (Open-Meteo): dry from 06:00 to 23:00.`}</div>`;
-  el.querySelectorAll("g.pick, g.on").forEach(g => g.onclick = () => { if ($("hour").disabled) return; $("hour").value = g.dataset.h; $("hour").onchange(); });
 }
 function wxResultLine(r) {   // the run's weather what-if for the result line: name, estimate with its range, label
   const w = runWeather(r); if (!w) return "";
@@ -1107,8 +994,8 @@ function renderWxNow() {   // "Clear sky · 27°C", "Light rain 0.8 mm/h · 24°
   el.innerHTML = wxIcon(w.weather_code, wet, w.is_day !== false) +
     `<span>Weather now: <b>${esc(w.text || "–")}${wet && w.rain_mm_per_hour != null ? ` ${mmTxt(w.rain_mm_per_hour)} mm/h` : ""}</b>${w.temperature_c != null ? ` · ${Math.round(w.temperature_c)}°C` : ""}` +
     (wet && eff && eff.trip_time_pct ? ` · rain like this adds about ${pctTxt(eff.trip_time_pct, 0)} to the trip <span class="tag est">estimated</span>` : "") + `</span>` +
-    `<span class="wx-src">modelled${w.stale && w.age_s ? `, ${Math.round(w.age_s / 60)} min old` : ""}</span>`;
-  el.title = `${w.label || "modelled (Open-Meteo forecast), not a rain gauge"}. ${w.source || ""}${w.location?.name ? `, at ${w.location.name}` : ""}${w.time ? `, ${w.time}` : ""}`;
+    `<span class="wx-src">Real data · live${w.stale && w.age_s ? `, ${Math.round(w.age_s / 60)} min old` : ""}</span>`;
+  el.title = `${plain(w.label || "modelled (Open-Meteo forecast), not a rain gauge")}. ${plain(w.source || "")}${w.location?.name ? `, at ${w.location.name}` : ""}${w.time ? `, ${w.time}` : ""}`;
 }
 
 // ---------- Live now: the live trip (GET /corridor/live_trip) and Simulate now (POST /corridor/runs?async=1, day "live") ----------
@@ -1117,11 +1004,11 @@ function renderWxNow() {   // "Clear sky · 27°C", "Light rain 0.8 mm/h · 24°
 let liveTrip = null, ltTimer = null, ncBase = null, ncChanged = null, ncBusy = false, ncTimer = null;
 const liveCaps = () => corridor?.sim?.live || null;
 const NC_POLL_MS = window.NC_POLL_MS || 2000;
-const nowcastOn = () => mode === "live" && !!playingRun?._nowcast;   // simulated now-cast vehicles on the live map
+const nowcastOn = () => !!playingRun?._nowcast;   // simulated now-cast vehicles on the live map
 const istHHMM = t => /T(\d{2}:\d{2})/.exec(String(t || ""))?.[1] || hhmm(t);
 function ltSchedule() {   // GET /corridor/live_trip now and every refresh_s while Live now is on screen
   clearInterval(ltTimer); ltTimer = null;
-  const on = mode === "live" && !!liveCaps()?.available;
+  const on = !!liveCaps()?.available;
   $("nc-box").hidden = !on;
   if (!on) return;
   loadLiveTrip();
@@ -1134,20 +1021,20 @@ async function loadLiveTrip() {
 function renderLiveTrip() {
   const lt = liveTrip, t = lt?.trip;
   $("lt-box").hidden = !t; $("lt-off").hidden = !!t; $("nc-run").hidden = !t;
-  if (!t) { $("lt-off").textContent = "Live trip unavailable right now (no TomTom live flow through the API)."; renderNcChange(); return; }
+  if (!t) { $("lt-off").textContent = "Live trip unavailable right now (no live data through the API)."; renderNcChange(); return; }
   const d = t.delta_s != null ? t.delta_s / 60 : t.july_same_hour_min != null ? t.total_min - t.july_same_hour_min : null;
   const cls = d == null ? "" : d >= 3 ? "bad" : d > 0.5 ? "mid" : "ok";
-  $("lt").innerHTML = `<span class="lt-big" id="lt-total">${t.total_min.toFixed(1)} min</span> <span class="lab estimated" title="${esc(t.label)}: summed from TomTom's live speeds on each stretch">${esc(t.label || "estimated")}</span>` +
-    (lt.stale ? ` <span class="lt-stale" id="lt-stale" title="TomTom's live data is ${Math.round((lt.age_s || 0) / 60)} min old">STALE</span>` : "") +
-    `<div class="lt-line" id="lt-vs">${t.july_same_hour_min != null ? `July same hour <b>${t.july_same_hour_min.toFixed(1)} min</b>` : ""}` +
+  $("lt").innerHTML = `<span class="lt-big" id="lt-total">${t.total_min.toFixed(1)} min</span> <span class="lab estimated" title="${esc(plain(t.label))}: summed from the live speeds on each stretch">${esc(plain(t.label || "estimated"))}</span>` +
+    (lt.stale ? ` <span class="lt-stale" id="lt-stale" title="The live data is ${Math.round((lt.age_s || 0) / 60)} min old">STALE</span>` : "") +
+    `<div class="lt-line" id="lt-vs">${t.july_same_hour_min != null ? `Typical day, same hour <b>${t.july_same_hour_min.toFixed(1)} min</b>` : ""}` +
     (d != null ? ` · now <b class="${cls}">${signed(d)} min</b>` : "") + `</div>` +
-    `<div class="lt-line" id="lt-asof">Confidence <b>${esc(t.confidence_label || (t.confidence != null ? Math.round(t.confidence * 100) + "%" : "–"))}</b> · as of <b>${esc(lt.time_label || istHHMM(lt.as_of))}</b>` +
+    `<div class="lt-line" id="lt-asof">Confidence <b>${esc(plain(t.confidence_label) || (t.confidence != null ? Math.round(t.confidence * 100) + "%" : "–"))}</b> · as of <b>${esc(lt.time_label || istHHMM(lt.as_of))}</b>` +
     ` · refreshes every ${Math.round((liveCaps()?.refresh_s || 300) / 60)} min</div>`;
   const legs = lt.legs || [], tot = legs.reduce((s, l) => s + (l.time_s || 0), 0) || 1;
   $("lt-strip").innerHTML = legs.map((l, i) => {
     const kmh = l.flow?.current_speed_kmh ?? l.speed_kmh, ff = l.flow?.free_flow_speed_kmh;
     return `<span data-i="${i}" style="flex:${(l.time_s || 1) / tot} 1 0;background:rgb(${speedRGB(kmh ?? 20).join(",")})" title="${esc(short(l.from_name || point(l.from_id)?.name))} → ${esc(short(l.to_name || point(l.to_id)?.name))}: ` +
-      `${kmh != null ? Math.round(kmh) + " km/h now" : "no live speed"}${ff != null ? ` (free flow ${Math.round(ff)})` : ""}, ${fmtMin(l.time_s || 0)} min · ${esc(l.flow?.label || l.basis || "")}"></span>`;
+      `${kmh != null ? Math.round(kmh) + " km/h now" : "no live speed"}${ff != null ? ` (free flow ${Math.round(ff)})` : ""}, ${fmtMin(l.time_s || 0)} min · ${esc(plain(l.flow?.label || l.basis || ""))}"></span>`;
   }).join("");
   $("lt-strip").querySelectorAll("span").forEach(el => el.onclick = () => flyToLeg(Number(el.dataset.i)));
   renderNcChange();
@@ -1180,7 +1067,7 @@ function renderNcChange() {   // "Try a change now": the July list of changes, e
 async function simulateNow(withChange) {
   if (ncBusy) return;
   const body = { interventions: [], day: "live", volume_scale: 1.0 };
-  ncSetBusy(true, withChange ? "Simulating now with the change" : "Simulating the corridor now, tuned to TomTom live");
+  ncSetBusy(true, withChange ? "Simulating now with the change" : "Simulating the corridor now, tuned to real data · live");
   $("nc-result").hidden = true;
   try {
     if (!withChange || !ncBase) { const r = await runAsync(body); r._nowcast = true; ncBase = r; ncChanged = null; }
@@ -1198,7 +1085,7 @@ async function simulateNow(withChange) {
     }
     ncSetBusy(false);
     renderNowcast(); renderNcChange();
-    if (mode === "live") play(withChange ? ncChanged : ncBase);
+    play(withChange ? ncChanged : ncBase);
   } catch (e) {
     ncSetBusy(false);
     $("nc-result").hidden = false;
@@ -1212,14 +1099,14 @@ function renderNowcast() {
   const lv = r.inputs?.live_trip || {}, at = istHHMM(lv.as_of || r.time?.as_of), tt = r.journey?.tomtom_total_s;
   const clamped = lv.hour_clamped ? ` <span class="nc-clamp" id="nc-clamped" title="${esc(`${hh(lv.now_hour ?? 0)} is outside the calibrated hours: the model uses the nearest calibrated hour, tuned to the live trip`)}">night: ${hh(lv.hour ?? r.time?.hour ?? 6)} model</span>` : "";
   const watch = ncChanged ? `<div class="row" style="margin:4px 0 0"><button class="ghost" id="nc-watch-base">Watch now-cast</button><button class="ghost" id="nc-watch-chg">Watch with the change</button></div>` : "";
-  $("nc-result").innerHTML = `<div id="nc-label"><b>${esc(r.time?.label || "Now-cast")}</b> <span class="tag sim">SIMULATED</span>${r.sample ? ' <span class="tag sample">SAMPLE DATA</span>' : ""}${clamped}</div>` +
-    `<div>Simulated trip now <b id="nc-total">${min1(r.journey.total_s)} min</b>${tt ? ` · TomTom live estimate ${min1(tt)} min <span class="tag real">REAL</span>` : ""}</div>` +
+  $("nc-result").innerHTML = `<div id="nc-label"><b>${esc(plain(r.time?.label || "Now-cast"))}</b> <span class="tag sim">SIMULATED</span>${r.sample ? ' <span class="tag sample">SAMPLE DATA</span>' : ""}${clamped}</div>` +
+    `<div>Simulated trip now <b id="nc-total">${min1(r.journey.total_s)} min</b>${tt ? ` · live estimate ${min1(tt)} min <span class="tag real">REAL</span>` : ""}</div>` +
     (ncChanged ? `<div id="nc-cmp">With ${esc(ncChanged._ivs.map(ivText).join("; "))} at ${esc(short(point(ncChanged._ivs[0].junction_id)?.name))}: <b>${min1(ncChanged.journey.total_s)} min</b> ` +
       `(<b class="${ncChanged.journey.total_s < r.journey.total_s ? "ok" : "bad"}">${signed((ncChanged.journey.total_s - r.journey.total_s) / 60)} min</b> vs the now-cast) <span class="tag chg">WITH CHANGES</span></div>` : "") +
     `<small id="nc-clock" class="muted"></small>` + watch;
   if (ncChanged) { $("nc-watch-base").onclick = () => play(ncBase); $("nc-watch-chg").onclick = () => play(ncChanged); }
-  $("nc-legend").innerHTML = `<b>Cars: <span style="color:var(--sim)">SIMULATED</span> now-cast</b>, tuned to TomTom live at ${esc(at || "–")} · ` +
-    `<b>road colours and red queues: <span style="color:var(--real)">REAL</span> TomTom</b><br>` +
+  $("nc-legend").innerHTML = `<b>Cars: <span style="color:var(--sim)">SIMULATED</span> now-cast</b>, tuned to real data · live at ${esc(at || "–")} · ` +
+    `<b>red queues: <span style="color:var(--real)">REAL</span> data · live</b><br>` +
     `<span class="k" style="background:#f58832"></span>two-wheeler <span class="k" style="background:#c9c9c9"></span>car <span class="k" style="background:#fcbf26"></span>auto <span class="k" style="background:#35c177"></span>bus`;
 }
 $("nc-run").onclick = () => simulateNow(false);
@@ -1281,7 +1168,7 @@ async function loadLive() {
     if (!live || !e.status || [404, 405].includes(e.status)) live = null;   // endpoint not there (yet) or API down: hide the panel
     else { $("live-note").innerHTML = `<span class="mid">Could not refresh (${e.status}); showing the last update.</span>`; return; }
   }
-  if (mode === "live") loadGeometry();
+  loadGeometry();
   renderLive();
 }
 // Approach shapes (GET /corridor/junctions/geometry): [{junction_id, approaches: [{approach_id, name, coordinates: [[lon, lat], ...]}]}],
@@ -1333,41 +1220,50 @@ function queueLines() {   // the measured queue on each live approach, drawn bac
   }
   return out;
 }
-function renderLive() {
+let openLive = null, liveCam = null;   // the expanded junction in the accordion; the camera from before it opened
+function renderLive() {   // the right-hand accordion: one row per live junction, its worst delay now vs usual as a badge
   const has = !!(live && live.length);
   updateMarkers();
-  $("live-link").hidden = !has;
-  if (has) {
-    $("live-link").innerHTML = `TomTom is reporting live from ${live.length} of these junctions right now: <button class="linkbtn" id="see-live">see Live now</button>`;
-    $("see-live").onclick = () => { setMode("live"); window.scrollTo(0, 0); };
-  }
   $("live-empty").hidden = has;
   $("geo-note").hidden = !has || geometry !== null;
   $("geo-note").textContent = "Queues are listed per junction here; drawing them on the road needs the approach shapes (GET /corridor/junctions/geometry), not on this server yet.";
-  if (mode === "live") render();
+  render();
   if (!has) {
-    $("live-empty").textContent = apiUp ? "No live junction data right now: the API has no TomTom Junction Analytics feed (GET /corridor/junctions/live)." :
-      "API not running (`make dev`): live TomTom junction data comes through the API.";
+    $("live-empty").textContent = apiUp ? "No live junction data right now (GET /corridor/junctions/live)." :
+      "API not running (`make dev`): live junction data comes through the API.";
     $("live").innerHTML = ""; $("live-note").textContent = "";
     return;
   }
+  if (openLive && !live.some(j => j.id === openLive)) openLive = null;
   const nm = n => String(n).replace(/\bRoad\b/g, "Rd").replace(/\b(North|South|East|West) Bound\b/g, (m, d) => d[0] + "-bound");
   $("live").innerHTML = live.map(j => {
-    const w = worst(j), calm = w.every(a => !a.delay_s && !a.queue_m), hr = w.some(a => a.mean && a.mean.delay_s != null);
-    return `<div class="lj" data-id="${j.id}"><div class="hd" title="Fly to this junction"><span>${pointLabel(j.id)} · ${esc(short(j.name))}</span>` +
-      `<small${j.age_s > 900 ? ' class="mid" title="No fresh data from TomTom for a while"' : ""}>${j.time ? "TomTom " + hhmm(j.time) : ""}${j.age_s > 900 ? `, ${Math.round(j.age_s / 60)} min old` : ""}</small></div>` +
+    const w = worst(j), top = w[0], calm = w.every(a => !a.delay_s && !a.queue_m), hr = w.some(a => a.mean && a.mean.delay_s != null), open = j.id === openLive;
+    return `<div class="lj${open ? " open" : ""}" data-id="${j.id}"><button class="hd" aria-expanded="${open}" title="${open ? "Close and fly back" : "Open: approaches, and fly to this junction"}">` +
+      `<span class="nm2">${pointLabel(j.id)} · ${esc(short(j.name))}</span>` +
+      (top ? `<span class="sev ${delayClass(top)}" title="Worst delay now${top.usual_delay_s != null ? `; usually ${Math.round(top.usual_delay_s)} s` : ""}">${Math.round(top.delay_s)} s</span>` : "") +
+      `<small${j.age_s > 900 ? ' class="mid" title="No fresh live data for a while"' : ""}>${j.time ? "Live " + hhmm(j.time) : ""}${j.age_s > 900 ? `, ${Math.round(j.age_s / 60)} min old` : ""}</small></button>` +
+      `<div class="lj-body"${open ? "" : " hidden"}>` +
       (calm ? `<div class="calm ok">Flowing freely: no delay on any of ${j.approaches.length} approaches.</div>` :
         `<table><tr><th>Worst approaches</th><th class="n">Delay</th><th class="n">Usual</th>${hr ? '<th class="n">Last hr</th>' : ""}<th class="n">Queue</th></tr>` +
         w.map(a => `<tr class="ap" title="${esc(a.name)}: ${Math.round(a.delay_s)} s delay now${a.usual_delay_s != null ? `, usually ${Math.round(a.usual_delay_s)} s` : ""}">` +
           `<td class="nm">${esc(nm(a.name))}</td><td class="n"><b class="${delayClass(a)}">${Math.round(a.delay_s)} s</b></td>` +
           `<td class="n">${a.usual_delay_s != null ? Math.round(a.usual_delay_s) + " s" : "–"}</td>` +
           `${hr ? `<td class="n">${a.mean && a.mean.delay_s != null ? Math.round(a.mean.delay_s) + " s" : "–"}</td>` : ""}<td class="n">${fmtQ(a.queue_m)}</td></tr>`).join("") + `</table>`) +
-      `${j.mean && j.mean.delay_s != null ? `<div class="calm muted">Last hour, whole junction: ${Math.round(j.mean.delay_s)} s average delay</div>` : ""}</div>`;
+      `${j.mean && j.mean.delay_s != null ? `<div class="calm muted">Last hour, whole junction: ${Math.round(j.mean.delay_s)} s average delay</div>` : ""}</div></div>`;
   }).join("");
-  $("live").querySelectorAll(".lj .hd").forEach(el => el.onclick = () => flyToPoint(el.parentElement.dataset.id));
+  $("live").querySelectorAll(".lj .hd").forEach(el => el.onclick = () => toggleLive(el.parentElement.dataset.id));
   const est = live.some(j => /estimated/i.test(j.label)) || /estimated/i.test(liveLabels.queue_m || "");
-  $("live-note").innerHTML = `Delay per approach now vs usual, from TomTom Junction Analytics${est ? " (queue and volume estimated by TomTom)" : ""}. ` +
+  $("live-note").innerHTML = `Delay per approach now vs usual, real data · live${est ? " (queue and volume estimated)" : ""}. ` +
     `Updated ${hhmm(liveAt)}, refreshes every ${Math.round(LIVE_MS / 1000)} s.`;
+}
+function toggleLive(id) {   // expand: fly to the junction; collapse: back to the camera from before
+  if (openLive === id) {
+    openLive = null; selected = null; renderLive(); if (popup) popup.remove();
+    if (liveCam) { map.flyTo({ ...liveCam, duration: 1400, essential: true }); liveCam = null; }
+    return;
+  }
+  if (!openLive && map) liveCam = { center: map.getCenter(), zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() };
+  openLive = id; renderLive(); flyToPoint(id);
 }
 
 // ---------- 2 · change a junction ----------
@@ -1412,7 +1308,9 @@ function readParams() {
   return params;
 }
 function showNanalButton() { $("iv-nanal").hidden = !NANAL_PAIR.includes($("iv-j").value); }
-$("iv-kind").onchange = () => { fillParams(); syncPicker(); };
+function syncKindChips() { document.querySelectorAll("#iv-kinds button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.kind === $("iv-kind").value))); }
+$("iv-kind").onchange = () => { fillParams(); syncPicker(); syncKindChips(); };
+document.querySelectorAll("#iv-kinds button").forEach(b => b.onclick = () => { if (b.disabled) return; $("iv-kind").value = b.dataset.kind; $("iv-kind").onchange(); });
 $("iv-j").onchange = () => { selected = $("iv-j").value; updateMarkers(); syncPicker(); };
 function sortIvs() { interventions.sort((a, b) => points.findIndex(p => p.id === a.junction_id) - points.findIndex(p => p.id === b.junction_id)); }
 const MERGE_NOTE = "Nanal Nagar and Rethibowli are only about 420 m apart, so one 1.2 km flyover over both replaces two separate flyovers.";
@@ -1471,7 +1369,7 @@ function setRunning(on) {
 }
 async function simulate(withChanges) {
   if (running) return;
-  if (withChanges && !interventions.length) { $("run-note").innerHTML = `<span class="mid">Add at least one change in step 2 first.</span>`; return; }
+  if (withChanges && !interventions.length) { $("run-note").innerHTML = `<span class="mid">Add at least one change under Simulated first.</span>`; return; }
   const ivs = JSON.parse(JSON.stringify(interventions)), t0 = Date.now();
   simKeyRun = JSON.stringify(simParams());
   const what = (withChanges ? `with ${ivs.length} change${ivs.length > 1 ? "s" : ""}` : "today's roads") + (simParams().hour != null ? `, ${pickLabel()}` : "") +
@@ -1490,7 +1388,7 @@ async function simulate(withChanges) {
     renderJourney(); renderJunctions(); renderWatch(); render();
     $("status").textContent = `Corridor, ${what}: simulated${r.sample ? " (sample data)" : ""}${took >= 3 ? ` in ${clock(took)}` : ""}, now playing`;
     const odd = r._fallback && withChanges && !(ivs.length === 1 && ivs[0].junction_id === "j07" && ivs[0].kind === "flyover");
-    $("run-note").innerHTML = `Simulated window: ${esc(r.time?.label || "calibrated peak")} · traffic input: <b>${esc(r.inputs?.label || "–")}</b>${r.inputs?.counts_source && r.inputs.counts_source !== r.inputs?.label ? ` (${esc(r.inputs.counts_source)})` : ""}` +
+    $("run-note").innerHTML = `Simulated window: ${esc(plain(r.time?.label || "calibrated peak"))} · traffic input: <b>${esc(plain(r.inputs?.label || "–"))}</b>${r.inputs?.counts_source && r.inputs.counts_source !== r.inputs?.label ? ` (${esc(plain(r.inputs.counts_source))})` : ""}` +
       wxResultLine(r) + (odd ? `<br><span class="mid">The sample always shows a flyover at 7 · Tolichowki, whatever you chose.</span>` : "");
     winPick = null; play(r);   // loads in the background; the panel stays usable
   } catch (e) {
@@ -1517,14 +1415,16 @@ function stripRow(title, tags, legs, max, opts = {}) {
       `${fmtMin(l.time_s)} min, ${(l.distance_m / 1000).toFixed(1)} km, ${Math.round(legSpeed(l))} km/h${opts.ref ? ` (${signed(mins(d))} min)` : ""}`;
     return `<div class="leg${Math.abs(d) >= 30 ? " changed" : ""}" data-leg="${i}" title="${tip}" style="width:${w}%;background:rgb(${speedRGB(legSpeed(l))})">${w > 2.6 ? fmtMin(l.time_s) : ""}</div>`;
   }).join("");
-  return `<div class="strip" data-strip="${opts.key}"><div class="name">${title}${tags}</div><div class="bar">${blocks}</div><div class="total">${Math.round(mins(tot))} min</div></div>`;
+  return `<div class="strip" data-strip="${opts.key}"><div class="name">${title}${tags}</div><div class="bar">${blocks}</div><div class="total">${mins(tot).toFixed(1)} min</div></div>`;
 }
 function renderJourney() {
   const p = measured(), tt = p ? tomtom[p] || [] : [];
-  const rows = [];
-  if (base) rows.push({ key: "base", title: `${simDay(base)}, roads as they are`, tags: tagsFor(base), legs: base.journey.legs, total: base.journey.total_s });
-  if (tt.length) rows.push({ key: "tomtom", title: `Measured by TomTom, ${pickHour != null ? pickLabel() : periodShort(p)}`, tags: '<span class="tag real">REAL</span>', legs: tt });
-  if (changed) rows.push({ key: "changed", title: `${simDay(changed)}, with your changes`, tags: tagsFor(changed), legs: changed.journey.legs, total: changed.journey.total_s, ref: base && base.journey.legs });
+  // Two bars only: real data (measured, typical day) and, once a change has been run, the simulation with your changes.
+  // Today's simulation is not a bar: the text under the strip gives it, and the change is measured against it.
+  const rows = [], w = runWeather(changed);
+  if (tt.length) rows.push({ key: "tomtom", title: `Real data · typical day`, tags: '<span class="tag real">REAL</span>', legs: tt });
+  if (changed) rows.push({ key: "changed", title: `Simulated with your changes${w ? `, ${esc(wxName(w).toLowerCase())}` : ""}`, tags: tagsFor(changed), legs: changed.journey.legs,
+    total: changed.journey.total_s, ref: base && base.journey.legs });
   const max = Math.max(...rows.map(r => Math.max(r.total ?? 0, sumT(r.legs))), 1);
   let h = "";
   rows.forEach((r, k) => {
@@ -1545,7 +1445,7 @@ function renderJourney() {
 const runHour = r => num(r?.time?.hour ?? r?.hour ?? r?.requested?.hour);
 const runDay = r => r?.time?.day ?? r?.day ?? r?.requested?.day ?? null;
 function simDay(r) {   // "Simulated typical July day", "Simulated Wed 8 Jul, 18:00–19:00", "Simulated typical July day, heavy rain"
-  const h = runHour(r), d = runDay(r), day = /^\d{4}-\d{2}-\d{2}$/.test(d || "") ? dayLabel(d) : "typical July day", w = runWeather(r);
+  const h = runHour(r), d = runDay(r), day = /^\d{4}-\d{2}-\d{2}$/.test(d || "") ? dayLabel(d) : "typical day", w = runWeather(r);
   return `Simulated ${day}${h != null ? `, ${hourSpan(h)}` : ""}${w ? `, ${wxName(w).toLowerCase()}` : ""}`;
 }
 // Why the simulated and measured rows differ in length: our simulated route is a little shorter than TomTom's. Numbers from the
@@ -1560,14 +1460,17 @@ function tripBasis() {
 function renderTripFoot() {
   const t = tripBasis(), km = x => x.toFixed(1);
   if (t.simKm == null || base?.sample) { $("trip-foot").textContent = ""; return; }   // the sample's numbers are not our route
-  $("trip-foot").innerHTML = `Our simulated route is ${km(t.simKm)} km${t.ttKm ? ` (TomTom's: ${km(t.ttKm)} km)` : ""}.` +
-    (t.ttSame != null ? ` Over the same ${km(t.simKm)} km TomTom measured ${Math.round(t.ttSame)} min${t.simMin != null ? `; the simulation gives ${Math.round(t.simMin)} min` : ""}.` : "") +
-    (base ? " Compare the two simulated rows to see what a change does." : "");
+  $("trip-foot").innerHTML = `Our simulated route is ${km(t.simKm)} km${t.ttKm ? ` (the measured route: ${km(t.ttKm)} km)` : ""}.` +
+    (t.ttSame != null ? ` Over the same ${km(t.simKm)} km real data measured ${Math.round(t.ttSame)} min${t.simMin != null ? `; the simulation gives ${Math.round(t.simMin)} min` : ""}.` : "") +
+    (changed ? " The change is measured against the simulation of today's roads, not against real data." : "");
 }
 function renderDeltas() {
-  if (!base) { $("deltas").innerHTML = `<small class="muted">Press “Simulate today” to simulate a typical July day on the roads as they are, then add changes and “Simulate with changes”.</small>`; return; }
-  if (!changed) {
-    $("deltas").innerHTML = base.sample ? `<small>Model ${Math.round(mins(base.journey.total_s))} min vs TomTom ${Math.round(mins(sumT(tomtom[measured()] || [])))} min (${esc(pickLabel())}).</small>` : "";
+  if (!base) { $("deltas").innerHTML = `<small class="muted">Press “Start engine” to simulate a typical day on the roads as they are, then add changes and “Run with changes”.</small>`; return; }
+  const today = mins(base.journey.total_s), w0 = runWeather(base), t = tripBasis(), real = t.ttSame ?? mins(sumT(tomtom[measured()] || []));
+  if (!changed) {   // after Start engine: one line, no second bar
+    $("deltas").innerHTML = `<div class="headline" id="sim-today">Simulated today: <b>${today.toFixed(1)} min</b>${w0 ? `, ${esc(wxName(w0).toLowerCase())} (what-if)` : ""} ` +
+      `<span class="muted">(real data ${real.toFixed(1)})</span>${tagsFor(base)}</div>` +
+      `<small class="muted">Add a change under Simulated and press “Run with changes” to see it as a second bar.</small>`;
     return;
   }
   const b = base.journey.total_s, c = changed.journey.total_s, dm = mins(c - b);
@@ -1581,7 +1484,7 @@ function renderDeltas() {
   const moved = diffs.filter(x => Math.abs(x.d) >= 6).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)), same = diffs.length - moved.length;
   const cls = dm < -0.05 ? "ok" : dm > 0.05 ? "bad" : "";
   const stale = changed._ivs && changed._ivs !== ivKey(interventions) ? `<div class="mid" style="font-size:12px">Your list of changes was edited after this run: simulate again to update.</div>` : "";
-  $("deltas").innerHTML = `<div class="headline">Whole trip: <b>${Math.round(mins(b))} → ${Math.round(mins(c))} min, <span class="${cls}">${signed(dm)} min</span></b>${tagsFor(changed)}` +
+  $("deltas").innerHTML = `<div class="headline">With your changes: <b>${mins(c).toFixed(1)} min</b> · <b class="${cls}">${signed(dm)} min</b> vs the simulation of today's roads (${mins(b).toFixed(1)})${tagsFor(changed)}` +
     ` <small>· with ${(changed.interventions || []).map(iv => `${ivText(iv).toLowerCase()} at ${short(point(iv.junction_id)?.name)}`).join("; ")}` +
     `${runWeather(changed) ? `, both in ${esc(wxName(runWeather(changed)).toLowerCase())} (what-if)` : ""}</small></div>` + stale +
     `<div id="run-warn">${warnBox("Warnings for this run", changed.warnings || [])}</div>` +
@@ -1618,6 +1521,7 @@ function renderJunctions() {
 // A result's warnings in plain words: "j07 flyover: j07 already has a flyover: the corridor crosses ..." becomes
 // "7 · Tolichowki, flyover: already has a flyover. The corridor crosses ...". Escaped (warnings come from the server).
 function warnHtml(w) {
+  w = plain(w);
   const named = s => s.replace(/\b(j\d\d)\b/g, (m, id) => point(id) ? `${pointLabel(id)} · ${short(point(id).name)}` : m);
   const m = /^(j\d\d) ([a-z_]+): (.*)$/s.exec(String(w));
   if (!m || !point(m[1])) return "⚠ " + esc(named(String(w)));
@@ -1646,18 +1550,18 @@ function addMarkers() {
 function updateMarkers() {
   for (const [id, m] of Object.entries(markers)) {
     const el = m.getElement(), lj = (live || []).find(j => j.id === id), w = lj && worst(lj)[0];
-    el.classList.toggle("has", mode === "july" && interventions.some(iv => iv.junction_id === id || (id === NANAL_PAIR[1] && coversBoth(iv))));
+    el.classList.toggle("has", interventions.some(iv => iv.junction_id === id || (id === NANAL_PAIR[1] && coversBoth(iv))));
     el.classList.toggle("sel", selected === id);
     el.classList.toggle("live", !!lj);
     el.classList.toggle("fly", !!existingFlyover(id));
     if (w) { el.dataset.badge = `${Math.round(w.delay_s)} s`; el.dataset.sev = delayClass(w); }   // drawn in Live now only (CSS)
     else { delete el.dataset.badge; delete el.dataset.sev; }
     el.title = point(id)?.name + (existingFlyover(id) ? ` · flyover exists: the main road crosses on the ${existingFlyover(id)}` : "") +
-      (w && mode === "live" ? ` · live now: worst delay ${Math.round(w.delay_s)} s on ${w.name}${w.usual_delay_s != null ? ` (usually ${Math.round(w.usual_delay_s)} s)` : ""}` : "");
+      (w ? ` · real data · live: worst delay ${Math.round(w.delay_s)} s on ${w.name}${w.usual_delay_s != null ? ` (usually ${Math.round(w.usual_delay_s)} s)` : ""}` : "");
   }
 }
 let popup = null;
-const VIEW_OFFSET = [65, -105];   // put the junction in the middle of the map area the panels leave free (left 400 px, right 270, bottom 250)
+const VIEW_OFFSET = [44, -40];   // put the junction in the middle of the map area the panels leave free (left 400 px, right 320, playback pill on top, trip at the bottom)
 const narrow = () => window.innerWidth <= 820;   // narrow screens: the panels sit below the map, nothing to keep clear of
 const pad = (desk) => narrow() ? 30 : desk;
 function flyToPoint(id) {
@@ -1665,11 +1569,11 @@ function flyToPoint(id) {
   selected = id; updateMarkers();
   if (p.kind === "junction") { $("iv-j").value = id; syncPicker(); }
   map.flyTo({ center: [p.lon, p.lat], zoom: 16.2, pitch: 58, bearing: -20, duration: 1800, essential: true, offset: narrow() ? [0, 0] : VIEW_OFFSET });
-  const sim = mode === "july", b = sim && base && base.junctions.find(j => j.id === id), c = sim && changed && changed.junctions.find(j => j.id === id);
+  const b = base && base.junctions.find(j => j.id === id), c = changed && changed.junctions.find(j => j.id === id);
   const stat = (r, lab) => r ? `<br>${lab}: ${r.avg_delay_s} s delay, ${r.max_queue_m} m queue` : "";
-  const lj = !sim && (live || []).find(j => j.id === id), ws = lj ? worst(lj) : [];
-  const liveLine = ws.length ? ws.map((w, k) => `<br>${k ? "" : "Live now: "}<b class="${delayClass(w)}">${Math.round(w.delay_s)} s</b> delay${w.usual_delay_s != null ? ` (usual ${Math.round(w.usual_delay_s)} s)` : ""}, queue ${fmtQ(w.queue_m)} on ${esc(w.name)}`).join("") + ' <span class="tag real">REAL</span>' :
-    !sim ? "<br><span class='muted'>No live TomTom data for this junction.</span>" : "";
+  const lj = (live || []).find(j => j.id === id), ws = lj ? worst(lj) : [];
+  const liveLine = ws.length ? ws.map((w, k) => `<br>${k ? "" : "Real data · live: "}<b class="${delayClass(w)}">${Math.round(w.delay_s)} s</b> delay${w.usual_delay_s != null ? ` (usual ${Math.round(w.usual_delay_s)} s)` : ""}, queue ${fmtQ(w.queue_m)} on ${esc(w.name)}`).join("") + ' <span class="tag real">REAL</span>' :
+    "";
   if (popup) popup.remove();
   popup = new maplibregl.Popup({ offset: 16, closeButton: true }).setLngLat([p.lon, p.lat])
     .setHTML(`<b>${pointLabel(id)} · ${esc(p.name)}</b>` +
@@ -1690,14 +1594,27 @@ function overview(animate = true) {
   map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
                 { padding: { top: pad(60), bottom: pad(260), left: pad(420), right: pad(280) }, pitch: 0, bearing: 0, duration: animate ? 1200 : 0 });
 }
-function routeLegs() {   // what colours the route: the latest simulation, else TomTom for the chosen day
+const legLines = legs => legs.map(l => {   // [{path, kmh}] per stretch, on the real road when we have it
+  const a = point(l.from_id), z = point(l.to_id), path = legPaths?.[`${l.from_id}|${l.to_id}`];
+  return path ? { path, kmh: legSpeed(l) } : a && z ? { path: [[a.lon, a.lat], [z.lon, z.lat]], kmh: legSpeed(l) } : null;
+}).filter(Boolean);
+function routeLegs() {   // what colours the route: the latest simulation, else real data for the typical day
   const r = changed || base, legs = r ? r.journey.legs : (tomtom[measured()] || []);
-  const by = r ? `${changed ? "the run with changes" : "today's simulation"}${r.sample ? " (sample)" : ""} (SIMULATED speeds)` : `TomTom, ${pickLabel()} (REAL speeds)`;
+  const by = r ? `${changed ? "the run with changes" : "today's simulation"}${r.sample ? " (sample)" : ""} (SIMULATED speeds)${changed && base ? "; today's run is drawn alongside it" : ""}` : `real data, ${pickLabel()} (REAL speeds)`;
   $("route-src").textContent = `Route coloured by ${by}. ${legPaths ? "Drawn on the real road, A → B." : "Straight lines between junctions (road shape not available yet)."}`;
-  return legs.map(l => {
-    const a = point(l.from_id), z = point(l.to_id), path = legPaths?.[`${l.from_id}|${l.to_id}`];
-    return path ? { path, kmh: legSpeed(l) } : a && z ? { path: [[a.lon, a.lat], [z.lon, z.lat]], kmh: legSpeed(l) } : null;
-  }).filter(Boolean);
+  return legLines(legs);
+}
+let offsetExt = null;
+function routeLayers(layers, near) {   // the A -> B trip: coloured by simulated speed per stretch after a run (today's and with changes side by side)
+  const legs = routeLegs(), both = !!(base && changed), w = near ? 6 : 8, op = near ? 0.6 : 0.95;
+  const ext = both && deck.PathStyleExtension ? [offsetExt ||= new deck.PathStyleExtension({ offset: true })] : [];
+  const common = { widthUnits: "pixels", capRounded: true, jointRounded: true, getPath: d => d.path };
+  layers.push(new deck.PathLayer({ ...common, id: "route-casing", data: legs, getWidth: (ext.length ? 2 * w : w) + 5, opacity: near ? 0.3 : 0.75, getColor: [10, 10, 12, 235],
+    updateTriggers: { getWidth: [both, near] } }));
+  if (ext.length) layers.push(new deck.PathLayer({ ...common, id: "route-base", data: legLines(base.journey.legs), getWidth: w, opacity: op, extensions: ext, getOffset: -0.55,
+    getColor: d => [...speedRGB(d.kmh), 235], updateTriggers: { getColor: [base, changed] } }));
+  layers.push(new deck.PathLayer({ ...common, id: "route", data: legs, getWidth: w, opacity: op, extensions: ext, getOffset: ext.length ? 0.55 : 0,
+    getColor: d => [...speedRGB(d.kmh), 240], updateTriggers: { getColor: [base, changed], getOffset: both } }));
 }
 
 // ---------- vehicles (C1 frames), same drawing as the YMCA page ----------
@@ -1863,7 +1780,7 @@ const dirOf = p => /B->A|rev/i.test(String(p?.direction || "")) || (!p?.directio
 const dep = p => p.depart_s ?? p.points[0].t;
 const TYPE_NAME = { two_wheeler: "Two-wheeler", car: "Car", auto: "Auto", bus: "Bus", truck: "Truck" };
 const volOf = r => Number(r?.inputs?.volume_scale ?? 1);
-const simShown = () => mode === "july" || nowcastOn();   // simulated vehicles are on the map
+const simShown = () => true;   // simulated vehicles share the map with the live layers
 function setOrbit(on) { orbiting = on; $("orbit").textContent = on ? "Stop orbit" : "Orbit"; if (on) { setFollow(false); stopRide(); } }
 function setPlaying(on) {
   playing = !!on; lastTick = 0;
@@ -2158,74 +2075,29 @@ function watchRun(r) {   // Watch: Today | With changes: the same moment of the 
   if (hit) return play(hit, seek);
   const m = winPick; play(r); watchFrom(m, seek);
 }
-function fillHours() {   // 06:00-07:00 .. 22:00-23:00
-  $("hour").innerHTML = `<option value="">All day</option>` + Array.from({ length: 17 }, (_, i) => i + 6).map(h => `<option value="${h}">${hourSpan(h)}</option>`).join("");
-  setHourOk(hourOk);
-}
-function setHourOk(ok) {   // usable once the API simulates hours, or once GET /corridor has hourly TomTom periods (then the measured row only)
-  hourOk = ok;
-  const hourly = Object.keys(tomtom).some(isHourly), on = !!ok || hourly;
-  $("hour").disabled = !on;
-  if (!on && pickHour != null) { pickHour = null; $("hour").value = ""; }
-  $("hour-box").title = ok ? "The hour sets the measured (TomTom) row and the simulation" : on ? "The hour sets the measured (TomTom) row; the simulation is still the typical July day" : "hourly TomTom data arriving tonight";
-  $("hour-note").textContent = on ? "" : "Hour: hourly TomTom data arriving tonight.";
-  updateWhenNote();
-}
-async function probeHour() {   // does the API take `hour` yet? GET /corridor says so (sim.hours); older APIs: try once
-  if (Array.isArray(corridor?.sim?.hours)) return setHourOk(corridor.sim.hours.includes(8));
-  const KEY = `cr.hour.${API}`;
-  try { const c = JSON.parse(localStorage.getItem(KEY) || "null"); if (c && Date.now() - c.at < 30 * 60000) return setHourOk(!!c.ok); } catch (e) { /* no storage */ }
-  let ok = null;
-  try { const r = await post("/corridor/runs", { interventions: [], volume_scale: 1.0, day: "july", hour: 8 }); ok = runHour(r) === 8; }   // an API that ignores `hour` answers without it
-  catch (e) { if (e.status && e.status < 500 && ![404, 405].includes(e.status)) ok = false; }   // 422 "hourly data not available yet"
-  if (ok === null) return;   // API down or no corridor runs: ask again next time
-  try { localStorage.setItem(KEY, JSON.stringify({ ok, at: Date.now() })); } catch (e) { /* no storage */ }
-  setHourOk(ok);
-}
-
 function render() {
   if (!overlay) return;
-  const layers = [], near = map.getZoom() >= 14, night = $("t-night").checked, sim = mode === "july";
+  const layers = [], near = map.getZoom() >= 14, night = $("t-night").checked;
   if (buildings && $("t-buildings").checked && near) layers.push(new deck.PolygonLayer({
     id: "buildings", data: bldData(), extruded: true, wireframe: false, opacity: 0.6,
     getPolygon: d => d.polygon, getElevation: d => d.h, getFillColor: night ? [74, 74, 74] : [214, 208, 196], material: { ambient: 0.5, diffuse: 0.6 },
     updateTriggers: { getFillColor: night },
   }));
-  if ($("t-route").checked) layers.push(new deck.PathLayer({   // Live now: just where our route runs (TomTom's live layer shows the speeds)
-    id: "route", data: routeLegs(), widthUnits: "pixels", getWidth: sim ? 7 : 3, capRounded: true, jointRounded: true, opacity: sim ? (near ? (legPaths ? 0.55 : 0.35) : 0.85) : 0.6,
-    getPath: d => d.path, getColor: d => sim ? [...speedRGB(d.kmh), 220] : [201, 201, 201, 170], updateTriggers: { getColor: [base, changed, $("when").value, pickHour, mode] },
-  }));
-  if (!sim) {   // Live now: the measured queues on the road, nothing simulated
-    const q = $("t-queues").checked ? queueLines() : [];
-    if (q.length) {
-      layers.push(new deck.PathLayer({ id: "live-queues-casing", data: q, widthUnits: "pixels", getWidth: 11, capRounded: true, jointRounded: true, getPath: d => d.path, getColor: [7, 9, 13, 235] }));
-      layers.push(new deck.PathLayer({
-        id: "live-queues", data: q, widthUnits: "pixels", getWidth: 6, capRounded: true, jointRounded: true, getPath: d => d.path, getColor: [226, 61, 39, 250], pickable: true,
-        onHover: ({ object: o }) => { $("queue-info").innerHTML = o ? `Queue now: <b>${fmtQ(o.queue_m)}</b>${o.beyond ? " (longer than the road drawn)" : ""} on ${esc(o.name)} into ${esc(short(point(o.jid)?.name))}, ` +
-          `${Math.round(o.delay_s)} s delay${o.usual_delay_s != null ? ` (usual ${Math.round(o.usual_delay_s)} s)` : ""} <span class="tag real">REAL</span>` : ""; },
-      }));
-    }
-    if (nowcastOn()) {   // Simulate now: the now-cast's vehicles (SIMULATED) on the live map; the live layers stay on
-      const st = structures(playingRun);
-      if (st.length) layers.push(new deck.PathLayer({ id: "nc-structures", data: st, widthUnits: "meters", widthMinPixels: 3, jointRounded: true, billboard: false,
-        getPath: d => d.path, getWidth: d => d.lanes * (d.oneWay ? 1 : 2) * 3.5 + 1.5, getColor: d => d.kind === "underpass" ? [70, 70, 78, 230] : [168, 166, 160, 240] }));
-      const showOthers = !ride || ride.inWin, inv = near ? inView() : null;
-      const vs = frames.length && showOthers ? currentVehicles(ride ? (inv ? v => !ride.skip.has(v.id) && inv(v) : v => !ride.skip.has(v.id)) : inv) : [];
-      if (vs.length) layers.push(near ? new deck.PolygonLayer({
-        id: "nc-vehicles", data: vs, extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2], getFillColor: v => COLORS[v.type] || [0, 0, 0],
-        material: { ambient: 0.45, diffuse: 0.7, shininess: 20 }, updateTriggers: { getPolygon: pos } })
-        : new deck.ScatterplotLayer({ id: "nc-vehicle-dots", data: vs, radiusUnits: "pixels", getRadius: 2.5, getPosition: v => [v.lon, v.lat, v.z || 0],
-          getFillColor: v => [...(COLORS[v.type] || [0, 0, 0]), 230], updateTriggers: { getPosition: pos } }));
-      focusLayers(layers);
-    }
-    overlay.setProps({ layers, effects: lighting(night) });
-    return;
-  }
+  if ($("t-route").checked) routeLayers(layers, near);
   if (roads && $("t-roads").checked) layers.push(new deck.PathLayer({
     id: "roads", data: roads.filter(f => !f.properties?.structure), widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
     getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], c[2] != null ? c[2] : f.properties.flyover ? DECK_Z : 0.3]),
     getWidth: f => (f.properties.lanes || 2) * 3.2, getColor: f => roadColor(f.properties),
   }));
+  const q = $("t-queues").checked ? queueLines() : [];   // real data · live: the measured queues on the road
+  if (q.length) {
+    layers.push(new deck.PathLayer({ id: "live-queues-casing", data: q, widthUnits: "pixels", getWidth: 11, capRounded: true, jointRounded: true, getPath: d => d.path, getColor: [7, 9, 13, 235] }));
+    layers.push(new deck.PathLayer({
+      id: "live-queues", data: q, widthUnits: "pixels", getWidth: 6, capRounded: true, jointRounded: true, getPath: d => d.path, getColor: [226, 61, 39, 250], pickable: true,
+      onHover: ({ object: o }) => { $("queue-info").innerHTML = o ? `Queue now: <b>${fmtQ(o.queue_m)}</b>${o.beyond ? " (longer than the road drawn)" : ""} on ${esc(o.name)} into ${esc(short(point(o.jid)?.name))}, ` +
+        `${Math.round(o.delay_s)} s delay${o.usual_delay_s != null ? ` (usual ${Math.round(o.usual_delay_s)} s)` : ""} <span class="tag real">REAL</span>` : ""; },
+    }));
+  }
   const st = structures(playingRun || changed);
   if (st.length) {
     layers.push(new deck.PathLayer({
@@ -2280,7 +2152,7 @@ function tick(ts) {
     const end = ride.probe.arrive_s ?? ride.probe.points[ride.probe.points.length - 1].t;
     if (ride.t >= end) { ride.t = end; rideTick(); stopRide(true); }
     else { rideTick(); render(); }
-  } else if (playing && frames.length && (mode === "july" || nowcastOn())) {
+  } else if (playing && frames.length) {
     const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
     pos += dt * Number($("speed").value) / frameStep();   // 1× = real time, whatever the frame interval (real runs: ~2 s)
     const loading = stream && stream.readyState <= 1;   // frames still arriving: wait at the newest one instead of stopping
@@ -2298,7 +2170,7 @@ function showClock(scrubbing) {   // "Minute 3:20 of 15 · Simulated typical Jul
   const s = Math.max(0, Math.min(total, abs - p0));
   if (!scrubbing) $("scrub").value = Math.round(s);
   $("tl-time").textContent = `${clock(s)} / ${clock(total)}`;
-  $("clock").textContent = `${abs - p0 < -1 ? "Warm-up, before the simulated period" : `Minute ${clock(s)} of ${Math.round(total / 60)}`} · ${r._nowcast ? "Simulated now-cast (Live now)" : simDay(r)}`;
+  $("clock").textContent = `${abs - p0 < -1 ? "Warm-up, before the simulated period" : `Minute ${clock(s)} of ${Math.round(total / 60)}`} · ${r._nowcast ? "Simulated now-cast (real data · live)" : simDay(r)}`;
 }
 function ncClock() {
   if (!nowcastOn() || !$("nc-clock")) return;
@@ -2306,7 +2178,7 @@ function ncClock() {
   $("nc-clock").textContent = `Playing ${playingRun === ncChanged ? "with the change" : "the now-cast"} · ${simMinTxt(f.t + tOffset)} · ${f.vehicles.length} vehicles`;
 }
 function renderWatch() {   // Watch: Today | With changes (Live now: Now | With the change), when both runs exist
-  const live = mode === "live", A = live ? ncBase : base, B = live ? ncChanged : changed, el = $("watch");
+  const live = nowcastOn(), A = live ? ncBase : base, B = live ? ncChanged : changed, el = $("watch");
   el.hidden = !(A && B);
   if (el.hidden) { el.innerHTML = ""; return; }
   const on = x => !!playingRun && runKey(playingRun) === runKey(x);
@@ -2316,7 +2188,7 @@ function renderWatch() {   // Watch: Today | With changes (Live now: Now | With 
   $("watch-changed").onclick = () => live ? play(ncChanged) : watchRun(changed);
 }
 function pbSync() {   // the playback pill: July with a run to play, Live now with Simulate now playing
-  $("pb").hidden = !(mode === "july" ? !!playingRun && !playingRun._nowcast : nowcastOn());
+  $("pb").hidden = !playingRun;
 }
 async function play(r, seek = null) {   // seek: simulation seconds to start from once the frames reach it (the timeline, Watch)
   playingRun = r;
@@ -2348,7 +2220,7 @@ async function play(r, seek = null) {   // seek: simulation seconds to start fro
     };
     ws.onclose = resolve; ws.onerror = resolve;
     const start = () => {   // play on its own once frames are there (a busy server can take longer than 1.5 s to send the first)
-      if (stream !== ws || (mode !== "july" && !(r._nowcast && mode === "live")) || ride) return;
+      if (stream !== ws || ride) return;
       if (!frames.length) return setTimeout(start, 500);
       setPlaying(true); render();
       if (!flown && map.getZoom() < 14 && !following) { flown = true; flyToPoint(focusJunction(r)); }   // vehicles are too small to see from the corridor overview
@@ -2379,13 +2251,14 @@ $("follow-stop").onclick = stopFollowing;
 $("follow-dir").onclick = () => { followDir = followDir === "fwd" ? "rev" : "fwd"; dirUI(); if (following || ride) followCar(); };
 $("t-traffic").onchange = () => { trafficTouched = true; trafficLayer(); };
 $("t-queues").onchange = render;
+$("t-badges").onchange = () => document.body.classList.toggle("badges-on", $("t-badges").checked);
 function resetView() {   // "Whole corridor", the Reset view pill and the R key (viewguard.js): nothing moves the camera, the whole corridor
   stopRide(); setFollow(false); setOrbit(false); selected = null; updateMarkers(); if (popup) popup.remove(); overview(true);
 }
 $("overview").onclick = resetView;
 init();
 crView.init({ reset: resetView, escape: () => { if (ride) stopRide(); if (following) setFollow(false); if (orbiting) setOrbit(false); },
-              panels: [{ id: "left", label: "controls" }, { id: "right", label: "layers" }, { id: "journey", label: "trip" }], above: "#journey", right: 12 });
+              panels: [{ id: "left", label: "controls" }, { id: "right", label: "live" }, { id: "journey", label: "trip" }], above: "#journey", right: 12 });
 </script>
 <script src="md.js"></script>
 <script src="planner.js"></script>

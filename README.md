@@ -82,6 +82,8 @@ cd frontend && python3 -m http.server 5174      # screens
 
 Any free port works for the screens (the team uses 5174 because 5173 is often taken). Without the API running, the corridor page still opens and shows sample data, tagged SAMPLE DATA.
 
+Corridor screen, one view (no tabs): the header shows the route and the weather now (real data, live). Left: **Quick actions**, **Start engine** (simulate today's roads) and **Run with changes**, then **Simulated**: pick a junction, a modification (flyover, underpass, signal retime, widening, one-way) and the weather (slider from dry to heavy rain), then the junction results and the decision. The simulated A → B trip is drawn on the map, coloured by simulated speed per stretch (today and with changes side by side). Right: the live trip with **Simulate now**, and the live junctions accordion (open one to fly there, close it to fly back), then the layers. Simulations always use the typical day (all-day average). Labels on screen say only **real data** or **simulated data**.
+
 ## Data sources and labels
 Every traffic input is labelled **counted** (or **measured**), **estimated** or **assumed**, and every number on screen
 is tagged **REAL** or **SIMULATED**. Full list with files: [data/README.md](data/README.md).

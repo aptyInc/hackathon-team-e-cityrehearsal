@@ -88,14 +88,14 @@
   <h1>YMCA Circle, Narayanguda</h1>
   <small><a href="corridor.html">Corridor view: Lingampally → Lakdikapul, 11 junctions →</a></small><br>
   <small id="status">API: checking…</small>
-  <h2>1 · Choose a time <span class="tag real">TomTom data</span></h2>
+  <h2>1 · Choose a time <span class="tag real">Real data</span></h2>
   <div class="row">
     <select id="date-sel"><option value="typical">Typical weekday morning</option></select>
     <select id="hour-sel" disabled><option>09:00</option></select>
-    <button id="run-live" class="ghost" title="Refresh TomTom and simulate the last 15 minutes">● Live now</button>
+    <button id="run-live" class="ghost" title="Refresh the real data and simulate the last 15 minutes">● Live now</button>
   </div>
   <div id="bands" class="row" style="display:none"></div>
-  <small id="time-note" class="muted">Calibrated morning peak: 2020 count × 2.0, turns from TomTom, speeds checked against TomTom.</small>
+  <small id="time-note" class="muted">Calibrated morning peak: 2020 count × 2.0, turns from real data, speeds checked against real data.</small>
   <h2>2 · Choose what to simulate <span class="tag sim">simulated</span></h2>
   <div class="row">
     <button id="run-base">Today's roads</button>
@@ -115,14 +115,14 @@
   <div id="data" style="display:none">
     <div id="d-history"><small class="muted">Loading junction history…</small></div>
     <div id="d-july"></div>
-    <div id="d-calib"><small class="muted">Run today's traffic to compare the simulation with TomTom.</small></div>
+    <div id="d-calib"><small class="muted">Run today's traffic to compare the simulation with real data.</small></div>
     <div id="d-counts"></div>
   </div>
 </div>
 
 <div id="right" class="panel">
   <h2 style="margin-top:0">Layers</h2>
-  <label class="t"><input type="checkbox" id="t-traffic" /> TomTom live traffic <span class="tag real">real</span></label>
+  <label class="t"><input type="checkbox" id="t-traffic" /> Live traffic <span class="tag real">real</span></label>
   <label class="t"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
   <label class="t"><input type="checkbox" id="t-buildings" checked /> 3D buildings</label>
   <label class="t"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
@@ -132,8 +132,8 @@
 
 <div id="live" class="panel">
   <h2 style="margin-top:0">YMCA Circle right now <span class="tag real">real</span> <span id="live-time" class="muted" style="text-transform:none;letter-spacing:0"></span></h2>
-  <div id="live-body"><small>Loading TomTom live data…</small></div>
-  <small>TomTom Junction Analytics: delay measured from GPS trips; vehicles/hour and queue estimated.</small>
+  <div id="live-body"><small>Loading live data…</small></div>
+  <small>Real data · live: delay measured from GPS trips; vehicles/hour and queue estimated.</small>
 </div>
 
 <div id="legend" class="panel">
@@ -163,6 +163,10 @@ let cfg = { tomtom_maps_key: "", junction: { lon: 78.4903, lat: 17.3954 } };
 let map, overlay, buildings = null, roads = null, frames = [], runs = [], caseId = null, history = [];
 let playing = false, pos = 0, lastTick = 0, orbiting = false, lastOrbit = 0, clockBase = 8 * 60, stream = null;
 
+// Text from the API in plain words: "real data" (measured) or simulated, not the data provider's name or the month of the averages.
+const plain = s => String(s ?? "").replace(/TomTom live( flow)?/g, "real data · live")
+  .replace(/TomTom(['’]s)?( (Traffic Stats|Junction Analytics|probe (data|vehicles)|hourly|data))?/g, "real data")
+  .replace(/([Tt])ypical July day/g, "$1ypical day").replace(/,? ?July 2026/g, "").replace(/\bJuly\b/g, "typical-day");
 async function get(path) { const r = await fetch(API + path); if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`); return r.json(); }
 async function post(path, body) { const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`); return r.json(); }
 
@@ -199,7 +203,7 @@ async function loadHistory() {
     const dates = [...new Set(history.map(b => b.time.slice(0, 10)))];
     $("date-sel").innerHTML = `<option value="typical">Typical weekday morning</option>` + dates.map(d => `<option value="${d}">${dayLabel(d)}</option>`).join("");
     $("date-sel").value = "typical"; fillHours(); updateTimeNote();
-  } catch (e) { $("time-note").textContent = "TomTom history not available; only the typical morning can be simulated."; }
+  } catch (e) { $("time-note").textContent = "Real-data history not available; only the typical morning can be simulated."; }
 }
 const BANDS = [[8, 10, "8–10 am"], [10, 12, "10–12"], [12, 14, "12–2 pm"], [16, 18, "4–6 pm"], [18, 20, "6–8 pm"], [20, 22, "8–10 pm"]];
 let band = null;   // [startHour, endHour, label] when a quick button is chosen, else null (single hour)
@@ -218,7 +222,7 @@ function fillBands() {   // quick peak-hour buttons for the chosen date; greyed 
   $("bands").innerHTML = BANDS.map(([a, z, lab], i) => {
     const n = [...Array(z - a).keys()].filter(k => have.has(a + k)).length;
     const on = band && band[0] === a;
-    return `<button class="band${on ? " on" : ""}" data-i="${i}" ${n ? "" : "disabled"} title="${n ? (n < z - a ? "partly recorded so far" : "TomTom data for both hours") : "no TomTom data for this window yet"}">${lab}</button>`;
+    return `<button class="band${on ? " on" : ""}" data-i="${i}" ${n ? "" : "disabled"} title="${n ? (n < z - a ? "partly recorded so far" : "real data for both hours") : "no real data for this window yet"}">${lab}</button>`;
   }).join("");
   const hs = $("hour-sel"), blank = hs.querySelector('option[value=""]');   // the hour box shows "–" while a quick button is on
   if (band && !blank) hs.insertAdjacentHTML("afterbegin", '<option value="">–</option>');
@@ -236,14 +240,14 @@ function currentTime() {   // what step 1 says: {window, minutes, label}
 }
 function updateTimeNote() {
   const t = currentTime();
-  if (t.window === "live") { $("time-note").innerHTML = `<b>Live:</b> TomTom's last 15 minutes drive the simulation; the live panel and the traffic layer are on.`; return; }
-  if (!t.window) { $("time-note").textContent = "Calibrated morning peak: 2020 count × 2.0, turns from TomTom, speeds checked against TomTom."; return; }
+  if (t.window === "live") { $("time-note").innerHTML = `<b>Live:</b> the last 15 minutes of real data drive the simulation; the live panel and the traffic layer are on.`; return; }
+  if (!t.window) { $("time-note").textContent = "Calibrated morning peak: 2020 count × 2.0, turns from real data, speeds checked against real data."; return; }
   const start = new Date(t.window + ":00+05:30").getTime(), end = start + t.minutes * 60000;
   const bs = history.filter(b => { const x = new Date(b.time + ":00+05:30").getTime(); return x >= start && x < end; });
-  if (!bs.length) { $("time-note").innerHTML = `<b>${t.label}</b>: TomTom has no data for this window yet.`; return; }
+  if (!bs.length) { $("time-note").innerHTML = `<b>${t.label}</b>: no real data for this window yet.`; return; }
   const avg = k => { const v = bs.map(b => b[k]); return { NE: v.reduce((s, x) => s + (x.NE || 0), 0) / v.length, E: v.reduce((s, x) => s + (x.E || 0), 0) / v.length, S: v.reduce((s, x) => s + (x.S || 0), 0) / v.length, W: v.reduce((s, x) => s + (x.W || 0), 0) / v.length }; };
   const d = avg("delay_s"), q = avg("queue_m");
-  $("time-note").innerHTML = `<b>${t.label}</b>, TomTom measured: delay NE ${d.NE.toFixed(0)} s · E ${d.E.toFixed(0)} s · S ${d.S.toFixed(0)} s · W ${d.W.toFixed(0)} s; longest queue ${Math.max(q.NE, q.E, q.S, q.W).toFixed(0)} m. Vehicles and turns for the simulation come from ${t.minutes > 60 ? `these ${t.minutes / 60} hours` : "this hour"}${bs.length * 15 < t.minutes ? ` (${bs.length * 15} of ${t.minutes} minutes recorded so far)` : ""}.`;
+  $("time-note").innerHTML = `<b>${t.label}</b>, real data, measured: delay NE ${d.NE.toFixed(0)} s · E ${d.E.toFixed(0)} s · S ${d.S.toFixed(0)} s · W ${d.W.toFixed(0)} s; longest queue ${Math.max(q.NE, q.E, q.S, q.W).toFixed(0)} m. Vehicles and turns for the simulation come from ${t.minutes > 60 ? `these ${t.minutes / 60} hours` : "this hour"}${bs.length * 15 < t.minutes ? ` (${bs.length * 15} of ${t.minutes} minutes recorded so far)` : ""}.`;
 }
 $("date-sel").onchange = () => { live = false; fillHours(); updateTimeNote(); };
 $("hour-sel").onchange = () => { if (!$("hour-sel").value) return; live = false; band = null; fillBands(); updateTimeNote(); };
@@ -330,7 +334,7 @@ async function ensureCase() {
 async function runVariant(vid, template, params, scale, option) {
   const t = currentTime(), extra = t.window ? { window: t.window, minutes: t.minutes } : {}, label = `${t.label} · ${option}`;
   const btns = ["run-base", "run-fly", "run-base80", "run-live"]; btns.forEach(b => $(b).disabled = true);
-  $("status").textContent = `Simulating ${label}… (${t.window === "live" ? "fetching TomTom, then " : ""}a few seconds)`;
+  $("status").textContent = `Simulating ${label}… (${t.window === "live" ? "fetching the live data, then " : ""}a few seconds)`;
   try {
     await ensureCase();
     await post("/variants", { case_id: caseId, variant_id: vid, template, params });
@@ -342,7 +346,7 @@ async function runVariant(vid, template, params, scale, option) {
     $("status").textContent = `${r.label}: simulated in ${r.wall_seconds ?? "?"} s, now playing`;
     btns.forEach(b => $(b).disabled = false);
     play(r);   // loads in the background; the panel stays usable
-  } catch (e) { $("status").innerHTML = `<span class="bad">${e.message.slice(0, 200)}</span>`; }
+  } catch (e) { $("status").innerHTML = `<span class="bad">${plain(e.message).slice(0, 200)}</span>`; }
   btns.forEach(b => $(b).disabled = false);
 }
 function showResults() {
@@ -350,16 +354,16 @@ function showResults() {
   const rows = runs.map((r, i) => {
     const c = j(r, "ymca_circle");
     const ripple = r.junctions.filter(x => x.id !== "ymca_circle" && (x.avg_delay_s > 15 || x.max_queue_m > 100)).map(x => `${x.id.replace("next_", "")}: ${x.avg_delay_s} s`).join(", ");
-    return `<tr><td><b>${r.label}</b><br><small>${r.inputs.volume_scale < 1 ? "reviewer · " : ""}${r.inputs.window ? "TomTom data" : "calibrated"} · ${r.inputs.label}</small></td>
+    return `<tr><td><b>${r.label}</b><br><small>${r.inputs.volume_scale < 1 ? "reviewer · " : ""}${r.inputs.window ? "real data" : "calibrated"} · ${plain(r.inputs.label)}</small></td>
       <td>${c.avg_delay_s ?? "–"} s</td><td>${c.max_queue_m ?? "–"} m</td><td>${r.corridor_travel_time_s} s</td>
       <td>${ripple || "<span class=ok>none</span>"}</td><td><button class="ghost" onclick="play(runs[${i}])">Play</button></td></tr>`
-      + (r.warnings.length ? `<tr><td colspan=6><div class=warn>⚠ ${r.warnings.join("<br>⚠ ")}</div></td></tr>` : "")
+      + (r.warnings.length ? `<tr><td colspan=6><div class=warn>⚠ ${r.warnings.map(plain).join("<br>⚠ ")}</div></td></tr>` : "")
       + (r.tomtom_window ? `<tr><td colspan=6><small><span class="tag mix">simulated vs real</span> delay per road in that window: ` +
-          Object.keys(r.tomtom_window).map(d => `${d.toUpperCase()} ${r.approach_delay_s?.[d] ?? "–"} s vs TomTom ${r.tomtom_window[d].delay_s} s`).join(" · ") + `</small></td></tr>` : "");
+          Object.keys(r.tomtom_window).map(d => `${d.toUpperCase()} ${r.approach_delay_s?.[d] ?? "–"} s vs real ${r.tomtom_window[d].delay_s} s`).join(" · ") + `</small></td></tr>` : "");
   }).join("");
   const last = runs[runs.length - 1];
   const tw = last.tomtom_window, refOf = d => tw ? tw[d]?.speed_kmh : last.tomtom_speed_kmh[d];
-  const cal = last.approach_speed_kmh ? `<small>Speeds on the roads into the circle, simulated vs TomTom ${tw ? "in that window" : "July 09:00"}: ` +
+  const cal = last.approach_speed_kmh ? `<small>Speeds on the roads into the circle, simulated vs real data ${tw ? "in that window" : "(typical day, 09:00)"}: ` +
     Object.keys(last.approach_speed_kmh).map(d => `${d.toUpperCase()} ${last.approach_speed_kmh[d]} / ${refOf(d) ?? "–"}`).join(" · ") + ` km/h</small>` : "";
   $("results").innerHTML = `<table><tr><th>Option</th><th>Delay at circle</th><th>Longest queue</th><th>Trip time</th><th>Knock-on at next junctions</th><th></th></tr>${rows}</table>${cal}`;
 }
@@ -388,7 +392,7 @@ async function refreshLive() {
     $("live-body").innerHTML = d.approaches.map(a => `<div class="road"><span>${a.name.replace(" Bound", "").replace("Raja Bahadur Venkata Rama Reddy Marg", "RBVRR Marg")}</span>
       <span><b class="${cls(a.delay_s)}">${a.delay_s} s</b> delay · ${Math.round(a.queue_m)} m queue · ${a.volume_per_hour}/h</span></div>`).join("");
     $("live-time").textContent = "· " + new Date(d.time * 1000).toLocaleTimeString();
-  } catch (e) { $("live-body").innerHTML = `<small class="muted">Live data not available (${e.message.slice(0, 60)})</small>`; }
+  } catch (e) { $("live-body").innerHTML = `<small class="muted">Live data not available (${plain(e.message).slice(0, 60)})</small>`; }
 }
 
 // ---------- data panel ----------
@@ -414,14 +418,14 @@ async function loadData() {
     const h = await get("/data/junction_history?minutes=15");
     const b = h.buckets, labels = b.map((r, i) => i % 8 === 0 ? r.time.slice(11, 16) : "");
     const series = {}; for (const k of ["NE", "E", "S", "W"]) series[k] = b.map(r => r.delay_s[k] ?? null);
-    $("d-history").innerHTML = `<b>YMCA Circle since last night: delay per road (seconds)</b> <span class="tag real">real</span><br><small>${b.length} quarter-hours from ${b[0].time.slice(5, 16)} to ${b[b.length - 1].time.slice(11, 16)}, TomTom live data, measured from GPS trips</small>` + lineChart(series, labels, { note: "roads into the circle" });
+    $("d-history").innerHTML = `<b>YMCA Circle since last night: delay per road (seconds)</b> <span class="tag real">real</span><br><small>${b.length} quarter-hours from ${b[0].time.slice(5, 16)} to ${b[b.length - 1].time.slice(11, 16)}, real data · live, measured from GPS trips</small>` + lineChart(series, labels, { note: "roads into the circle" });
     const q = {}; for (const k of ["NE", "E", "S", "W"]) q[k] = b.map(r => r.queue_m[k] ?? null);
-    $("d-history").innerHTML += `<b>Queue length per road (metres)</b> <span class="tag real">real, estimated by TomTom</span>` + lineChart(q, labels, { note: "estimated by TomTom" });
+    $("d-history").innerHTML += `<b>Queue length per road (metres)</b> <span class="tag real">real data, estimated</span>` + lineChart(q, labels, { note: "estimated from real data" });
   } catch (e) { $("d-history").innerHTML = `<small class="muted">Junction history not available (${e.message.slice(0, 50)})</small>`; }
   try {
     const j = await get("/data/july_speeds");
     const labels = Array.from({ length: 24 }, (_, i) => i % 4 === 0 ? `${i}:00` : "");
-    $("d-july").innerHTML = `<b>A typical weekday, July 2026: speed by hour (km/h)</b> <span class="tag real">real</span><br><small>TomTom Traffic Stats, averaged over 22 weekdays; dashed line = 09:00, the hour the simulation is calibrated to</small>` + lineChart(j.speed_kmh_by_hour, labels, { markX: 9 });
+    $("d-july").innerHTML = `<b>A typical weekday: speed by hour (km/h)</b> <span class="tag real">real</span><br><small>Real data, measured, averaged over 22 weekdays; dashed line = 09:00, the hour the simulation is calibrated to</small>` + lineChart(j.speed_kmh_by_hour, labels, { markX: 9 });
   } catch (e) { $("d-july").innerHTML = ""; }
   try {
     const c = await get("/data/counts");
@@ -433,12 +437,12 @@ async function loadData() {
 function showCalibration(r) {
   if (!r.approach_speed_kmh) return;
   const dirs = Object.keys(r.approach_speed_kmh), tw = r.tomtom_window;
-  const ref = d => tw ? (tw[d]?.speed_kmh || 0) : (r.tomtom_speed_kmh[d] || 0), refName = tw ? "TomTom in that quarter hour" : "TomTom July 09:00";
+  const ref = d => tw ? (tw[d]?.speed_kmh || 0) : (r.tomtom_speed_kmh[d] || 0), refName = tw ? "real data in that quarter hour" : "real data, typical day 09:00";
   const bars = dirs.map(d => { const s = r.approach_speed_kmh[d], t = ref(d), w = v => Math.min(100, v / 35 * 100);
     return `<div style="margin:4px 0"><small><b>${d}</b> simulated ${s} km/h · ${refName} ${t} km/h</small><div style="background:rgba(255,255,255,.08);border-radius:3px;height:6px;margin:2px 0"><div style="width:${w(s)}%;background:${ROAD_COLORS[d]};height:6px;border-radius:3px"></div></div><div style="background:rgba(255,255,255,.08);border-radius:3px;height:6px"><div style="width:${w(t)}%;background:#929292;height:6px;border-radius:3px"></div></div></div>`; }).join("");
   const mix = frames.length ? (() => { const f = frames[Math.floor(frames.length / 2)], c = {}; f.vehicles.forEach(v => c[v.type] = (c[v.type] || 0) + 1); return `On screen at once: ` + Object.entries(c).map(([k, v]) => `${v} ${k.replace("_", "-")}s`).join(", "); })() : "";
-  const js = r.tomtom_junction_speed_kmh ? ` TomTom's own junction data this morning gives ${dirs.map(d => `${d} ${r.tomtom_junction_speed_kmh[d] ?? "–"}`).join(", ")} km/h on the same roads; the two TomTom sources differ by 3–6 km/h.` : "";
-  $("d-calib").innerHTML = `<b>Does the model match reality? (${r.label})</b> <span class="tag mix">simulated vs real</span><br><small>Speed on the last 240 m of each road, simulation (colour) vs TomTom July 09:00 (grey).${js} Delay per road: simulated ${dirs.map(d => `${d} ${r.approach_delay_s?.[d] ?? "–"} s`).join(", ")}; TomTom median this morning ${dirs.map(d => `${d} ${r.tomtom_delay_s?.[d] ?? "–"} s`).join(", ")}.</small>${bars}<small>${mix}</small>`;
+  const js = r.tomtom_junction_speed_kmh ? ` The live junction data this morning gives ${dirs.map(d => `${d} ${r.tomtom_junction_speed_kmh[d] ?? "–"}`).join(", ")} km/h on the same roads; the two real-data sources differ by 3–6 km/h.` : "";
+  $("d-calib").innerHTML = `<b>Does the model match reality? (${r.label})</b> <span class="tag mix">simulated vs real</span><br><small>Speed on the last 240 m of each road, simulation (colour) vs real data, typical day 09:00 (grey).${js} Delay per road: simulated ${dirs.map(d => `${d} ${r.approach_delay_s?.[d] ?? "–"} s`).join(", ")}; real data, median this morning ${dirs.map(d => `${d} ${r.tomtom_delay_s?.[d] ?? "–"} s`).join(", ")}.</small>${bars}<small>${mix}</small>`;
 }
 $("data-toggle").onclick = () => { const open = $("data").style.display === "none"; $("data").style.display = open ? "block" : "none"; $("data-toggle").textContent = open ? "hide" : "show"; if (open && !$("d-july").innerHTML) loadData(); };
 
