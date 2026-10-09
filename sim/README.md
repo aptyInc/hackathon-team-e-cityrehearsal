@@ -71,6 +71,42 @@ Thu 8 Oct 23:17 works; the API takes `window: "live"` to refresh the data and si
 Labels: volumes `estimated`, turns `measured`, mix `assumed`. The calibration factor is not applied (TomTom's volumes
 are absolute); at 09:00 today the model's speeds were within ~4 km/h of TomTom's on three roads.
 
+## Corridor: Indian driver behaviour and traffic on every arm (Sat 10 Oct)
+Spec: `docs/driver-behaviour.md`. Code: `sim/corridor/corridor_runner.py` (VEHICLES, junction_arms, demand),
+`sim/corridor/corridor_net.py` (signal_plans). Labels as the doc: measured / estimated / assumed; calibrated = fitted.
+
+| Item (doc section) | Status | Label |
+|---|---|---|
+| 7 vehicle types, shares 47/19/27/4/3, fast riders 30% of two-wheelers and 50% of autos (the doc's table; its prose says the reverse), sizes, top speeds, pull-away/braking (s2) | built | assumed |
+| speeding (speedFactor), following gap / reaction time (s3) | built | assumed |
+| capacity x1.35 (s1) | built as following headways / 1.55 (saturation headway 1.31 -> 0.97 s); lanes unchanged, so the templates see the same roads | estimated |
+| imperfection 0.5 / 0.6 (s3) | **0.2 / 0.24**: at 0.5 the near-capacity Nanal Nagar section varied ~70 s (sd) between seeds | calibrated (spec 0.5) |
+| amber 4 s, red running 2 s (fast) / 1 s / buses and trucks stop at 40 km/h, box blocking 0/5/10 s, 15 s blocker rule (s7) | built (jmDriveAfterYellowTime, jmDriveAfterRedTime + jmDriveRedSpeed, jmIgnoreKeepClearTime, --ignore-junction-blocker 15) | assumed |
+| giving way below 1.5 m/s at 30% per 0.5 s; smaller gaps after 30 s (s6) | built (jmIgnoreFoeSpeed/Prob, --time-to-impatience 30) | assumed |
+| side streets force in below 5 m/s at 50% (s6) | built: side-street vType variants (`*_side`) for arms that give way | estimated |
+| free left in every phase; amber 4 s; protected right-turn phase 12 s; main road >= 65% of the green; cycle 120 s (s5) | built | assumed / estimated |
+| one approach at a time at big junctions, 150 s cycle (s5) | built, **off** (`CR_BIG_JUNCTIONS=j02,j08,j09`): each corridor direction gets ~1/4 of the cycle and j02/j08 gridlocked (leg j07-j08 4.6x TomTom) | assumed |
+| police-style actuated greens (s5) | not built: the calibration fits static green shares; left for after the demo | - |
+| U-turns at signals (s5) | where TomTom's turn ratios show them | measured |
+| lateral position, filtering, weaving, side clearance (s4); creeping past the stop line (s7) | out of scope: non-sublane model (sublane was ~11x slower); stop-line creep is a viewer effect (jmStoplineGap 0) | - |
+
+Every arm of every junction now carries traffic, including the ground roads under the flyovers (j03, j04, j06, j07)
+and the side roads merging at j10/j11. Each arm takes TomTom Junction Analytics' volume (mean of the minutes between
+06 and 23 h) x `cross_scale` and leaves by TomTom's turn shares (left/straight/right/U by angle, probe-weighted);
+without TomTom (j01's and j05's TomTom areas lie 1.3-2 km off the corridor; j06's ground arms; j11) volumes and splits
+are assumed. No double counting: at each corridor approach TomTom measures, the traffic already arriving (through
+traffic, earlier joins and top-ups) is counted first and only the shortfall is added, taking the turning traffic
+first. Where TomTom measured an arm on the corridor before a flyover splits off (j04, j07), 81% of its through
+traffic stays on the flyover (measured). Demand is planned on the unchanged network, so a variant carries exactly the
+baseline's traffic.
+
+Recalibrated (`calibration.json`): 56.6 vs 56.2 min, every leg within 6%; through 1,215 veh/h each way and
+`cross_scale` 0.405 (old: 1,500 and 0.5): the Nanal Nagar (j08) eastbound approach is 2 lanes in OSM and cannot take
+more, and the calibration lowers all traffic together. Hourly (`calibration_hourly.json`): 18 of 18 hours within 3%.
+Runs take 35-60 s with 3 SUMO processes. Noise (imperfection 0.2): paired variant-minus-baseline at seeds 2-4 is
+-3.1 / -3.1 / -2.7 min for a 1.2 km flyover at j08 and +2.2 / +3.3 / +3.6 min for heavy rain, so a one-junction change
+is beyond noise above about +-0.5 min and a corridor-wide one (rain) above about +-1.5 min (`SIGMA_NOTE`).
+
 ## Next steps (Simulation / Scenarios owners)
 1. Templates for `signal_retime`, `bus_lane`, `junction_redesign`, `widening` in `sim/templates/` (same pattern as
    `flyover.py`: plain-XML edit, rebuild, return the network path and any design warnings), then add them to

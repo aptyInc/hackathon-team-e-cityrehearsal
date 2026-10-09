@@ -26,10 +26,12 @@ A real commute of about **22.4 km**, split at **11 junctions** (among them Gachi
 Rethibowli and Masab Tank; full list in `data/corridor/corridor.json`). TomTom measured it at **58.2 minutes** on an average July 2026 day.
 The slowest stretch is Nallagandla to the ISB Rd / DLF junction (13.8 min). The main road already crosses five flyovers
 (Gachibowli, Bio-Diversity Park, Shaikpet, Tolichowki, Masab Tank) and meets signals at five junctions (Nallagandla,
-ISB Rd / DLF, Khajaguda, Nanal Nagar, Rethibowli). The calibrated simulation gives **55.4 min** against TomTom's
-**56.2 min** on the same 21.6 km, with every stretch within about 5% (`sim/corridor/calibration.json`). Its traffic
-(1,500 vehicles an hour each way, plus half of TomTom's evening cross-road volumes) is lighter than TomTom's evening
-estimates: it is calibrated to the all-day trip time.
+ISB Rd / DLF, Khajaguda, Nanal Nagar, Rethibowli). The calibrated simulation gives **56.6 min** against TomTom's
+**56.2 min** on the same 21.6 km, with every stretch within about 6% (`sim/corridor/calibration.json`). Every arm of
+every junction carries traffic, including the roads under the flyovers, with Indian driver behaviour
+(`docs/driver-behaviour.md`; what is built: `sim/README.md`). Its traffic (1,215 vehicles an hour each way end to end,
+plus 40% of TomTom's junction volumes on every arm) is lighter than TomTom's evening estimates: it is calibrated to
+the all-day trip time.
 
 On the corridor screen you can:
 1. See the trip split by stretch: **measured** by TomTom (REAL) next to our **simulation** (SIMULATED).
@@ -116,7 +118,7 @@ Each workstream owns one folder (see `CLAUDE.md`). Team members are listed at th
 **What the team actually built** (status Fri 9 Oct, 21:30; the 24-hour build is the roads and traffic module):
 - Lingampally to Lakdikapul corridor: road network from OpenStreetMap routed over the five existing flyovers, TomTom
   stretch times, live data at 10 junctions, the corridor API and the 3D corridor screen with quick demos.
-- Corridor calibrated to TomTom: 55.4 min simulated vs 56.2 min measured on the same roads, every stretch within about 5%.
+- Corridor calibrated to TomTom: 56.6 min simulated vs 56.2 min measured on the same roads, every stretch within about 6%; every hour 06-23 within 3%.
 - Five kinds of fixes as templates, each with design checks (for example a warning when flyover lanes squeeze into
   fewer lanes).
 - YMCA Circle: calibrated simulation (within about 3 km/h of TomTom), 3D view, simulate any moment since 8 Oct
@@ -148,7 +150,7 @@ Full version: [docs/business-case.md](docs/business-case.md).
 - [x] Corridor fix templates: flyover, underpass, signal retime, widening, one-way side road
 - [x] 3D view of YMCA Circle with calibrated mixed traffic (Predict)
 - [x] Review and sign-off API with logged decisions and evidence fingerprints
-- [x] Corridor calibrated against TomTom trip times (55.4 vs 56.2 min)
+- [x] Corridor calibrated against TomTom trip times (56.6 vs 56.2 min), Indian driver behaviour, traffic on every junction arm
 - [x] AI agent testing low-cost fixes first, with a decision brief (Mitigate)
 - [x] Review and sign-off screens
 - [x] Gariahat backtest (`sim/gariahat/README.md`)

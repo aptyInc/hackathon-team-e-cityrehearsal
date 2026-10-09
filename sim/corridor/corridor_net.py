@@ -5,6 +5,7 @@ Used by build_network.sh (signals) and by the corridor runner and intervention t
 import heapq
 import json
 import math
+import os
 import re
 import subprocess
 import sys
@@ -17,12 +18,20 @@ import sumolib
 ROOT = Path(__file__).resolve().parents[2]
 CORRIDOR = json.loads((ROOT / "data/corridor/corridor.json").read_text())
 ROUTE_POINTS = json.loads((Path(__file__).parent / "route_points.json").read_text())
-SIGNAL_CYCLE_S = 120   # assumed default cycle at the corridor's signalised junctions
-CORRIDOR_GREEN_SHARE = 0.6   # assumed share of the green time for the corridor's stage (signal_plans)
-YELLOW_S = 4           # amber after each stage (assumed)
+SIGNAL_CYCLE_S = 120   # assumed default cycle at the corridor's signalised junctions (main x minor: 100-150 s, s5)
+CORRIDOR_GREEN_SHARE = 0.65  # assumed share of the green time for the corridor (signal_plans; main x minor: at least 65%, s5)
+YELLOW_S = 4           # amber after each stage (docs/driver-behaviour.md s5, assumed)
+# s5: junctions with 3+ busy approaches (TomTom: >= 1,000 veh/h each, estimated) run one approach at a time: here
+# j02, j08, j09. Built (signal_plans) but OFF by default: in this single-file model each corridor direction then gets
+# ~1/4 of a 150 s cycle, and the 2-3-lane corridor approaches at j02 and j08 gridlocked (delays of 5-15 min, leg j07-j08
+# 4.6x TomTom) even at the old volumes. Turn on with CR_BIG_JUNCTIONS=j02,j08,j09 (needs recalibrating).
+BIG_JUNCTIONS = {j for j in os.environ.get("CR_BIG_JUNCTIONS", "").split(",") if j}
+BIG_CYCLE_S = 150      # cycle at the big junctions (s5, assumed)
+RIGHT_TURN_S = 12      # protected right-turn phase for the corridor at main x minor junctions (s5, estimated)
+MIN_GREEN_S = 10       # shortest green (s5: police let a green run from 10 s; assumed)
+FREE_LEFT = os.environ.get("CR_FREE_LEFT", "1") != "0"   # s5: left-turners go in every phase, giving way (assumed)
 FLYOVER_COST = 0.7     # route(): a metre on an existing flyover counts as 0.7 m: through traffic takes them (assumed;
                        # TomTom's fastest legs are exactly the flyover stretches)
-INNER_WAIT = "g"       # links inside a junction outside their own stage: "g" give way, "r" wait for their stage
 
 
 def _angle(e):
@@ -255,66 +264,115 @@ def corridor_lanes(net_path: Path):
 
 
 def signal_plans(net_path: Path, share=CORRIDOR_GREEN_SHARE, yellow=YELLOW_S):
-    """Replace netconvert's guessed programs at the corridor junctions with a plain two-stage plan (assumed):
-    stage 1 the corridor's approaches go (both directions), stage 2 the cross roads' approaches go, `yellow` s amber
-    after each; the corridor gets `share` of the green time (a number, or {junction id: share} with the default
-    elsewhere). Links that start inside a junction (the median gap of a
-    divided road, the circulating lanes of Gachibowli Circle) never get a red: in their own stage they have priority,
-    in the other stage they give way (SUMO's 'g') to traffic with a green, so vehicles already in the junction can always
-    clear it. Turns across oncoming traffic also give way, and so do links merging into a lane another green link
-    feeds (the corridor's own, else the straight-on one, keeps priority).
-    netconvert's own plans for these clusters (up to 10 stages at j03, 6 at j07, 8 s ambers) left the corridor about a
-    third of the cycle and stopped vehicles inside the junction, which gridlocked the corridor. Returns {tls id: jid}."""
+    """Replace netconvert's guessed programs at the corridor junctions with the signal plans of docs/driver-behaviour.md
+    section 5 (assumed). Every plan: `yellow` (4 s) amber after each green; the free left (left = the short turn in
+    lefthand traffic) goes in every phase, giving way to traffic with a green (SUMO 'g').
+      main x minor (j01, j05): the corridor both ways together (its right-turners wait for a gap in oncoming traffic,
+          'g'), then a protected right-turn phase for the corridor (RIGHT_TURN_S, 12 s), then the side road;
+          cycle SIGNAL_CYCLE_S (120 s); the corridor (with its right-turn phase) gets `share` of the green (>= 65%).
+      big junctions with 3+ busy approaches (BIG_JUNCTIONS: j02, j08, j09): one approach at a time, so right-turners
+          never face oncoming traffic; cycle BIG_CYCLE_S (150 s); the corridor's two approaches share `share` of the
+          green, the cross roads the rest, equally (the doc shares green by traffic per lane: simplified).
+    `share`: a number, or {junction id: share} with CORRIDOR_GREEN_SHARE elsewhere.
+    Links that start inside a junction (the median gap of a divided road, the circulating lanes of Gachibowli Circle)
+    never get a red: with their approach's green they have priority, otherwise they give way ('g'), so vehicles already
+    in the junction can always clear it. Links merging into a lane another green link feeds give way (the corridor's
+    own, else the straight-on one, keeps priority). Returns {tls id: jid}."""
     net = sumolib.net.readNet(str(net_path), withPrograms=True)
     fwd, rev = route(net), route(net, reverse=True)
-    on_path = {e.getID() for e in fwd + rev}
+    F, R = {e.getID() for e in fwd}, {e.getID() for e in rev}
+    on_path = F | R
     owner = {c.getTLSID(): jid for jid, nodes in junction_groups(net).items() for n in nodes
              for e in n.getIncoming() for lane in e.getLanes() for c in lane.getOutgoing() if c.getTLSID()}
-    links = {}                  # tls id -> {link index: (stage, inside the junction, gives way)}
-    merges = {}                 # tls id -> {link index: (target lane, rank)}: rank 0 keeps 'G' where links merge
+    links = {}                  # tls id -> {link index: {...}}
     for tls_id in owner:
         conns = net.getTLS(tls_id).getConnections()
         ids = {i.getEdge().getToNode().getID() for i, _, _ in conns}     # the nodes this signal controls
         for in_lane, out_lane, idx in conns:
             e = in_lane.getEdge()
             c = next((c for c in in_lane.getOutgoing() if c.getToLane() == out_lane), None)
-            stage = "corridor" if e.getID() in on_path else "cross"
-            inner = e.getFromNode().getID() in ids
-            # left-hand traffic: right turns and U-turns cross oncoming traffic and give way; the corridor's own
-            # route never does (where the road bends right at a junction, SUMO calls it a turn too)
-            across = c is not None and c.getDirection() in ("r", "t") and not (e.getID() in on_path and out_lane.getEdge().getID() in on_path)
-            links.setdefault(tls_id, {})[idx] = (stage, inner, across)
+            d = c.getDirection() if c is not None else "s"
             on = e.getID() in on_path and out_lane.getEdge().getID() in on_path
-            merges.setdefault(tls_id, {})[idx] = (out_lane.getID(), 0 if on else 1 if c is not None and c.getDirection() == "s" else 2)
-    green = (SIGNAL_CYCLE_S - 2 * yellow)
+            links.setdefault(tls_id, {})[idx] = {
+                "stage": "corridor" if e.getID() in on_path else "cross", "inner": e.getFromNode().getID() in ids,
+                "approach": e.getID(), "tag": "fwd" if e.getID() in F else "rev" if e.getID() in R else None,
+                # left-hand traffic: the free left is the short turn; right turns and U-turns cross oncoming traffic
+                # (the corridor's own route never does: where the road bends at a junction, SUMO calls it a turn too)
+                "free_left": FREE_LEFT and d in ("l", "L") and not on and out_lane.getEdge().getToNode().getID() not in ids, "right": d in ("r", "R", "t") and not on, "out": out_lane.getID(),
+                "rank": 0 if on else 1 if d == "s" else 2}
     text = Path(net_path).read_text()
 
     def plan(m):     # only the tlLogic blocks change; the rest of the file stays byte for byte
         tl = ET.fromstring(m.group(0))
         k = links.get(tl.get("id"))
-        if not k or not any(stage == "cross" and not inner for stage, inner, _ in k.values()):
+        if not k or not any(v["stage"] == "cross" and not v["inner"] for v in k.values()):
             return m.group(0)   # no cross road meets this signal (one carriageway's side): netconvert's plan stays
         n = len(tl.find("phase").get("state"))
-        sh = share.get(owner[tl.get("id")], CORRIDOR_GREEN_SHARE) if isinstance(share, dict) else share
-        durations = (round(green * sh), yellow, green - round(green * sh), yellow)
+        jid = owner[tl.get("id")]
+        sh = share.get(jid, CORRIDOR_GREEN_SHARE) if isinstance(share, dict) else share
+        L = lambda i: k.get(i, {"stage": "", "inner": True, "approach": None, "tag": None, "free_left": False, "right": False,  # noqa: E731
+                                "out": None, "rank": 2})
 
-        def go(s, i):
-            stage, inner, across = k.get(i, ("", True, True))
-            return ("g" if across else "G") if stage == s else INNER_WAIT if inner else "r"
-
-        def amber(s, i):
-            stage, inner, _ = k.get(i, ("", True, True))
-            return "y" if stage == s and (not inner or INNER_WAIT == "r") else go(s, i)
         def merged(state):     # two 'G' links into one lane: the corridor (else straight-on) link keeps it, the rest give way
-            state, mk, best = list(state), merges.get(tl.get("id"), {}), {}
-            for i in sorted((i for i in range(n) if state[i] == "G" and i in mk), key=lambda i: mk[i][1]):
-                if mk[i][0] in best:
+            state, best = list(state), {}
+            for i in sorted((i for i in range(n) if state[i] == "G" and i in k), key=lambda i: k[i]["rank"]):
+                if k[i]["out"] in best:
                     state[i] = "g"
-                best.setdefault(mk[i][0], i)
+                best.setdefault(k[i]["out"], i)
             return "".join(state)
-        states = [f(stage) for stage in ("corridor", "cross") for f in
-                  (lambda s: merged("".join(go(s, i) for i in range(n))), lambda s: merged("".join(amber(s, i) for i in range(n))))]
-        phases = "".join(f'        <phase duration="{d}" state="{s}"/>\n' for s, d in zip(states, durations))
+
+        def phase(go, protected=lambda v: False):
+            """State: 'G' for links `go` lets through (or 'g' when they cross oncoming traffic and are not
+            `protected`), free lefts 'g' always, inner links 'g' when not going, the rest 'r'."""
+            out = []
+            for i in range(n):
+                v = L(i)
+                if go(v):
+                    out.append("g" if v["right"] and not protected(v) else "G")
+                elif v["free_left"] or v["inner"]:
+                    out.append("g")
+                else:
+                    out.append("r")
+            return merged("".join(out))
+
+        def amber(state, nxt):
+            """Links green now and red next get 'y'."""
+            return "".join("y" if a in "Gg" and b == "r" else a for a, b in zip(state, nxt))
+
+        if jid in BIG_JUNCTIONS:
+            groups = []        # one phase per approach: corridor A->B, corridor B->A, then each cross road
+            for tag in ("fwd", "rev"):
+                if any(v["tag"] == tag and not v["inner"] for v in k.values()):
+                    groups.append(("corridor", tag))
+            for a in sorted({v["approach"] for v in k.values() if v["stage"] == "cross" and not v["inner"]}):
+                groups.append(("cross", a))
+            green = BIG_CYCLE_S - yellow * len(groups)
+            n_corr = sum(g[0] == "corridor" for g in groups)
+            n_cross = len(groups) - n_corr
+            if n_corr and n_cross:
+                durs = [max(MIN_GREEN_S, round(green * (sh / n_corr if g[0] == "corridor" else (1 - sh) / n_cross))) for g in groups]
+            else:
+                durs = [round(green / len(groups))] * len(groups)
+            states = []
+            for kind, key in groups:
+                if kind == "corridor":   # the corridor's inner links of this direction go with it
+                    states.append(phase(lambda v, key=key: v["tag"] == key, protected=lambda v: True))
+                else:
+                    states.append(phase(lambda v, key=key: v["approach"] == key and not v["inner"], protected=lambda v: True))
+        else:
+            right = any(v["stage"] == "corridor" and v["right"] for v in k.values())
+            green = SIGNAL_CYCLE_S - yellow * (3 if right else 2)
+            main = round(green * sh)
+            prot = RIGHT_TURN_S if right else 0
+            durs = [max(MIN_GREEN_S, main - prot)] + ([prot] if right else []) + [max(MIN_GREEN_S, green - main)]
+            states = [phase(lambda v: v["stage"] == "corridor")]
+            if right:
+                states.append(phase(lambda v: v["stage"] == "corridor" and v["right"], protected=lambda v: True))
+            states.append(phase(lambda v: v["stage"] == "cross"))
+        phases = ""
+        for i, (s, d) in enumerate(zip(states, durs)):
+            nxt = states[(i + 1) % len(states)]
+            phases += f'        <phase duration="{d}" state="{s}"/>\n        <phase duration="{yellow}" state="{amber(s, nxt)}"/>\n'
         return (f'<tlLogic id="{tl.get("id")}" type="static" programID="{tl.get("programID")}" offset="0">\n'
                 f'{phases}    </tlLogic>')
     Path(net_path).write_text(re.sub(r"<tlLogic .*?</tlLogic>", plan, text, flags=re.S))
@@ -326,6 +384,6 @@ if __name__ == "__main__":
     if sys.argv[1:] == ["signals"]:      # build_network.sh, after netconvert
         print("signals at:", add_signals(NET))
         print("corridor lanes (widened pieces, relinked route steps):", corridor_lanes(NET))
-        print("two-stage plans:", sorted(set(signal_plans(NET).values())))
+        print("signal plans (s5):", sorted(set(signal_plans(NET).values())))
     elif sys.argv[1:] == ["plans"]:
-        print("two-stage plans:", sorted(set(signal_plans(NET).values())))
+        print("signal plans (s5):", sorted(set(signal_plans(NET).values())))
