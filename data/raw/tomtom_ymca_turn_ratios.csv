@@ -71,3 +71,768 @@ time,approach,exit,ratio_percent,probes,source,label
 2026-10-08T23:45:25+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
 2026-10-08T23:45:25+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,60,15,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
 2026-10-08T23:45:25+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,32,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,6,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,83,39,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,24,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,70,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,6,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,60,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,10,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,30,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,64,16,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-08T23:50:25+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,28,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,22,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,8,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,70,26,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,73,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,27,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,65,13,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,35,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,19,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,68,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:10:43+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,24,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,8,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,68,25,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,73,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,27,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,67,14,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,33,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,17,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,50,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:15:44+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,33,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,26,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,9,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,65,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,78,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,63,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,32,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,37,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,38,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:20:45+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,25,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,26,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,63,17,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,67,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,33,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,69,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,6,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,25,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,30,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,40,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:25:46+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,30,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,15,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,77,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,67,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,33,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,69,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,23,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,20,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,50,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:30:48+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,30,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,12,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,84,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,25,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,75,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,82,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,9,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,9,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,23,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,46,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:35:49+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,31,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Narayanguda Road South Bound,Narayanguda Road North Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,21,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,75,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,17,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,66,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,17,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,73,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,9,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,18,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,18,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,46,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:40:49+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,36,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,Narayanguda Road South Bound,Narayanguda Road North Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,21,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,76,22,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,60,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,90,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,10,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,18,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,64,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:45:50+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,18,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,Narayanguda Road South Bound,Narayanguda Road North Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,19,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,77,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,13,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,62,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,25,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,90,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,10,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,29,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,50,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:50:51+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,21,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,Narayanguda Road South Bound,Narayanguda Road North Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,23,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,72,16,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,13,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,62,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,25,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,33,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,42,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T01:55:52+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,25,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,Narayanguda Road South Bound,Narayanguda Road North Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,27,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,66,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,78,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,73,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,20,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,42,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,33,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:00:56+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,25,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,25,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,67,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,11,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,67,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,67,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,20,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,40,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,40,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:05:57+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,20,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,23,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,15,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,62,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,40,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,10,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,65,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,14,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,21,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,45,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,33,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:10:58+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,21,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,14,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,65,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,40,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,60,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,57,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,14,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,29,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,42,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,29,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:15:59+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,29,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,25,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,62,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,44,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,56,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,57,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,14,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,29,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,40,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,40,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:21:00+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,24,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,10,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,66,14,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,44,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,56,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,66,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,27,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,50,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:26:01+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,50,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,28,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,61,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,43,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,57,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,84,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,33,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,50,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:31:02+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,17,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,35,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,65,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,75,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,25,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,43,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,43,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:36:03+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,27,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,73,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,67,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,33,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,50,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,33,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:41:03+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,17,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:46:04+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,25,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:46:04+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,75,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:46:04+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,67,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:46:04+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,33,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:46:04+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,100,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:46:04+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,45,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:46:04+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:46:04+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,33,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,14,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,79,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,60,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,45,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:51:05+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,33,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,23,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,69,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,25,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,25,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,30,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,30,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T02:56:06+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,40,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,11,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,78,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,25,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,25,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,38,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:01:07+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,49,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,13,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,74,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,60,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,93,14,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,29,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:06:08+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,57,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,9,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,9,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,82,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,60,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,89,16,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,11,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,13,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,49,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:11:09+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,38,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,11,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,78,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,60,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,20,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,57,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:16:10+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,29,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,17,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,83,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,86,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,74,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,71,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:21:11+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,29,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,78,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,87,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,13,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,74,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,83,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:26:12+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,17,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:31:13+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:31:13+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,15,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:31:13+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,77,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:31:13+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,100,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:31:13+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,68,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:31:13+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:31:13+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,19,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:31:13+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,100,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:36:14+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,9,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:36:14+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,27,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:36:14+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,64,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:36:14+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,100,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:36:14+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,74,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:36:14+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:36:14+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:36:14+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,100,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:41:16+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:41:16+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,25,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:41:16+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,67,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:41:16+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,100,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:41:16+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,74,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:41:16+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:41:16+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:41:16+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,100,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,21,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,72,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,83,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,17,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,81,13,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,6,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,86,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:46:17+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,20,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,73,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,78,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,72,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:51:18+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,21,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,72,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,30,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,20,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,87,13,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,72,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T03:56:19+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,23,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,69,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,57,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,29,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,9,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,73,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:01:20+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,18,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,11,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,78,14,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,57,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,43,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,17,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,58,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:06:21+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,25,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,9,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,78,18,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,45,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,22,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,33,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,84,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,19,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,62,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:11:21+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,19,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,15,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,10,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,75,15,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,56,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,33,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,11,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,86,13,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,15,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,75,15,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:16:22+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,10,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,15,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,80,16,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,56,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,33,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,11,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,93,14,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,15,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,75,15,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:21:23+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,10,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,9,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,78,18,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,29,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,57,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,14,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,94,16,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,6,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,16,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,76,19,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:26:24+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,10,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,10,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,80,17,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,17,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,83,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,95,19,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,15,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,81,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:31:25+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,21,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,72,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,50,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,95,19,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,12,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:36:26+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,88,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,19,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,68,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,57,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,43,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,90,18,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,6,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:41:27+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,94,29,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,74,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,50,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,90,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,5,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,90,35,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:46:28+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,5,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,19,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,13,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,68,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,50,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,90,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,5,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,90,40,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:51:29+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,5,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,27,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,7,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,66,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,75,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,25,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,92,22,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,7,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,90,54,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T04:56:30+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,3,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,29,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,71,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,100,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,88,22,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,6,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,91,62,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:01:31+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,3,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,28,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,72,13,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,71,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,29,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,90,19,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,4,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,93,68,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:06:32+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,3,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,19,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,81,17,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,62,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,38,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,87,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,13,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,5,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,94,71,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:11:33+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,1,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,19,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,81,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,8,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,42,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,89,24,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,11,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,5,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,92,72,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:16:34+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,3,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,19,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,78,25,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,22,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,28,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,82,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,18,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,4,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,93,73,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:21:35+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,3,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,16,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,81,30,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,23,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,54,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,23,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,83,24,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,17,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,5,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,90,75,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:26:35+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,5,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,16,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,8,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,76,28,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,20,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,60,15,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,20,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,76,26,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,21,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,5,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,90,75,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:31:36+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,5,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,16,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,73,27,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,22,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,65,15,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,13,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,83,29,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,14,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,6,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,87,76,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:36:37+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,7,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,24,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,12,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,64,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,14,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,68,19,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,18,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,80,28,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,17,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,7,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,87,70,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:41:38+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,6,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,24,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,9,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,67,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,15,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,74,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,11,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,75,24,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,22,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,9,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,83,63,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:46:39+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,8,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,20,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,10,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,70,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,16,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,71,22,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,13,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,80,29,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,17,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,8,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,81,53,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:51:40+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,11,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,14,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,7,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,79,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,21,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,67,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,12,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,79,26,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,21,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,8,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,82,42,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T05:56:41+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,10,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,84,25,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,22,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,70,26,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,8,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,80,24,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,20,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,9,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,80,35,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:01:42+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,11,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,9,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,88,28,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,26,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,63,24,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,11,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,78,24,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,19,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,9,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,80,28,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:06:43+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,11,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,10,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,87,27,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,24,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,65,24,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,11,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,74,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,22,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,88,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:11:44+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,85,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,23,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,64,19,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,13,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,71,17,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,25,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,88,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:16:46+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,9,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,9,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,82,26,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,22,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,63,17,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,15,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,69,18,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,27,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,84,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:21:47+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,8,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,13,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,10,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,77,24,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,19,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,59,16,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,22,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,69,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,3,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,28,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,10,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,74,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:26:48+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,16,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,15,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,9,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,76,25,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,18,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,50,11,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,32,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,71,22,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,29,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,10,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,73,21,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:31:49+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,17,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,15,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,11,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,74,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,22,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,52,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,26,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,74,25,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,26,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,13,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,67,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:36:50+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,20,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,19,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,4,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,77,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,17,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,53,12,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,30,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,73,30,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,22,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,12,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,67,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:41:51+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,21,7,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,21,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,7,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,72,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,19,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,59,16,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,22,6,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,71,29,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,24,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,7,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,66,20,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:46:52+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,27,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,15,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,12,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,73,19,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,16,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,71,22,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,13,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,71,29,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,24,10,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,7,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,64,18,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:51:53+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,29,8,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Narayanguda Road South Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,12,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Narayanguda Road South Bound,YMCA to Ramkoti Road West Bound,12,3,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Narayanguda Road South Bound,Narayanguda Road South Bound,76,19,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road North Bound,16,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,YMCA to Ramkoti Road West Bound,71,23,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Raja Bahadur Venkata Rama Reddy Marg West Bound,Narayanguda Road South Bound,13,4,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Narayanguda Road North Bound,Narayanguda Road North Bound,72,29,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Narayanguda Road North Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,5,2,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,Narayanguda Road North Bound,YMCA to Ramkoti Road West Bound,23,9,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road North Bound,5,1,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,YMCA to Ramkoti Road East Bound,Raja Bahadur Venkata Rama Reddy Marg East Bound,71,15,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured
+2026-10-09T06:56:54+05:30,YMCA to Ramkoti Road East Bound,Narayanguda Road South Bound,24,5,TomTom Junction Analytics 6ac7d6870b461bdaf5cd8158,measured

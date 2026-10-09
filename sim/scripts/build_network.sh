@@ -16,5 +16,5 @@ netconvert --osm-files ymca.osm.xml -o ymca.net.xml \
   --geometry.remove --ramps.guess --junctions.join --tls.guess-signals --tls.discard-simple \
   --output.original-names
 # Widen the roundabout ring and the 8 roads touching it to the widths measured in the 2020 study.
-netconvert -s ymca.net.xml --edge-files ymca_widths.edg.xml --lefthand -o ymca.net.tmp.xml && mv ymca.net.tmp.xml ymca.net.xml
+python3 ../scripts/apply_widths.py ymca.net.xml ymca_widths.edg.xml
 echo "Built networks/ymca.net.xml — now check lane counts in netedit."

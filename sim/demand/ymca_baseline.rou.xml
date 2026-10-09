@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- YMCA Circle baseline traffic, built by sim/scripts/build_demand.py (scale 0.9).
+     Volumes: 2020 study counts per approach and class (counted). Turns: TomTom Junction Analytics, probe-weighted (measured).
+     Assumed: car/auto split 70/30 of light vehicles; heavy = bus; study legs matched to approaches by place name. -->
+<routes>
+    <!-- Sublane model: run SUMO with lateral-resolution 0.3 so two-wheelers and autos filter between cars. -->
+    <vType id="two_wheeler" vClass="motorcycle" length="1.9" width="0.75" minGap="1.0" maxSpeed="16.7" accel="3.0" decel="5.0"
+           speedFactor="normc(0.85,0.1,0.5,1.2)" latAlignment="arbitrary" minGapLat="0.3" lcSublane="2.0" lcPushy="0.6" color="1,0.6,0"/>
+    <vType id="auto" vClass="passenger" length="2.7" width="1.4" minGap="1.2" maxSpeed="12.5" accel="1.8" decel="4.0"
+           speedFactor="normc(0.85,0.1,0.5,1.1)" latAlignment="arbitrary" minGapLat="0.4" lcSublane="1.5" lcPushy="0.4" color="0.2,0.7,0.2"/>
+    <vType id="car" vClass="passenger" length="4.3" width="1.75" minGap="1.5" maxSpeed="16.7" accel="2.6" decel="4.5"
+           speedFactor="normc(0.85,0.1,0.5,1.2)" latAlignment="center" minGapLat="0.5" color="0.3,0.5,0.9"/>
+    <vType id="bus" vClass="bus" length="11" width="2.5" minGap="2.0" maxSpeed="13.9" accel="1.2" decel="4.0"
+           speedFactor="normc(0.8,0.1,0.5,1.0)" latAlignment="center" minGapLat="0.6" color="0.8,0.1,0.1"/>
+
+    <!-- King Koti road -> YMCA to Ramkoti Road East Bound: enters on -1525101483#2 -->
+    <flow id="king_raja_east_two_wheeler" type="two_wheeler" from="-1525101483#2" to="-313328846#10" begin="0" end="4200" vehsPerHour="346.1" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_raja_east_car" type="car" from="-1525101483#2" to="-313328846#10" begin="0" end="4200" vehsPerHour="123.4" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_raja_east_auto" type="auto" from="-1525101483#2" to="-313328846#10" begin="0" end="4200" vehsPerHour="52.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_raja_east_bus" type="bus" from="-1525101483#2" to="-313328846#10" begin="0" end="4200" vehsPerHour="16.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_narayanguda_south_two_wheeler" type="two_wheeler" from="-1525101483#2" to="28110318#0" begin="0" end="4200" vehsPerHour="51.7" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_narayanguda_south_car" type="car" from="-1525101483#2" to="28110318#0" begin="0" end="4200" vehsPerHour="18.4" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_narayanguda_south_auto" type="auto" from="-1525101483#2" to="28110318#0" begin="0" end="4200" vehsPerHour="7.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_narayanguda_south_bus" type="bus" from="-1525101483#2" to="28110318#0" begin="0" end="4200" vehsPerHour="2.5" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_narayanguda_north_two_wheeler" type="two_wheeler" from="-1525101483#2" to="1057079071#2" begin="0" end="4200" vehsPerHour="44.1" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_narayanguda_north_car" type="car" from="-1525101483#2" to="1057079071#2" begin="0" end="4200" vehsPerHour="15.7" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_narayanguda_north_auto" type="auto" from="-1525101483#2" to="1057079071#2" begin="0" end="4200" vehsPerHour="6.7" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="king_narayanguda_north_bus" type="bus" from="-1525101483#2" to="1057079071#2" begin="0" end="4200" vehsPerHour="2.2" departLane="best" departSpeed="max" departPosLat="random"/>
+    <!-- Kacheguda signal -> Raja Bahadur Venkata Rama Reddy Marg West Bound: enters on 313328846#0 -->
+    <flow id="kacheguda_ymca_west_two_wheeler" type="two_wheeler" from="313328846#0" to="28110319#0" begin="0" end="4200" vehsPerHour="353.8" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_ymca_west_car" type="car" from="313328846#0" to="28110319#0" begin="0" end="4200" vehsPerHour="131.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_ymca_west_auto" type="auto" from="313328846#0" to="28110319#0" begin="0" end="4200" vehsPerHour="56.5" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_ymca_west_bus" type="bus" from="313328846#0" to="28110319#0" begin="0" end="4200" vehsPerHour="13.0" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_narayanguda_north_two_wheeler" type="two_wheeler" from="313328846#0" to="1057079071#2" begin="0" end="4200" vehsPerHour="107.7" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_narayanguda_north_car" type="car" from="313328846#0" to="1057079071#2" begin="0" end="4200" vehsPerHour="40.1" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_narayanguda_north_auto" type="auto" from="313328846#0" to="1057079071#2" begin="0" end="4200" vehsPerHour="17.2" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_narayanguda_north_bus" type="bus" from="313328846#0" to="1057079071#2" begin="0" end="4200" vehsPerHour="3.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_narayanguda_south_two_wheeler" type="two_wheeler" from="313328846#0" to="28110318#0" begin="0" end="4200" vehsPerHour="79.4" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_narayanguda_south_car" type="car" from="313328846#0" to="28110318#0" begin="0" end="4200" vehsPerHour="29.6" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_narayanguda_south_auto" type="auto" from="313328846#0" to="28110318#0" begin="0" end="4200" vehsPerHour="12.7" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="kacheguda_narayanguda_south_bus" type="bus" from="313328846#0" to="28110318#0" begin="0" end="4200" vehsPerHour="2.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <!-- Barkathpura road -> Narayanguda Road South Bound: enters on 28110317#0 -->
+    <flow id="barkathpura_narayanguda_south_two_wheeler" type="two_wheeler" from="28110317#0" to="28110318#0" begin="0" end="4200" vehsPerHour="313.8" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_narayanguda_south_car" type="car" from="28110317#0" to="28110318#0" begin="0" end="4200" vehsPerHour="132.0" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_narayanguda_south_auto" type="auto" from="28110317#0" to="28110318#0" begin="0" end="4200" vehsPerHour="56.6" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_narayanguda_south_bus" type="bus" from="28110317#0" to="28110318#0" begin="0" end="4200" vehsPerHour="9.4" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_raja_east_two_wheeler" type="two_wheeler" from="28110317#0" to="-313328846#10" begin="0" end="4200" vehsPerHour="66.5" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_raja_east_car" type="car" from="28110317#0" to="-313328846#10" begin="0" end="4200" vehsPerHour="28.0" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_raja_east_auto" type="auto" from="28110317#0" to="-313328846#10" begin="0" end="4200" vehsPerHour="12.0" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_raja_east_bus" type="bus" from="28110317#0" to="-313328846#10" begin="0" end="4200" vehsPerHour="2.0" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_ymca_west_two_wheeler" type="two_wheeler" from="28110317#0" to="28110319#0" begin="0" end="4200" vehsPerHour="37.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_ymca_west_car" type="car" from="28110317#0" to="28110319#0" begin="0" end="4200" vehsPerHour="15.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_ymca_west_auto" type="auto" from="28110317#0" to="28110319#0" begin="0" end="4200" vehsPerHour="6.8" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="barkathpura_ymca_west_bus" type="bus" from="28110317#0" to="28110319#0" begin="0" end="4200" vehsPerHour="1.1" departLane="best" departSpeed="max" departPosLat="random"/>
+    <!-- Narayanaguda road -> Narayanguda Road North Bound: enters on 747373024#0 -->
+    <flow id="narayanaguda_narayanguda_north_two_wheeler" type="two_wheeler" from="747373024#0" to="1057079071#2" begin="0" end="4200" vehsPerHour="417.5" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_narayanguda_north_car" type="car" from="747373024#0" to="1057079071#2" begin="0" end="4200" vehsPerHour="153.8" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_narayanguda_north_auto" type="auto" from="747373024#0" to="1057079071#2" begin="0" end="4200" vehsPerHour="65.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_narayanguda_north_bus" type="bus" from="747373024#0" to="1057079071#2" begin="0" end="4200" vehsPerHour="15.6" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_ymca_west_two_wheeler" type="two_wheeler" from="747373024#0" to="28110319#0" begin="0" end="4200" vehsPerHour="86.5" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_ymca_west_car" type="car" from="747373024#0" to="28110319#0" begin="0" end="4200" vehsPerHour="31.9" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_ymca_west_auto" type="auto" from="747373024#0" to="28110319#0" begin="0" end="4200" vehsPerHour="13.7" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_ymca_west_bus" type="bus" from="747373024#0" to="28110319#0" begin="0" end="4200" vehsPerHour="3.2" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_raja_east_two_wheeler" type="two_wheeler" from="747373024#0" to="-313328846#10" begin="0" end="4200" vehsPerHour="26.1" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_raja_east_car" type="car" from="747373024#0" to="-313328846#10" begin="0" end="4200" vehsPerHour="9.6" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_raja_east_auto" type="auto" from="747373024#0" to="-313328846#10" begin="0" end="4200" vehsPerHour="4.1" departLane="best" departSpeed="max" departPosLat="random"/>
+    <flow id="narayanaguda_raja_east_bus" type="bus" from="747373024#0" to="-313328846#10" begin="0" end="4200" vehsPerHour="1.0" departLane="best" departSpeed="max" departPosLat="random"/>
+</routes>

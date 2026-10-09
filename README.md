@@ -52,7 +52,10 @@ SUMO 1.28 is installed from the official `eclipse-sumo` Python package into `.ve
 make setup-sim            # installs eclipse-sumo, sumolib, traci, pyproj; prints the SUMO version
 make network              # sim/networks/ymca.osm.xml -> sim/networks/ymca.net.xml
 make sim-test             # 10 minutes of random traffic; expect "Inserted: 400", "Running: 0", "Waiting: 0"
+python sim/scripts/build_demand.py --scale 0.9   # real baseline traffic (inside .venv)
+python sim/scripts/calibrate.py 0.9              # simulated vs TomTom speeds per road
 ```
+Status, calibration results and next steps: [sim/README.md](sim/README.md).
 - The road map is an OpenStreetMap extract of the YMCA Circle area (`sim/networks/ymca.osm.xml`, downloaded 9 Oct 2026). To refresh it: `curl -A "cityrehearsal" "https://api.openstreetmap.org/api/0.6/map?bbox=78.4843,17.3902,78.4975,17.4005" -o sim/networks/ymca.osm.xml`
 - `sim/scripts/build_network.sh` sets left-hand traffic, keeps main roads only, and uses `sim/networks/india_urban.typ.xml` for speeds and lane counts where OpenStreetMap has none (labelled `assumed`). It then applies `sim/networks/ymca_widths.edg.xml`, which widens the roundabout and the 8 roads touching it to 3 lanes (9.9 m), matching the widths measured in the 2020 study (`counted`).
 - The visual editors `sumo-gui` and `netedit` also come with the package. On macOS they need [XQuartz](https://www.xquartz.org) (`brew install --cask xquartz`, then log out and back in).
@@ -62,7 +65,8 @@ make sim-test             # 10 minutes of random traffic; expect "Inserted: 400"
 All data and its sources are listed in [data/README.md](data/README.md). The files are already in the repo; these commands only refresh them and need `TOMTOM_API_KEY` in `.env`.
 - **Hourly speeds** (TomTom Traffic Stats): the request files are in `data/tomtom/*.request.json`; `data/tomtom/fetch_traffic_stats.py` shows the submit, status and download steps. The trial only allows dates in July 2026.
 - **YMCA Circle junction live data** (TomTom Junction Analytics, junction `6ac7d6870b461bdaf5cd8158`): delay, queue, volume and turn ratios. One snapshot: `python3 data/tomtom/collect_junction_live.py --once`. Every 5 minutes, keeping the Mac awake: `nohup caffeinate -i python3 data/tomtom/collect_junction_live.py >> data/tomtom/junction/collector.log 2>&1 &` (stop with `pkill -f collect_junction_live`). TomTom also keeps the history: the hourglass button on the junction page exports it.
-- If Python reports `CERTIFICATE_VERIFY_FAILED` on your network, use `curl` for TomTom calls (the collector already does).
+- If Python reports `CERTIFICATE_VERIFY_FAILED`: run `export SSL_CERT_FILE=$(python -m certifi)` inside `.venv` (python.org Python on macOS ships without certificates), or use `curl` for TomTom calls (the collector already does).
+- Building footprints (Overture Maps): `pip install overturemaps` then `overturemaps download --bbox=78.4843,17.3902,78.4975,17.4005 -f geojson --type=building -o data/raw/ymca_buildings.geojson`.
 
 Deployed URL: _(add if deployed)_
 
