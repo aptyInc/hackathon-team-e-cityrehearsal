@@ -368,6 +368,11 @@ if _HOURLY.exists():
                                         "day": "live", "weather": "heavy_rain"}).json()
     assert fl["time"]["day"] == "live" and fl["time"]["weather"] == "heavy_rain" and fl["time"]["bucket"], fl["time"]
     assert len(_calls) == 2 * n_pts, "runs in one bucket share one live estimate (one TomTom refresh)"
+    same = c.post("/corridor/runs", json={"interventions": [], "day": "live", "live_bucket": t["bucket"]})
+    assert same.status_code == 200 and same.json()["time"]["bucket"] == t["bucket"], same.text[:200]
+    assert c.post("/corridor/runs", json={"interventions": [], "day": "live", "live_bucket": "2020-01-01T10:20+05:30"}).status_code == 410
+    assert c.post("/corridor/runs", json={"interventions": [], "day": "live", "live_bucket": "yesterday"}).status_code == 400
+    assert c.post("/corridor/runs", json={"interventions": [], "live_bucket": t["bucket"]}).status_code == 400
 _lt.FETCH, _lt.key = _real_lt_fetch, _real_key
 _reset_live()
 print("SMOKE TEST PASSED")

@@ -66,6 +66,10 @@ class LiveUnavailable(Exception):
     """No live estimate to serve (no key, no points file, TomTom unreachable and nothing cached, budget spent)."""
 
 
+class BucketGone(LiveUnavailable):
+    """A now-cast asked for an earlier 10-minute bucket that is no longer kept (or never was)."""
+
+
 def key() -> str | None:
     return (os.getenv("TOMTOM_MAPS_KEY") or "").strip() or None
 
@@ -435,11 +439,13 @@ def bucket_of(now: datetime) -> str:
 _frozen: dict = {}
 
 
-def frozen(now: datetime | None = None) -> dict:
+def frozen(now: datetime | None = None, bucket: str | None = None) -> dict:
     """The live estimate now-cast runs use in this 10-minute bucket (the first one asked for in it, kept for the bucket,
-    also across API restarts: LIVE_DIR/buckets.json). LiveUnavailable when there is none."""
+    also across API restarts: LIVE_DIR/buckets.json; the newest 36 buckets, 6 hours). `bucket`: an earlier bucket
+    (time.bucket of a now-cast result), so variants are fitted to the same live trip as their baseline; BucketGone when
+    it is not kept. LiveUnavailable when there is no estimate."""
     now = now or _now()
-    b = bucket_of(now)
+    b = bucket or bucket_of(now)
     with _lock:
         if b in _frozen:
             return _frozen[b]
@@ -451,6 +457,8 @@ def frozen(now: datetime | None = None) -> dict:
         if b in disk:
             _frozen[b] = disk[b]
             return disk[b]
+    if bucket and bucket != bucket_of(_now()):      # only the current bucket can still be made
+        raise BucketGone(f"now-cast bucket {bucket} is not kept (buckets are kept for 6 hours); simulate now again")
     est = live_trip()
     if est.get("stale") and est.get("age_s", 0) > BUCKET_S * 3:
         raise LiveUnavailable(f"the last live estimate is {est['age_s'] // 60} min old and TomTom cannot be reached now")

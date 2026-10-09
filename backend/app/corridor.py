@@ -24,6 +24,8 @@ day "live" (hour optional: default the current IST hour, clamped to the calibrat
 calibration is adjusted (as for a single day) so the simulated trip matches GET /corridor/live_trip's estimate, frozen
 per 10-minute bucket (live_trip.frozen: a baseline and its variants in one bucket share the live trip and the fit). The
 bucket is part of the cache key; the result echoes time.day "live", time.as_of, time.bucket and inputs.live_trip.
+live_bucket (optional, with day "live"): a now-cast's time.bucket, so a variant asked for later is fitted to the same
+live trip as its baseline (cached fit); 410 once that bucket is no longer kept (6 hours).
 
 MOCK_SIM=1: POST returns the contract sample (baseline, or flyover_j07 when any intervention is given), with a
 warning when the request asked for something else. MOCK_SIM=0: sim/corridor/corridor_runner.run in a worker thread
@@ -312,6 +314,7 @@ class CorridorRunIn(BaseModel):
     hour: int | None = None                # 6..23: hh:00-hh+1:00 (needs calibration_hourly.json)
     day: str | None = None                 # with hour: "july" (typical July day, default) or a date like "2026-07-08"
     weather: str | None = None             # rain what-if: "dry" | "light_rain" | "heavy_rain"; none = as calibrated
+    live_bucket: str | None = None         # day "live": an earlier now-cast's time.bucket (variants fitted like their baseline)
     _live: dict | None = PrivateAttr(default=None)   # day "live": the frozen live trip of this bucket (with_live)
 
 
@@ -370,11 +373,21 @@ def with_live(body: CorridorRunIn) -> CorridorRunIn:
     """day "live": attach the live trip frozen for the current 10-minute bucket (live_trip.frozen) and, without an hour,
     take the current IST hour, clamped to the calibrated HOURS (the label says so). 503 when there is no live estimate.
     Changes `body` in place (once) and returns it."""
+    if body.live_bucket is not None and day_of(body) != "live":
+        raise HTTPException(400, "live_bucket goes with day 'live'")
     if day_of(body) != "live" or body._live is not None:
         return body
     now = live._now()
+    if body.live_bucket is not None:
+        try:
+            now = datetime.fromisoformat(body.live_bucket)
+            assert now.tzinfo is not None and live.bucket_of(now) == body.live_bucket
+        except (ValueError, AssertionError):
+            raise HTTPException(400, f"live_bucket must be a now-cast's time.bucket like 2026-10-10T10:20+05:30, got {body.live_bucket!r}")
     try:
-        est = live.frozen(now)
+        est = live.frozen(now, bucket=body.live_bucket)
+    except live.BucketGone as e:
+        raise HTTPException(410, str(e))
     except live.LiveUnavailable as e:
         raise HTTPException(503, f"live now-cast unavailable: {e}")
     clamped = False
