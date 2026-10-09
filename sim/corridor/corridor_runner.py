@@ -567,9 +567,14 @@ def write_roads(net, outdir: Path):
     for e in net.getEdges():
         if e.getFunction() == "internal" or not e.allows("passenger"):
             continue
-        coords = [list(map(lambda v: round(v, 6), net.convertXY2LonLat(x, y))) for x, y, *_ in e.getShape(True)]
-        feats.append({"type": "Feature", "properties": {"id": e.getID(), "lanes": e.getLaneNumber(), "name": e.getName()},
-                      "geometry": {"type": "LineString", "coordinates": coords}})
+        shape = e.getShape3D()   # z: flyovers and underpasses built by sim/templates/corridor.py are at +-6 m
+        lifted = any(abs(z) > 0.5 for *_, z in shape)
+        coords = [[round(v, 6) for v in net.convertXY2LonLat(x, y)] + ([round(z, 1)] if lifted else []) for x, y, z in shape]
+        props = {"id": e.getID(), "lanes": e.getLaneNumber(), "name": e.getName()}
+        kind = next((k for k in ("flyover", "underpass") if e.getID().startswith(k + "_")), None)
+        if kind:   # the template's structure edges are named <kind>_<junction>_<fwd|rev>
+            props.update(structure=kind, junction_id=e.getID().split("_")[1], flyover=kind == "flyover")
+        feats.append({"type": "Feature", "properties": props, "geometry": {"type": "LineString", "coordinates": coords}})
     path = outdir / "roads.geojson"
     path.write_text(json.dumps({"type": "FeatureCollection", "features": feats}, separators=(",", ":")))
     return path

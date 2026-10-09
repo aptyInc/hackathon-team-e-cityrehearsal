@@ -985,9 +985,9 @@ function inView() {   // a filter for what the camera can see (with a margin); n
 }
 
 // ---------- flyovers and underpasses (drawn in 3D from the result's interventions) ----------
-// From the model roads when they carry it (z in the coordinates or a flyover flag), else along the route line:
-// the structure's length (default 400 m: ramps ~200 m either side), ramps rising to 6.5 m over the first and last 150 m.
-const DECK_Z = 6.5;
+// From the model roads when they carry it (structure edges with z, one per direction, written by the sim), else along the
+// route line: the structure's length (default 400 m: ramps ~200 m either side), ramps rising to 6 m over the first and last 150 m.
+const DECK_Z = 6;   // the templates' deck height (sim/templates/corridor.py)
 let structCache = { key: null, data: [] };
 function routeLine() {   // the whole A -> B line with cumulative metres, and where each corridor point sits on it
   const line = [], at = {};
@@ -1014,12 +1014,26 @@ function subLine(R, from, to, step = 15) {   // points every `step` m between tw
   }
   return out;
 }
+function densify(path, step = 15) {   // a vertex every ~15 m, so ramps are smooth and piers spread along the deck
+  const out = [path[0]];
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1], b = path[i], n = Math.max(1, Math.round(metres(a, b) / step));
+    for (let k = 1; k <= n; k++) out.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n, a[2] + (b[2] - a[2]) * k / n]);
+  }
+  return out;
+}
 function structures(r) {
   const ivs = (r?.interventions || []).filter(iv => iv.kind === "flyover" || iv.kind === "underpass");
   const key = r ? `${r.run_id}|${ivKey(ivs)}|${!!legPaths}|${roads ? roads.length : 0}` : null;
   if (structCache.key === key) return structCache.data;
   const data = [];
-  if (ivs.length && !(roads && roads.some(f => f.properties?.flyover || f.geometry?.coordinates?.some(c => Math.abs(c[2] || 0) > 1)))) {
+  const decks = ivs.length ? (roads || []).filter(f => f.properties?.structure) : [];
+  for (const f of decks) {   // the structures the simulation built, exactly where its vehicles drive (heights included)
+    const kind = f.properties.structure, z0 = kind === "underpass" ? -DECK_Z : DECK_Z;
+    data.push({ kind, junction_id: f.properties.junction_id, lanes: f.properties.lanes || 2, oneWay: true,
+                path: densify(f.geometry.coordinates.map(c => [c[0], c[1], c[2] ?? z0])), length_m: null });
+  }
+  if (ivs.length && !decks.length && !(roads && roads.some(f => f.properties?.flyover || f.geometry?.coordinates?.some(c => Math.abs(c[2] || 0) > 1)))) {
     const R = routeLine();
     for (const iv of ivs) {
       const jd = R.cum[R.at[iv.junction_id]]; if (jd == null) continue;
@@ -1109,7 +1123,7 @@ function render() {
     getPath: d => d.path, getColor: d => [...speedRGB(d.kmh), 220], updateTriggers: { getColor: [base, changed, $("when").value] },
   }));
   if (roads && $("t-roads").checked) layers.push(new deck.PathLayer({
-    id: "roads", data: roads, widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
+    id: "roads", data: roads.filter(f => !f.properties?.structure), widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
     getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], c[2] != null ? c[2] : f.properties.flyover ? DECK_Z : 0.3]),
     getWidth: f => (f.properties.lanes || 2) * 3.2, getColor: f => roadColor(f.properties),
   }));
@@ -1117,7 +1131,7 @@ function render() {
   if (st.length) {
     layers.push(new deck.PathLayer({
       id: "structures", data: st, widthUnits: "meters", widthMinPixels: 3, capRounded: false, jointRounded: true, billboard: false,
-      getPath: d => d.path, getWidth: d => d.lanes * 2 * 3.5 + 1.5, getColor: d => d.kind === "underpass" ? [70, 70, 78, 230] : [168, 166, 160, 240],
+      getPath: d => d.path, getWidth: d => d.lanes * (d.oneWay ? 1 : 2) * 3.5 + 1.5, getColor: d => d.kind === "underpass" ? [70, 70, 78, 230] : [168, 166, 160, 240],
       pickable: true, onHover: ({ object }) => { if (object) $("playinfo").textContent = `${KINDS[object.kind]} at ${short(point(object.junction_id)?.name)}: ${object.length_m} m, ${object.lanes} lanes each way (drawn from the plan)`; },
     }));
     if (near) layers.push(new deck.ColumnLayer({   // piers under the deck
