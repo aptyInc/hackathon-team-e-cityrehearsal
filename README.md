@@ -4,6 +4,9 @@
 
 Apty Hackathon 2026 · Theme: Sustainable Cities and Communities — Smart cities
 
+
+> **One command, one address:** `make demo` starts the TomTom junction collector and the API with real simulations, and serves the whole app at **http://localhost:8000/** (home, corridor, YMCA, decisions, about the data). `make dev` + `python3 -m http.server 5174` in `frontend/` still works for development and the UI tests.
+
 ## What is CityRehearsal? (plain words)
 CityRehearsal is a **rehearsal for road decisions**. We build a computer copy of real roads, fill it with simulated
 cars, two-wheelers, autos and buses that behave like real Hyderabad traffic, and check it against measured data. Then

@@ -1,4 +1,4 @@
-.PHONY: setup setup-sim network sim-test sim-run junction-data dev smoke
+.PHONY: setup setup-sim network sim-test sim-run junction-data dev demo smoke
 setup:
 	python3 -m venv .venv && . .venv/bin/activate && pip install -r backend/requirements.txt
 setup-sim:
@@ -16,5 +16,9 @@ junction-data:
 	python3 data/tomtom/fetch_junction_archive.py 2026-10-08
 dev:
 	. .venv/bin/activate && cd backend && MOCK_SIM=$${MOCK_SIM:-1} uvicorn app.main:app --reload --reload-dir . --reload-dir ../sim --port 8000
+demo:   ## the whole app on http://localhost:8000/ with real simulations and the TomTom junction collector
+	@pgrep -f collect_corridor_junctions.py >/dev/null || (nohup python3 data/tomtom/collect_corridor_junctions.py >> data/tomtom/junction/corridor_collector.log 2>&1 &)
+	@echo "Terascope AI: open http://localhost:8000/"
+	. .venv/bin/activate && cd backend && MOCK_SIM=0 uvicorn app.main:app --reload --reload-dir . --reload-dir ../sim --port 8000
 smoke:
 	. .venv/bin/activate && python scripts/smoke_test.py
