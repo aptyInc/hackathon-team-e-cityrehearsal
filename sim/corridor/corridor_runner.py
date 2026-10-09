@@ -53,13 +53,16 @@ Playback (for the 3D view)
 
 Hour of the day: with calibration_hourly.json (calibrate_hourly(), fitted to TomTom's hourly leg times when those rows
 are in data/raw/corridor_legs_tomtom.csv), run(hour=h) applies that hour's volume scale (and, only where needed, a
-speed-cap scale) on top of the all-day calibration.
+speed-cap scale) on top of the all-day calibration. run(hour=h, day="2026-07-08") starts from the typical July hour and
+adjusts it to that day-hour's TomTom trip time on demand (fit_day_hour(): 1-2 baseline runs, kept in
+calibration_days.json and reused).
 
     python sim/corridor/corridor_runner.py calibrate          # writes sim/corridor/calibration.json
     python sim/corridor/corridor_runner.py calibrate_hourly [8 9 ...]   # writes sim/corridor/calibration_hourly.json
+    python sim/corridor/corridor_runner.py fit_day 2026-07-08 18        # one day and hour (calibration_days.json)
     python sim/corridor/corridor_runner.py run [j07:flyover]  # prints the C5 result summary
 """
-import csv, heapq, json, math, os, re, shutil, statistics, subprocess, sys, time, uuid, xml.etree.ElementTree as ET
+import csv, hashlib, heapq, json, math, os, re, shutil, statistics, subprocess, sys, time, uuid, xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -109,7 +112,8 @@ FRAMES = (WARMUP + 300, WARMUP + 600, 4)   # vehicle positions for the 3D view (
 FRAMES_MAX_S = 600                # a frames window is at most 10 minutes (~50 MB) and lies inside WARMUP .. WARMUP + PROBE_SPAN
 PROBE_TRACK_S = 5                 # probe car positions every N s for the whole trip (probes.json)
 HOURLY = HERE / "calibration_hourly.json"
-HOURS = range(6, 23)              # hour h = hh:00-hh+1:00; TomTom's all-day period is 06:00-23:00
+HOURS = range(6, 24)              # hour h = hh:00-hh+1:00: 06:00-07:00 .. 23:00-24:00
+DAYS_FILE = HERE / "calibration_days.json"   # on-demand fits of single days and hours (fit_day_hour)
 HOUR_VOLUME = (0.5, 1.6)          # calibrate_hourly(): volume scale limits; beyond them it scales the speed caps
 HOUR_CAP = (0.6, 1.8)             # ... within these limits
 HOUR_MAX_KMH = 80                 # ... and no leg faster than this
@@ -146,16 +150,32 @@ def row_hour(row):
     return h0 if m0 == 0 and m1 == 0 and (h1 - h0) % 24 == 1 else None
 
 
-def tomtom_hours():
+def row_dates(row):
+    """(first, last) date of a TomTom row's period ('2026-07-01..2026-07-31 ...' -> both; a single date twice)."""
+    d = re.findall(r"\d{4}-\d{2}-\d{2}", row.get("period") or "")
+    return (d[0], d[1] if len(d) > 1 else d[0]) if d else (None, None)
+
+
+def is_july(day):
+    return day in (None, "", "july", "July")
+
+
+def tomtom_hours(day=None):
     """TomTom's hourly rows in LEGS_CSV: {hour: {"period", "job", "legs": {(from_id, to_id): (distance_m, time_s,
-    speed_kmh)}, "trip_total_s"}}. When an hour has several periods, the one covering July 2026 (the all-day
-    calibration's month) wins, else the one with the most legs. {} while TomTom's hourly data is not in."""
+    speed_kmh)}, "trip_total_s"}}. `day` None or "july": periods over several days (the typical July day; when an hour
+    has several, the one covering July 2026 wins, else the one with the most legs); "2026-07-08": that day's periods
+    only. {} while TomTom's hourly data is not in."""
     if not LEGS_CSV.exists():
         return {}
     by = {}
     for r in csv.DictReader(LEGS_CSV.open()):
         h = row_hour(r)
         if h is None:
+            continue
+        d0, d1 = row_dates(r)
+        if (d0 != d1) if not is_july(day) else (d0 == d1):
+            continue
+        if not is_july(day) and d0 != day:
             continue
         p = by.setdefault(h, {}).setdefault((r.get("period", ""), r.get("job", "")), {"legs": {}, "trip_total_s": None})
         f = lambda k: float(r[k]) if (r.get(k) or "").strip() not in ("", "nan", "None") else None  # noqa: E731
@@ -465,7 +485,7 @@ def sections(net, info):
     for k, (p1, p2) in enumerate(SECTIONS):
         i1, i2 = pts.index(p1), pts.index(p2)
         sec = {"k": k, "legs": list(range(i1, i2)), "points": pts[i1:i2 + 1], "junctions": [], "owned": [],
-               "lon": (-999 if i1 == 0 else lon[p1] + 0.0015, 999 if i2 == len(pts) - 1 else lon[p2] + 0.0015)}
+               "lon": section_lon(k)}
         for tag, a, b in (("fwd", p1, p2), ("rev", p2, p1)):
             path, pos = info["paths"][tag], info["pos"][tag]
             cum = [0.0]
@@ -944,8 +964,33 @@ def hourly_calibration():
     return json.loads(HOURLY.read_text()) if HOURLY.exists() else None
 
 
-def hour_settings(hour):
-    """That hour's entry of calibration_hourly.json; HourlyUnavailable (plain words) when there is none."""
+def hour_label(hour):
+    return f"July typical {hour:02d}:00-{hour + 1:02d}:00"
+
+
+def day_label(day, hour):
+    from datetime import date
+    d = date.fromisoformat(day)
+    return f"{d.strftime('%a')} {d.day} {d.strftime('%b')}, {hour:02d}:00-{hour + 1:02d}:00"
+
+
+def day_fits():
+    """calibration_days.json: on-demand fits of a single day and hour ({"fits": {"2026-07-08 18": {...}}})."""
+    return (json.loads(DAYS_FILE.read_text()) if DAYS_FILE.exists() else {}).get("fits", {})
+
+
+def _day_sig(base, d):
+    """What a day-hour fit depends on: the July hour's calibration and that day-hour's TomTom numbers."""
+    blob = json.dumps({"base": {k: base.get(k) for k in ("volume_scale", "cap_scale", "tomtom_total_s", "sim_total_s")},
+                       "tomtom": [d.get("trip_total_s"), sorted((f"{a}->{b}", v[1]) for (a, b), v in d["legs"].items())]}, sort_keys=True)
+    return hashlib.sha256(blob.encode()).hexdigest()[:16]
+
+
+def hour_settings(hour, day=None):
+    """Scales for an hour of the day. `day` None or "july": the typical July hour (calibration_hourly.json). A single
+    day ("2026-07-08"): its on-demand fit (calibration_days.json) when that fit still matches the July hour and
+    TomTom's numbers, else {"needs_fit": True, "base": July hour, "tomtom": that day-hour's TomTom rows}.
+    HourlyUnavailable (plain words) when the data is not there; ValueError for a bad hour or day."""
     if hour not in HOURS:
         raise ValueError(f"hour must be between {HOURS[0]} and {HOURS[-1]} (hh:00-hh+1:00), got {hour}")
     h = hourly_calibration()
@@ -958,23 +1003,123 @@ def hour_settings(hour):
         have = sorted(int(k) for k in (h.get("hours") or {}))
         raise HourlyUnavailable(f"hourly data not available yet for {hour:02d}:00-{hour + 1:02d}:00; calibrated hours: "
                                 f"{', '.join(f'{k:02d}' for k in have) or 'none'}")
-    return e
+    if is_july(day):
+        return dict(e, label=f"{hour_label(hour)} (TomTom hourly calibration)", window=hour_label(hour))
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(day)):
+        raise ValueError(f"day must be 'july' or a date like 2026-07-08, got {day!r}")
+    d = tomtom_hours(day).get(hour)
+    if d is None:
+        raise HourlyUnavailable(f"TomTom data for {day} {hour:02d}:00-{hour + 1:02d}:00 not available yet")
+    sig = _day_sig(e, d)
+    fit = day_fits().get(f"{day} {hour:02d}")
+    if fit and fit.get("sig") == sig:
+        return fit
+    return {"needs_fit": True, "base": e, "tomtom": d, "sig": sig}
 
 
-def hour_label(hour):
-    return f"July typical {hour:02d}:00-{hour + 1:02d}:00"
+def trip_target(d, legs, ref_total_s, ref_trip_s):
+    """(TomTom's trip time over the simulated `legs`, basis) for one hour's TomTom rows `d` (tomtom_hours() entry):
+    'leg speeds' when every leg is there (TomTom's speed per leg over the simulated leg lengths, as the all-day
+    calibration), else 'trip total': `ref_total_s` (the reference's target over the simulated legs) scaled by TomTom's
+    trip time for the hour over the reference's (`ref_trip_s`). (None, None) when neither is there."""
+    if all(d["legs"].get((l["from_id"], l["to_id"]), (None, None, None))[2] for l in legs):
+        return sum(l["distance_m"] / (d["legs"][(l["from_id"], l["to_id"])][2] / 3.6) for l in legs), "leg speeds"
+    if d.get("trip_total_s") and ref_trip_s:
+        return ref_total_s * d["trip_total_s"] / ref_trip_s, "trip total"
+    return None, None
+
+
+def allday_trip_s():
+    """TomTom's all-day July trip time (job TOMTOM_JOB), the reference for hours given as trip totals only."""
+    for r in csv.DictReader(LEGS_CSV.open()):
+        if r["job"] == TOMTOM_JOB and row_hour(r) is None and (r.get("trip_total_s") or "").strip():
+            return float(r["trip_total_s"])
+    return sum(t for *_, t, _ in tomtom_legs())
+
+
+def fit_day_hour(day, hour, cfg, final=None, tol=0.03):
+    """Fit one day and hour on demand, from the typical July hour (cfg["base"]) to that day-hour's TomTom trip time:
+    at most 2 baseline runs (first guess from the July hour's sensitivity of trip time to traffic, then a secant
+    step); the volume scale moves, the speed caps only when the volume is at its limits. The fit is kept in
+    calibration_days.json (reused while the July hour and TomTom's numbers are unchanged). `final`: {run_id, frames,
+    frames_window} when the request itself is the baseline: the trial runs are then that request's run and the last
+    one is returned. Returns (fit, result or None)."""
+    base, d = cfg["base"], cfg["tomtom"]
+    july = tomtom_hours().get(hour) or {}
+    ref_trip = base.get("tomtom_trip_total_s") or july.get("trip_total_s")
+    if d.get("trip_total_s") and ref_trip:
+        t_est = base["tomtom_total_s"] * d["trip_total_s"] / ref_trip
+    else:
+        both = [(v[1], july["legs"][k][1]) for k, v in d["legs"].items() if k in july.get("legs", {}) and july["legs"][k][1]]
+        t_est = base["tomtom_total_s"] * (sum(a for a, _ in both) / sum(b for _, b in both) if both else 1.0)
+    v_h, cs_h, t_h = float(base["volume_scale"]), float(base.get("cap_scale", 1.0)), float(base["sim_total_s"])
+    slope = float(base.get("slope_s_per_volume") or 600.0)       # s of trip per unit of volume scale near the July hour
+    labels = {"label": f"{day_label(day, hour)} (July {hour:02d}:00 calibration adjusted to that day's TomTom trip time)",
+              "window": f"{day} {hour:02d}:00-{hour + 1:02d}:00", "period": d["period"], "job": d["job"], "day": day}
+
+    def step(v, cs, t, target, slope):
+        """Volume first (a day differs from the typical July hour by a moderate amount: at most 25% per step); the
+        speed caps only when the volume is already at its limit in the direction needed."""
+        nv = v + (target - t) / max(50.0, slope)
+        lo, hi = max(HOUR_VOLUME[0], v / 1.25), min(HOUR_VOLUME[1], v * 1.25)
+        if (nv > v and v >= HOUR_VOLUME[1] - 1e-6) or (nv < v and v <= HOUR_VOLUME[0] + 1e-6):
+            return v, round(min(HOUR_CAP[1], max(HOUR_CAP[0], cs * (t / target) ** 1.3)), 3)
+        return round(min(hi, max(lo, nv)), 3), cs
+
+    v, cs = step(v_h, cs_h, t_h, t_est, slope)
+    trials, res = [], None
+    for i in range(2):
+        rid = final["run_id"] if final else f"calib_{day}_{hour:02d}_{i}"
+        trial = {"volume_scale": v, "cap_scale": cs, "tomtom_total_s": round(t_est), **labels}
+        res = run(hour=hour, day=day, hour_cfg=trial, run_id=rid, frames=bool(final and final.get("frames")),
+                  frames_window=final.get("frames_window") if final else None)
+        if not final:
+            shutil.rmtree(OUT / rid, ignore_errors=True)
+        target, how = trip_target(d, res["journey"]["legs"], base["tomtom_total_s"], ref_trip)
+        target = target or t_est
+        t = res["journey"]["total_s"]
+        trials.append({"volume_scale": v, "cap_scale": cs, "sim_total_s": t, "tomtom_total_s": round(target)})
+        print(f"{labels['window']} trial {i}: sim {t / 60:.1f} min vs TomTom {target / 60:.1f} min | volume x{v} caps x{cs}", flush=True)
+        if abs(t / target - 1) < tol or i == 1:
+            break
+        if abs(t - t_h) > 1 and abs(v - v_h) > 1e-6 and cs == cs_h:
+            slope = max(50.0, (t - t_h) / (v - v_h))
+        v, cs = step(v, cs, t, target, slope)
+    fit = {"volume_scale": v, "cap_scale": cs, "tomtom_total_s": round(target), "sim_total_s": t, "ratio": round(t / target, 3),
+           "within_tolerance": abs(t / target - 1) < tol, "target_basis": how or "trip total (estimated)",
+           "tomtom_trip_total_s": d.get("trip_total_s"), "base_hour": {"hour": hour, "volume_scale": v_h, "cap_scale": cs_h,
+                                                                       "tomtom_total_s": base["tomtom_total_s"]},
+           "trials": trials, "sig": cfg["sig"], **labels, "fitted_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+    store = json.loads(DAYS_FILE.read_text()) if DAYS_FILE.exists() else {}
+    store.setdefault("fits", {})[f"{day} {hour:02d}"] = fit
+    store["note"] = ("on-demand fits of a single day and hour (fit_day_hour): the typical July hour's scales "
+                     "(calibration_hourly.json) adjusted so the simulated trip matches that day-hour's TomTom trip time")
+    DAYS_FILE.write_text(json.dumps(store, indent=1))
+    if final:
+        res["inputs"]["day_fit"] = {k: fit[k] for k in ("volume_scale", "cap_scale", "ratio", "within_tolerance", "target_basis", "trials")}
+        Path(res["roads_path"]).with_name("result.json").write_text(json.dumps(res, indent=1))
+        return fit, res
+    return fit, None
 
 
 def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None, label="July 2026 average, 6 am-11 pm", through=None,
-        cross_scale=None, shares=None, seed=SEED, tomtom=None, frames_window=None, hour=None):
+        cross_scale=None, shares=None, seed=SEED, tomtom=None, frames_window=None, hour=None, day=None, hour_cfg=None):
     """Simulate the corridor with `interventions` (C5 shape); return the C5 corridor result. `caps` (km/h per leg),
     `through` ({"fwd", "rev"} veh/h), `cross_scale` and `shares` ({junction id: corridor green share}) override the
     calibrated values (calibrate() uses them). `frames_window`: (from_s, to_s) of the C1 frames (default FRAMES; see
-    frames_window()); it changes nothing else. `hour` (6..22): that hour's scales from calibration_hourly.json on top
-    of the all-day calibration (HourlyUnavailable without them)."""
+    frames_window()); it changes nothing else. `hour` (HOURS): that hour's scales on top of the all-day calibration;
+    `day`: "july" (default, calibration_hourly.json) or a date like "2026-07-08" (fitted on demand from the July hour,
+    fit_day_hour(), then reused). HourlyUnavailable without the data. `hour_cfg`: explicit scales (fit_day_hour)."""
     window = tuple(frames_window) if frames_window else FRAMES[:2]
-    hour_cfg = hour_settings(hour) if hour is not None else None
     run_id = run_id or "rc_" + uuid.uuid4().hex[:8]
+    if hour is not None and hour_cfg is None:
+        hour_cfg = hour_settings(hour, day)
+        if hour_cfg.get("needs_fit"):
+            plain = not interventions and volume_scale == 1.0 and all(x is None for x in (caps, through, cross_scale, shares, tomtom)) and seed == SEED
+            fit, res = fit_day_hour(day, hour, hour_cfg, {"run_id": run_id, "frames": frames, "frames_window": frames_window} if plain else None)
+            if res is not None:
+                return res
+            hour_cfg = fit
     outdir = OUT / run_id
     outdir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
@@ -983,7 +1128,7 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
     if hour_cfg:
         volume_scale = volume_scale * float(hour_cfg.get("volume_scale", 1.0))
         caps = [min(HOUR_MAX_KMH, round(c * float(hour_cfg.get("cap_scale", 1.0)), 1)) for c in (caps if caps is not None else cal["cap_kmh"])]
-        label = f"{hour_label(hour)} (TomTom hourly calibration)"
+        label = hour_cfg.get("label") or f"{hour_label(hour)} (TomTom hourly calibration)"
     through = through or cal["through_vph"]
     base = sumolib.net.readNet(str(NET))
     base_groups = {j: [n.getID() for n in g] for j, g in cn.junction_groups(base).items() if g}
@@ -1030,7 +1175,7 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                          "time_s_sd": round(leg_sd, 1)})       # spread between the probe cars
     if hour_cfg:     # TomTom's times for that hour: its own leg speeds when the hourly rows have every leg, else scaled
         ids = [p["id"] for p in pts]
-        hl = tomtom_hours().get(hour, {}).get("legs", {})
+        hl = tomtom_hours(day).get(hour, {}).get("legs", {})
         if all(hl.get((a, b), (None, None, None))[2] for a, b in zip(ids, ids[1:])):
             for l in out_legs:
                 l["tomtom_time_s"] = round(l["distance_m"] / (hl[(l["from_id"], l["to_id"])][2] / 3.6))
@@ -1055,8 +1200,10 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
     result = {
         "run_id": run_id, "variant_id": "baseline" if not interventions else "+".join(f"{i['kind']}_{i['junction_id']}" for i in interventions),
         "corridor_id": CORRIDOR_ID,
-        "time": {"window": hour_label(hour) if hour_cfg else "2026-07", "minutes": PROBE_SPAN // 60, "label": label}
-                | ({"hour": hour, "data_label": "calibrated to TomTom's hourly leg times (" + str(hour_cfg.get("period", "July 2026")) + ")"} if hour_cfg else {}),
+        "time": {"window": (hour_cfg.get("window") or hour_label(hour)) if hour_cfg else "2026-07", "minutes": PROBE_SPAN // 60, "label": label}
+                | ({"hour": hour, "day": "july" if is_july(day) else day,
+                    "data_label": ("calibrated to TomTom's hourly leg times (" if is_july(day) else "July hour adjusted to TomTom's trip time for ")
+                    + str(hour_cfg.get("period", "July 2026")) + (")" if is_july(day) else "")} if hour_cfg else {}),
         "interventions": list(interventions),
         "journey": {"total_s": sum(l["time_s"] for l in out_legs), "distance_m": sum(l["distance_m"] for l in out_legs),
                     "tomtom_total_s": sum(l["tomtom_time_s"] for l in out_legs), "legs": out_legs,
@@ -1073,15 +1220,17 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
         "warnings": warnings,
         "inputs": {"counts_source": "estimated" if measured else "assumed", "label": "estimated" if measured else "assumed",
                    "volume_scale": asked_scale, "cross_traffic": cross,
-                   **({"hour": hour, "hour_volume_scale": hour_cfg.get("volume_scale", 1.0), "hour_cap_scale": hour_cfg.get("cap_scale", 1.0),
-                       "volume_scale_effective": round(volume_scale, 4)} if hour_cfg else {}),
+                   **({"hour": hour, "day": "july" if is_july(day) else day, "hour_volume_scale": hour_cfg.get("volume_scale", 1.0),
+                       "hour_cap_scale": hour_cfg.get("cap_scale", 1.0), "volume_scale_effective": round(volume_scale, 4)} if hour_cfg else {}),
                    "through_vph": round(through["fwd"] * volume_scale),
                    "through_vph_by_direction": {"A->B": round(through["fwd"] * volume_scale), "B->A": round(through["rev"] * volume_scale)},
                    "cross_vph_per_approach": round(CROSS_VPH * volume_scale),
                    "corridor_volumes": corridor_volumes(outdir, secs, info["corridor"], approaches),
-                   "sources": sources_note(cal, info) + ([{"input": f"hour of day {hour_label(hour)}", "label": "calibrated",
+                   "sources": sources_note(cal, info) + ([{"input": f"time of day {hour_cfg.get('window') or hour_label(hour)}", "label": "calibrated",
                                                            "source": f"traffic x{hour_cfg.get('volume_scale', 1.0)}, speed caps x{hour_cfg.get('cap_scale', 1.0)} on the all-day "
-                                                                     f"calibration, fitted to TomTom {hour_cfg.get('period', 'hourly leg times')} (calibration_hourly.json)"}] if hour_cfg else []),
+                                                                     f"calibration, fitted to TomTom {hour_cfg.get('period', 'hourly leg times')} "
+                                                                     + ("(calibration_hourly.json)" if is_july(day) else
+                                                                        "(the July hour adjusted on demand, calibration_days.json)")}] if hour_cfg else []),
                    "calibrated_to": f"TomTom Traffic Stats job {TOMTOM_JOB}, July 2026 06:00-23:00, leg speeds",
                    "speeds_source": "counted (TomTom probe data)", "probes_arrived": min(n_probes), "teleports": teleports,
                    "vehicles_loaded": loaded, "vehicles_not_inserted": waiting,
@@ -1096,6 +1245,51 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
     }
     (outdir / "result.json").write_text(json.dumps(result, indent=1))
     return result
+
+
+def section_lon(k):
+    """Longitude range whose vehicles section k contributes to the frames (each stretch shown by one section only)."""
+    pts = cn.CORRIDOR["points"]
+    ids, lon = [p["id"] for p in pts], {p["id"]: p["lon"] for p in pts}
+    p1, p2 = SECTIONS[k]
+    i1, i2 = ids.index(p1), ids.index(p2)
+    return (-999 if i1 == 0 else lon[p1] + 0.0015, 999 if i2 == len(pts) - 1 else lon[p2] + 0.0015)
+
+
+def replay_frames(prev, window, run_id=None):
+    """Another frames window for a finished run: `prev` is its C5 result (its folder still on disk). The run's own
+    network, routes and detector files are simulated again, each section only up to the window's end, recording the
+    frames. Driving is deterministic, so these are exactly the frames a full run would record (checked by
+    check_playback.py); the numbers, roads and probe tracks are prev's (copied). About half the time of a full run.
+    Returns the new run's C5 result (frames_replayed_from: prev's run_id). FileNotFoundError when prev's files are gone."""
+    src = Path(prev["roads_path"]).parent
+    n = len(SECTIONS)
+    files = [src / "variant.net.xml", src / "roads.geojson", Path(prev.get("probe_tracks_path") or src / "probes.json")]
+    files += [src / f"{x}_{k}.xml" for k in range(n) for x in ("routes", "det")]
+    missing = [f.name for f in files if not f.exists()]
+    if missing:
+        raise FileNotFoundError(f"run {prev.get('run_id')}: {', '.join(missing)} no longer on disk")
+    run_id = run_id or "rc_" + uuid.uuid4().hex[:8]
+    outdir = OUT / run_id
+    outdir.mkdir(parents=True, exist_ok=True)
+    t0 = time.time()
+    for f in files:
+        shutil.copy(f, outdir / f.name)
+    net_path = outdir / "variant.net.xml"
+    net = sumolib.net.readNet(str(net_path))
+    secs = [{"k": k, "lon": section_lon(k), "end": int(window[1] + FRAMES[2])} for k in range(n)]
+    with ThreadPoolExecutor(min(n, PARALLEL)) as pool:
+        frame_files = list(pool.map(lambda s: simulate(net, net_path, s, outdir, True, SEED, window), secs))
+    frames_path = merge_frames(frame_files, outdir / "frames.jsonl")
+    for k in range(n):        # outputs of the shortened sections are partial: only the frames count
+        for name in (f"probes_{k}.xml", f"fcd_{k}.xml", f"stats_{k}.xml", f"e2_{k}.xml", f"counts_{k}.xml"):
+            (outdir / name).unlink(missing_ok=True)
+    res = json.loads(json.dumps({k: v for k, v in prev.items() if k not in ("fingerprint", "cached", "requested")}))
+    res.update(run_id=run_id, frames_path=str(frames_path), frames_window=frames_info(window), roads_path=str(outdir / "roads.geojson"),
+               probe_tracks_path=str(outdir / files[2].name), frames_replayed_from=prev["run_id"])
+    res["inputs"] = {**res["inputs"], "frames_wall_seconds": round(time.time() - t0, 1)}
+    (outdir / "result.json").write_text(json.dumps(res, indent=1))
+    return res
 
 
 def sources_note(cal, sources):
@@ -1241,9 +1435,105 @@ def calibrate(rounds=8, fresh=False, through=None, cross_scale=None):
     return caps, shares
 
 
+def calibrate_hourly(hours=None, rounds=8, tol=0.03):
+    """Fit each hour of the day to TomTom's hourly trip time and write calibration_hourly.json. Needs TomTom rows in
+    data/raw/corridor_legs_tomtom.csv whose period is one hour (row_hour(): e.g. "2026-07-01..2026-07-31 08:00-09:00").
+    Starting from the all-day calibration, per hour: the simulated trip is too slow -> less traffic, too fast -> more
+    traffic (volume scale within HOUR_VOLUME; secant steps once two runs are in). Only when the volume is at its limit
+    (or the network jams: vehicles stuck or unable to enter) are the legs' speed caps scaled (HOUR_CAP; side friction
+    differs by hour too), never above HOUR_MAX_KMH. Stops within `tol` (3%) of TomTom's trip; keeps the closest round.
+    The file is written after every hour, so a long run can be stopped and resumed (hours already in it are redone
+    only when asked for by number)."""
+    data = tomtom_hours()
+    asked = list(hours) if hours else None
+    todo = [h for h in (asked or sorted(data)) if h in data and h in HOURS]
+    if not todo:
+        print("no hourly TomTom rows in", LEGS_CSV.name, "(periods like '2026-07-01..2026-07-31 08:00-09:00'); nothing to do", flush=True)
+        return None
+    cal = calibration()
+    if not cal["calibrated"]:
+        raise RuntimeError("run calibrate() first: the hourly scales sit on top of the all-day calibration")
+    out = hourly_calibration() or {}
+    out.setdefault("hours", {})
+    if not asked:
+        todo = [h for h in todo if str(h) not in out["hours"]]
+    for h in todo:
+        d = data[h]
+        v, cs, hist, best, seen = 1.0, 1.0, [], None, []
+        for r in range(rounds):
+            caps = [min(HOUR_MAX_KMH, round(c * cs, 1)) for c in cal["cap_kmh"]]
+            rid = f"calib_h{h:02d}_{r}"
+            res = run(volume_scale=v, caps=caps, frames=False, run_id=rid)
+            shutil.rmtree(OUT / rid, ignore_errors=True)
+            j, inp = res["journey"], res["inputs"]
+            target, how = trip_target(d, j["legs"], j["tomtom_total_s"], allday_trip_s())
+            if target is None:
+                raise RuntimeError(f"hour {h:02d}: the hourly rows have neither leg times nor a trip total")
+            t = j["total_s"]
+            stuck = inp["teleports"] > 0.01 * inp["vehicles_loaded"] or inp["vehicles_not_inserted"] > 0.02 * inp["vehicles_loaded"]
+            err = t / target - 1
+            seen.append((v, cs, t, stuck))
+            print(f"{hour_label(h)} round {r}: sim {t / 60:.1f} min vs TomTom {target / 60:.1f} min ({how}) | volume x{v:.3f} "
+                  f"caps x{cs:.3f} | {'JAMMED ' if stuck else ''}{inp['wall_seconds']} s", flush=True)
+            if best is None or (stuck, abs(err)) < (best["stuck"], abs(best["err"])):
+                best = {"v": v, "cs": cs, "t": t, "target": target, "how": how, "err": err, "stuck": stuck, "rounds": r + 1,
+                        "legs": j["legs"], "warnings": res["warnings"]}
+            if abs(err) < tol and not stuck:
+                break
+            hist.append((v, cs, t, stuck))
+            at_floor, at_ceiling = v <= HOUR_VOLUME[0] + 1e-6, v >= HOUR_VOLUME[1] - 1e-6
+            if stuck:                                   # too much traffic for the network
+                if not at_floor and cs == 1.0:
+                    v = max(HOUR_VOLUME[0], round(v * 0.85, 3))
+                else:
+                    cs = round(min(HOUR_CAP[1], cs * 1.1), 3)
+            elif cs == 1.0 and not (err > 0 and at_floor) and not (err < 0 and (at_ceiling or any(s for _, _, _, s in hist))):
+                same = [(hv, ht) for hv, hcs, ht, hs in hist if hcs == cs and not hs]
+                if len(same) >= 2 and abs(same[-1][1] - same[-2][1]) > 1:
+                    (v0, t0_), (v1, t1_) = same[-2], same[-1]
+                    nv = v1 + (target - t1_) * (v1 - v0) / (t1_ - t0_)
+                else:
+                    nv = v * (target / t) ** 3      # the trip responds weakly to traffic away from capacity: a bold first step
+                v = round(min(HOUR_VOLUME[1], max(HOUR_VOLUME[0], v / 1.5, min(v * 1.5, nv))), 3)
+            else:                                       # volume at its limit: the time is in the road speeds
+                cs = round(min(HOUR_CAP[1], max(HOUR_CAP[0], cs * (t / target) ** 1.3)), 3)
+            if hist and (v, cs) == hist[-1][:2]:
+                break                                   # nothing left to change
+        b = best
+        # how the trip time responds to traffic near the fit (s per unit of volume scale): fit_day_hour's first step
+        near = sorted((p for p in seen if p[1] == b["cs"] and not p[3] and abs(p[0] - b["v"]) > 1e-6), key=lambda p: abs(p[0] - b["v"]))
+        slope = round((b["t"] - near[0][2]) / (b["v"] - near[0][0]), 1) if near and abs(b["t"] - near[0][2]) > 1 else None
+        out["hours"][str(h)] = {
+            "volume_scale": b["v"], "cap_scale": b["cs"], "tomtom_total_s": round(b["target"]), "sim_total_s": b["t"],
+            "ratio": round(b["t"] / b["target"], 3), "within_tolerance": abs(b["err"]) < tol and not b["stuck"],
+            "target_basis": b["how"], "tomtom_trip_total_s": d.get("trip_total_s"), "period": d["period"], "job": d["job"],
+            "label": hour_label(h), "rounds": b["rounds"], "jammed": b["stuck"], "warnings": b["warnings"],
+            "slope_s_per_volume": slope if slope and slope > 0 else None,
+            "legs": [{"leg": f"{l['from_id']}->{l['to_id']}", "distance_m": l["distance_m"], "sim_s": l["time_s"],
+                      "tomtom_s": round(l["distance_m"] / (d["legs"][(l["from_id"], l["to_id"])][2] / 3.6)) if b["how"] == "leg speeds" else None}
+                     for l in b["legs"]]}
+        out.update({
+            "target": "TomTom Traffic Stats hourly leg times (rows of data/raw/corridor_legs_tomtom.csv covering one hour), July 2026",
+            "base_calibration": json.loads(CALIBRATION.read_text()).get("calibrated_at") if CALIBRATION.exists() else None,
+            "method": "per hour: volume scale on the all-day traffic (through and cross), then, only if the volume is at its "
+                      f"limits {HOUR_VOLUME} or the network jams, a scale on the legs' speed caps {HOUR_CAP}; target within "
+                      f"{tol:.0%} of TomTom's trip (calibrate_hourly)",
+            "knobs": {"volume_scale": "calibrated: multiplies all traffic of the all-day calibration for this hour",
+                      "cap_scale": "calibrated: multiplies every leg's speed cap (side friction) for this hour; 1 = unchanged"},
+            "calibrated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
+        HOURLY.write_text(json.dumps(out, indent=1))
+        print(f"{hour_label(h)}: volume x{b['v']}, caps x{b['cs']}, sim {b['t'] / 60:.1f} vs TomTom {b['target'] / 60:.1f} min", flush=True)
+    return out
+
+
 if __name__ == "__main__":
     if sys.argv[1:2] == ["calibrate"]:
         calibrate()
+    elif sys.argv[1:2] == ["calibrate_hourly"]:
+        calibrate_hourly([int(a) for a in sys.argv[2:]] or None)
+    elif sys.argv[1:2] == ["fit_day"]:        # fit_day 2026-07-08 18: fit (or reuse) one day and hour, print the result
+        res = run(hour=int(sys.argv[3]), day=sys.argv[2], frames=False)
+        print(res["time"], round(res["journey"]["total_s"] / 60, 1), "min vs TomTom", round(res["journey"]["tomtom_total_s"] / 60, 1))
     elif sys.argv[1:2] == ["run"]:
         ivs = [{"junction_id": a.split(":")[0], "kind": a.split(":")[1], "params": {}} for a in sys.argv[2:]]
         res = run(ivs, frames=False)

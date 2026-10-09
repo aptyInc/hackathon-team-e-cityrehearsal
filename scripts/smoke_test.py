@@ -74,13 +74,21 @@ for bad in ({"frames_minutes": 11}, {"frames_minutes": 0.5}, {"frames_from_min":
 from app.corridor import CorridorRunIn as _In, cache_key as _key, CALIBRATION_HOURLY as _HOURLY  # noqa: E402
 assert _key([], _In()) == _key([], _In(frames_from_min=5, frames_minutes=5)) != _key([], _In(frames_from_min=0)), "window in the cache key"
 assert c.post("/corridor/runs", json={"interventions": [], "hour": 3}).status_code == 400
+assert c.post("/corridor/runs", json={"interventions": [], "day": "2026-07-08"}).status_code == 400, "a day needs an hour"
+assert c.post("/corridor/runs", json={"interventions": [], "hour": 8, "day": "8 July"}).status_code == 400
 hr = c.post("/corridor/runs", json={"interventions": [], "hour": 8})
+hd = c.post("/corridor/runs", json={"interventions": [], "hour": 8, "day": "2026-07-08"})
 if not _HOURLY.exists():
-    assert hr.status_code == 422 and "hourly data not available yet" in hr.json()["detail"], hr.text[:200]
+    for r in (hr, hd):
+        assert r.status_code == 422 and "hourly data not available yet" in r.json()["detail"], r.text[:200]
 else:
-    assert hr.status_code in (200, 422), hr.text[:200]
+    assert hr.status_code in (200, 422) and hd.status_code in (200, 422), (hr.text[:200], hd.text[:200])
     if hr.status_code == 200:
         assert hr.json()["time"]["hour"] == 8 and "08:00-09:00" in hr.json()["time"]["window"], hr.json()["time"]
+    if hd.status_code == 200:
+        assert hd.json()["time"]["day"] == "2026-07-08" and hd.json()["time"]["window"].startswith("2026-07-08 08:00"), hd.json()["time"]
+    else:
+        assert "not available yet" in hd.json()["detail"], hd.text[:200]
 assert c.get("/runs/rc_nothere/probes").status_code == 404
 pr = c.get(f"/runs/{base['run_id']}/probes")
 assert pr.status_code in (200, 404), pr.text[:200]

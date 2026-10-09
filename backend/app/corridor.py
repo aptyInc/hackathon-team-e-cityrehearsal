@@ -133,7 +133,10 @@ def tomtom_periods() -> list[dict]:
                 dates, hours = r["period"].split(" ", 1)
                 d0, d1 = dates.split("..")
                 h0, h1 = (int(x.split(":")[0]) for x in hours.replace(" ", "").split("-"))
-                if d0 == d1:
+                if d0 == d1 and (h1 - h0) % 24 == 1:      # one hour of one day (TomTom's hourly breakdown per day)
+                    d = datetime.fromisoformat(d0)
+                    label, kind = f"{DAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {h0:02d}:00-{h1:02d}:00", "day_hour"
+                elif d0 == d1:
                     d = datetime.fromisoformat(d0)
                     label, kind = f"{DAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {_hours(hours)}", "day"
                 elif (h1 - h0) % 24 == 1:      # TomTom's hourly breakdown: one hour of a typical day
@@ -146,13 +149,13 @@ def tomtom_periods() -> list[dict]:
             p = periods[r["period"]] = {"period": r["period"], "label": label, "kind": kind, "date_from": d0, "date_to": d1,
                                         "hours": hours, "job": r["job"], "trip_total_s": float(r.get("trip_total_s") or 0),
                                         "source": f"TomTom Traffic Stats job {r['job']}", "data_label": "measured", "legs": [],
-                                        "hour": h0 if kind == "hour" else None}
+                                        "hour": h0 if kind in ("hour", "day_hour") else None}
         try:
             p["legs"].append({"from_id": r["from_id"], "to_id": r["to_id"], "from_name": r["from"], "to_name": r["to"],
                               "distance_m": float(r["distance_m"]), "time_s": float(r["time_s"]), "speed_kmh": float(r["speed_kmh"])})
         except (KeyError, TypeError, ValueError):
             pass
-    rank = {"average": 0, "hour": 1, "day": 2}
+    rank = {"average": 0, "hour": 1, "day": 2, "day_hour": 3}
     out = sorted(periods.values(), key=lambda p: (rank.get(p["kind"], 3), p["date_from"], p["hour"] or 0))
     for p in out:
         p["total_s"] = round(sum(l["time_s"] for l in p["legs"]), 1)
@@ -267,13 +270,14 @@ class CorridorRunIn(BaseModel):
     case_id: str | None = None
     frames_from_min: float | None = None   # C1 frames window: minutes after warm-up (default 5)
     frames_minutes: float | None = None    # ... and its length (default 5, 1..10)
-    hour: int | None = None                # 6..22: hh:00-hh+1:00 of a typical July day (needs calibration_hourly.json)
+    hour: int | None = None                # 6..23: hh:00-hh+1:00 (needs calibration_hourly.json)
+    day: str | None = None                 # with hour: "july" (typical July day, default) or a date like "2026-07-08"
 
 
 # mirror of sim/corridor/corridor_runner.py (WARMUP, PROBE_SPAN, FRAMES, FRAMES_MAX_S, HOURS): the API checks a request
 # without loading the simulation; the runner checks again and its C5 `frames_window` says what was recorded
 SIM_WARMUP_S, SIM_MEASURED_S, FRAMES_DEFAULT, FRAMES_STEP_S, FRAMES_MAX_MIN = 600, 900, (5.0, 5.0), 4, 10
-HOURS = range(6, 23)
+HOURS = range(6, 24)
 CALIBRATION_HOURLY = SIM_CORRIDOR / "calibration_hourly.json"
 HOURLY_MISSING = ("hourly data not available yet: the corridor is calibrated to TomTom's all-day July average (06:00-23:00) "
                   "only. Hours of the day work once TomTom's hourly leg times are in and sim/corridor/calibration_hourly.json "
@@ -304,8 +308,28 @@ def frames_info(window: tuple[int, int]) -> dict:
             "note": "frames t is simulation seconds; the window can start anywhere from 0 to sim_minutes_total - minutes after warm-up"}
 
 
-def hourly_entry(hour: int) -> dict:
-    """That hour's entry in calibration_hourly.json. 400 outside 6..22, 422 while there is no hourly calibration."""
+def day_of(body: CorridorRunIn) -> str | None:
+    """The request's day: None for the typical July day ("july" or not given), else the ISO date."""
+    d = (body.day or "").strip()
+    return None if d.lower() in ("", "july") else d
+
+
+def day_rows(day: str, hour: int) -> list[dict]:
+    """TomTom rows for one day and hour: period '<day>..<day> hh:00-hh+1:00' (also 8:00-9:00, 08-09, 23:00-00:00)."""
+    import re
+    if not LEGS_CSV.exists():
+        return []
+    end = f"(?:0?{hour + 1}|0?{(hour + 1) % 24})"
+    pat = re.compile(rf"^{re.escape(day)}(?:\s*\.\.\s*{re.escape(day)})?[\sT]+0?{hour}(?::00)?\s*-\s*{end}(?::00)?$")
+    return [r for r in csv.DictReader(LEGS_CSV.open()) if pat.match((r.get("period") or "").strip())]
+
+
+def hourly_entry(hour: int, day: str | None = None) -> dict:
+    """That hour's entry in calibration_hourly.json. 400 outside 6..23 or for a bad day, 422 while there is no hourly
+    calibration or (for a single day) no TomTom data for that day and hour."""
+    import re
+    if day is not None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
+        raise HTTPException(400, f"day must be 'july' (typical July day) or a date like 2026-07-08, got {day!r}")
     if hour not in HOURS:
         raise HTTPException(400, f"hour must be between {HOURS[0]} and {HOURS[-1]} (meaning hh:00-hh+1:00), got {hour}")
     if not CALIBRATION_HOURLY.exists():
@@ -314,6 +338,8 @@ def hourly_entry(hour: int) -> dict:
     if str(hour) not in hours:
         have = ", ".join(f"{int(h):02d}" for h in sorted(hours, key=int)) or "none"
         raise HTTPException(422, f"hourly data not available yet for {hour:02d}:00-{hour + 1:02d}:00 (calibrated hours: {have})")
+    if day is not None and not day_rows(day, hour):
+        raise HTTPException(422, f"TomTom data for {day} {hour:02d}:00-{hour + 1:02d}:00 not available yet")
     return hours[str(hour)]
 
 
@@ -336,7 +362,9 @@ def validate(body: CorridorRunIn) -> list[dict]:
         raise HTTPException(400, f"minutes must be between 1 and 1440, got {body.minutes}")
     frames_window(body)
     if body.hour is not None:
-        hourly_entry(body.hour)
+        hourly_entry(body.hour, day_of(body))
+    elif day_of(body) is not None:
+        raise HTTPException(400, "day needs an hour (6..23): TomTom's single days are used hour by hour")
     return sorted(out, key=lambda iv: (iv["junction_id"], iv["kind"], json.dumps(iv["params"], sort_keys=True)))
 
 
@@ -351,7 +379,14 @@ def cache_key(ivs: list[dict], body: CorridorRunIn) -> str:
     if body.hour is not None:
         blob["hour"] = body.hour
         blob["calibration_hourly"] = CALIBRATION_HOURLY.read_text() if CALIBRATION_HOURLY.exists() else None
+        if day_of(body):     # a single day: fitted from the July hour to that day-hour's TomTom rows
+            blob["day"], blob["day_rows"] = day_of(body), day_rows(day_of(body), body.hour)
     return hashlib.sha256(json.dumps(blob, sort_keys=True).encode()).hexdigest()
+
+
+def numbers_key(ivs: list[dict], body: CorridorRunIn) -> str:
+    """cache_key without the frames window: runs with the same numbers (another window is only other frames)."""
+    return "numbers:" + cache_key(ivs, body.model_copy(update={"frames_from_min": None, "frames_minutes": None}))
 
 
 def fingerprint(result: dict) -> str:
@@ -442,8 +477,10 @@ def _mock_extras(res: dict, body: CorridorRunIn) -> dict:
     res["frames_window"] = frames_info(frames_window(body))
     res.setdefault("probe_tracks_path", None)
     if body.hour is not None:
-        res["time"] = {**res.get("time", {}), "window": f"July typical {body.hour:02d}:00-{body.hour + 1:02d}:00",
-                       "label": f"July typical {body.hour:02d}:00-{body.hour + 1:02d}:00 (MOCK: sample numbers)", "hour": body.hour}
+        h, day = body.hour, day_of(body)
+        window = f"{day} {h:02d}:00-{h + 1:02d}:00" if day else f"July typical {h:02d}:00-{h + 1:02d}:00"
+        res["time"] = {**res.get("time", {}), "window": window, "label": f"{window} (MOCK: sample numbers)", "hour": h,
+                       "day": day or "july"}
     return res
 
 
@@ -453,6 +490,7 @@ def mock_result(ivs: list[dict], body: CorridorRunIn) -> dict:
     asked = {"interventions": ivs, "volume_scale": body.volume_scale, "window": body.window, "minutes": body.minutes}
     if body.hour is not None:
         asked["hour"] = body.hour
+        asked["day"] = day_of(body) or "july"
     if body.frames_from_min is not None or body.frames_minutes is not None:
         asked["frames"] = {"from_min": body.frames_from_min, "minutes": body.frames_minutes}
     sample = {"interventions": res["interventions"], "volume_scale": res["inputs"]["volume_scale"], "window": None, "minutes": None}
@@ -516,10 +554,21 @@ def _simulate(run_id: str, key: str, ivs: list[dict], body: CorridorRunIn) -> di
         elif body.frames_from_min is not None or body.frames_minutes is not None:
             extra.append("frames_from_min/frames_minutes")
         if body.hour is not None:
-            if "hour" not in params:
+            if "hour" not in params or (day_of(body) and "day" not in params):
                 raise SimError(422, HOURLY_MISSING)
             kwargs["hour"] = body.hour
-        res = corridor_runner.run(**kwargs)
+            if day_of(body):
+                kwargs["day"] = day_of(body)
+        # the same numbers already simulated (only the frames window differs): record just the other window
+        res, prev = None, cache_lookup(numbers_key(ivs, body))
+        if prev and hasattr(corridor_runner, "replay_frames") and "frames_window" in params:
+            try:
+                res = corridor_runner.replay_frames(prev, frames_window(body), run_id)
+            except Exception:     # its files are gone (pruned) or anything else: simulate in full
+                shutil.rmtree(SIM_OUT / "corridor" / run_id, ignore_errors=True)
+                res = None
+        if res is None:
+            res = corridor_runner.run(**kwargs)
         if extra:
             res["warnings"].append(f"The corridor simulation does not take {', '.join(extra)} yet; this run is the calibrated "
                                    f"typical day ({res['time'].get('label', '')}).")
@@ -549,6 +598,8 @@ def _simulate(run_id: str, key: str, ivs: list[dict], body: CorridorRunIn) -> di
     res = store(res, body)
     with db() as c:
         c.execute("INSERT OR REPLACE INTO corridor_cache VALUES(?,?,?)", (key, run_id, time.time()))
+        if not res.get("frames_replayed_from"):     # a full run: later windows of the same numbers replay its files
+            c.execute("INSERT OR REPLACE INTO corridor_cache VALUES(?,?,?)", (numbers_key(ivs, body), run_id, time.time()))
     return res
 
 
