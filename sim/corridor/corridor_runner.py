@@ -343,7 +343,7 @@ def demand(net, base_groups, volume_scale=1.0, through=None, cross_scale=CROSS_S
                 to, rest = joins[tag]
                 p, _ = net.getShortestPath(start, to, vClass="passenger")
                 if p and sum(x.getLength() for x in p) < 3000:
-                    dests.append((tag, [x.getID() for x in p] + rest, split[tag]))
+                    dests.append((tag, [x.getID() for x in p] + rest, split.get(tag, 0.0)))
             ok = []
             for o in outs:
                 if o.getToNode() == e.getFromNode() or o.getID() == e.getID():
@@ -351,7 +351,7 @@ def demand(net, base_groups, volume_scale=1.0, through=None, cross_scale=CROSS_S
                 p, _ = net.getShortestPath(start, o, vClass="passenger")
                 if p and sum(x.getLength() for x in p) < 2000:
                     ok.append(p)
-            dests += [("cross", [x.getID() for x in p], split["cross"] / len(ok)) for p in ok]
+            dests += [("cross", [x.getID() for x in p], split.get("cross", 0.0) / len(ok)) for p in ok]
             total = sum(s for _, _, s in dests)
             if not dests or total <= 0:
                 continue
