@@ -91,8 +91,30 @@
   .lj td.n { text-align: right; white-space: nowrap; } .lj td.nm { color: var(--muted); }
   .lj .calm { font-size: 11px; }
   .livedot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #1a7f37; border: 2px solid #fff; box-shadow: 0 0 0 1px #1a7f37; vertical-align: 0; }
-  .pin.live::after { content: ""; position: absolute; top: -4px; right: -4px; width: 9px; height: 9px; border-radius: 50%; background: #1a7f37;
-                     border: 2px solid #fff; box-shadow: 0 0 0 1px #1a7f37; }
+  /* Live now: each junction pin carries its worst live delay, coloured against the usual delay */
+  body.mode-live .pin[data-badge]::after { content: attr(data-badge); position: absolute; left: 17px; top: -11px; white-space: nowrap; padding: 1px 6px;
+    border-radius: 9px; font: 700 11px/15px Inter, system-ui, sans-serif; color: #fff; background: #1a7f37; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+  body.mode-live .pin[data-sev=mid]::after { background: #b26a00; } body.mode-live .pin[data-sev=bad]::after { background: #b00020; }
+  /* the two modes: Live now (TomTom, measured) and July typical day (TomTom history + simulation) */
+  body.mode-live .july-only, body.mode-july .live-only { display: none !important; }
+  #modebar { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 380px; padding: 8px 10px 9px; z-index: 3; }
+  #left { top: calc(var(--nav-h, 0px) + 20px + var(--mode-h, 76px)); max-height: calc(100vh - var(--nav-h, 0px) - 32px - var(--mode-h, 76px)); }
+  .seg { display: flex; gap: 0; background: #e8e4dc; border-radius: 9px; padding: 3px; }
+  .seg button { flex: 1; background: transparent; color: var(--ink); font-weight: 700; font-size: 14px; padding: 8px 6px; border-radius: 7px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .seg button[aria-selected=true] { background: var(--ink); color: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+  .seg button .tag { margin-left: 0; }
+  #mode-head { font-size: 12.5px; margin-top: 6px; line-height: 1.35; }
+  .lv-legend { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+  .sev { display: inline-block; padding: 0 6px; border-radius: 9px; color: #fff; font-weight: 700; font-size: 10px; line-height: 15px; }
+  .sev.ok { background: #1a7f37; } .sev.mid { background: #b26a00; } .sev.bad { background: #b00020; }
+  .qline { display: inline-block; width: 22px; height: 5px; border-radius: 3px; background: #b00020; box-shadow: 0 0 0 1.5px #fff, 0 0 0 2.5px #b00020; vertical-align: 2px; margin-right: 4px; }
+  /* playback: the recorded window, the hour, and following a car */
+  #win-box label { display: block; } #win-box input { margin: 2px 0; }
+  #win-busy { margin: 4px 0; padding: 5px 8px; background: #fff4e5; border-left: 3px solid #b26a00; border-radius: 4px; font-size: 12px; }
+  #follow-card { font-size: 12px; margin: 6px 0; }
+  #follow-card b { font-size: 13px; }
+  #follow-pick { max-width: 100%; flex: 1 1 140px; min-width: 0; }
+  #ride-note { display: block; }
   /* Ask CityRehearsal (planner.js) */
   #ask-open { position: absolute; top: calc(var(--nav-h, 0px) + 12px); right: 276px; z-index: 4; box-shadow: 0 2px 10px rgba(0,0,0,.25); font-weight: 600; }
   body.chat-open #ask-open { right: 434px; }
@@ -161,6 +183,8 @@
     body { display: flex; flex-direction: column; padding-top: var(--nav-h, 0px); }
     #map { position: relative; top: 0; height: 55vh; flex: none; order: 0; }
     .panel { position: static; width: auto !important; max-height: none !important; margin: 8px 8px 0; }
+    #modebar { order: -1; margin-bottom: 8px; }
+    .seg button { font-size: 13px; padding: 8px 4px; }
     #journey { order: 1; } #left { order: 2; } #right { order: 3; margin-bottom: 8px; }
     .strip { grid-template-columns: 96px 1fr 58px; gap: 6px; }
     .strip .name { font-size: 11px; }
@@ -174,12 +198,33 @@
 <script src="nav.js" data-page="corridor"></script>
 <div id="map"></div>
 
+<div id="modebar" class="panel">
+  <div class="seg" role="tablist" aria-label="What the page shows">
+    <button id="mode-live" role="tab" data-mode="live" aria-selected="false" title="What TomTom measures on these roads right now: live traffic, junction delays and queues"><span class="livedot"></span>Live now</button>
+    <button id="mode-july" role="tab" data-mode="july" aria-selected="true" title="TomTom's July average, our simulation of it, and what a change would do">July typical day</button>
+  </div>
+  <div id="mode-head"></div>
+</div>
+
 <div id="left" class="panel">
   <h1>CityRehearsal · Lingampally → Lakdikapul</h1>
   <small>22.4 km commute through 11 junctions · <a href="ymca.html">YMCA Circle close-up</a></small><br>
   <small id="status">API: checking…</small>
-  <div id="src"></div>
+  <div id="src" class="july-only"></div>
 
+  <div id="live-box" class="live-only">
+    <h2>Live now at the junctions <span class="tag real">REAL</span></h2>
+    <div class="note">Each junction pin shows the worst delay TomTom measures there now, coloured against the usual delay for this time.
+      Red lines on the roads are the queues TomTom measures now, drawn back from the junction.</div>
+    <div class="lv-legend"><span class="sev ok">12 s</span> about usual · <span class="sev mid">25 s</span> a little worse · <span class="sev bad">90 s</span> 15 s or more over usual ·
+      <span class="qline"></span>queue now</div>
+    <div id="live-empty" class="note info" hidden></div>
+    <div id="live"></div>
+    <small id="live-note" class="muted"></small>
+    <div id="geo-note" class="note" hidden></div>
+  </div>
+
+  <div class="july-only">
   <h2>Quick demos</h2>
   <div id="presets">
     <button id="p-nallagandla" title="A 600 m, 2-lane flyover lifts the main road over the Nallagandla signal, the first signal of the trip. Replaces your list of changes, then simulates."><b>▶</b>Flyover at Nallagandla</button>
@@ -189,14 +234,11 @@
   </div>
 
   <h2>1 · When <span class="tag real">TomTom data</span></h2>
-  <div class="row"><select id="when" style="max-width:100%"></select></div>
+  <div class="row"><select id="when" style="max-width:100%;flex:1 1 190px;min-width:0" title="The day: TomTom's July average, or one day"></select>
+    <label class="muted" id="hour-box" title="hourly TomTom data arriving tonight">Hour <select id="hour" disabled></select></label></div>
+  <small id="hour-note" class="mid" style="display:block"></small>
   <small id="when-note" class="muted"></small>
-
-  <div id="live-box" hidden>
-    <h2>Live now at junctions <span class="tag real">REAL</span></h2>
-    <div id="live"></div>
-    <small id="live-note" class="muted"></small>
-  </div>
+  <div id="live-link" class="note" hidden></div>
 
   <h2>2 · Change a junction</h2>
   <div class="row">
@@ -244,30 +286,47 @@
     </div>
     <details id="case-list-box" hidden><summary class="muted">Earlier cases</summary><div id="case-list"></div></details>
   </div>
+  </div><!-- /july-only -->
 </div>
 
 <div id="right" class="panel">
   <h2 style="margin-top:0">Layers</h2>
-  <label class="t"><input type="checkbox" id="t-traffic" /> TomTom live traffic <span class="tag real">real</span></label>
-  <label class="t"><input type="checkbox" id="t-route" checked /> Route coloured by speed</label>
-  <label class="t"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
-  <label class="t"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
+  <label class="t live-only"><input type="checkbox" id="t-traffic" /> TomTom live traffic <span class="tag real">real</span></label>
+  <label class="t live-only"><input type="checkbox" id="t-queues" checked title="The queue TomTom measures now on each junction approach, drawn on the road" /> Queues now <span class="tag real">real</span></label>
+  <label class="t"><input type="checkbox" id="t-route" checked /> <span class="july-only">Route coloured by speed</span><span class="live-only">Our route, A → B</span></label>
+  <label class="t july-only"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
+  <label class="t july-only"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
   <label class="t"><input type="checkbox" id="t-buildings" checked /> 3D buildings</label>
   <label class="t"><input type="checkbox" id="t-night" /> Night view</label>
-  <small id="route-src" class="muted"></small><br>
+  <small id="route-src" class="muted july-only"></small><br class="july-only">
+  <small id="traffic-note" class="muted live-only"></small>
+  <small id="queue-info" class="live-only" style="display:block"></small>
   <small id="bld-note" class="muted"></small>
   <div class="row" style="margin-top:8px"><button id="overview" class="ghost">Whole corridor</button><button id="orbit" class="ghost">Orbit</button></div>
+  <div class="july-only">
   <h2>Playback <span class="tag sim">simulated</span></h2>
   <div class="row">
     <button id="play" class="ghost" disabled>▶ Play</button>
     <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option></select>
   </div>
   <div class="row" id="watch"></div>
-  <div class="row"><button id="follow" class="ghost" disabled title="Plays a run first">Follow a test car</button></div>
   <input type="range" id="scrub" min="0" max="0" value="0" disabled />
   <small id="clock" class="muted">—</small><br>
+  <div id="win-box" hidden>
+    <label class="muted">Watch from minute <b id="win-val">–</b> <input type="range" id="win" min="0" max="0" step="1" value="0" /></label>
+    <small id="win-note" class="muted"></small>
+    <div id="win-busy" hidden></div>
+  </div>
+  <div class="row"><button id="follow" class="ghost" disabled title="Plays a run first">Follow a test car</button></div>
+  <div class="row"><select id="follow-pick" disabled title="Plays a run first"><option value="">Test cars…</option></select></div>
+  <div id="follow-card" class="note info" hidden></div>
+  <div class="row" id="ride-row" hidden><button id="ride" class="secondary" title="Rides one test car from Lingampally to Lakdikapul, its whole simulated trip">Ride the whole trip</button>
+    <select id="ride-speed" title="How fast the ride plays"><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option></select></div>
+  <small id="ride-note" class="muted" hidden></small>
+  <small class="muted" id="click-hint">Click any vehicle on the map to follow it.</small><br>
   <small id="playinfo"></small>
-  <div style="margin-top:8px;font-size:11px" class="muted">
+  </div>
+  <div style="margin-top:8px;font-size:11px" class="muted july-only">
     <span class="chip" style="background:rgb(26,152,80)"></span>≥ 25 km/h
     <span class="chip" style="background:rgb(222,140,30)"></span>15–25
     <span class="chip" style="background:rgb(215,48,39)"></span>&lt; 15<br>
@@ -277,18 +336,19 @@
   </div>
 </div>
 
-<button id="ask-open" aria-controls="chat" aria-expanded="false">Ask CityRehearsal</button>
+<button id="ask-open" class="july-only" aria-controls="chat" aria-expanded="false">Ask CityRehearsal</button>
 
-<div id="journey" class="panel">
+<div id="journey" class="panel july-only">
   <div class="row" style="margin:0 0 4px;justify-content:space-between">
     <b>The trip, leg by leg <small class="muted" style="font-weight:400">· block width = minutes · click a block to fly there</small></b>
     <span id="journey-tags"></span>
   </div>
   <div id="strips"></div>
   <div id="deltas" class="deltas"></div>
+  <small id="trip-foot" class="muted" style="display:block;margin-top:4px"></small>
 </div>
 
-<div id="chat" class="panel" hidden aria-label="Ask CityRehearsal">
+<div id="chat" class="panel july-only" hidden aria-label="Ask CityRehearsal">
   <div class="hd"><b>Ask CityRehearsal</b>
     <span><button id="chat-new" class="ghost" title="Start a new conversation">New</button> <button id="chat-close" class="ghost" title="Close">✕</button></span></div>
   <small class="muted">An assistant that runs the corridor simulation for you and explains the results. Its numbers are <span class="tag sim">SIMULATED</span> unless it says TomTom.</small>
@@ -364,8 +424,20 @@ let tomtomSrc = "";                                     // where the measured le
 let legPaths = null;                                    // {"from|to": [[lon, lat], ...]} cut from GET /corridor's route; null: straight lines
 let interventions = [], base = null, changed = null, selected = null, running = false;
 let live = null, liveAt = null, liveLabels = {};                         // live: [{id, name, time, label, approaches: [...]}] from GET /corridor/junctions/live
-let roads = null, frames = [], playing = false, pos = 0, lastTick = 0, clockBase = 8 * 60, stream = null, playingRun = null;
+let geometry = undefined;                               // GET /corridor/junctions/geometry: {junction_id: {approach_id: [[lon, lat], ...] towards the junction}}; null: not there
+let roads = null, frames = [], playing = false, pos = 0, lastTick = 0, stream = null, playingRun = null;
+let calib = null;                                       // GET /corridor/calibration (tomtom_basis_detail: route lengths, TomTom over the simulated route)
 const markers = {};
+
+// ---------- two modes: "Live now" (TomTom, measured right now) and "July typical day" (TomTom's July average + our simulation) ----------
+// Kept in the URL hash (#mode=live / #mode=july, next to #case=...); July unless the URL says otherwise.
+const MODE_HEAD = {
+  live: `<b>Live now:</b> what TomTom measures on these roads right now <span class="tag real">REAL</span>`,
+  july: `<b>July typical day:</b> TomTom's July average, and our simulation of it <span class="tag real">REAL</span><span class="tag sim">SIMULATED</span>`,
+};
+const modeFromHash = () => { const m = /(?:^#|&)mode=(live|july)\b/.exec(location.hash || ""); return m ? m[1] : null; };
+let mode = modeFromHash() || "july";
+document.body.classList.add(`mode-${mode}`);
 
 class HttpError extends Error { constructor(status, msg, detail) { super(msg); this.status = status; this.detail = detail; } }
 async function failure(path, r) {   // the server's own message: plain text, or FastAPI's {"detail": ...}
@@ -388,8 +460,12 @@ async function sampleRun(ivs, why) {
 }
 // ===== end SAMPLE FALLBACK =====
 
+// The day (#when: TomTom's July average or one day) and the hour (#hour, 06-22 = 06:00-07:00 .. 22:00-23:00) set the measured
+// row, and the simulation too once the API takes `day` + `hour` (hourOk); until then the simulation is the typical July day.
+let pickHour = null, hourOk = null;
+const simParams = () => hourOk && pickHour != null ? { day: dayId($("when").value), hour: pickHour } : {};
 async function corridorRun(ivs) {
-  try { return await post("/corridor/runs", { interventions: ivs, volume_scale: 1.0 }); }
+  try { return await post("/corridor/runs", { interventions: ivs, volume_scale: 1.0, ...simParams() }); }
   catch (e) {
     if (e.status && ![404, 405].includes(e.status)) throw e;           // a real failure of the simulation: show it
     return sampleRun(ivs, e.status ? `corridor API answered ${e.status}` : "API not reachable");   // FALLBACK
@@ -410,6 +486,16 @@ function periodLabel(p) {
   return isMultiDay(p) ? `${t[0].toUpperCase()}${t.slice(1)} (TomTom${h ? ", " + h : ""})` : `${dayLabel(p.slice(0, 10))}${h ? ", " + h : ""}`;
 }
 function periodShort(p) { return !PERIOD_RE.test(p) ? p : isMultiDay(p) ? typicalName(p) : dayLabel(p.slice(0, 10)); }
+const isHourly = p => { const m = PERIOD_RE.exec(p || ""); return !!(m && m[3] != null && Number(m[4]) - Number(m[3]) === 1); };   // "... 18:00-19:00"
+const dayId = p => { const m = PERIOD_RE.exec(p || ""); return !m || m[1] !== m[2] ? "july" : m[1]; };   // the API's `day`: "july" or "2026-07-08"
+const hh = h => `${String(h).padStart(2, "0")}:00`;
+const hourSpan = h => `${hh(h)}–${hh(h + 1)}`;
+function measured() {   // the TomTom period on screen: the chosen day, or that day's chosen hour (null: no hourly data for it)
+  const d = $("when").value, m = PERIOD_RE.exec(d || "");
+  if (pickHour == null || !m) return d;
+  return Object.keys(tomtom).find(x => { const q = PERIOD_RE.exec(x); return q && q[1] === m[1] && q[2] === m[2] && isHourly(x) && Number(q[3]) === pickHour; }) || null;
+}
+function pickLabel() { const d = $("when").value; return `${PERIOD_RE.test(d) ? periodShort(d) : d}${pickHour != null ? `, ${hourSpan(pickHour)}` : ""}`; }
 const sumT = legs => legs.reduce((s, l) => s + l.time_s, 0);
 const mins = s => s / 60;
 const fmtMin = s => { const m = s / 60; return m < 10 ? m.toFixed(1) : m.toFixed(0); };
@@ -445,26 +531,65 @@ async function init() {
   points = corridor.points;
   legPaths = cutRoute(corridor.route);
   await loadTomTom(corridor.legs || corridor.tomtom?.periods || corridor.tomtom);
-  fillWhen(); fillJunctions(); fillParams(); renderIvs(); renderJourney(); renderJunctions();
+  if (apiUp) { try { calib = await get("/corridor/calibration"); } catch (e) { calib = null; } }
+  fillWhen(); fillJunctions(); fillParams(); fillHours(); renderIvs(); renderJourney(); renderJunctions();
 
   const hasKey = !!cfg.tomtom_maps_key;
   map = new maplibregl.Map({ container: "map", style: hasKey ? STYLE(false) : "https://tiles.openfreemap.org/styles/liberty",
                              center: [78.39, 17.43], zoom: 12, antialias: true });
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
-  overlay = new deck.MapboxOverlay({ interleaved: true, layers: [] });
+  overlay = new deck.MapboxOverlay({ interleaved: true, layers: [], pickingRadius: 6 });
   map.addControl(overlay);
   map.on("style.load", addTrafficLayer);
   map.on("moveend", () => { buildingsInView(); if (!playing) render(); });   // vehicles and buildings are drawn for what is in view
-  map.on("dragstart", () => { if (following) setFollow(false); });
+  map.on("dragstart", () => { if (following || ride) { stopRide(); setFollow(false); } });
   if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; $("t-night").parentElement.title = "Needs the TomTom map key"; }
+  $("traffic-note").textContent = hasKey ? "TomTom's live speeds on every road: green flowing, orange slow, red queuing." : "The TomTom live traffic layer needs the TomTom map key (TOMTOM_MAPS_KEY in .env).";
   bldNote();
   addMarkers();
   overview(false);
   map.once("load", () => overview(false));
+  setMode(mode, false);
   render();
   requestAnimationFrame(tick);
   loadLive(); setInterval(loadLive, LIVE_MS);
+  if (apiUp) setTimeout(probeHour, 1500);
 }
+
+// ---------- the two modes ----------
+function setMode(m, write = true) {
+  mode = m === "live" ? "live" : "july";
+  document.body.classList.toggle("mode-live", mode === "live"); document.body.classList.toggle("mode-july", mode === "july");
+  ["live", "july"].forEach(k => $(`mode-${k}`).setAttribute("aria-selected", String(k === mode)));
+  $("mode-head").innerHTML = MODE_HEAD[mode];
+  if (write) {   // keep anything else in the hash (#case=...)
+    const q = new URLSearchParams(location.hash.replace(/^#/, "")); q.set("mode", mode);
+    history.replaceState(null, "", "#" + q.toString().replace(/%3D/g, "="));
+  }
+  if (mode === "live") {   // nothing simulated in Live now: stop the playback, the follow camera and the assistant
+    playing = false; $("play").textContent = "▶ Play"; stopRide(); setFollow(false); setOrbit(false);
+    if (document.body.classList.contains("chat-open")) $("chat-close").click();
+    loadGeometry();
+  }
+  if (mode === "live" && cfg.tomtom_maps_key && !trafficTouched) $("t-traffic").checked = true;   // Live now opens with TomTom's live traffic on
+  trafficLayer();
+  syncModeHeight();
+  if (popup) popup.remove();
+  updateMarkers(); renderLive(); render();
+}
+let trafficTouched = false;   // the viewer switched the live traffic layer off or on: keep their choice
+const trafficShown = () => mode === "live" && $("t-traffic").checked;   // live traffic is a Live now layer only
+function trafficLayer() {
+  if (map && map.getLayer("tomtom-traffic")) map.setLayoutProperty("tomtom-traffic", "visibility", trafficShown() ? "visible" : "none");
+}
+function syncModeHeight() {   // the left panel sits under the mode switch
+  const h = $("modebar").getBoundingClientRect().height;
+  if (h) document.documentElement.style.setProperty("--mode-h", `${Math.ceil(h)}px`);
+}
+$("mode-live").onclick = () => setMode("live");
+$("mode-july").onclick = () => setMode("july");
+window.addEventListener("hashchange", () => { const m = modeFromHash(); if (m && m !== mode) setMode(m, false); });
+window.addEventListener("resize", syncModeHeight);
 
 function parseCsv(text) {
   const split = line => { const out = []; let cur = "", q = false; for (const ch of line) { if (ch === '"') q = !q; else if (ch === "," && !q) { out.push(cur); cur = ""; } else cur += ch; } out.push(cur); return out; };
@@ -582,8 +707,8 @@ function cutRoute(route) {   // {"from|to": path} for each consecutive pair of c
 }
 
 // ---------- 1 · when ----------
-function fillWhen() {
-  const ps = Object.keys(tomtom).sort((a, b) => (a === typical ? -1 : b === typical ? 1 : a.localeCompare(b)));
+function fillWhen() {   // days only: the hourly periods are picked with the hour
+  const ps = Object.keys(tomtom).filter(p => !isHourly(p)).sort((a, b) => (a === typical ? -1 : b === typical ? 1 : a.localeCompare(b)));
   $("when").innerHTML = ps.map(p => `<option value="${esc(p)}">${esc(periodLabel(p))} · ${Math.round(mins(sumT(tomtom[p])))} min</option>`).join("");
   $("when").value = typical;
   updateWhenNote();
@@ -597,9 +722,25 @@ function updateWhenNote() {
   const when = !PERIOD_RE.test(p) ? `for ${esc(p)}` : isMultiDay(p) ? `on an average ${typicalName(p).replace("typical ", "")}${h ? ", " + h : ""}` : `on ${dayLabel(p.slice(0, 10))}${h ? ", averaged " + h : ""}`;
   $("when-note").innerHTML = `TomTom measured the whole trip at <b>${tot} min</b> ${when}. ` +
     (daily.length ? `Weekdays ≈ ${avg(wk)} min, Sundays (${sun.map(x => Number(x.slice(8, 10))).join(" and ")} ${MON[Number((sun[0] || p).slice(5, 7)) - 1] || ""}) ≈ ${avg(sun)} min. ` : "") +
-    `This choice sets the measured trip shown under the simulation; the simulation runs the model's calibrated peak.`;
+    (pickHour != null ? (measured() ? `<br>${esc(pickLabel())}: TomTom measured <b>${Math.round(mins(sumT(tomtom[measured()])))} min</b>.` :
+      `<br><span class="mid">No hourly TomTom data for ${esc(pickLabel())} yet.</span>`) : "") +
+    (hourOk ? `<br><b>The day and hour set both the measured (TomTom) row and the simulation.</b>` :
+      `<br><b>Changes the measured (TomTom) row only; the simulation is the typical July day.</b>`);
 }
-$("when").onchange = () => { updateWhenNote(); renderJourney(); render(); };
+let simKeyRun = "{}", rerunTimer = null;   // the day and hour the shown simulation was asked for
+function pickChanged() {   // the measured row follows at once; the simulation follows too (run again) once the API simulates hours
+  updateWhenNote(); renderJourney(); render();
+  clearTimeout(rerunTimer);
+  rerunTimer = setTimeout(function again() {   // quick changes (day, then hour) make one run; a run in progress finishes first
+    if (running) { rerunTimer = setTimeout(again, 500); return; }
+    if (!base || JSON.stringify(simParams()) === simKeyRun) return;
+    const withChanges = !!changed && interventions.length > 0;
+    base = null; changed = null; renderJourney(); renderJunctions();
+    simulate(withChanges);
+  }, 600);
+}
+$("when").onchange = pickChanged;
+$("hour").onchange = () => { pickHour = $("hour").value === "" ? null : Number($("hour").value); pickChanged(); };
 
 // ---------- live junctions (TomTom Junction Analytics, GET /corridor/junctions/live) ----------
 // Accepts {junctions: [{junction_id|id, name, time, approaches: [...]}]}, a list of those, {j07: {...}}, or flat approach rows
@@ -657,13 +798,76 @@ async function loadLive() {
     if (!live || !e.status || [404, 405].includes(e.status)) live = null;   // endpoint not there (yet) or API down: hide the panel
     else { $("live-note").innerHTML = `<span class="mid">Could not refresh (${e.status}); showing the last update.</span>`; return; }
   }
+  if (mode === "live") loadGeometry();
   renderLive();
+}
+// Approach shapes (GET /corridor/junctions/geometry): [{junction_id, approaches: [{approach_id, name, coordinates: [[lon, lat], ...]}]}],
+// each line ordered towards the junction. Matched to the live approaches by approach_id (else by name). 404: queues stay in the panel only.
+function normGeometry(raw) {
+  const list = Array.isArray(raw) ? raw : raw && (raw.junctions || raw.items || raw.data);
+  if (!Array.isArray(list)) return null;
+  const out = {};
+  for (const j of list) {
+    const id = j && (j.junction_id ?? j.id); if (!id || !Array.isArray(j.approaches)) continue;
+    const g = out[id] ||= { byId: {}, byName: {} };
+    for (const a of j.approaches) {
+      const c = (a.coordinates || a.geometry?.coordinates || []).filter(q => Array.isArray(q) && isFinite(q[0]) && isFinite(q[1]));
+      if (c.length < 2) continue;
+      if (a.approach_id != null) g.byId[String(a.approach_id)] = c;
+      if (a.name) g.byName[a.name] = c;
+    }
+  }
+  return Object.keys(out).length ? out : null;
+}
+async function loadGeometry() {
+  if (geometry !== undefined) return;
+  geometry = false;   // loading
+  try { geometry = normGeometry(await get("/corridor/junctions/geometry")); }
+  catch (e) { geometry = e.status && [404, 405, 501].includes(e.status) ? null : undefined; }   // API down: try again with the next live refresh
+  renderLive();
+}
+function cutTail(coords, m) {   // the last m metres of a line drawn towards the junction; short: the queue runs past the drawn approach
+  const out = [coords[coords.length - 1]];
+  let left = m;
+  for (let i = coords.length - 1; i > 0 && left > 0; i--) {
+    const a = coords[i], b = coords[i - 1], d = metres(a, b);
+    if (d >= left) { const t = left / d; out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); left = 0; break; }
+    out.push(b); left -= d;
+  }
+  return { path: out.reverse(), short: left > 1 };
+}
+function queueLines() {   // the measured queue on each live approach, drawn back from the junction along the road
+  if (!geometry || !live) return [];
+  const out = [];
+  for (const j of live) {
+    const g = geometry[j.id]; if (!g) continue;
+    for (const a of j.approaches) {
+      if (!(a.queue_m >= 5)) continue;
+      const c = (a.id != null && g.byId[String(a.id)]) || g.byName[a.name]; if (!c) continue;
+      const { path, short: beyond } = cutTail(c, a.queue_m);
+      if (path.length >= 2) out.push({ path, jid: j.id, name: a.name, queue_m: a.queue_m, delay_s: a.delay_s, usual_delay_s: a.usual_delay_s, beyond });
+    }
+  }
+  return out;
 }
 function renderLive() {
   const has = !!(live && live.length);
-  $("live-box").hidden = !has;
   updateMarkers();
-  if (!has) return;
+  $("live-link").hidden = !has;
+  if (has) {
+    $("live-link").innerHTML = `TomTom is reporting live from ${live.length} of these junctions right now: <button class="linkbtn" id="see-live">see Live now</button>`;
+    $("see-live").onclick = () => { setMode("live"); window.scrollTo(0, 0); };
+  }
+  $("live-empty").hidden = has;
+  $("geo-note").hidden = !has || geometry !== null;
+  $("geo-note").textContent = "Queues are listed per junction here; drawing them on the road needs the approach shapes (GET /corridor/junctions/geometry), not on this server yet.";
+  if (mode === "live") render();
+  if (!has) {
+    $("live-empty").textContent = apiUp ? "No live junction data right now: the API has no TomTom Junction Analytics feed (GET /corridor/junctions/live)." :
+      "API not running (`make dev`): live TomTom junction data comes through the API.";
+    $("live").innerHTML = ""; $("live-note").textContent = "";
+    return;
+  }
   const nm = n => String(n).replace(/\bRoad\b/g, "Rd").replace(/\b(North|South|East|West) Bound\b/g, (m, d) => d[0] + "-bound");
   $("live").innerHTML = live.map(j => {
     const w = worst(j), calm = w.every(a => !a.delay_s && !a.queue_m), hr = w.some(a => a.mean && a.mean.delay_s != null);
@@ -679,7 +883,7 @@ function renderLive() {
   }).join("");
   $("live").querySelectorAll(".lj .hd").forEach(el => el.onclick = () => flyToPoint(el.parentElement.dataset.id));
   const est = live.some(j => /estimated/i.test(j.label)) || /estimated/i.test(liveLabels.queue_m || "");
-  $("live-note").innerHTML = `<span class="livedot"></span> marks these junctions on the map. Delay per approach now vs usual, from TomTom Junction Analytics${est ? " (queue and volume estimated by TomTom)" : ""}. ` +
+  $("live-note").innerHTML = `Delay per approach now vs usual, from TomTom Junction Analytics${est ? " (queue and volume estimated by TomTom)" : ""}. ` +
     `Updated ${hhmm(liveAt)}, refreshes every ${Math.round(LIVE_MS / 1000)} s.`;
 }
 
@@ -786,7 +990,8 @@ async function simulate(withChanges) {
   if (running) return;
   if (withChanges && !interventions.length) { $("run-note").innerHTML = `<span class="mid">Add at least one change in step 2 first.</span>`; return; }
   const ivs = JSON.parse(JSON.stringify(interventions)), t0 = Date.now();
-  const what = withChanges ? `with ${ivs.length} change${ivs.length > 1 ? "s" : ""}` : "today's roads";
+  simKeyRun = JSON.stringify(simParams());
+  const what = (withChanges ? `with ${ivs.length} change${ivs.length > 1 ? "s" : ""}` : "today's roads") + (simParams().hour != null ? `, ${pickLabel()}` : "");
   $("status").textContent = `Simulating the corridor, ${what}${withChanges && !base ? " (and today's roads to compare)" : ""}…`;
   $("run-note").textContent = "";
   setRunning(true);
@@ -803,7 +1008,7 @@ async function simulate(withChanges) {
     const odd = r._fallback && withChanges && !(ivs.length === 1 && ivs[0].junction_id === "j07" && ivs[0].kind === "flyover");
     $("run-note").innerHTML = `Simulated window: ${esc(r.time?.label || "calibrated peak")} · traffic input: <b>${esc(r.inputs?.label || "–")}</b> (${esc(r.inputs?.counts_source || "–")})` +
       (odd ? `<br><span class="mid">The sample always shows a flyover at 7 · Tolichowki, whatever you chose.</span>` : "");
-    play(r);   // loads in the background; the panel stays usable
+    winPick = null; play(r);   // loads in the background; the panel stays usable
   } catch (e) {
     setRunning(false);
     const msg = e.status ? `Simulation failed (HTTP ${e.status}): ${e.detail || e.message}` : `Simulation failed: ${e.message}`;
@@ -831,11 +1036,11 @@ function stripRow(title, tags, legs, max, opts = {}) {
   return `<div class="strip" data-strip="${opts.key}"><div class="name">${title}${tags}</div><div class="bar">${blocks}</div><div class="total">${Math.round(mins(tot))} min</div></div>`;
 }
 function renderJourney() {
-  const p = $("when").value, tt = tomtom[p] || [];
+  const p = measured(), tt = p ? tomtom[p] || [] : [];
   const rows = [];
-  if (base) rows.push({ key: "base", title: "Simulated, today's roads", tags: tagsFor(base), legs: base.journey.legs, total: base.journey.total_s });
-  rows.push({ key: "tomtom", title: `Measured by TomTom, ${periodShort(p)}`, tags: '<span class="tag real">REAL</span>', legs: tt });
-  if (changed) rows.push({ key: "changed", title: "Simulated with changes", tags: tagsFor(changed), legs: changed.journey.legs, total: changed.journey.total_s, ref: base && base.journey.legs });
+  if (base) rows.push({ key: "base", title: `${simDay(base)}, roads as they are`, tags: tagsFor(base), legs: base.journey.legs, total: base.journey.total_s });
+  if (tt.length) rows.push({ key: "tomtom", title: `Measured by TomTom, ${pickHour != null ? pickLabel() : periodShort(p)}`, tags: '<span class="tag real">REAL</span>', legs: tt });
+  if (changed) rows.push({ key: "changed", title: `${simDay(changed)}, with your changes`, tags: tagsFor(changed), legs: changed.journey.legs, total: changed.journey.total_s, ref: base && base.journey.legs });
   const max = Math.max(...rows.map(r => Math.max(r.total ?? 0, sumT(r.legs))), 1);
   let h = "";
   rows.forEach((r, k) => {
@@ -850,15 +1055,35 @@ function renderJourney() {
   $("strips").querySelectorAll(".leg").forEach(el => el.onclick = () => flyToLeg(Number(el.dataset.leg)));
   $("strips").querySelectorAll(".ticks span").forEach(el => el.onclick = () => flyToPoint(el.dataset.p));
   $("journey-tags").innerHTML = (base || changed) && [base, changed].some(r => r && r.sample) ? '<span class="tag sample">SAMPLE DATA</span>' : "";
-  renderDeltas();
+  renderDeltas(); renderTripFoot();
   if (window.planner) planner.sync();   // 4 · decision: what can be sent for review
 }
+const runHour = r => num(r?.time?.hour ?? r?.hour ?? r?.requested?.hour);
+const runDay = r => r?.time?.day ?? r?.day ?? r?.requested?.day ?? null;
+function simDay(r) {   // "Simulated typical July day", "Simulated Wed 8 Jul, 18:00–19:00"
+  const h = runHour(r), d = runDay(r), day = /^\d{4}-\d{2}-\d{2}$/.test(d || "") ? dayLabel(d) : "typical July day";
+  return `Simulated ${day}${h != null ? `, ${hourSpan(h)}` : ""}`;
+}
+// Why the simulated and measured rows differ in length: our simulated route is a little shorter than TomTom's. Numbers from the
+// result (journey.distance_m, journey.tomtom_total_s: TomTom's speeds over our route) and GET /corridor/calibration tomtom_basis_detail.
+function tripBasis() {
+  const d = calib?.tomtom_basis_detail || {}, j = base?.journey || {};
+  const simKm = num(d.simulated_route_km) ?? (j.distance_m ? j.distance_m / 1000 : null);
+  const ttKm = num(d.tomtom_route_km) ?? ((tomtom[typical] || []).reduce((a, l) => a + l.distance_m, 0) / 1000 || null);
+  const ttSame = j.tomtom_total_s ? mins(j.tomtom_total_s) : num(d.calibration_tomtom_min);
+  return { simKm, ttKm, ttSame, simMin: base ? mins(base.journey.total_s) : null };
+}
+function renderTripFoot() {
+  const t = tripBasis(), km = x => x.toFixed(1);
+  if (t.simKm == null || base?.sample) { $("trip-foot").textContent = ""; return; }   // the sample's numbers are not our route
+  $("trip-foot").innerHTML = `Our simulated route is ${km(t.simKm)} km${t.ttKm ? ` (TomTom's: ${km(t.ttKm)} km)` : ""}.` +
+    (t.ttSame != null ? ` Over the same ${km(t.simKm)} km TomTom measured ${Math.round(t.ttSame)} min${t.simMin != null ? `; the simulation gives ${Math.round(t.simMin)} min` : ""}.` : "") +
+    (base ? " Compare the two simulated rows to see what a change does." : "");
+}
 function renderDeltas() {
-  if (!base) { $("deltas").innerHTML = `<small class="muted">Press “Simulate today” to compare the model with TomTom, then add changes and “Simulate with changes”.</small>`; return; }
-  const tt = tomtom[$("when").value] || [];
+  if (!base) { $("deltas").innerHTML = `<small class="muted">Press “Simulate today” to simulate a typical July day on the roads as they are, then add changes and “Simulate with changes”.</small>`; return; }
   if (!changed) {
-    $("deltas").innerHTML = `<small>Model ${Math.round(mins(base.journey.total_s))} min vs TomTom ${Math.round(mins(sumT(tt)))} min (${periodShort($("when").value)})` +
-      `${base.journey.tomtom_total_s ? `; TomTom for the simulated window: ${Math.round(mins(base.journey.tomtom_total_s))} min` : ""}.</small>`;
+    $("deltas").innerHTML = base.sample ? `<small>Model ${Math.round(mins(base.journey.total_s))} min vs TomTom ${Math.round(mins(sumT(tomtom[measured()] || [])))} min (${esc(pickLabel())}).</small>` : "";
     return;
   }
   const b = base.journey.total_s, c = changed.journey.total_s, dm = mins(c - b);
@@ -922,7 +1147,7 @@ function addTrafficLayer() {
   if (!cfg.tomtom_maps_key || map.getSource("tomtom-traffic")) return;
   map.addSource("tomtom-traffic", { type: "raster", tiles: [TRAFFIC_TILES()], tileSize: 256, attribution: "© TomTom" });
   map.addLayer({ id: "tomtom-traffic", type: "raster", source: "tomtom-traffic", paint: { "raster-opacity": 0.9 },
-                 layout: { visibility: $("t-traffic").checked ? "visible" : "none" } });
+                 layout: { visibility: trafficShown() ? "visible" : "none" } });
 }
 function addMarkers() {
   points.forEach(p => {
@@ -934,15 +1159,16 @@ function addMarkers() {
   updateMarkers();
 }
 function updateMarkers() {
-  const liveIds = new Set((live || []).map(j => j.id));
   for (const [id, m] of Object.entries(markers)) {
-    const el = m.getElement();
-    el.classList.toggle("has", interventions.some(iv => iv.junction_id === id || (id === NANAL_PAIR[1] && coversBoth(iv))));
+    const el = m.getElement(), lj = (live || []).find(j => j.id === id), w = lj && worst(lj)[0];
+    el.classList.toggle("has", mode === "july" && interventions.some(iv => iv.junction_id === id || (id === NANAL_PAIR[1] && coversBoth(iv))));
     el.classList.toggle("sel", selected === id);
-    el.classList.toggle("live", liveIds.has(id));
+    el.classList.toggle("live", !!lj);
     el.classList.toggle("fly", !!existingFlyover(id));
+    if (w) { el.dataset.badge = `${Math.round(w.delay_s)} s`; el.dataset.sev = delayClass(w); }   // drawn in Live now only (CSS)
+    else { delete el.dataset.badge; delete el.dataset.sev; }
     el.title = point(id)?.name + (existingFlyover(id) ? ` · flyover exists: the main road crosses on the ${existingFlyover(id)}` : "") +
-      (liveIds.has(id) ? " · live TomTom junction data" : "");
+      (w && mode === "live" ? ` · live now: worst delay ${Math.round(w.delay_s)} s on ${w.name}${w.usual_delay_s != null ? ` (usually ${Math.round(w.usual_delay_s)} s)` : ""}` : "");
   }
 }
 let popup = null;
@@ -954,17 +1180,18 @@ function flyToPoint(id) {
   selected = id; updateMarkers();
   if (p.kind === "junction") { $("iv-j").value = id; syncPicker(); }
   map.flyTo({ center: [p.lon, p.lat], zoom: 16.2, pitch: 58, bearing: -20, duration: 1800, essential: true, offset: narrow() ? [0, 0] : VIEW_OFFSET });
-  const b = base && base.junctions.find(j => j.id === id), c = changed && changed.junctions.find(j => j.id === id);
+  const sim = mode === "july", b = sim && base && base.junctions.find(j => j.id === id), c = sim && changed && changed.junctions.find(j => j.id === id);
   const stat = (r, lab) => r ? `<br>${lab}: ${r.avg_delay_s} s delay, ${r.max_queue_m} m queue` : "";
-  const lj = (live || []).find(j => j.id === id), w = lj && worst(lj)[0];
-  const liveLine = w ? `<br>Live now: ${Math.round(w.delay_s)} s delay${w.usual_delay_s != null ? ` (usual ${Math.round(w.usual_delay_s)} s)` : ""}, queue ${fmtQ(w.queue_m)} on ${esc(w.name)} <span class="tag real">REAL</span>` : "";
+  const lj = !sim && (live || []).find(j => j.id === id), ws = lj ? worst(lj) : [];
+  const liveLine = ws.length ? ws.map((w, k) => `<br>${k ? "" : "Live now: "}<b class="${delayClass(w)}">${Math.round(w.delay_s)} s</b> delay${w.usual_delay_s != null ? ` (usual ${Math.round(w.usual_delay_s)} s)` : ""}, queue ${fmtQ(w.queue_m)} on ${esc(w.name)}`).join("") + ' <span class="tag real">REAL</span>' :
+    !sim ? "<br><span class='muted'>No live TomTom data for this junction.</span>" : "";
   if (popup) popup.remove();
   popup = new maplibregl.Popup({ offset: 16, closeButton: true }).setLngLat([p.lon, p.lat])
     .setHTML(`<b>${pointLabel(id)} · ${esc(p.name)}</b>` +
-      `${existingFlyover(id) ? `<br><span class="flytag">Flyover exists: the main road crosses on the ${esc(existingFlyover(id))}</span>` : ""}${liveLine}${stat(b, "Today")}${stat(c, "With changes")}${b || c ? ' <span class="tag sim">SIMULATED</span>' : ""}`).addTo(map);
+      `${existingFlyover(id) ? `<br><span class="flytag">Flyover exists: the main road crosses on the ${esc(existingFlyover(id))}</span>` : ""}${liveLine}${stat(b, "Roads as they are")}${stat(c, "With your changes")}${b || c ? ' <span class="tag sim">SIMULATED</span>' : ""}`).addTo(map);
 }
 function flyToLeg(i) {
-  const legs = (changed || base)?.journey.legs || tomtom[$("when").value] || [], l = legs[i]; if (!l) return;
+  const legs = (changed || base)?.journey.legs || tomtom[measured()] || [], l = legs[i]; if (!l) return;
   const a = point(l.from_id), z = point(l.to_id); if (!a || !z) return;
   selected = null; updateMarkers(); if (popup) popup.remove();
   const path = legPaths?.[`${l.from_id}|${l.to_id}`] || [[a.lon, a.lat], [z.lon, z.lat]];
@@ -979,8 +1206,8 @@ function overview(animate = true) {
                 { padding: { top: pad(60), bottom: pad(260), left: pad(420), right: pad(280) }, pitch: 0, bearing: 0, duration: animate ? 1200 : 0 });
 }
 function routeLegs() {   // what colours the route: the latest simulation, else TomTom for the chosen day
-  const r = changed || base, legs = r ? r.journey.legs : (tomtom[$("when").value] || []);
-  const by = r ? `${changed ? "the run with changes" : "today's simulation"}${r.sample ? " (sample)" : ""} (SIMULATED speeds)` : `TomTom, ${periodShort($("when").value)} (REAL speeds)`;
+  const r = changed || base, legs = r ? r.journey.legs : (tomtom[measured()] || []);
+  const by = r ? `${changed ? "the run with changes" : "today's simulation"}${r.sample ? " (sample)" : ""} (SIMULATED speeds)` : `TomTom, ${pickLabel()} (REAL speeds)`;
   $("route-src").textContent = `Route coloured by ${by}. ${legPaths ? "Drawn on the real road, A → B." : "Straight lines between junctions (road shape not available yet)."}`;
   return legs.map(l => {
     const a = point(l.from_id), z = point(l.to_id), path = legPaths?.[`${l.from_id}|${l.to_id}`];
@@ -1136,44 +1363,316 @@ function bldNote() {
     "No building outlines for this part of the corridor yet.";
 }
 
-// ---------- camera: orbit and follow a test car ----------
+// ---------- camera: orbit, follow a car, ride a test car's whole trip ----------
 let orbiting = false, lastOrbit = 0, following = null, followBearing = null;
-function setOrbit(on) { orbiting = on; $("orbit").textContent = on ? "Stop orbit" : "Orbit"; if (on) setFollow(false); }
+let probeList = null;   // GET /runs/{run_id}/probes: the test cars' whole trips [{id, direction, depart_s, arrive_s, total_s, points}]; null: not on this server
+const probeCache = {};
+let ride = null;        // {probe, t, inWin}: riding one test car from Lingampally to Lakdikapul
+let tOffset = 0;        // seconds to add to a frame's t to get the time since the simulation started
+const FOLLOW_RGB = [255, 196, 0];
+const isProbe = id => String(id).startsWith("probe_");
+const probeName = id => String(id).replace(/^probe_/, "").replace(/_/g, "-");
+const DIR_NAME = { fwd: "towards Lakdikapul", rev: "towards Lingampally" };
+const TYPE_NAME = { two_wheeler: "Two-wheeler", car: "Car", auto: "Auto", bus: "Bus", truck: "Truck" };
+const volOf = r => Number(r?.inputs?.volume_scale ?? 1);
+function setOrbit(on) { orbiting = on; $("orbit").textContent = on ? "Stop orbit" : "Orbit"; if (on) { setFollow(false); stopRide(); } }
 const probes = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.vehicles.filter(v => String(v.id).startsWith("probe_fwd")) : []; };
 const anyProbe = () => frames.some(f => f.vehicles.some(v => String(v.id).startsWith("probe_fwd")));
-function setFollow(on) {
+function setFollow(on) {   // the quick button: the test car furthest back (towards Lingampally), so it has the longest drive ahead
   if (on) {
-    const p = probes().sort((a, b) => a.lon - b.lon)[0];   // the test car furthest back (towards Lingampally), so it has the longest drive ahead
+    const p = probes().sort((a, b) => a.lon - b.lon)[0];
     if (!p) { $("playinfo").textContent = "No test car on the road at this moment: press Play and try again."; on = false; }
-    else { following = p.id; followBearing = map.getBearing(); setOrbit(false); if (!playing) $("play").click(); }
+    else return startFollow(p.id);
   }
-  if (!on) following = null;
-  $("follow").textContent = following ? "Stop following" : "Follow a test car";
+  following = null; followUI(); render();
 }
-function followTick() {
-  if (!following) return;
-  let v = vehicleAt(following);
-  if (!v) {   // that test car finished its trip: pick up the next one
-    const p = probes()[0]; if (!p) return; following = p.id; v = p;
-  }
+function startFollow(id) {   // any vehicle in the recorded frames, test car or not
+  if (mode !== "july" || !frames.length) return;
+  stopRide();
+  following = id; followBearing = map.getBearing(); setOrbit(false);
+  if (!playing) $("play").click();
+  followUI(); followTick(); render();
+}
+function followUI() {
+  const on = !!(following || ride);
+  $("follow").textContent = following ? "Stop following" : "Follow a test car";
+  $("follow-card").hidden = !on;
+  if (!on) $("follow-card").innerHTML = "";
+  const want = ride ? ride.probe.id : following || "";
+  $("follow-pick").value = [...$("follow-pick").options].some(o => o.value === want) ? want : "";
+  $("ride").textContent = ride ? "Stop the ride" : "Ride the whole trip";
+}
+function camera(v) {
   const da = ((v.angle - followBearing + 540) % 360) - 180;
   followBearing += da * 0.08;
   map.jumpTo({ center: [v.lon, v.lat], zoom: Math.max(map.getZoom(), 16.5), pitch: 60, bearing: followBearing });
-  $("playinfo").textContent = `Following test car ${v.id} · ${((v.speed || 0) * 3.6).toFixed(0)} km/h${v.z > 1 ? " · on the flyover" : v.z < -1 ? " · in the underpass" : ""}`;
+}
+function followTick() {
+  if (!following || ride) return;
+  let v = vehicleAt(following);
+  if (!v && isProbe(following)) { const p = probes()[0]; if (p) { following = p.id; v = p; followUI(); } }   // that test car finished: the next one
+  if (!v) { $("playinfo").textContent = "That vehicle left the recorded stretch (or the recorded minutes): pick another one."; following = null; followUI(); return; }
+  camera(v);
+  $("follow-card").innerHTML = carCard(v, frameNowS());
+  $("playinfo").textContent = `Following ${carName(v.id, v.type)}`;
+}
+// where a car is on the corridor: the nearest point of the A -> B line, its leg, how far along, how far off it, which way it drives
+let routeCache = null;
+function routeR() { if (!routeCache || routeCache.lp !== legPaths) routeCache = { lp: legPaths, R: routeLine() }; return routeCache.R; }
+function locate(v) {
+  const R = routeR(); let best = null;
+  for (let i = 0; i < R.line.length - 1; i++) { const [q, d] = project([v.lon, v.lat], R.line[i], R.line[i + 1]); if (!best || d < best.d) best = { i, q, d }; }
+  if (!best) return null;
+  const along = R.cum[best.i] + metres(R.line[best.i], best.q);
+  let leg = 0; for (let n = 0; n < points.length - 1; n++) if (R.cum[R.at[points[n].id]] <= along + 0.01) leg = n;
+  const a = R.line[best.i], b = R.line[best.i + 1] || a, road = (Math.atan2((b[0] - a[0]) * Math.cos(a[1] * Math.PI / 180), b[1] - a[1]) * 180 / Math.PI + 360) % 360;
+  const rev = v.angle != null && Math.abs(((v.angle - road + 540) % 360) - 180) > 90;
+  return { leg, along, off: best.d, rev };
+}
+function paceFromA(loc) {   // minutes from Lingampally to this point at the run's simulated leg times
+  const legs = playingRun?.journey?.legs; if (!legs?.length) return null;
+  const R = routeR(), k = loc.leg, s0 = R.cum[R.at[points[k].id]], s1 = R.cum[R.at[points[k + 1].id]];
+  const frac = s1 > s0 ? Math.max(0, Math.min(1, (loc.along - s0) / (s1 - s0))) : 0;
+  return (legs.slice(0, k).reduce((s, l) => s + l.time_s, 0) + frac * (legs[k]?.time_s || 0)) / 60;
+}
+function nearestJunction(v) {
+  return points.filter(p => p.kind === "junction").map(p => [p, metres([v.lon, v.lat], [p.lon, p.lat])]).sort((a, b) => a[1] - b[1])[0] || [null, Infinity];
+}
+function onStructure(v) {   // "on the Shaikpet Flyover", "on the new flyover at Nanal Nagar jn", ...
+  const z = v.z || 0; if (Math.abs(z) <= 1) return "";
+  const [j, d] = nearestJunction(v), near = j && d < 1500;
+  if (z < -1) return near ? `in the underpass at ${short(j.name)}` : "in an underpass";
+  if (near && existingFlyover(j.id)) return `on the ${existingFlyover(j.id)}`;
+  const iv = near && (playingRun?.interventions || []).find(x => x.kind === "flyover" && (x.junction_id === j.id || (coversBoth(x) && NANAL_PAIR.includes(j.id))));
+  return iv ? `on the new flyover at ${short(point(iv.junction_id)?.name)}` : "on a flyover";
+}
+const carName = (id, type) => isProbe(id) || (probeList || []).some(p => p.id === id) ? `test car ${probeName(id)}` : `${(TYPE_NAME[type] || "vehicle").toLowerCase()} ${id}`;
+function carCard(v, tNow) {   // Test car fwd-3 · 34 km/h · stretch Tolichowki → Nanal Nagar · 23 min since Lingampally · on the Shaikpet Flyover
+  const pr = ride && ride.probe.id === v.id ? ride.probe : (probeList || []).find(p => p.id === v.id);
+  const loc = locate(v), rev = pr ? pr.direction === "rev" : /(^|_)rev/.test(String(v.id)) || (!isProbe(v.id) && !!loc?.rev);
+  const nm = carName(v.id, v.type), bits = [`<b>${esc(nm[0].toUpperCase() + nm.slice(1))}</b>`, `${Math.round((v.speed || 0) * 3.6)} km/h`];
+  if (loc && loc.off < 80) {
+    const a = short(points[loc.leg].name), b = short(points[loc.leg + 1]?.name);
+    bits.push(`stretch ${esc(rev ? `${b} → ${a}` : `${a} → ${b}`)}`);
+    if (pr && pr.depart_s != null) bits.push(`${Math.max(0, Math.round((tNow - pr.depart_s) / 60))} min since ${rev ? "Lakdikapul" : "Lingampally"}`);
+    else if (!rev) { const m = paceFromA(loc); if (m != null) bits.push(`≈ ${Math.round(m)} min from Lingampally at the simulated pace`); }
+  } else if (loc) bits.push(`on a side road near ${esc(short(nearestJunction(v)[0]?.name))}`);
+  const st = onStructure(v); if (st) bits.push(esc(st));
+  return bits.join(" · ") + ' <span class="tag sim">SIMULATED</span>';
+}
+function trailOf(id) {   // the followed car's last ~50 s, from the recorded frames
+  const i = Math.min(Math.floor(pos), frames.length - 1), key = `${id}|${i}|${frames.length}`;
+  if (trailOf.key !== key) {
+    const path = [];
+    for (let k = Math.max(0, i - 12); k <= i; k++) { const v = frames[k]?.vehicles.find(x => x.id === id); if (v) path.push([v.lon, v.lat, (v.z || 0) + 0.6]); }
+    trailOf.key = key; trailOf.path = path;
+  }
+  return trailOf.path;
+}
+function focusCar() {   // the highlighted car: the ride's test car, or the followed vehicle
+  if (ride) {
+    const v = probeAt(ride.probe, ride.t); if (!v) return null;
+    const trail = ride.probe.points.filter(q => q.t >= ride.t - 90 && q.t <= ride.t).map(q => [q.lon, q.lat, (q.z || 0) + 0.6]);
+    return { v, trail: [...trail, [v.lon, v.lat, (v.z || 0) + 0.6]] };
+  }
+  if (!following) return null;
+  const v = vehicleAt(following); if (!v) return null;
+  return { v, trail: [...trailOf(following), [v.lon, v.lat, (v.z || 0) + 0.6]] };
+}
+
+// ---------- ride a test car's whole trip (GET /runs/{run_id}/probes) ----------
+function heading(P, i) {   // compass bearing from point i to the next point it moved to
+  for (let k = i + 1; k < P.length && k < i + 30; k++) {
+    const a = P[i], b = P[k];
+    if (metres([a.lon, a.lat], [b.lon, b.lat]) > 2) return (Math.atan2((b.lon - a.lon) * Math.cos(a.lat * Math.PI / 180), b.lat - a.lat) * 180 / Math.PI + 360) % 360;
+  }
+  return 0;
+}
+function probeAt(pr, t) {   // the test car at time t on its track, interpolated
+  const P = pr.points, n = P.length; if (!n) return null;
+  const at = (q, k, extra = {}) => ({ id: pr.id, type: "car", lon: q.lon, lat: q.lat, z: q.z || 0, speed: q.speed || 0, leg: q.leg, angle: heading(P, Math.max(0, Math.min(k, n - 2))), ...extra });
+  if (t <= P[0].t) return at(P[0], 0);
+  if (t >= P[n - 1].t) return at(P[n - 1], n - 2);
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (P[mid].t <= t) lo = mid; else hi = mid; }
+  const a = P[lo], b = P[hi], f = (t - a.t) / Math.max(1e-6, b.t - a.t);
+  return at(a, lo, { lon: a.lon + (b.lon - a.lon) * f, lat: a.lat + (b.lat - a.lat) * f, z: (a.z || 0) + ((b.z || 0) - (a.z || 0)) * f, speed: (a.speed || 0) + ((b.speed || 0) - (a.speed || 0)) * f });
+}
+async function loadProbes(r) {
+  let list = probeCache[r.run_id];
+  if (list === undefined) {
+    try {
+      const raw = await get(`/runs/${encodeURIComponent(r.run_id)}/probes`), arr = Array.isArray(raw) ? raw : raw?.probes || raw?.items || [];
+      list = arr.filter(p => p && p.id != null && Array.isArray(p.points) && p.points.length >= 2)
+                .map(p => ({ ...p, direction: p.direction || (/rev/.test(String(p.id)) ? "rev" : "fwd"), points: [...p.points].sort((a, b) => a.t - b.t) }));
+      if (!list.length) list = null;
+    } catch (e) { list = null; }   // 404: not on this server yet, the ride is hidden
+    probeCache[r.run_id] = list;
+  }
+  if (playingRun !== r) return;
+  probeList = list;
+  $("ride-row").hidden = !probeList;
+  fillPicker();
+}
+function framesProbes() {   // test cars in the recorded frames: id -> first time seen (s since the start)
+  const m = new Map();
+  for (const f of frames) for (const v of f.vehicles) if (isProbe(v.id) && !m.has(v.id)) m.set(v.id, f.t + tOffset);
+  return m;
+}
+function fillPicker() {
+  const opts = [], seen = new Set();
+  for (const p of probeList || []) {
+    seen.add(p.id);
+    opts.push([p.id, `${probeName(p.id)} · ${DIR_NAME[p.direction] || p.direction} · leaves minute ${Math.round((p.depart_s ?? p.points[0].t) / 60)}`]);
+  }
+  for (const [id, t] of framesProbes()) if (!seen.has(id)) opts.push([id, `${probeName(id)} · ${DIR_NAME[/(^|_)rev/.test(id) ? "rev" : "fwd"]} · on the road at minute ${Math.floor(t / 60)}`]);
+  $("follow-pick").innerHTML = `<option value="">${opts.length ? `Test cars (${opts.length})…` : "No test cars in this run"}</option>` + opts.map(([id, t]) => `<option value="${esc(id)}">${esc(t)}</option>`).join("");
+  $("follow-pick").disabled = !opts.length;
+  $("follow-pick").title = opts.length ? "Follow one of the model's test cars (direction, when it set off)" : "No test cars in this run";
+  followUI();
+}
+$("follow-pick").onchange = () => {
+  const id = $("follow-pick").value;
+  if (!id) { stopRide(); setFollow(false); return; }
+  const k = frames.findIndex(f => f.vehicles.some(v => v.id === id));
+  if (k >= 0) {   // in the recorded minutes: jump to where it first shows if it is not on the road now
+    if (!vehicleAt(id)) { pos = k; $("scrub").value = k; showClock(); }
+    startFollow(id);
+  } else if ((probeList || []).some(p => p.id === id)) startRide(id);   // outside the recorded minutes: ride its whole trip
+};
+function startRide(id) {
+  const L = probeList || [];
+  const pr = L.find(p => p.id === id) || L.find(p => p.id === $("follow-pick").value) || L.find(p => p.id === following) || L.find(p => p.direction !== "rev") || L[0];
+  if (!pr || mode !== "july") return;
+  playing = false; $("play").textContent = "▶ Play"; following = null; setOrbit(false);
+  ride = { probe: pr, t: pr.depart_s ?? pr.points[0].t, inWin: false };
+  followBearing = map.getBearing(); lastTick = 0;
+  const w = frames.length ? [Math.floor((frames[0].t + tOffset) / 60), Math.ceil((frames[frames.length - 1].t + tOffset) / 60)] : null;
+  $("ride-note").hidden = false;
+  $("ride-note").innerHTML = `Riding test car ${esc(probeName(pr.id))} ${DIR_NAME[pr.direction] || ""}: its whole simulated trip${pr.total_s ? `, ${Math.round(pr.total_s / 60)} min` : ""}. ` +
+    (w ? `Other traffic is shown only while the ride is inside the recorded window (minutes ${w[0]}–${w[1]}); outside it the test car drives alone on the map.` : "No other traffic was recorded for this run.");
+  followUI(); rideTick(); render();
+}
+function stopRide(arrived) {
+  if (!ride) return;
+  const pr = ride.probe; ride = null;
+  $("ride-note").hidden = !arrived;
+  if (arrived) $("ride-note").textContent = `Test car ${probeName(pr.id)} arrived at ${pr.direction === "rev" ? "Lingampally" : "Lakdikapul"}${pr.total_s ? ` after ${Math.round(pr.total_s / 60)} min` : ""}.`;
+  followUI(); showClock(); render();
+}
+function rideTick() {
+  const v = probeAt(ride.probe, ride.t); if (!v) return;
+  if (frames.length) {   // other traffic only inside the recorded minutes
+    const t0 = frames[0].t + tOffset, t1 = frames[frames.length - 1].t + tOffset;
+    ride.inWin = ride.t >= t0 && ride.t <= t1;
+    if (ride.inWin) { pos = Math.min(frames.length - 1, (ride.t - t0) / frameStep()); $("scrub").value = Math.floor(pos); }
+  }
+  camera(v);
+  $("follow-card").innerHTML = carCard(v, ride.t);
+  $("clock").textContent = `${simDay(playingRun)} · minute ${Math.floor(ride.t / 60)} of the simulated period · riding at ${$("ride-speed").value}×` +
+    (ride.inWin ? " · other traffic shown (recorded window)" : " · outside the recorded window: no other traffic");
+}
+$("ride").onclick = () => { if (ride) stopRide(); else startRide(); };
+
+// ---------- the recorded window ("Watch from minute") and the hour ----------
+const fwin = r => { const w = r?.frames_window; return w && isFinite(w.from_s) && isFinite(w.to_s) ? w : null; };
+const frameNowS = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.t + tOffset : 0; };
+const winCache = {};   // "<run key>|<from minute>" -> the same run, recorded from that minute
+const runKey = r => `${ivKey(r.interventions || [])}|${volOf(r)}|${runDay(r) ?? ""}|${runHour(r) ?? ""}`;
+let winBusy = false, winPick = null;
+function renderWindow() {
+  const r = playingRun, w = fwin(r);
+  $("win-box").hidden = !w || !(w.sim_minutes_total > 5);
+  if ($("win-box").hidden) return;
+  const max = Math.max(0, Math.floor(w.sim_minutes_total - 5)), from = Math.round(w.from_s / 60);
+  winCache[`${runKey(r)}|${from}`] ||= r;
+  $("win").max = max;
+  if (!winBusy) { $("win").value = Math.min(from, max); $("win-val").textContent = $("win").value; }
+  $("win-note").innerHTML = `Recorded: minutes ${from}–${Math.round(w.to_s / 60)} of the ${Math.round(w.sim_minutes_total)} simulated. Pick another start to record 5 minutes from there: the same run, so the results stay identical.`;
+}
+$("win").oninput = () => { $("win-val").textContent = $("win").value; };
+$("win").onchange = () => watchFrom(Number($("win").value));
+async function watchFrom(m) {
+  const r = playingRun, w = fwin(r); if (!r || !w || winBusy) return;
+  winPick = m;
+  const key = `${runKey(r)}|${m}`;
+  if (Math.round(w.from_s / 60) === m) return;
+  if (winCache[key]) return play(winCache[key]);
+  winBusy = true;
+  const t0 = Date.now(), show = () => { $("win-busy").innerHTML = `<span class="spin"></span>Recording minutes ${m}–${m + 5} of this run (usually 30–60 s) · <b id="win-el">${clock((Date.now() - t0) / 1000)}</b>`; };
+  $("win-busy").hidden = false; show();
+  const timer = setInterval(show, 1000);
+  $("win").disabled = true;
+  let err = "";
+  try {
+    const x = await post("/corridor/runs", { interventions: r.interventions || [], volume_scale: volOf(r), frames_from_min: m, frames_minutes: 5, ...(runHour(r) != null ? { day: runDay(r) || "july", hour: runHour(r) } : {}) });
+    const xw = fwin(x);
+    if (!xw || Math.round(xw.from_s / 60) !== m) throw new Error("this API does not record another window yet");
+    x._ivs = r._ivs; winCache[key] = x;
+    if (playingRun === r) play(x);
+  } catch (e) { err = `Could not record minutes ${m}–${m + 5}: ${e.status ? `HTTP ${e.status} ` : ""}${e.detail || e.message}`; winPick = null; }
+  finally {
+    winBusy = false; clearInterval(timer); $("win-busy").hidden = true; $("win").disabled = false;
+    renderWindow();
+    if (err) $("win-note").innerHTML = `<span class="bad">${esc(err.slice(0, 220))}</span>`;
+  }
+}
+function watchRun(r) {   // Watch today / with changes: keep the minute picked with the slider
+  const w = fwin(r);
+  if (winPick == null || !w || Math.round(w.from_s / 60) === winPick) return play(r);
+  const hit = winCache[`${runKey(r)}|${winPick}`];
+  if (hit) return play(hit);
+  const m = winPick; play(r); watchFrom(m);
+}
+function fillHours() {   // 06:00-07:00 .. 22:00-23:00
+  $("hour").innerHTML = `<option value="">All day</option>` + Array.from({ length: 17 }, (_, i) => i + 6).map(h => `<option value="${h}">${hourSpan(h)}</option>`).join("");
+  setHourOk(hourOk);
+}
+function setHourOk(ok) {   // usable once the API simulates hours, or once GET /corridor has hourly TomTom periods (then the measured row only)
+  hourOk = ok;
+  const hourly = Object.keys(tomtom).some(isHourly), on = !!ok || hourly;
+  $("hour").disabled = !on;
+  if (!on && pickHour != null) { pickHour = null; $("hour").value = ""; }
+  $("hour-box").title = ok ? "The hour sets the measured (TomTom) row and the simulation" : on ? "The hour sets the measured (TomTom) row; the simulation is still the typical July day" : "hourly TomTom data arriving tonight";
+  $("hour-note").textContent = on ? "" : "Hour: hourly TomTom data arriving tonight.";
+  updateWhenNote();
+}
+async function probeHour() {   // does the API take `hour` yet? Tried once (the answer is kept for 30 minutes in this browser)
+  const KEY = `cr.hour.${API}`;
+  try { const c = JSON.parse(localStorage.getItem(KEY) || "null"); if (c && Date.now() - c.at < 30 * 60000) return setHourOk(!!c.ok); } catch (e) { /* no storage */ }
+  let ok = null;
+  try { const r = await post("/corridor/runs", { interventions: [], volume_scale: 1.0, day: "july", hour: 8 }); ok = runHour(r) === 8; }   // an API that ignores `hour` answers without it
+  catch (e) { if (e.status && e.status < 500 && ![404, 405].includes(e.status)) ok = false; }   // 422 "hourly data not available yet"
+  if (ok === null) return;   // API down or no corridor runs: ask again next time
+  try { localStorage.setItem(KEY, JSON.stringify({ ok, at: Date.now() })); } catch (e) { /* no storage */ }
+  setHourOk(ok);
 }
 
 function render() {
   if (!overlay) return;
-  const layers = [], near = map.getZoom() >= 14, night = $("t-night").checked;
+  const layers = [], near = map.getZoom() >= 14, night = $("t-night").checked, sim = mode === "july";
   if (buildings && $("t-buildings").checked && near) layers.push(new deck.PolygonLayer({
     id: "buildings", data: bldData(), extruded: true, wireframe: false, opacity: 0.6,
     getPolygon: d => d.polygon, getElevation: d => d.h, getFillColor: night ? [70, 82, 100] : [214, 208, 196], material: { ambient: 0.5, diffuse: 0.6 },
     updateTriggers: { getFillColor: night },
   }));
-  if ($("t-route").checked) layers.push(new deck.PathLayer({
-    id: "route", data: routeLegs(), widthUnits: "pixels", getWidth: 7, capRounded: true, jointRounded: true, opacity: near ? (legPaths ? 0.55 : 0.35) : 0.85,   // fainter up close, where the model roads and vehicles show
-    getPath: d => d.path, getColor: d => [...speedRGB(d.kmh), 220], updateTriggers: { getColor: [base, changed, $("when").value] },
+  if ($("t-route").checked) layers.push(new deck.PathLayer({   // Live now: just where our route runs (TomTom's live layer shows the speeds)
+    id: "route", data: routeLegs(), widthUnits: "pixels", getWidth: sim ? 7 : 3, capRounded: true, jointRounded: true, opacity: sim ? (near ? (legPaths ? 0.55 : 0.35) : 0.85) : 0.6,
+    getPath: d => d.path, getColor: d => sim ? [...speedRGB(d.kmh), 220] : [22, 32, 42, 170], updateTriggers: { getColor: [base, changed, $("when").value, pickHour, mode] },
   }));
+  if (!sim) {   // Live now: the measured queues on the road, nothing simulated
+    const q = $("t-queues").checked ? queueLines() : [];
+    if (q.length) {
+      layers.push(new deck.PathLayer({ id: "live-queues-casing", data: q, widthUnits: "pixels", getWidth: 11, capRounded: true, jointRounded: true, getPath: d => d.path, getColor: [255, 255, 255, 235] }));
+      layers.push(new deck.PathLayer({
+        id: "live-queues", data: q, widthUnits: "pixels", getWidth: 6, capRounded: true, jointRounded: true, getPath: d => d.path, getColor: [176, 0, 32, 250], pickable: true,
+        onHover: ({ object: o }) => { $("queue-info").innerHTML = o ? `Queue now: <b>${fmtQ(o.queue_m)}</b>${o.beyond ? " (longer than the road drawn)" : ""} on ${esc(o.name)} into ${esc(short(point(o.jid)?.name))}, ` +
+          `${Math.round(o.delay_s)} s delay${o.usual_delay_s != null ? ` (usual ${Math.round(o.usual_delay_s)} s)` : ""} <span class="tag real">REAL</span>` : ""; },
+      }));
+    }
+    overlay.setProps({ layers, effects: lighting(night) });
+    return;
+  }
   if (roads && $("t-roads").checked) layers.push(new deck.PathLayer({
     id: "roads", data: roads.filter(f => !f.properties?.structure), widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
     getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], c[2] != null ? c[2] : f.properties.flyover ? DECK_Z : 0.3]),
@@ -1191,24 +1690,47 @@ function render() {
       diskResolution: 8, radius: 1.1, extruded: true, getPosition: q => [q[0], q[1], 0], getElevation: q => q[2] - 0.4, getFillColor: [140, 138, 132],
     }));
   }
-  if ($("t-vehicles").checked && frames.length) {
+  const fc = focusCar(), hl = ride ? null : following;
+  if ($("t-vehicles").checked && frames.length && (!ride || ride.inWin)) {   // a ride outside the recorded minutes: the test car alone
+    const keepRide = ride ? v => v.id !== ride.probe.id : null, inv = near ? inView() : null;
+    const keep = keepRide && inv ? v => keepRide(v) && inv(v) : keepRide || inv;
     if (near) layers.push(new deck.PolygonLayer({
-      id: "vehicles", data: currentVehicles(inView()), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
-      getFillColor: v => COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
-      updateTriggers: { getPolygon: pos }, pickable: true,
-      onHover: ({ object }) => { $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h` : ""; },
+      id: "vehicles", data: currentVehicles(keep), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
+      getFillColor: v => v.id === hl ? FOLLOW_RGB : COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
+      updateTriggers: { getPolygon: pos, getFillColor: hl }, pickable: true,
+      onHover: ({ object }) => { if (!following && !ride) $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h · click to follow it` : ""; },
+      onClick: ({ object }) => { if (object) startFollow(object.id); },
     }));
     else layers.push(new deck.ScatterplotLayer({   // whole-corridor view: a dot per vehicle, too small for boxes
-      id: "vehicle-dots", data: currentVehicles(), radiusUnits: "pixels", getRadius: 2, getPosition: v => [v.lon, v.lat, v.z || 0],
-      getFillColor: v => [...(COLORS[v.type] || [0, 0, 0]), 220], updateTriggers: { getPosition: pos },
+      id: "vehicle-dots", data: currentVehicles(keep), radiusUnits: "pixels", getRadius: v => v.id === hl ? 6 : 2, getPosition: v => [v.lon, v.lat, v.z || 0],
+      getFillColor: v => v.id === hl ? [...FOLLOW_RGB, 255] : [...(COLORS[v.type] || [0, 0, 0]), 220], updateTriggers: { getPosition: pos, getRadius: hl, getFillColor: hl },
+      pickable: true, onClick: ({ object }) => { if (object) startFollow(object.id); },
     }));
   }
-  overlay.setProps({ layers, effects: [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: night ? 0.7 : 1.1 }),
-    sun: new deck.DirectionalLight({ color: night ? [160, 180, 230] : [255, 250, 240], intensity: night ? 0.9 : 1.6, direction: [-1, -2, -3] }) })] });
+  if (fc) {   // the followed car: a short trail, a halo, and (riding) the car itself
+    layers.push(new deck.PathLayer({ id: "follow-trail", data: [{ path: fc.trail }], widthUnits: "pixels", getWidth: 4, capRounded: true, jointRounded: true,
+      getPath: d => d.path, getColor: [...FOLLOW_RGB, 200], updateTriggers: { getPath: [pos, ride && ride.t] } }));
+    layers.push(new deck.ScatterplotLayer({ id: "follow-halo", data: [fc.v], radiusUnits: "meters", getRadius: 7, radiusMinPixels: 9, stroked: true, filled: true,
+      getFillColor: [...FOLLOW_RGB, 60], getLineColor: [...FOLLOW_RGB, 255], lineWidthUnits: "pixels", getLineWidth: 2, getPosition: v => [v.lon, v.lat, (v.z || 0) + 0.2],
+      updateTriggers: { getPosition: [pos, ride && ride.t] } }));
+    if (ride) layers.push(new deck.PolygonLayer({ id: "ride-car", data: [fc.v], extruded: true, getPolygon: box, getElevation: SIZE.car[2], getFillColor: FOLLOW_RGB,
+      material: { ambient: 0.5, diffuse: 0.7 }, updateTriggers: { getPolygon: ride.t } }));
+  }
+  overlay.setProps({ layers, effects: lighting(night) });
+}
+function lighting(night) {
+  return [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: night ? 0.7 : 1.1 }),
+    sun: new deck.DirectionalLight({ color: night ? [160, 180, 230] : [255, 250, 240], intensity: night ? 0.9 : 1.6, direction: [-1, -2, -3] }) })];
 }
 function frameStep() { return frames.length > 1 ? Math.max(0.1, frames[1].t - frames[0].t) : 1; }
 function tick(ts) {
-  if (playing && frames.length) {
+  if (ride && mode === "july") {
+    const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
+    ride.t += Math.min(dt, 0.25) * Number($("ride-speed").value);
+    const end = ride.probe.arrive_s ?? ride.probe.points[ride.probe.points.length - 1].t;
+    if (ride.t >= end) { ride.t = end; rideTick(); stopRide(true); }
+    else { rideTick(); render(); }
+  } else if (playing && frames.length && mode === "july") {
     const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
     pos += dt * Number($("speed").value) / frameStep();   // 1× = real time, whatever the frame interval (real runs: ~2 s)
     if (pos >= frames.length - 1) { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; }
@@ -1220,25 +1742,27 @@ function tick(ts) {
   if (orbiting) { const now = performance.now(); if (lastOrbit) map.setBearing(map.getBearing() + (now - lastOrbit) / 1000 * 6); lastOrbit = now; } else lastOrbit = 0;   // 6 degrees a second
   requestAnimationFrame(tick);
 }
-function showClock() {
+function showClock() {   // minutes since the simulation started (no clock time: the run is a typical July day, not a particular hour)
+  if (ride) return;
   const f = frames[Math.floor(pos)]; if (!f) return;
-  const m = (clockBase + Math.floor(f.t / 60)) % 1440;
-  $("clock").textContent = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")} simulated · ${f.vehicles.length} vehicles`;
+  $("clock").textContent = `${simDay(playingRun)} · minute ${Math.floor((f.t + tOffset) / 60)} of the simulated period · ${f.vehicles.length} vehicles`;
 }
 function renderWatch() {
-  $("watch").innerHTML = (base ? `<button class="ghost" id="watch-base">Watch today</button>` : "") + (changed ? `<button class="ghost" id="watch-changed">Watch with changes</button>` : "");
-  if (base) $("watch-base").onclick = () => play(base);
-  if (changed) $("watch-changed").onclick = () => play(changed);
+  $("watch").innerHTML = (base ? `<button class="ghost" id="watch-base">Watch roads as they are</button>` : "") + (changed ? `<button class="ghost" id="watch-changed">Watch with changes</button>` : "");
+  if (base) $("watch-base").onclick = () => watchRun(base);
+  if (changed) $("watch-changed").onclick = () => watchRun(changed);
 }
 async function play(r) {
   playingRun = r;
-  const w = r.time && r.time.window; clockBase = w && w.length >= 16 ? Number(w.slice(11, 13)) * 60 + Number(w.slice(14, 16)) : 8 * 60;
+  stopRide(); probeList = null; $("ride-row").hidden = true; $("ride-note").hidden = true; tOffset = 0;
   frames = []; nextCache = { i: -1, map: null }; setFollow(false); $("follow").disabled = true; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("scrub").max = 0; $("clock").textContent = "—";
+  fillPicker(); renderWindow();
   if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
   if (r.sample && !r.frames_path) { render(); $("playinfo").textContent = "No vehicle playback for sample data: it comes with the real corridor simulation."; return; }
   if (r.roads_path !== null) { try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; } }
   if (playingRun !== r) return;
   render();
+  loadProbes(r);
   $("playinfo").textContent = "Loading vehicle positions…";
   let flown = false;
   await new Promise(resolve => {
@@ -1246,21 +1770,25 @@ async function play(r) {
     ws.onmessage = e => {
       if (stream !== ws) return;
       const fr = JSON.parse(e.data); frames.push(fr);
+      if (frames.length === 1) {   // frames count from the simulation start, or (some APIs) from the recorded window's start
+        const w = fwin(r); tOffset = w && fr.t < w.from_s - 2 * (w.step_s || 4) ? w.from_s - fr.t : 0;
+        $("scrub").disabled = false; $("play").disabled = false; showClock();
+      }
       if ($("follow").disabled && fr.vehicles.some(v => String(v.id).startsWith("probe_fwd"))) { $("follow").disabled = false; $("follow").title = "The camera rides along with one of the model's test cars"; }
-      if (frames.length === 1) { $("scrub").disabled = false; $("play").disabled = false; }
       $("scrub").max = frames.length - 1;
       if (frames.length % 50 === 0) $("playinfo").textContent = `${frames.length} frames loaded…`;
     };
     ws.onclose = resolve; ws.onerror = resolve;
     setTimeout(() => {
-      if (stream !== ws || !frames.length) return;
+      if (stream !== ws || !frames.length || mode !== "july" || ride) return;
       playing = true; $("play").textContent = "❚❚ Pause";
-      if (!flown && map.getZoom() < 14) { flown = true; flyToPoint(focusJunction(r)); }   // vehicles are too small to see from the corridor overview
+      if (!flown && map.getZoom() < 14 && !following) { flown = true; flyToPoint(focusJunction(r)); }   // vehicles are too small to see from the corridor overview
     }, 1500);
   });
   if (playingRun !== r) return;
-  if (!following) $("playinfo").textContent = frames.length ? `${frames.length} frames · ${r.variant_id}` : "No vehicle positions for this run.";
+  if (!following && !ride) $("playinfo").textContent = frames.length ? `${frames.length} frames · ${r.variant_id}` : "No vehicle positions for this run.";
   $("follow").disabled = !anyProbe(); $("follow").title = anyProbe() ? "The camera rides along with one of the model's test cars" : "No test cars in this run";
+  fillPicker();
 }
 function focusJunction(r) {   // first changed junction, else the one with the longest queue
   if (r.interventions && r.interventions.length) return r.interventions[0].junction_id;
@@ -1275,8 +1803,10 @@ $("t-buildings").onchange = () => { buildingsInView(); render(); };
 $("t-night").onchange = e => { if (cfg.tomtom_maps_key) map.setStyle(STYLE(e.target.checked), { diff: false }); render(); };
 $("orbit").onclick = () => setOrbit(!orbiting);
 $("follow").onclick = () => setFollow(!following);
-$("t-traffic").onchange = e => map.getLayer("tomtom-traffic") && map.setLayoutProperty("tomtom-traffic", "visibility", e.target.checked ? "visible" : "none");
-$("overview").onclick = () => { setFollow(false); setOrbit(false); selected = null; updateMarkers(); if (popup) popup.remove(); overview(true); };
+$("ride-speed").onchange = () => { if (ride) rideTick(); };
+$("t-traffic").onchange = () => { trafficTouched = true; trafficLayer(); };
+$("t-queues").onchange = render;
+$("overview").onclick = () => { stopRide(); setFollow(false); setOrbit(false); selected = null; updateMarkers(); if (popup) popup.remove(); overview(true); };
 init();
 </script>
 <script src="md.js"></script>
