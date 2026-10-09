@@ -1,50 +1,50 @@
 {
  "target": "TomTom Traffic Stats job 10051304: Lingampally -> Lakdikapul, July 2026 every day 06:00-23:00",
  "cap_kmh": [
-  21.7,
-  30.9,
-  24.8,
-  35.2,
-  31.1,
-  37.1,
-  40.4,
-  22.7,
-  55.7,
-  21.9,
+  18.6,
+  25.7,
+  21.5,
+  33.9,
+  30.0,
+  32.8,
   36.6,
-  24.4
+  24.4,
+  38.5,
+  19.7,
+  28.5,
+  22.7
  ],
  "green_share": {
-  "j02": 0.5,
-  "j08": 0.7,
-  "j09": 0.55
+  "j02": 0.8,
+  "j08": 0.75,
+  "j09": 0.65
  },
  "through_vph": {
-  "fwd": 1500,
-  "rev": 1500
+  "fwd": 1215,
+  "rev": 1215
  },
- "cross_scale": 0.5,
+ "cross_scale": 0.405,
  "tomtom": {
-  "span": "2026-10-09T16:54 .. 2026-10-09T20:30",
+  "span": "2026-10-09T16:54 .. 2026-10-09T23:53",
   "cross": {
    "472147467": {
     "jid": "j02",
-    "vph": 2922,
+    "vph": 2762,
     "split": {
      "fwd": 0.0,
-     "rev": 0.357,
-     "cross": 0.643
+     "rev": 0.312,
+     "cross": 0.688
     },
     "road": "ISB Road East Bound",
     "split_source": "estimated (TomTom turn ratios)"
    },
    "309189799": {
     "jid": "j08",
-    "vph": 1671,
+    "vph": 1574,
     "split": {
-     "fwd": 0.462,
-     "rev": 0.477,
-     "cross": 0.061
+     "fwd": 0.597,
+     "rev": 0.347,
+     "cross": 0.057
     },
     "road": "NH163 North Bound",
     "split_source": "estimated (TomTom turn ratios)"
@@ -54,206 +54,1178 @@
    "j02": {
     "rev": {
      "edge": "313363619#2",
-     "vph": 4761,
+     "vph": 4112,
      "road": "Gachibowli Road West Bound",
-     "delay_s": 13.3
+     "delay_s": 9.4
     },
     "fwd": {
      "edge": "157046148#1",
-     "vph": 3494,
+     "vph": 3152,
      "road": "Professor C R Rao Road East Bound",
-     "delay_s": 23.3
+     "delay_s": 20.1
     }
    },
    "j04": {
     "rev": {
      "edge": "313364728#0",
-     "vph": 2612,
+     "vph": 2370,
      "road": "Gachibowli Road North Bound",
      "delay_s": 2.9
     },
     "fwd": {
      "edge": "313363624",
-     "vph": 5698,
+     "vph": 5354,
      "road": "Gachibowli Road East Bound",
-     "delay_s": 11.2
+     "delay_s": 7.6
     }
    },
    "j06": {
     "rev": {
      "edge": "1311972348",
-     "vph": 3490,
+     "vph": 2637,
      "road": "Mumbai Road North Bound",
-     "delay_s": 4.1
+     "delay_s": 3.2
     },
     "fwd": {
      "edge": "1311233183",
-     "vph": 3232,
+     "vph": 2699,
      "road": "Mumbai Road East Bound",
-     "delay_s": 40.9
+     "delay_s": 27.6
     }
    },
    "j07": {
     "rev": {
      "edge": "728941829#1",
-     "vph": 4419,
+     "vph": 3714,
      "road": "Mumbai Road West Bound",
-     "delay_s": 6.1
+     "delay_s": 5.9
     }
    },
    "j08": {
     "rev": {
      "edge": "315417462#5",
-     "vph": 3081,
+     "vph": 3108,
      "road": "Mehdipatnam Road West Bound",
-     "delay_s": 60.3
+     "delay_s": 40.7
     },
     "fwd": {
      "edge": "28131038#0",
-     "vph": 5090,
+     "vph": 4770,
      "road": "Mumbai Road East Bound",
-     "delay_s": 36.6
+     "delay_s": 26.6
     }
    },
    "j09": {
     "rev": {
      "edge": "315417462#7",
-     "vph": 3495,
+     "vph": 3574,
      "road": "Mehdipatnam Road West Bound",
-     "delay_s": 51.6
+     "delay_s": 30.9
     },
     "fwd": {
      "edge": "562832903#0",
-     "vph": 4238,
+     "vph": 4063,
      "road": "Mumbai Road East Bound",
-     "delay_s": 114.3
+     "delay_s": 78.4
     }
    },
    "j10": {
     "rev": {
      "edge": "393419597",
-     "vph": 1554,
+     "vph": 1570,
      "road": "SH4 West Bound",
-     "delay_s": 96.5
+     "delay_s": 55.7
     },
     "fwd": {
      "edge": "313512532#2",
-     "vph": 3989,
+     "vph": 4023,
      "road": "Mehdipatnam Road East Bound",
-     "delay_s": 41.8
+     "delay_s": 30.1
     }
    }
   },
-  "note": "TomTom Junction Analytics means used by every run (frozen at calibration; refreshed by calibrate())"
+  "arms": {
+   "j01": {
+    "nodes": [
+     "10600434125",
+     "10600434129",
+     "cluster_353678163_3817562675_3817562677_3817562686"
+    ],
+    "tomtom": "not at this junction",
+    "arms": [
+     {
+      "edge": "378337288",
+      "road": "Nallagandla Road",
+      "lanes": 2,
+      "vph": null,
+      "label": "none (corridor traffic as it arrives)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": "fwd",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "378337331",
+      "road": "Old Bombay Road",
+      "lanes": 2,
+      "vph": null,
+      "label": "none (corridor traffic as it arrives)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": "rev",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "472153852",
+      "road": "Old Bombay Road",
+      "lanes": 2,
+      "vph": 400,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     }
+    ]
+   },
+   "j02": {
+    "nodes": [
+     "1692848819",
+     "4663630996",
+     "cluster_11521112899_1707132513_701228111_7122854144"
+    ],
+    "tomtom": "used",
+    "arms": [
+     {
+      "edge": "157046148#1",
+      "road": "Old Bombay Road",
+      "lanes": 2,
+      "vph": 3152,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.055,
+       "S": 0.0,
+       "R": 0.945,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 2323 probes)",
+      "probes": 2323.4,
+      "corridor": "fwd",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Professor C R Rao Road East Bound"
+      ]
+     },
+     {
+      "edge": "211221856#1",
+      "road": "ISB Road",
+      "lanes": 3,
+      "vph": 450,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "472147467",
+      "road": "ISB Road East Bound",
+      "lanes": 1,
+      "vph": 2762,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.999,
+       "S": 0.001,
+       "R": 0.0,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 4117 probes)",
+      "probes": 4117.3,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "ISB Road East Bound"
+      ]
+     },
+     {
+      "edge": "472147469#2",
+      "road": "Old Bombay Road",
+      "lanes": 3,
+      "vph": 4112,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.174,
+       "S": 0.826,
+       "R": 0.0,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 14421 probes)",
+      "probes": 14420.6,
+      "corridor": "rev",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       " West Bound",
+       "Gachibowli Road West Bound"
+      ]
+     }
+    ]
+   },
+   "j03": {
+    "nodes": [
+     "11801247549",
+     "11801247555",
+     "11810966985",
+     "12618756887",
+     "12618756896",
+     "1304459647",
+     "1699091329",
+     "1966832111",
+     "2210758000",
+     "2233905575",
+     "308971487",
+     "701228141",
+     "7732971056",
+     "9513770678"
+    ],
+    "tomtom": "used",
+    "arms": [
+     {
+      "edge": "1190308702",
+      "road": "Gachibowli - Miyapur Highway",
+      "lanes": 3,
+      "vph": 2467,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.0,
+       "S": 0.0,
+       "R": 0.998,
+       "U": 0.002
+      },
+      "turn_source": "estimated (TomTom turn ratios, 155 probes)",
+      "probes": 154.7,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Gachibowli Miyapur Road South Bound"
+      ]
+     },
+     {
+      "edge": "1250765019#0",
+      "road": "Gachibowli - Miyapur Highway",
+      "lanes": 2,
+      "vph": 400,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "1250844117#0",
+      "road": "Outer Ring Road",
+      "lanes": 5,
+      "vph": 1489,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.998,
+       "S": 0.0,
+       "R": 0.0,
+       "U": 0.002
+      },
+      "turn_source": "estimated (TomTom turn ratios, 3587 probes)",
+      "probes": 3587.4,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Jawaharlal Nehru Outer Ring Road North Bound"
+      ]
+     },
+     {
+      "edge": "1271881319",
+      "road": "",
+      "lanes": 1,
+      "vph": 200,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "1544022149",
+      "road": "Old Bombay Road",
+      "lanes": 2,
+      "vph": 2191,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.748,
+       "S": 0.0,
+       "R": 0.136,
+       "U": 0.116
+      },
+      "turn_source": "estimated (TomTom turn ratios, 4616 probes)",
+      "probes": 4615.7,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Gachibowli Road East Bound"
+      ]
+     },
+     {
+      "edge": "213741922",
+      "road": "",
+      "lanes": 1,
+      "vph": 200,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "378333808#0",
+      "road": "Old Bombay Highway",
+      "lanes": 4,
+      "vph": 2828,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.017,
+       "S": 0.16,
+       "R": 0.824,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 12799 probes)",
+      "probes": 12798.7,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Gachibowli Road West Bound"
+      ]
+     }
+    ]
+   },
+   "j04": {
+    "nodes": [
+     "12257750667",
+     "2280730558",
+     "317159646",
+     "3219757364",
+     "9684884111"
+    ],
+    "tomtom": "used",
+    "arms": [
+     {
+      "edge": "1032456292#0",
+      "road": "Hi Tech City Main Road",
+      "lanes": 3,
+      "vph": 450,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "28847506#2",
+      "road": "Gachibowli Road East Bound",
+      "lanes": 2,
+      "vph": 5354,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.082,
+       "S": 0.915,
+       "R": 0.0,
+       "U": 0.003
+      },
+      "turn_source": "estimated (TomTom turn ratios, 27226 probes)",
+      "probes": 27225.9,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": "313363624",
+      "approaches": [
+       "Gachibowli Road East Bound"
+      ]
+     },
+     {
+      "edge": "313209564#2",
+      "road": "Hi Tech City Main Road",
+      "lanes": 3,
+      "vph": 4160,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.603,
+       "S": 0.0,
+       "R": 0.397,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 11777 probes)",
+      "probes": 11776.8,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Hitech City Main Road South Bound"
+      ]
+     },
+     {
+      "edge": "313364728#0",
+      "road": "Old Bombay Highway",
+      "lanes": 3,
+      "vph": 2370,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.0,
+       "S": 0.903,
+       "R": 0.032,
+       "U": 0.065
+      },
+      "turn_source": "estimated (TomTom turn ratios, 10110 probes)",
+      "probes": 10110.5,
+      "corridor": "rev",
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Gachibowli Road North Bound"
+      ]
+     }
+    ]
+   },
+   "j05": {
+    "nodes": [
+     "cluster_12323904989_12336657974_2177264514_308971465"
+    ],
+    "tomtom": "not at this junction",
+    "arms": [
+     {
+      "edge": "313364730#2",
+      "road": "Old Bombay Road",
+      "lanes": 3,
+      "vph": null,
+      "label": "none (corridor traffic as it arrives)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": "fwd",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "313364732#1",
+      "road": "Old Bombay Highway",
+      "lanes": 3,
+      "vph": null,
+      "label": "none (corridor traffic as it arrives)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": "rev",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "861160016",
+      "road": "Khajaguda Nanakramguda road",
+      "lanes": 2,
+      "vph": 400,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     }
+    ]
+   },
+   "j06": {
+    "nodes": [
+     "2177264397",
+     "cluster_308971452_3220003333_3224407314_4659011192"
+    ],
+    "tomtom": "not at this junction",
+    "arms": [
+     {
+      "edge": "313364729#2",
+      "road": "Old Bombay Road",
+      "lanes": 3,
+      "vph": 450,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "313366033",
+      "road": "Old Bombay Highway",
+      "lanes": 3,
+      "vph": 450,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "471759399#0",
+      "road": "Narne Road",
+      "lanes": 2,
+      "vph": 400,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     }
+    ]
+   },
+   "j07": {
+    "nodes": [
+     "10279838203",
+     "10279838204",
+     "11036649274",
+     "11201628975",
+     "11250127971",
+     "6829353259",
+     "6829353262",
+     "6829353270",
+     "7694429906",
+     "9860640795"
+    ],
+    "tomtom": "used",
+    "arms": [
+     {
+      "edge": "-1124108400",
+      "road": "Mumbai Road North Bound",
+      "lanes": 2,
+      "vph": 243,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.329,
+       "S": 0.338,
+       "R": 0.267,
+       "U": 0.066
+      },
+      "turn_source": "estimated (TomTom turn ratios, 1300 probes)",
+      "probes": 1299.9,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Moti Darwaja Road North Bound",
+       "Mumbai Road North Bound"
+      ]
+     },
+     {
+      "edge": "-1152308056",
+      "road": "Abdul Waheed Khan Marg",
+      "lanes": 2,
+      "vph": 411,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": [
+       " East Bound"
+      ]
+     },
+     {
+      "edge": "1208987932#0",
+      "road": "Hakimpet Road South Bound",
+      "lanes": 2,
+      "vph": 742,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.817,
+       "S": 0.0,
+       "R": 0.18,
+       "U": 0.003
+      },
+      "turn_source": "estimated (TomTom turn ratios, 3425 probes)",
+      "probes": 3425.3,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Hakimpet Road South Bound",
+       "Nizam Colony Road South Bound"
+      ]
+     },
+     {
+      "edge": "693067124#1",
+      "road": "Tolichowki Road",
+      "lanes": 2,
+      "vph": 3714,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.013,
+       "S": 0.969,
+       "R": 0.017,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 33625 probes)",
+      "probes": 33625.2,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": "728941829#1",
+      "approaches": [
+       "Mumbai Road West Bound"
+      ]
+     },
+     {
+      "edge": "728941839#0",
+      "road": "Tolichowki Road",
+      "lanes": 2,
+      "vph": 874,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.006,
+       "S": 0.966,
+       "R": 0.027,
+       "U": 0.001
+      },
+      "turn_source": "estimated (TomTom turn ratios, 47385 probes)",
+      "probes": 47385.3,
+      "corridor": null,
+      "signal": false,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Mumbai Road East Bound"
+      ]
+     }
+    ]
+   },
+   "j08": {
+    "nodes": [
+     "1314246678",
+     "1314246679",
+     "1314246684",
+     "307096052",
+     "308528051",
+     "308528054"
+    ],
+    "tomtom": "used",
+    "arms": [
+     {
+      "edge": "28131038#1",
+      "road": "Old Bombay Highway",
+      "lanes": 2,
+      "vph": 4770,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.0,
+       "S": 0.887,
+       "R": 0.113,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 22288 probes)",
+      "probes": 22288.3,
+      "corridor": "fwd",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Mumbai Road East Bound"
+      ]
+     },
+     {
+      "edge": "309189799",
+      "road": "NH163 North Bound",
+      "lanes": 2,
+      "vph": 1574,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.367,
+       "S": 0.0,
+       "R": 0.632,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 7094 probes)",
+      "probes": 7094.5,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "NH163 North Bound"
+      ]
+     },
+     {
+      "edge": "314536791",
+      "road": "Golkonda Road",
+      "lanes": 3,
+      "vph": null,
+      "label": "none (corridor traffic as it arrives)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": "rev",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     }
+    ]
+   },
+   "j09": {
+    "nodes": [
+     "cluster_13922425883_307096050_308528067_3966164034"
+    ],
+    "tomtom": "used",
+    "arms": [
+     {
+      "edge": "1109179959#0",
+      "road": "Inner Ring Road",
+      "lanes": 2,
+      "vph": 400,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "207472304#0",
+      "road": "Inner Ring Road",
+      "lanes": 2,
+      "vph": 119,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       " North Bound"
+      ]
+     },
+     {
+      "edge": "314222571",
+      "road": "Golkonda Road",
+      "lanes": 3,
+      "vph": null,
+      "label": "none (corridor traffic as it arrives)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": "fwd",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "393419596",
+      "road": "Golkonda Road",
+      "lanes": 3,
+      "vph": 3574,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.508,
+       "S": 0.492,
+       "R": 0.0,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 14829 probes)",
+      "probes": 14828.8,
+      "corridor": "rev",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Mehdipatnam Road West Bound"
+      ]
+     }
+    ]
+   },
+   "j10": {
+    "nodes": [
+     "2177264468",
+     "2177264481"
+    ],
+    "tomtom": "used",
+    "arms": [
+     {
+      "edge": "28197087#1",
+      "road": "Masab Tank Road",
+      "lanes": 3,
+      "vph": 450,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "313512532#2",
+      "road": "Golkonda Road",
+      "lanes": 3,
+      "vph": 4023,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 1.0,
+       "S": 0.0,
+       "R": 0.0,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 37345 probes)",
+      "probes": 37345.2,
+      "corridor": "fwd",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "Mehdipatnam Road East Bound"
+      ]
+     },
+     {
+      "edge": "393419597",
+      "road": "Masab Tank Flyover",
+      "lanes": 3,
+      "vph": 1570,
+      "label": "estimated (TomTom Junction Analytics)",
+      "turns": {
+       "L": 0.01,
+       "S": 0.0,
+       "R": 0.99,
+       "U": 0.0
+      },
+      "turn_source": "estimated (TomTom turn ratios, 44530 probes)",
+      "probes": 44530.3,
+      "corridor": "rev",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": [
+       "NMDC Masab Tank Road South Bound",
+       "SH4 West Bound"
+      ]
+     }
+    ]
+   },
+   "j11": {
+    "nodes": [
+     "2177311055",
+     "2177311107"
+    ],
+    "tomtom": "none",
+    "arms": [
+     {
+      "edge": "1096488864",
+      "road": "Mahavir Marg",
+      "lanes": 3,
+      "vph": null,
+      "label": "none (corridor traffic as it arrives)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": "rev",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "1311455363",
+      "road": "Masab Tank Flyover",
+      "lanes": 3,
+      "vph": null,
+      "label": "none (corridor traffic as it arrives)",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": "fwd",
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     },
+     {
+      "edge": "309194767#1",
+      "road": "Masab Tank Road",
+      "lanes": 3,
+      "vph": 450,
+      "label": "assumed",
+      "turns": {
+       "L": 0.3,
+       "S": 0.55,
+       "R": 0.15,
+       "U": 0.0
+      },
+      "turn_source": "assumed",
+      "probes": 0,
+      "corridor": null,
+      "signal": true,
+      "fed_by_corridor": null,
+      "approaches": []
+     }
+    ]
+   }
+  },
+  "note": "TomTom Junction Analytics means (minutes within 06-23 h) used by every run: corridor approaches (volume check, delay targets) and every arm of every junction (junction_arms: volumes and turn shares); frozen at calibration, refreshed by calibrate()"
  },
  "knobs": {
   "cap_kmh": "calibrated: speed cap per leg (A->j01 ... j11->B) standing in for side friction (bus stops, parking, pedestrians, autos), both directions",
-  "green_share": "calibrated: corridor share of the green time at junctions where the leg was still too slow at 60 km/h; elsewhere 0.6 (assumed)",
+  "green_share": "calibrated: corridor share of the green time at junctions where the leg was still too slow at 60 km/h; elsewhere 0.65 (assumed)",
   "through_vph": "calibrated: end-to-end corridor traffic per direction; starts at THROUGH_VPH (assumed) and is lowered 10% at a time while a leg stays too slow with the corridor's green at its limit",
   "cross_scale": "calibrated as through_vph: share of TomTom Junction Analytics' evening cross-road volumes used for the all-day average"
  },
  "result": {
-  "sim_total_s": 3326,
+  "sim_total_s": 3396,
   "tomtom_total_s": 3373,
   "legs": [
    {
     "leg": "A_lingampally->j01",
-    "sim_s": 437,
+    "sim_s": 436,
     "tomtom_s": 437,
-    "ratio": 1.0
+    "ratio": 0.998
    },
    {
     "leg": "j01->j02",
-    "sim_s": 779,
+    "sim_s": 800,
     "tomtom_s": 801,
-    "ratio": 0.973
+    "ratio": 0.999
    },
    {
     "leg": "j02->j03",
-    "sim_s": 236,
+    "sim_s": 232,
     "tomtom_s": 232,
-    "ratio": 1.017
+    "ratio": 1.0
    },
    {
     "leg": "j03->j04",
-    "sim_s": 181,
+    "sim_s": 175,
     "tomtom_s": 175,
-    "ratio": 1.034
+    "ratio": 1.0
    },
    {
     "leg": "j04->j05",
-    "sim_s": 133,
+    "sim_s": 137,
     "tomtom_s": 138,
-    "ratio": 0.964
+    "ratio": 0.993
    },
    {
     "leg": "j05->j06",
-    "sim_s": 163,
+    "sim_s": 172,
     "tomtom_s": 172,
-    "ratio": 0.948
+    "ratio": 1.0
    },
    {
     "leg": "j06->j07",
-    "sim_s": 272,
+    "sim_s": 281,
     "tomtom_s": 280,
-    "ratio": 0.971
+    "ratio": 1.004
    },
    {
     "leg": "j07->j08",
-    "sim_s": 224,
+    "sim_s": 247,
     "tomtom_s": 232,
-    "ratio": 0.966
+    "ratio": 1.065
    },
    {
     "leg": "j08->j09",
-    "sim_s": 56,
+    "sim_s": 61,
     "tomtom_s": 58,
-    "ratio": 0.966
+    "ratio": 1.052
    },
    {
     "leg": "j09->j10",
-    "sim_s": 453,
+    "sim_s": 445,
     "tomtom_s": 441,
-    "ratio": 1.027
+    "ratio": 1.009
    },
    {
     "leg": "j10->j11",
-    "sim_s": 134,
+    "sim_s": 140,
     "tomtom_s": 140,
-    "ratio": 0.957
+    "ratio": 1.0
    },
    {
     "leg": "j11->B_lakdikapul",
-    "sim_s": 258,
+    "sim_s": 270,
     "tomtom_s": 267,
-    "ratio": 0.966
+    "ratio": 1.011
    }
   ],
   "junction_delays": {
    "j02": {
-    "sim_s": 18.0,
-    "target_s": 18.3
+    "sim_s": 18.4,
+    "target_s": 14.8
    },
    "j08": {
-    "sim_s": 45.7,
-    "target_s": 48.5
+    "sim_s": 37.0,
+    "target_s": 33.7
    },
    "j09": {
-    "sim_s": 20.4,
+    "sim_s": 14.1,
     "target_s": 41.5
    }
   },
-  "total_s_se": 78.0,
+  "total_s_se": 93.2,
   "corridor_volumes": [
    {
     "junction_id": "j02",
     "direction": "A->B",
     "road": "Professor C R Rao Road East Bound",
     "edge": "157046148#1",
-    "tomtom_vph": 3494,
-    "sim_vph": 1520,
-    "tomtom_delay_s": 23.3,
-    "sim_delay_s": 4.1,
+    "tomtom_vph": 3152,
+    "sim_vph": 1260,
+    "tomtom_delay_s": 20.1,
+    "sim_delay_s": 3.2,
     "label": "estimated"
    },
    {
@@ -261,10 +1233,10 @@
     "direction": "B->A",
     "road": "Gachibowli Road West Bound",
     "edge": "313363619#2",
-    "tomtom_vph": 4761,
-    "sim_vph": 2020,
-    "tomtom_delay_s": 13.3,
-    "sim_delay_s": 31.9,
+    "tomtom_vph": 4112,
+    "sim_vph": 1976,
+    "tomtom_delay_s": 9.4,
+    "sim_delay_s": 33.6,
     "label": "estimated"
    },
    {
@@ -272,9 +1244,9 @@
     "direction": "A->B",
     "road": "Gachibowli Road East Bound",
     "edge": "313363624",
-    "tomtom_vph": 5698,
-    "sim_vph": 1472,
-    "tomtom_delay_s": 11.2,
+    "tomtom_vph": 5354,
+    "sim_vph": 2148,
+    "tomtom_delay_s": 7.6,
     "sim_delay_s": null,
     "label": "estimated"
    },
@@ -283,8 +1255,8 @@
     "direction": "B->A",
     "road": "Gachibowli Road North Bound",
     "edge": "313364728#0",
-    "tomtom_vph": 2612,
-    "sim_vph": 1440,
+    "tomtom_vph": 2370,
+    "sim_vph": 2452,
     "tomtom_delay_s": 2.9,
     "sim_delay_s": null,
     "label": "estimated"
@@ -294,9 +1266,9 @@
     "direction": "A->B",
     "road": "Mumbai Road East Bound",
     "edge": "1311233183",
-    "tomtom_vph": 3232,
-    "sim_vph": 1528,
-    "tomtom_delay_s": 40.9,
+    "tomtom_vph": 2699,
+    "sim_vph": 1520,
+    "tomtom_delay_s": 27.6,
     "sim_delay_s": null,
     "label": "estimated"
    },
@@ -305,9 +1277,9 @@
     "direction": "B->A",
     "road": "Mumbai Road North Bound",
     "edge": "1311972348",
-    "tomtom_vph": 3490,
-    "sim_vph": 2244,
-    "tomtom_delay_s": 4.1,
+    "tomtom_vph": 2637,
+    "sim_vph": 1832,
+    "tomtom_delay_s": 3.2,
     "sim_delay_s": null,
     "label": "estimated"
    },
@@ -316,9 +1288,9 @@
     "direction": "B->A",
     "road": "Mumbai Road West Bound",
     "edge": "728941829#1",
-    "tomtom_vph": 4419,
-    "sim_vph": 2216,
-    "tomtom_delay_s": 6.1,
+    "tomtom_vph": 3714,
+    "sim_vph": 2016,
+    "tomtom_delay_s": 5.9,
     "sim_delay_s": null,
     "label": "estimated"
    },
@@ -327,10 +1299,10 @@
     "direction": "A->B",
     "road": "Mumbai Road East Bound",
     "edge": "28131038#0",
-    "tomtom_vph": 5090,
-    "sim_vph": 1672,
-    "tomtom_delay_s": 36.6,
-    "sim_delay_s": 24.6,
+    "tomtom_vph": 4770,
+    "sim_vph": 2012,
+    "tomtom_delay_s": 26.6,
+    "sim_delay_s": 49.4,
     "label": "estimated"
    },
    {
@@ -338,10 +1310,10 @@
     "direction": "B->A",
     "road": "Mehdipatnam Road West Bound",
     "edge": "315417462#5",
-    "tomtom_vph": 3081,
-    "sim_vph": 1580,
-    "tomtom_delay_s": 60.3,
-    "sim_delay_s": 66.7,
+    "tomtom_vph": 3108,
+    "sim_vph": 1996,
+    "tomtom_delay_s": 40.7,
+    "sim_delay_s": 24.5,
     "label": "estimated"
    },
    {
@@ -349,10 +1321,10 @@
     "direction": "A->B",
     "road": "Mumbai Road East Bound",
     "edge": "562832903#0",
-    "tomtom_vph": 4238,
-    "sim_vph": 2236,
-    "tomtom_delay_s": 114.3,
-    "sim_delay_s": 24.2,
+    "tomtom_vph": 4063,
+    "sim_vph": 2612,
+    "tomtom_delay_s": 78.4,
+    "sim_delay_s": 15.6,
     "label": "estimated"
    },
    {
@@ -360,10 +1332,10 @@
     "direction": "B->A",
     "road": "Mehdipatnam Road West Bound",
     "edge": "315417462#7",
-    "tomtom_vph": 3495,
-    "sim_vph": 1296,
-    "tomtom_delay_s": 51.6,
-    "sim_delay_s": 16.6,
+    "tomtom_vph": 3574,
+    "sim_vph": 1420,
+    "tomtom_delay_s": 30.9,
+    "sim_delay_s": 12.7,
     "label": "estimated"
    },
    {
@@ -371,9 +1343,9 @@
     "direction": "A->B",
     "road": "Mehdipatnam Road East Bound",
     "edge": "313512532#2",
-    "tomtom_vph": 3989,
-    "sim_vph": 1980,
-    "tomtom_delay_s": 41.8,
+    "tomtom_vph": 4023,
+    "sim_vph": 1708,
+    "tomtom_delay_s": 30.1,
     "sim_delay_s": null,
     "label": "estimated"
    },
@@ -382,18 +1354,18 @@
     "direction": "B->A",
     "road": "SH4 West Bound",
     "edge": "393419597",
-    "tomtom_vph": 1554,
-    "sim_vph": 1592,
-    "tomtom_delay_s": 96.5,
+    "tomtom_vph": 1570,
+    "sim_vph": 1296,
+    "tomtom_delay_s": 55.7,
     "sim_delay_s": null,
     "label": "estimated"
    }
   ],
-  "teleports": 0,
-  "vehicles_loaded": 16756,
-  "vehicles_not_inserted": 0,
+  "teleports": 13,
+  "vehicles_loaded": 30081,
+  "vehicles_not_inserted": 1565,
   "probes_arrived": 30,
-  "wall_seconds": 56.1,
+  "wall_seconds": 36.0,
   "inputs": [
    {
     "input": "leg travel times (calibration target)",
@@ -401,19 +1373,24 @@
     "source": "TomTom Traffic Stats job 10051304: probe vehicles, July 2026 every day 06:00-23:00"
    },
    {
-    "input": "cross-road volumes at j08",
+    "input": "traffic on every arm of every junction at j02, j03, j04, j06, j07, j08, j09, j10",
     "label": "estimated",
-    "source": "TomTom Junction Analytics (model estimates from probe data), mean over 2026-10-09T16:54 .. 2026-10-09T20:30"
+    "source": "TomTom Junction Analytics (model estimates from probe data), mean over 2026-10-09T16:54 .. 2026-10-09T23:53 (minutes within 06-23 h) x cross_scale; corridor approaches topped up only by the shortfall to TomTom's volume (traffic already arriving counted first)"
    },
    {
-    "input": "where cross traffic goes (turn shares)",
+    "input": "where each arm's traffic goes (turn shares)",
     "label": "estimated",
-    "source": "TomTom Junction Analytics turn ratios where collected; elsewhere a third each way (assumed)"
+    "source": "TomTom Junction Analytics turn ratios (left/straight/right/U by angle, probe-weighted) where at least 10 probes back them; elsewhere L 30%, S 55%, R 15%, U 0% (assumed)"
    },
    {
-    "input": "cross-road volumes at the other junctions",
+    "input": "arms without TomTom (j01, j05: TomTom's areas are elsewhere; j11: none; side streets)",
     "label": "assumed",
-    "source": "450 veh/h per approach"
+    "source": "200 veh/h per lane, at most 450 veh/h per arm"
+   },
+   {
+    "input": "through traffic taking a flyover",
+    "label": "measured",
+    "source": "81% (docs/driver-behaviour.md s1)"
    },
    {
     "input": "end-to-end corridor volume",
@@ -428,27 +1405,32 @@
    {
     "input": "signal plans",
     "label": "assumed",
-    "source": "120 s cycle, a corridor stage and a cross-road stage, corridor gets 60% of the green (corridor_net.signal_plans)"
+    "source": "docs/driver-behaviour.md s5: 4 s amber, free left in every phase; main x minor junctions: corridor both ways, a 12 s protected right-turn phase, then the side road, 120 s cycle, corridor >= 65% of the green; big junctions (): one approach at a time, 150 s cycle (corridor_net.signal_plans)"
    },
    {
     "input": "corridor green share where calibrated",
     "label": "calibrated",
-    "source": "j02 40%, j03 70%, j06 65%, j07 80%, j08 80%, j09 50%, j10 35%"
+    "source": "j02 80%, j08 80%, j09 65%"
    },
    {
     "input": "vehicle mix",
     "label": "assumed",
-    "source": "two_wheeler 45%, car 30%, auto 18%, bus 7%"
+    "source": "two_wheeler 47%, auto 19%, car 27%, bus 4%, truck 3%; fast riders: 30% of two-wheelers, 50% of autos (docs/driver-behaviour.md s2 table)"
+   },
+   {
+    "input": "driver behaviour (sizes, speeds, gaps, reaction times, amber/red running, box blocking, giving way)",
+    "label": "assumed",
+    "source": "docs/driver-behaviour.md s2-s7 (VEHICLES); capacity x1.35 via following headways (tau, minGap / 1.55, estimated); imperfection calibrated (spec 0.5): 0.2, fast riders 0.24. With the spec's 0.5 the Nanal Nagar section (j07-j09, near capacity) varied 278-404 s between seeds (sd ~70 s: a variant-vs-baseline comparison there would carry about +-3 min of noise); at 0.2, 257-277 s (sd ~10 s, about +-0.5 min); side-street traffic forces in below 5 m/s (50%, estimated); lateral behaviour (filtering, weaving) and creeping past the stop line not modelled (non-sublane model)"
    },
    {
     "input": "joining traffic",
     "label": "assumed",
-    "source": "drives 3 km along the corridor, then turns off"
+    "source": "drives 2 km along the corridor, then turns off"
    },
    {
     "input": "junction delay on the corridor's approaches (calibration target)",
     "label": "estimated",
-    "source": "TomTom Junction Analytics, mean over 2026-10-09T16:54 .. 2026-10-09T20:30 (evening); capped at each leg's all-day time above 50 km/h free flow (inputs.corridor_volumes: tomtom_delay_s vs sim_delay_s)"
+    "source": "TomTom Junction Analytics, mean over 2026-10-09T16:54 .. 2026-10-09T23:53 (evening); capped at each leg's all-day time above 50 km/h free flow (inputs.corridor_volumes: tomtom_delay_s vs sim_delay_s)"
    },
    {
     "input": "traffic at Lakdikapul (B)",
@@ -457,12 +1439,12 @@
    }
   ]
  },
- "run_to_run_sd_s": 22.8,
+ "run_to_run_sd_s": 50.2,
  "seed_totals_s": [
-  3326,
-  3334,
-  3377,
-  3354
+  3396,
+  3330,
+  3296,
+  3397
  ],
- "calibrated_at": "2026-10-09T20:36:27+0530"
+ "calibrated_at": "2026-10-10T02:53:36+0530"
 }

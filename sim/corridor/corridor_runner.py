@@ -18,21 +18,24 @@ Traffic
     on its road. Side-road traffic enters INSERT_BACK_M up its road, so the junction's queue does not block it.
   - Drivers (VEHICLES, docs/driver-behaviour.md): seven vehicle types in the measured mix, Indian following gaps and
     reaction times (capacity x1.35 via headways), speeding, amber/red running, box blocking, giving way, side-street
-    forcing; signals: free left, protected right phase at main x minor junctions, one approach at a time at big ones.
+    forcing; signals: free left, protected right phase, corridor >= 65% of the green (one approach at a time at big
+    junctions is built but off: it gridlocked; corridor_net.BIG_JUNCTIONS). Out of scope (non-sublane model): lateral
+    behaviour (filtering, weaving, side clearance) and creeping past the stop line (a viewer effect).
   - Probe cars every 30 s both ways record when they pass each corridor point: the trip time split by leg.
 
 Noise: journey.total_s_se is the uncertainty of the trip time as an absolute number: the probe cars' spread in this
 run combined with the run-to-run spread (the calibrated baseline with 3 other seeds, run_to_run_sd_s in
-calibration.json). Comparing a variant with the baseline is a paired comparison: driving is deterministic (Krauss
-sigma 0), every run uses the same seed, the same traffic and the same netconvert rebuild (sim/templates/corridor.py
-rebuilds every variant; the baseline gets a rebuild with no change), so a change only moves the legs of the sections
-it touches. For that, use total_s_se_probes: a change is beyond noise when it exceeds about twice both runs'
-total_s_se_probes combined (about +-0.8 min).
+calibration.json). Comparing a variant with the baseline is a paired comparison: every run uses the same seed, the
+same traffic (planned on the unchanged network) and the same netconvert rebuild (sim/templates/corridor.py rebuilds
+every variant; the baseline gets a rebuild with no change), and each section is its own SUMO run, so a change only
+moves the legs of the sections it touches. Drivers are imperfect (sigma, docs/driver-behaviour.md s3), so inside a
+touched section the change also reshuffles the random draws: there the noise is the seed-to-seed spread of that
+section (see SIGMA_NOTE for the measured size); a change is beyond noise when it exceeds about twice that spread x sqrt 2.
 
 Running fast: the corridor runs as 6 sections (SECTIONS) at once, one SUMO each. A section is its legs plus 1 km of
 road before them (traffic reaches the first junction in realistic platoons) and 300 m after; traffic entering it is the
 corridor flow at that point. Trip time = sum of the legs. Each section starts full (fill flows), so 10 minutes of
-warm-up and 15 minutes of probes are enough. A run takes about 20-40 s; frames (C1) cover 5 minutes.
+warm-up and 15 minutes of probes are enough. A run takes about 30-60 s with 3 SUMO processes (CR_SIM_PARALLEL); frames (C1) cover 5 minutes.
 
 Calibration (`calibrate()`, writes calibration.json), in plain words: TomTom measured how long each leg takes on
 average (July 2026, 6 am-11 pm, `counted`) and, this evening, how long vehicles wait on the corridor's approaches at
@@ -98,7 +101,8 @@ CROSS_SCALE = 0.6                 # share of TomTom's estimated cross-road volum
 CROSS_VPH = 450                   # per cross-road approach at junctions without TomTom counts (assumed)
 ASSUMED_SPLIT = {"fwd": 1 / 3, "rev": 1 / 3, "cross": 1 / 3}   # cross traffic: joins A->B, joins B->A, crosses (assumed)
 MIN_TURN_PROBES = 10              # TomTom turn ratios are used for an approach once this many probe trips back them
-JOIN_M = 3000                     # cross traffic that joins the corridor drives this far on it, then leaves (assumed)
+JOIN_M = 1500                     # traffic that joins the corridor drives this far on it, then leaves (assumed; was 3 km:
+                                  # with every arm loaded, joins from several junctions piled up beyond TomTom's volumes)
 INSERT_BACK_M = 250               # cross traffic enters this far up its road, not at the stop line
 FILL_STEP_M, FILL_SPEED = 2500, 6.0   # the corridor starts full: extra entry points every 2.5 km until traffic at 6 m/s arrives
 MIX = {"two_wheeler": 0.47, "auto": 0.19, "car": 0.27, "bus": 0.04, "truck": 0.03}   # assumed (docs/driver-behaviour.md s2; VEHICLES)
@@ -115,7 +119,7 @@ def min_share(jid):
 FREE_KMH = 50                     # free-flow speed on the corridor's roads (assumed): a leg's time above it is delay
 STEP = 0.5                        # s; the vehicle types' reaction times (tau 0.6-1.0 s) need steps no longer than this
 SEED = 2                          # SUMO random seed: the same for the baseline and every variant (common random numbers)
-SIGMA = 0                         # driver imperfection (Krauss sigma): 0, so baseline and variants differ only by the change
+SIGMA = 0                         # the probe cars only: they drive at the speed cap without imperfection (traffic: VEHICLES)
 TELEPORT_S = 300                  # s a vehicle may stand still before SUMO lifts it out of a deadlock
 PARALLEL = int(os.environ.get("CR_SIM_PARALLEL", "6"))   # SUMO processes at once per run (one per section at most)
 WARMUP = 600                      # s before the first probe leaves
@@ -142,9 +146,13 @@ IMPATIENCE_S = int(os.environ.get("CR_IMPATIENCE_S", "30"))   # s of waiting aft
 # Non-sublane model (the sublane model was ~11x slower): vehicles keep to their lane in single file, so lateral
 # behaviour (s4: position in the lane, side clearance, filtering, weaving) is out of scope.
 CAPACITY = 1.35                   # s1 (assumed): real capacity = marked lanes x 1.35. Single file cannot fit 3 two-wheelers
-                                  # across a lane, so the factor goes on the following headway instead: every type's
-                                  # tau and minGap / CAPACITY (tau not below STEP); the network's lanes are unchanged, so
-                                  # the intervention templates (flyover lanes, widening) see the same roads
+                                  # across a lane, so the factor goes on the following headway instead; the network's
+                                  # lanes are unchanged, so the intervention templates (flyover lanes, widening) see the
+                                  # same roads
+HEADWAY_FACTOR = 1.55             # every type's tau and minGap / this (tau not below STEP): the mix's saturation headway at
+                                  # a 36 km/h discharge, tau + (length + minGap) / v, drops from 1.31 s (doc values) to
+                                  # 0.97 s, i.e. capacity x1.35 (estimated; dividing by 1.35 itself gave only x1.23,
+                                  # since vehicle lengths do not shrink)
 # id, C1 type, share, vClass, length, width (m), top speed (km/h), accel, decel (m/s2), minGap (m), tau (s), sigma,
 # speedFactor, jmDriveAfterRedTime (s; -1 = stops), jmIgnoreKeepClearTime (s)       (s2, s3, s7; all assumed)
 VEHICLES = [
@@ -158,8 +166,10 @@ VEHICLES = [
 ]
 # the doc's prose says half of two-wheeler riders and 30% of autos are fast; its table says the reverse (30% / half):
 # the table is followed, as the doc's own note says
-SIGMA_SCALE = float(os.environ.get("CR_SIGMA_SCALE", "1.0"))   # x the doc's imperfection (0.5, fast 0.6); see SIGMA_NOTE
-SIGMA_NOTE = "assumed (spec 0.5, fast riders 0.6)"
+SIGMA_SCALE = float(os.environ.get("CR_SIGMA_SCALE", "0.4"))   # x the doc's imperfection (0.5, fast 0.6): 0.2 / 0.24
+SIGMA_NOTE = ("calibrated (spec 0.5): 0.2, fast riders 0.24. With the spec's 0.5 the Nanal Nagar section (j07-j09, near "
+              "capacity) varied 278-404 s between seeds (sd ~70 s: a variant-vs-baseline comparison there would carry about "
+              "+-3 min of noise); at 0.2, 257-277 s (sd ~10 s, about +-0.5 min)")
 YELLOW_GO_S = 4                   # s7: nobody brakes for amber: whoever reaches the line in the 4 s amber goes (assumed)
 RED_SPEED = 11.1                  # s7: red-runners keep their speed, up to 40 km/h (assumed)
 GIVE_WAY_SPEED, GIVE_WAY_PROB = 1.5, 0.3   # s6: noses out in front of a priority vehicle crawling below 1.5 m/s, 30% per 0.5 s (assumed)
@@ -182,8 +192,8 @@ def vtypes_xml():
                   f'jmIgnoreFoeSpeed="{SIDE_SPEED if side else GIVE_WAY_SPEED}" jmIgnoreFoeProb="{SIDE_PROB if side else GIVE_WAY_PROB}"'
                   + (f' jmDriveAfterRedTime="{red}" jmDriveRedSpeed="{RED_SPEED}"' if red >= 0 else ""))
             lines.append(f'    <vType id="{vid}{"_side" if side else ""}" vClass="{vcls}" length="{length}" width="{width}" '
-                         f'maxSpeed="{kmh / 3.6:.2f}" accel="{accel}" decel="{decel}" minGap="{gap / CAPACITY:.2f}" '
-                         f'tau="{max(STEP, tau / CAPACITY):.2f}" sigma="{sigma * SIGMA_SCALE:.3f}" speedFactor="{sf}" {jm}/>')
+                         f'maxSpeed="{kmh / 3.6:.2f}" accel="{accel}" decel="{decel}" minGap="{gap / HEADWAY_FACTOR:.2f}" '
+                         f'tau="{max(STEP, tau / HEADWAY_FACTOR):.2f}" sigma="{sigma * SIGMA_SCALE:.3f}" speedFactor="{sf}" {jm}/>')
         names = [v[0] + ("_side" if side else "") for v in VEHICLES]
         lines.append(f'    <vTypeDistribution id="{"mix_side" if side else "mix"}" vTypes="{" ".join(names)}" '
                      f'probabilities="{" ".join(f"{v[2]:.4f}" for v in VEHICLES)}"/>')
@@ -1966,7 +1976,7 @@ def sources_note(cal, sources):
         {"input": "vehicle mix", "label": "assumed", "source": ", ".join(f"{k} {v:.0%}" for k, v in MIX.items())
                                                               + "; fast riders: 30% of two-wheelers, 50% of autos (docs/driver-behaviour.md s2 table)"},
         {"input": "driver behaviour (sizes, speeds, gaps, reaction times, amber/red running, box blocking, giving way)", "label": "assumed",
-         "source": f"docs/driver-behaviour.md s2-s7 (VEHICLES); capacity x{CAPACITY} via following headways (tau, minGap / {CAPACITY}); "
+         "source": f"docs/driver-behaviour.md s2-s7 (VEHICLES); capacity x{CAPACITY} via following headways (tau, minGap / {HEADWAY_FACTOR}, estimated); "
                    f"imperfection {SIGMA_NOTE}; side-street traffic forces in below {SIDE_SPEED:g} m/s ({SIDE_PROB:.0%}, estimated); "
                    f"lateral behaviour (filtering, weaving) and creeping past the stop line not modelled (non-sublane model)"},
         {"input": "joining traffic", "label": "assumed", "source": f"drives {JOIN_M / 1000:.0f} km along the corridor, then turns off"},
@@ -2095,7 +2105,7 @@ def calibrate(rounds=8, fresh=False, through=None, cross_scale=None):
     return caps, shares
 
 
-def calibrate_hourly(hours=None, rounds=8, tol=0.03):
+def calibrate_hourly(hours=None, rounds=8, tol=0.03, refit=False):
     """Fit each hour of the day to TomTom's hourly trip time and write calibration_hourly.json. Needs TomTom rows in
     data/raw/corridor_legs_tomtom.csv whose period is one hour (row_hour(): e.g. "2026-07-01..2026-07-31 08:00-09:00").
     Starting from the all-day calibration, per hour: the simulated trip is too slow -> less traffic, too fast -> more
@@ -2115,7 +2125,10 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
         raise RuntimeError("run calibrate() first: the hourly scales sit on top of the all-day calibration")
     out = hourly_calibration() or {}
     out.setdefault("hours", {})
-    if not asked:
+    prev_fits = dict(out["hours"]) if refit else {}
+    if refit:          # the model changed: refit every hour, each starting from its own previous scales
+        out["hours"] = {}
+    if not asked and not refit:
         todo = [h for h in todo if str(h) not in out["hours"]]
     # start with the hour most like the all-day average (the all-day calibration fits it best), then outwards, so
     # each hour starts from a fitted neighbour
@@ -2137,6 +2150,9 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
             else:
                 slope = near.get("slope_s_per_volume") or 600.0
                 v = round(min(HOUR_VOLUME[1], max(HOUR_VOLUME[0], near["volume_scale"] + (t_est - t_near) / slope)), 3)
+        own = (prev_fits or {}).get(str(h))
+        if own:        # refitting an hour (the model changed): start from its own previous scales
+            v, cs = float(own["volume_scale"]), float(own.get("cap_scale", 1.0))
         hist, best, seen = [], None, []
         for r in range(rounds):
             caps = [min(HOUR_MAX_KMH, round(c * cs, 1)) for c in cal["cap_kmh"]]
@@ -2210,8 +2226,9 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["calibrate"]:
         calibrate()
-    elif sys.argv[1:2] == ["calibrate_hourly"]:
-        calibrate_hourly([int(a) for a in sys.argv[2:]] or None)
+    elif sys.argv[1:2] == ["calibrate_hourly"]:       # calibrate_hourly [refit] [8 9 ...]
+        args = [a for a in sys.argv[2:] if a != "refit"]
+        calibrate_hourly([int(a) for a in args] or None, refit="refit" in sys.argv[2:])
     elif sys.argv[1:2] == ["fit_day"]:        # fit_day 2026-07-08 18: fit (or reuse) one day and hour, print the result
         res = run(hour=int(sys.argv[3]), day=sys.argv[2], frames=False)
         print(res["time"], round(res["journey"]["total_s"] / 60, 1), "min vs TomTom", round(res["journey"]["tomtom_total_s"] / 60, 1))

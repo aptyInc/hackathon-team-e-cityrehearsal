@@ -385,6 +385,6 @@ if __name__ == "__main__":
     if sys.argv[1:] == ["signals"]:      # build_network.sh, after netconvert
         print("signals at:", add_signals(NET))
         print("corridor lanes (widened pieces, relinked route steps):", corridor_lanes(NET))
-        print("two-stage plans:", sorted(set(signal_plans(NET).values())))
+        print("signal plans (s5):", sorted(set(signal_plans(NET).values())))
     elif sys.argv[1:] == ["plans"]:
-        print("two-stage plans:", sorted(set(signal_plans(NET).values())))
+        print("signal plans (s5):", sorted(set(signal_plans(NET).values())))
