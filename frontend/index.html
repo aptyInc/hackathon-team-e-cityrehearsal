@@ -31,6 +31,8 @@
   .chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
   .road { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; }
   .road b { font-weight: 600; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .5px; padding: 1px 6px; border-radius: 4px; vertical-align: 1px; margin-left: 6px; }
+  .tag.real { background: #1a7f37; color: #fff; } .tag.sim { background: #c4561c; color: #fff; } .tag.mix { background: #5b6670; color: #fff; }
 </style>
 </head>
 <body>
@@ -39,14 +41,15 @@
 <div id="left" class="panel">
   <h1>CityRehearsal · YMCA Circle, Narayanguda</h1>
   <small id="status">API: checking…</small>
-  <h2>Predict and test</h2>
+  <h2>Predict and test <span class="tag sim">simulated</span></h2>
+  <small>Everything the model computes is marked <span class="tag sim">simulated</span>; everything TomTom measured on the road is marked <span class="tag real">real</span>.</small>
   <div class="row">
     <button id="run-base">Run today's traffic</button>
     <button id="run-fly" class="secondary">Test a 3-lane flyover</button>
     <button id="run-base80" class="ghost" title="Reviewer's sensitivity test">Today, 20% less traffic</button>
   </div>
   <div id="results"></div>
-  <h2>Playback</h2>
+  <h2>Playback <span class="tag sim">simulated</span></h2>
   <div class="row">
     <button id="play" class="ghost" disabled>▶ Play</button>
     <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option></select>
@@ -65,16 +68,16 @@
 
 <div id="right" class="panel">
   <h2 style="margin-top:0">Layers</h2>
-  <label class="t"><input type="checkbox" id="t-traffic" /> TomTom live traffic (now)</label>
-  <label class="t"><input type="checkbox" id="t-roads" checked /> Simulated congestion</label>
+  <label class="t"><input type="checkbox" id="t-traffic" /> TomTom live traffic <span class="tag real">real</span></label>
+  <label class="t"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
   <label class="t"><input type="checkbox" id="t-buildings" checked /> 3D buildings</label>
-  <label class="t"><input type="checkbox" id="t-vehicles" checked /> Vehicles</label>
+  <label class="t"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
   <label class="t"><input type="checkbox" id="t-night" /> Night view</label>
   <div class="row" style="margin-top:10px"><button id="recenter" class="ghost">Recenter</button><button id="orbit" class="ghost">Orbit</button></div>
 </div>
 
 <div id="live" class="panel">
-  <h2 style="margin-top:0">YMCA Circle right now <span id="live-time" class="muted" style="text-transform:none;letter-spacing:0"></span></h2>
+  <h2 style="margin-top:0">YMCA Circle right now <span class="tag real">real</span> <span id="live-time" class="muted" style="text-transform:none;letter-spacing:0"></span></h2>
   <div id="live-body"><small>Loading TomTom live data…</small></div>
   <small>TomTom Junction Analytics: delay measured from GPS trips; vehicles/hour and queue estimated.</small>
 </div>
@@ -84,7 +87,7 @@
   <span><span class="chip" style="background:rgb(47,111,159)"></span>car</span>
   <span><span class="chip" style="background:rgb(240,200,40)"></span>auto</span>
   <span><span class="chip" style="background:rgb(40,160,90)"></span>bus</span>
-  <span class="muted">· roads:</span>
+  <span class="muted">(simulated) · roads:</span>
   <span><span class="chip" style="background:rgb(26,152,80)"></span>flowing</span>
   <span><span class="chip" style="background:rgb(253,174,97)"></span>slow</span>
   <span><span class="chip" style="background:rgb(215,48,39)"></span>jammed</span>
@@ -284,19 +287,19 @@ async function loadData() {
     const h = await get("/data/junction_history?minutes=15");
     const b = h.buckets, labels = b.map((r, i) => i % 8 === 0 ? r.time.slice(11, 16) : "");
     const series = {}; for (const k of ["NE", "E", "S", "W"]) series[k] = b.map(r => r.delay_s[k] ?? null);
-    $("d-history").innerHTML = `<b>YMCA Circle since last night: delay per road (seconds)</b><br><small>${b.length} quarter-hours from ${b[0].time.slice(5, 16)} to ${b[b.length - 1].time.slice(11, 16)}, TomTom live data, measured from GPS trips</small>` + lineChart(series, labels, { note: "roads into the circle" });
+    $("d-history").innerHTML = `<b>YMCA Circle since last night: delay per road (seconds)</b> <span class="tag real">real</span><br><small>${b.length} quarter-hours from ${b[0].time.slice(5, 16)} to ${b[b.length - 1].time.slice(11, 16)}, TomTom live data, measured from GPS trips</small>` + lineChart(series, labels, { note: "roads into the circle" });
     const q = {}; for (const k of ["NE", "E", "S", "W"]) q[k] = b.map(r => r.queue_m[k] ?? null);
-    $("d-history").innerHTML += `<b>Queue length per road (metres)</b>` + lineChart(q, labels, { note: "estimated by TomTom" });
+    $("d-history").innerHTML += `<b>Queue length per road (metres)</b> <span class="tag real">real, estimated by TomTom</span>` + lineChart(q, labels, { note: "estimated by TomTom" });
   } catch (e) { $("d-history").innerHTML = `<small class="muted">Junction history not available (${e.message.slice(0, 50)})</small>`; }
   try {
     const j = await get("/data/july_speeds");
     const labels = Array.from({ length: 24 }, (_, i) => i % 4 === 0 ? `${i}:00` : "");
-    $("d-july").innerHTML = `<b>A typical weekday, July 2026: speed by hour (km/h)</b><br><small>TomTom Traffic Stats, averaged over 22 weekdays; dashed line = 09:00, the hour the simulation is calibrated to</small>` + lineChart(j.speed_kmh_by_hour, labels, { markX: 9 });
+    $("d-july").innerHTML = `<b>A typical weekday, July 2026: speed by hour (km/h)</b> <span class="tag real">real</span><br><small>TomTom Traffic Stats, averaged over 22 weekdays; dashed line = 09:00, the hour the simulation is calibrated to</small>` + lineChart(j.speed_kmh_by_hour, labels, { markX: 9 });
   } catch (e) { $("d-july").innerHTML = ""; }
   try {
     const c = await get("/data/counts");
     const tot = c.rows.reduce((s, r) => s + r.total_vehicles, 0), tw = c.rows.reduce((s, r) => s + r.motorcycle, 0);
-    $("d-counts").innerHTML = `<b>Who is on the road: field count, 2020 study</b><br><small>${tot.toLocaleString()} vehicles/hour into the circle at peak, ${Math.round(100 * tw / tot)}% two-wheelers. The simulation uses this mix, raised ${Math.round((c.calibrated_scale - 1) * 100)}% to match 2026 speeds.</small>
+    $("d-counts").innerHTML = `<b>Who is on the road: field count, 2020 study</b> <span class="tag real">real, 2020</span><br><small>${tot.toLocaleString()} vehicles/hour into the circle at peak, ${Math.round(100 * tw / tot)}% two-wheelers. The simulation uses this mix, raised ${Math.round((c.calibrated_scale - 1) * 100)}% to match 2026 speeds.</small>
       <table><tr><th>Road</th><th>Two-wheelers</th><th>Cars + autos</th><th>Buses</th><th>Total /h</th></tr>` + c.rows.map(r => `<tr><td>${r.approach}</td><td>${r.motorcycle}</td><td>${r.light_motor_vehicle}</td><td>${r.heavy_vehicle}</td><td>${r.total_vehicles}</td></tr>`).join("") + `</table>`;
   } catch (e) { $("d-counts").innerHTML = ""; }
 }
@@ -307,7 +310,7 @@ function showCalibration(r) {
     return `<div style="margin:4px 0"><small><b>${d}</b> simulated ${s} km/h · TomTom ${t} km/h</small><div style="background:#eee;border-radius:3px;height:6px;margin:2px 0"><div style="width:${w(s)}%;background:${ROAD_COLORS[d]};height:6px;border-radius:3px"></div></div><div style="background:#eee;border-radius:3px;height:6px"><div style="width:${w(t)}%;background:#999;height:6px;border-radius:3px"></div></div></div>`; }).join("");
   const mix = frames.length ? (() => { const f = frames[Math.floor(frames.length / 2)], c = {}; f.vehicles.forEach(v => c[v.type] = (c[v.type] || 0) + 1); return `On screen at once: ` + Object.entries(c).map(([k, v]) => `${v} ${k.replace("_", "-")}s`).join(", "); })() : "";
   const js = r.tomtom_junction_speed_kmh ? ` TomTom's own junction data this morning gives ${dirs.map(d => `${d} ${r.tomtom_junction_speed_kmh[d] ?? "–"}`).join(", ")} km/h on the same roads; the two TomTom sources differ by 3–6 km/h.` : "";
-  $("d-calib").innerHTML = `<b>Does the model match reality? (${r.label})</b><br><small>Speed on the last 240 m of each road, simulation (colour) vs TomTom July 09:00 (grey).${js} Delay per road: simulated ${dirs.map(d => `${d} ${r.approach_delay_s?.[d] ?? "–"} s`).join(", ")}; TomTom median this morning ${dirs.map(d => `${d} ${r.tomtom_delay_s?.[d] ?? "–"} s`).join(", ")}.</small>${bars}<small>${mix}</small>`;
+  $("d-calib").innerHTML = `<b>Does the model match reality? (${r.label})</b> <span class="tag mix">simulated vs real</span><br><small>Speed on the last 240 m of each road, simulation (colour) vs TomTom July 09:00 (grey).${js} Delay per road: simulated ${dirs.map(d => `${d} ${r.approach_delay_s?.[d] ?? "–"} s`).join(", ")}; TomTom median this morning ${dirs.map(d => `${d} ${r.tomtom_delay_s?.[d] ?? "–"} s`).join(", ")}.</small>${bars}<small>${mix}</small>`;
 }
 $("data-toggle").onclick = () => { const open = $("data").style.display === "none"; $("data").style.display = open ? "block" : "none"; $("data-toggle").textContent = open ? "hide" : "show"; if (open && !$("d-july").innerHTML) loadData(); };
 
