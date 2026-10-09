@@ -9,6 +9,7 @@ tries is a stored, fingerprinted run that the UI, the case workflow and reviewer
                         -> compact summary vs the no-change baseline under the same conditions   (simulated)
     compare_runs        side-by-side totals and the biggest per-leg / per-junction differences   (simulated)
     write_brief         one-page markdown decision brief with evidence fingerprints -> brief_id
+    advise_junction     "flyover here, or what else?": the advisor loop (advisor.py) over the option set, ranked
 """
 import hashlib, json, statistics, time, uuid
 from dataclasses import dataclass, field
@@ -87,6 +88,23 @@ TOOLS = [
          "recommendation": {"type": "string", "description": "the option you recommend reviewers approve, and any condition"},
          "reasons": {"type": "array", "items": {"type": "string"}}},
          "required": ["title", "problem", "run_ids", "recommendation", "reasons"]}},
+    {"name": "advise_junction",
+     "description": "Answer 'can we build a flyover at this junction, and if not, what else would help?' for one junction. "
+                    "Gathers the measured data (TomTom leg times, live delay, rain sensitivity), then simulates the option set "
+                    "cheapest-first against the baseline under identical conditions: signal_retime (corridor green share 0.7 and "
+                    "0.5), one_way, widening (+1 lane), underpass, flyover (2 lanes), and re-tests the two best in heavy rain and at "
+                    "1.1x traffic. Returns a ranked options table (trip change, noise, ripple at neighbours, rain and 1.1x "
+                    "checks, cost class), a verdict, reasons, caveats and a decision brief id. Pre-computed advice (same "
+                    "simulation version) comes back instantly; otherwise up to ~12 simulations run (several minutes). "
+                    "Junctions already crossed on a flyover (j03, j04, j06, j07, j10, j11) get the alternative instead. "
+                    "Use this for 'what should we do at X' / 'flyover at X?' questions; use run_corridor for one-off tests.",
+     "input_schema": {"type": "object", "properties": {
+         "junction_id": {"type": "string", "description": "j01..j11 (Nallagandla j01, ISB Rd/DLF j02, Gachibowli j03, Biodiversity j04, "
+                                                          "Khajaguda j05, Shaikpet j06, Tolichowki j07, Nanal Nagar j08, Rethibowli j09, "
+                                                          "NMDC j10, Masab Tank j11)"},
+         "weather": {"type": "string", "enum": WEATHER, "description": "run the whole option set under this rain what-if (optional)"},
+         "fresh": {"type": "boolean", "description": "true: recompute even when pre-computed advice exists (slow)"}},
+         "required": ["junction_id"]}},
 ]
 
 
@@ -467,8 +485,35 @@ def render_brief(ctx: Context, inp: dict, runs: list[dict]) -> tuple[str, dict]:
     return "\n".join(lines) + "\n", fps
 
 
+def advise_junction(ctx: Context, inp: dict) -> dict:
+    from . import advisor, store
+    jid, weather = (inp.get("junction_id") or "").strip().lower(), inp.get("weather") or None
+    if jid not in cor.junction_ids():
+        return {"error": f"unknown junction {jid!r}; use one of {', '.join(cor.junction_ids())}"}
+    ver = advisor.model_version()
+    if not inp.get("fresh"):
+        hit = store.latest_advice(jid, ver, weather)
+        if hit and not hit["stale"] and hit["advice"]:
+            ctx.run_ids += [r for r in hit["run_ids"] if r not in ctx.run_ids]
+            if hit["brief_id"]:
+                ctx.brief_id = hit["brief_id"]
+            return advisor.compact(hit["advice"]) | {"precomputed": True, "advice_id": hit["advice_id"],
+                                                     "computed_at": hit["finished"], "note": "pre-computed on this simulation version"}
+    ctx.max_runs = max(ctx.max_runs, advisor.ADVISE_MAX_RUNS)
+    aid = store.create_advice(jid, weather, ver)
+    try:
+        adv = advisor.advise(jid, advisor.LocalRunner(ctx), weather, session_id=ctx.session_id or "advisor")
+    except Exception as e:
+        store.finish_advice(aid, None, f"{type(e).__name__}: {e}")
+        raise
+    store.finish_advice(aid, adv)
+    if adv.get("brief_id"):
+        ctx.brief_id = adv["brief_id"]
+    return advisor.compact(adv) | {"precomputed": False, "advice_id": aid, "runs_left_this_turn": ctx.max_runs - ctx.runs_used}
+
+
 HANDLERS = {"get_corridor": get_corridor, "get_live_junctions": get_live_junctions, "run_corridor": run_corridor,
-            "compare_runs": compare_runs, "write_brief": write_brief}
+            "compare_runs": compare_runs, "write_brief": write_brief, "advise_junction": advise_junction}
 
 
 def execute(ctx: Context, name: str, inp: dict) -> tuple[dict, bool]:
@@ -503,6 +548,10 @@ def one_line(name: str, inp: dict, out: dict) -> str:
         return "; ".join(f"{r['option']}: {r['total_min']} min" for r in out["rows"])[:200]
     if name == "write_brief":
         return f"brief {out['brief_id']} written"
+    if name == "advise_junction":
+        top = out["options"][0] if out.get("options") else None
+        return (f"{out['junction']} {out.get('name', '')}: {out.get('verdict')}" + (f" (best: {top['kind']} {top['trip_change_min']:+} min)" if top else "")
+                + (" [pre-computed]" if out.get("precomputed") else ""))[:200]
     return ""
 
 

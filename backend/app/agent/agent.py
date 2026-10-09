@@ -162,8 +162,11 @@ def _run_turn(session_id: str, message: str, turn_id: str) -> dict:
             step = {"tool": b["name"], "input": b.get("input") or {}, "summary": one_line(b["name"], b.get("input") or {}, out)}
             if b["name"] == "run_corridor" and "run_id" in out:
                 step["run_id"] = out["run_id"]
-            if b["name"] == "write_brief" and "brief_id" in out:
+            if b["name"] in ("write_brief", "advise_junction") and out.get("brief_id"):
                 step["brief_id"] = out["brief_id"]
+            if b["name"] == "advise_junction" and "verdict" in out:
+                step["advice"] = {"junction": out["junction"], "verdict": out["verdict"], "verdict_code": out.get("verdict_code"),
+                                  "advice_id": out.get("advice_id"), "precomputed": out.get("precomputed")}
             steps.append(step)
             results.append({"type": "tool_result", "tool_use_id": b["id"], "content": json.dumps(out, default=str),
                             **({"is_error": True} if is_err else {})})
