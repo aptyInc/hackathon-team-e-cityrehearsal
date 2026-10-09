@@ -1,0 +1,36 @@
+/* CityRehearsal design tokens, direction A "Control room" (see frontend/design/brief.md). Owner: Frontend.
+   Shared by every page (content pages get it through app.css; map pages link it directly) and by nav.js.
+   Measured (TomTom) is always cyan, simulated is always violet, a simulated change is magenta. */
+@font-face { font-family: "Geist"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("vendor/fonts/geist-latin.woff2") format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-style: normal; font-weight: 400 600; font-display: swap; src: url("vendor/fonts/geist-mono-latin.woff2") format("woff2"); }
+:root {
+  color-scheme: dark;
+  --bg: #07090d; --bg-2: #0c1017; --surface: #10151e; --surface-2: #151b26;
+  --glass: rgba(14, 18, 26, .74); --glass-strong: rgba(14, 18, 26, .9);
+  --blur: blur(18px) saturate(150%);
+  --line: rgba(255, 255, 255, .08); --line-2: rgba(255, 255, 255, .14);
+  --hi: inset 0 1px 0 rgba(255, 255, 255, .06);
+  --tx: #e8edf5; --tx-2: #a3adbd; --tx-3: #6f7a8c;
+  --brand: #ff7a45;
+  --real: #22d3ee; --real-bg: rgba(34, 211, 238, .12); --real-line: rgba(34, 211, 238, .35);
+  --sim: #a78bfa; --sim-bg: rgba(167, 139, 250, .13); --sim-line: rgba(167, 139, 250, .38);
+  --chg: #e879f9; --chg-bg: rgba(232, 121, 249, .13); --chg-line: rgba(232, 121, 249, .4);
+  --good: #34d399; --good-bg: rgba(52, 211, 153, .12);
+  --bad: #fb7185; --bad-bg: rgba(251, 113, 133, .12);
+  --warn: #fbbf24; --warn-bg: rgba(251, 191, 36, .12);
+  --neutral: #94a3b8;
+  --fast: #2dd4a7; --mid-speed: #fbbf24; --slow: #f43f5e;
+  --r-sm: 8px; --r: 12px; --r-lg: 16px; --r-xl: 20px;
+  --sh: 0 10px 40px -10px rgba(0, 0, 0, .7), 0 2px 6px rgba(0, 0, 0, .4);
+  --f: "Geist", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* legacy names used by older page styles */
+  --ink: var(--tx); --paper: var(--surface); --soft: rgba(255, 255, 255, .04); --accent: var(--brand); --blue: #60a5fa;
+  --muted: var(--tx-2); --ok: var(--good); --mid: var(--warn);
+}
+@media print {
+  :root { color-scheme: light; --bg: #fff; --bg-2: #fff; --surface: #fff; --surface-2: #fff; --glass: #fff; --glass-strong: #fff;
+    --line: #ddd; --line-2: #ccc; --tx: #111; --tx-2: #444; --tx-3: #666; --real: #0e7490; --sim: #6d28d9; --chg: #a21caf;
+    --good: #047857; --bad: #be123c; --warn: #b45309; --real-bg: #ecfeff; --sim-bg: #f5f3ff; --chg-bg: #fdf4ff; --good-bg: #ecfdf5;
+    --bad-bg: #fff1f2; --warn-bg: #fffbeb; --sh: none; --hi: none; }
+}

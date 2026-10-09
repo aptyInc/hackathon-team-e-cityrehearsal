@@ -80,7 +80,7 @@ Shadow: `0 10px 40px -10px rgba(0,0,0,.7)` plus a 1 px inner top highlight (`--h
 120–180 ms ease-out on hover and press. Panels fade and rise 4 px when they appear. The Live dot pulses every 2 s. The selected junction ring pulses every 2.2 s. The progress bar sweeps while a run is in flight. Map moves use `flyTo` at 1.2 s. All of this is off under `prefers-reduced-motion`.
 
 ### Iconography
-**Lucide**, 16 px at 1.75 stroke: git-merge (flyover), timer (retime), move-horizontal (widen), bus (bus lane), traffic-cone (signals), flask-conical (simulate with changes), sparkles (AI), radio (live), shield-check (decisions).
+**Lucide**, 16 px at 1.75 stroke: git-merge (flyover), timer (retime), move-horizontal (widen), traffic-cone (signals), flask-conical (simulate with changes), sparkles (AI), radio (live), shield-check (decisions).
 
 ### Responsive
 - **≥ 1200 px:** left panel 344, right column 340, trip dock between them, all floating over the map.
@@ -90,7 +90,7 @@ Shadow: `0 10px 40px -10px rgba(0,0,0,.7)` plus a 1 px inner top highlight (`--h
 ## 3. Libraries (no build step, vendored under `frontend/vendor/`)
 | Library | How | Why |
 |---|---|---|
-| **Hand-written token CSS** (`frontend/ui/cr.css`) | one static file, CSS variables | A design system in about 400 lines. No toolchain, and four people can edit it during a hackathon. |
+| **Hand-written token CSS** (`frontend/tokens.css` + `frontend/app.css`) | static files, CSS variables | A design system in about 400 lines. No toolchain, and four people can edit it during a hackathon. |
 | **Lucide** (UMD `lucide.min.js`, pinned) | `<i data-lucide="…">` + `lucide.createIcons()` | Clean, consistent icons. Works offline once vendored. |
 | **Geist / Geist Mono** | Google Fonts, plus woff2 vendored in `vendor/fonts/` with `@font-face` fallback | Modern grotesk and a mono with tabular figures. |
 | MapLibre GL + deck.gl | already vendored | Unchanged. The glass panels are plain DOM above the map canvas (z-index), which needs no integration work. |
@@ -108,7 +108,7 @@ A light, editorial look: Instrument Serif headlines, Inter UI, warm paper backgr
 
 ## 5. Implementation plan (direction A on the real app)
 
-**Shared (wave 1, about 1 h):** `frontend/ui/cr.css` holds the tokens and components (promoted from `a.css`, extended for existing class names). Vendor `lucide.min.js` and the Geist woff2 files. Restyle `nav.js` (glass bar, mode switch slot, status pill; same IDs `#cr-nav` and links; two-row bar on phones as the tests expect). Reduce `app.css` to page-specific leftovers.
+**Shared (wave 1, done):** `frontend/tokens.css` holds the tokens and the Geist `@font-face` rules. Content pages get it through `frontend/app.css`, which keeps the existing class names; map pages link it directly. `vendor/lucide.min.js` and `vendor/fonts/*.woff2` are vendored. `nav.js` is restyled as a 48 px glass bar with the same IDs (`#cr-nav`, links, pill) and a two-row bar on phones.
 
 | Page | Change | Time |
 |---|---|---|
