@@ -112,7 +112,7 @@ const TRAFFIC_TILES = () => `https://api.tomtom.com/traffic/map/4/tile/flow/rela
 
 let cfg = { tomtom_maps_key: "", junction: { lon: 78.4903, lat: 17.3954 } };
 let map, overlay, buildings = null, roads = null, frames = [], runs = [], caseId = null, history = [];
-let playing = false, pos = 0, lastTick = 0, orbiting = false;
+let playing = false, pos = 0, lastTick = 0, orbiting = false, clockBase = 8 * 60;
 
 async function get(path) { const r = await fetch(API + path); if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`); return r.json(); }
 async function post(path, body) { const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`); return r.json(); }
@@ -131,6 +131,7 @@ async function init() {
   overlay = new deck.MapboxOverlay({ interleaved: true, layers: [] });
   map.addControl(overlay);
   map.on("style.load", addTrafficLayer);
+  map.once("load", () => map.jumpTo({ center: [cfg.junction.lon, cfg.junction.lat], zoom: 17.2, pitch: 58, bearing: -25 }));
   if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; }
   try { buildings = (await get("/buildings")).features; } catch (e) { buildings = null; }
   render();
@@ -148,7 +149,7 @@ async function loadHistory() {
     history = (await get("/data/junction_history?minutes=15")).buckets;
     const dates = [...new Set(history.map(b => b.time.slice(0, 10)))];
     $("date-sel").innerHTML = `<option value="typical">Typical weekday morning</option>` + dates.map(d => `<option value="${d}">${dayLabel(d)}</option>`).join("");
-    $("date-sel").value = dates[dates.length - 1]; fillHours(); $("hour-sel").value = $("hour-sel").lastElementChild.value; updateTimeNote();
+    $("date-sel").value = "typical"; fillHours(); updateTimeNote();
   } catch (e) { $("time-note").textContent = "TomTom history not available; only the typical morning can be simulated."; }
 }
 function fillHours() {
@@ -174,6 +175,80 @@ function updateTimeNote() {
 $("date-sel").onchange = () => { live = false; fillHours(); updateTimeNote(); };
 $("hour-sel").onchange = () => { live = false; updateTimeNote(); };
 
+function addTrafficLayer() {
+  if (!cfg.tomtom_maps_key || map.getSource("tomtom-traffic")) return;
+  map.addSource("tomtom-traffic", { type: "raster", tiles: [TRAFFIC_TILES()], tileSize: 256, attribution: "© TomTom" });
+  map.addLayer({ id: "tomtom-traffic", type: "raster", source: "tomtom-traffic", paint: { "raster-opacity": 0.9 },
+                 layout: { visibility: $("t-traffic").checked ? "visible" : "none" } });
+}
+
+// ---------- geometry helpers ----------
+function box(v) {  // vehicle footprint as a lon/lat rectangle, heading from SUMO's angle (0 = north, clockwise)
+  const [L, W] = SIZE[v.type] || SIZE.car, a = v.angle * Math.PI / 180;
+  const fx = Math.sin(a), fy = Math.cos(a), rx = Math.cos(a), ry = -Math.sin(a);      // forward and right, in metres (east, north)
+  const mLat = 1 / 111320, mLon = 1 / (111320 * Math.cos(v.lat * Math.PI / 180));
+  const z = v.z || 0;
+  return [[+1, +1], [+1, -1], [-1, -1], [-1, +1]].map(([s, t]) => {
+    const dx = s * fx * L / 2 + t * rx * W / 2, dy = s * fy * L / 2 + t * ry * W / 2;
+    return [v.lon + dx * mLon, v.lat + dy * mLat, z];
+  });
+}
+function roadColor(p) {
+  if (p.speed_kmh == null || !p.vehicles) return [160, 160, 160, 90];
+  const r = p.speed_kmh / Math.max(p.limit_kmh, 1);
+  return r >= 0.7 ? [26, 152, 80, 200] : r >= 0.45 ? [253, 174, 97, 220] : [215, 48, 39, 230];
+}
+
+// ---------- rendering ----------
+function currentVehicles() {
+  if (!frames.length) return [];
+  const i = Math.min(Math.floor(pos), frames.length - 1), f = pos - i;
+  const a = frames[i], b = frames[Math.min(i + 1, frames.length - 1)];
+  if (f < 0.02 || a === b) return a.vehicles;
+  const next = new Map(b.vehicles.map(v => [v.id, v]));
+  return a.vehicles.map(v => {        // smooth motion between two one-second frames
+    const n = next.get(v.id); if (!n) return v;
+    let da = ((n.angle - v.angle + 540) % 360) - 180;
+    return { ...v, lon: v.lon + (n.lon - v.lon) * f, lat: v.lat + (n.lat - v.lat) * f, z: v.z + (n.z - v.z) * f, angle: v.angle + da * f, speed: n.speed };
+  });
+}
+function render() {
+  if (!overlay) return;
+  const night = $("t-night").checked;
+  const layers = [];
+  if (buildings && $("t-buildings").checked) layers.push(new deck.PolygonLayer({
+    id: "buildings", data: buildings, extruded: true, wireframe: false, opacity: 0.55,
+    getPolygon: f => f.geometry.type === "Polygon" ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0],
+    getElevation: f => f.properties.render_height_m || 6, getFillColor: night ? [70, 82, 100] : [214, 208, 196], material: { ambient: 0.5, diffuse: 0.6 },
+  }));
+  if (roads && $("t-roads").checked) layers.push(new deck.PathLayer({
+    id: "roads", data: roads, widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
+    getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], f.properties.flyover ? 6.5 : 0.3]),
+    getWidth: f => f.properties.lanes * 3.2, getColor: f => roadColor(f.properties),
+  }));
+  if ($("t-vehicles").checked) layers.push(new deck.PolygonLayer({
+    id: "vehicles", data: currentVehicles(), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
+    getFillColor: v => COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
+    updateTriggers: { getPolygon: pos }, pickable: true,
+    onHover: ({ object }) => { $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h` : ""; },
+  }));
+  overlay.setProps({ layers, effects: [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: night ? 0.7 : 1.1 }),
+    sun: new deck.DirectionalLight({ color: night ? [160, 180, 230] : [255, 250, 240], intensity: night ? 0.9 : 1.6, direction: [-1, -2, -3] }) })] });
+}
+function tick(ts) {
+  if (playing && frames.length) {
+    const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
+    pos += dt * Number($("speed").value);
+    if (pos >= frames.length - 1) { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; }
+    $("scrub").value = Math.floor(pos);
+    const t = frames[Math.floor(pos)].t, clockMin = (clockBase + Math.floor(t / 60)) % 1440;  // run start (window hour, or 08:00 for the typical morning)
+    $("clock").textContent = `${String(Math.floor(clockMin / 60)).padStart(2, "0")}:${String(clockMin % 60).padStart(2, "0")} simulated · ${frames[Math.floor(pos)].vehicles.length} vehicles on the map`;
+    render();
+  } else lastTick = ts;
+  if (orbiting) map.setBearing(map.getBearing() + 0.08);
+  requestAnimationFrame(tick);
+}
+
 // ---------- runs ----------
 async function ensureCase() {
   if (!caseId) caseId = (await post("/cases", { junction_id: "ymca_circle", title: "Should we build a flyover at YMCA Circle?", raised_by: "engineer" })).id;
@@ -191,8 +266,8 @@ async function runVariant(vid, template, params, scale, option) {
     const dup = runs.findIndex(x => x.variant_id === r.variant_id && x.inputs.volume_scale === r.inputs.volume_scale && (x.inputs.window || null) === (r.inputs.window || null));
     if (dup >= 0) runs[dup] = r; else runs.push(r);   // one row per option; a re-run replaces it
     showResults();
+    $("status").textContent = `${r.label}: simulated in ${r.wall_seconds ?? "?"} s, now playing`;
     await play(r);
-    $("status").textContent = `${label}: done in ${r.wall_seconds ?? "?"} s`;
   } catch (e) { $("status").innerHTML = `<span class="bad">${e.message.slice(0, 200)}</span>`; }
   btns.forEach(b => $(b).disabled = false);
 }
@@ -209,11 +284,13 @@ function showResults() {
           Object.keys(r.tomtom_window).map(d => `${d.toUpperCase()} ${r.approach_delay_s?.[d] ?? "–"} s vs TomTom ${r.tomtom_window[d].delay_s} s`).join(" · ") + `</small></td></tr>` : "");
   }).join("");
   const last = runs[runs.length - 1];
-  const cal = last.approach_speed_kmh ? `<small>Speeds on the roads into the circle, simulated vs TomTom 09:00: ` +
-    Object.keys(last.approach_speed_kmh).map(d => `${d.toUpperCase()} ${last.approach_speed_kmh[d]} / ${last.tomtom_speed_kmh[d]}`).join(" · ") + ` km/h</small>` : "";
+  const tw = last.tomtom_window, refOf = d => tw ? tw[d]?.speed_kmh : last.tomtom_speed_kmh[d];
+  const cal = last.approach_speed_kmh ? `<small>Speeds on the roads into the circle, simulated vs TomTom ${tw ? "in that window" : "July 09:00"}: ` +
+    Object.keys(last.approach_speed_kmh).map(d => `${d.toUpperCase()} ${last.approach_speed_kmh[d]} / ${refOf(d) ?? "–"}`).join(" · ") + ` km/h</small>` : "";
   $("results").innerHTML = `<table><tr><th>Option</th><th>Delay at circle</th><th>Longest queue</th><th>Trip time</th><th>Knock-on at next junctions</th><th></th></tr>${rows}</table>${cal}`;
 }
 async function play(r) {
+  const w = r.inputs && r.inputs.window; clockBase = w ? Number(w.slice(11, 13)) * 60 + Number(w.slice(14, 16)) : 8 * 60;
   frames = []; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true;
   try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; }
   render();
@@ -300,7 +377,7 @@ $("scrub").oninput = e => { pos = Number(e.target.value); render(); };
 ["t-roads", "t-buildings", "t-vehicles"].forEach(id => $(id).onchange = render);
 $("t-traffic").onchange = e => map.getLayer("tomtom-traffic") && map.setLayoutProperty("tomtom-traffic", "visibility", e.target.checked ? "visible" : "none");
 $("t-night").onchange = e => { if (cfg.tomtom_maps_key) map.setStyle(STYLE(e.target.checked)); render(); };
-$("recenter").onclick = () => map.easeTo({ center: [cfg.junction.lon, cfg.junction.lat], zoom: 16.6, pitch: 58, bearing: -25 });
+$("recenter").onclick = () => map.easeTo({ center: [cfg.junction.lon, cfg.junction.lat], zoom: 17.2, pitch: 58, bearing: -25 });
 $("orbit").onclick = () => { orbiting = !orbiting; $("orbit").textContent = orbiting ? "Stop orbit" : "Orbit"; };
 init();
 </script>
