@@ -9,7 +9,7 @@ from its own geometry every ~700 m, skipping points on or near the corridor's fl
 the road underneath).
 
 Usage (repo root; uses the key named in KEY_ENV from .env):
-    python3 data/tomtom/corridor_hourly.py build      # writes data/tomtom/corridor/hourly.request.json
+    python3 data/tomtom/corridor_hourly.py build [--tag=2]   # --tag=2: the second job, 24-31 July
     python3 data/tomtom/corridor_hourly.py submit     # creates the job ONCE (account limit 20), saves its id
     python3 data/tomtom/corridor_hourly.py status
     python3 data/tomtom/corridor_hourly.py download   # saves data/tomtom/corridor/<jobId>.json when DONE
@@ -19,8 +19,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = ROOT / "data/tomtom/corridor"
-REQUEST = HERE / "hourly.request.json"
-JOB = HERE / "hourly_job.json"
+# job 1 (tag ""): July + each day 1-23 July; job 2 (tag "2"): each day 24-31 July (TomTom allows 24 date ranges per job)
+TAG = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--tag=")), "")
+DAYS_COVERED = {"": (True, range(1, 24)), "2": (False, range(24, 32))}[TAG]
+REQUEST = HERE / f"hourly{TAG}.request.json"
+JOB = HERE / f"hourly{TAG}_job.json"
 SOURCE_JOB = HERE / "10051304.json"
 API = "https://api.tomtom.com/traffic/trafficstats"
 DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
@@ -65,13 +68,13 @@ def build():
             via.append({"latitude": round(b[0], 6), "longitude": round(b[1], 6)})
             run = 0.0
     body = {
-        "jobName": "CityRehearsal Lingampally to Lakdikapul hourly, July 2026",
+        "jobName": "CityRehearsal Lingampally to Lakdikapul hourly, July 2026" + (f" (part {TAG})" if TAG else ""),
         "distanceUnit": "KILOMETERS", "acceptMode": "AUTO",
         "routes": [{"name": "lin to lak hourly", "start": {"latitude": shape[0][0], "longitude": shape[0][1]},
                     "via": via, "end": {"latitude": shape[-1][0], "longitude": shape[-1][1]},
                     "fullTraversal": False, "zoneId": "Asia/Kolkata", "probeSource": "ALL"}],
-        "dateRanges": [{"name": "July 2026", "from": "2026-07-01", "to": "2026-07-31"}] +
-                      [{"name": f"2026-07-{d:02d}", "from": f"2026-07-{d:02d}", "to": f"2026-07-{d:02d}"} for d in range(1, 24)],
+        "dateRanges": ([{"name": "July 2026", "from": "2026-07-01", "to": "2026-07-31"}] if DAYS_COVERED[0] else []) +
+                      [{"name": f"2026-07-{d:02d}", "from": f"2026-07-{d:02d}", "to": f"2026-07-{d:02d}"} for d in DAYS_COVERED[1]],
         # time sets may not overlap (TomTom rejects that), so no 06:00-23:00 set: 24 one-hour sets cover the whole day
         "timeSets": [{"name": f"{h:02d}:00-{h + 1:02d}:00", "timeGroups": [{"days": DAYS, "times": [f"{h:02d}:00-{h + 1:02d}:00"]}]}
                      for h in range(24)],
@@ -112,5 +115,5 @@ def download():
 
 
 if __name__ == "__main__":
-    cmd = sys.argv[1] if len(sys.argv) > 1 else "status"
+    cmd = next((a for a in sys.argv[1:] if not a.startswith("--")), "status")
     r = {"build": build, "submit": submit, "status": lambda: print(status()), "download": download}[cmd]()
