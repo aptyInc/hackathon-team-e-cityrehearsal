@@ -92,7 +92,7 @@ is tagged **REAL** or **SIMULATED**. Full list with files: [data/README.md](data
 | Maitra et al. 2004 (Gariahat) | Volumes, turns, before/after delays for the backtest | counted; after-flyover delays are the study's model |
 | OpenStreetMap | Road network (lanes, speed limits, junctions) | counted; defaults where missing are assumed |
 | Overture Maps | Building footprints for the 3D view | footprints measured; heights mostly assumed |
-| Open-Meteo | Rain, July 2026 (rain adds about 5% while raining, low confidence; `data/rain/README.md`) | measured (weather model) |
+| Open-Meteo | Rain, July 2026, hour by hour (about +3% in a rainy hour, 4-8% when rain persists (estimated, low-moderate confidence); the corridor's Weather what-if; `data/rain/README.md`) | measured (weather model) |
 | Our own settings | Car/auto split, driver following gaps | assumed |
 
 ## Workstreams
