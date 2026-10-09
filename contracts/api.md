@@ -55,3 +55,12 @@ Added 9 Oct 17:50 (fields added only):
 
 Corridor case stages: `proposed → in_review → decided`. Append-only; each event's fingerprint = SHA-256 over its body, the evidence fingerprints and the previous event's fingerprint.
 Optional mock: `CR_MOCK_SYNTH=1` makes POST /corridor/runs (MOCK_SIM=1) return illustrative numbers shaped like the request (`variant_id` e.g. `signal_retime_j07`, `inputs.label: "assumed"`, a `MOCK_SIM` warning) instead of the fixed sample when the request differs from it.
+
+Added 9 Oct 20:20 (fields added only):
+- GET /corridor/cases rows also return `decision` (approve/reject/revise or null; latest decision) and `decided_at` (epoch seconds or null).
+- GET /corridor/cases/{case_id}: `runs[].volume_scale` is the level the run was asked for (review re-runs at 1.2 show 1.2, also in mock mode).
+- GET /corridor/calibration also returns `tomtom_basis` (one-line explanation) and `tomtom_basis_detail: {simulated_route_km, calibration_tomtom_min, tomtom_route_km, tomtom_route_min, tomtom_period, data_label}`.
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| GET | /corridor/cases/{case_id}/verify | – | `{case_id, ok, events: [{seq, kind, fingerprint, recomputed, matches, prev_ok}], evidence: [{id (run_id or "brief:<id>"), recorded, recomputed, matches}], method}` (SHA-256 recomputed server-side) |
