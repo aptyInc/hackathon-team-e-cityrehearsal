@@ -66,7 +66,7 @@
   const label = s => STATES[s] || STATES.checking;
   nav.innerHTML =
     `<div class="crn-top"><a class="crn-brand" href="index.html" title="CityRehearsal: home"><span class="crn-mark" aria-hidden="true"></span>CityRehearsal</a>` +
-    `<span class="crn-pill crn-pill-sm" data-state="checking" role="status" aria-live="polite"></span></div>` +
+    `<span class="crn-pill" data-state="checking" role="status" aria-live="polite"></span></div>` +
     `<nav class="crn-links" aria-label="Pages">` +
     PAGES.map(([id, href, long, short]) => `<a href="${href}" data-page="${id}"${id === active ? ' aria-current="page"' : ""}>` +
       `<span class="crn-long">${long}</span><span class="crn-short">${short}</span></a>`).join("") +
@@ -91,6 +91,7 @@
   const state = { api: API, state: "checking", onChange(fn) { listeners.push(fn); if (this.state !== "checking") fn(this.state); } };
   window.crNav = state;
   function show(s) {
+    if (s === state.state && pill.childNodes.length) return;   // unchanged: no re-render (the pill is a polite live region)
     const [long, short, tip] = label(s);
     pill.dataset.state = s;
     pill.innerHTML = `<span class="crn-long">${long}</span><span class="crn-short">${short}</span>`;
