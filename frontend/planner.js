@@ -390,8 +390,12 @@ window.planner = (() => {
   $("ask-open").onclick = () => openChat($("chat").hidden);
   $("chat-close").onclick = () => openChat(false);
   $("chat-new").onclick = newChat;
-  $("chat-sugg").innerHTML = SUGGESTIONS.map(s => `<button class="sugg">${esc(s)}</button>`).join("");
-  $("chat-sugg").querySelectorAll("button").forEach(b => b.onclick = () => ask(b.textContent));
+  function drawSugg(list) {
+    $("chat-sugg").innerHTML = list.map(s => `<button class="sugg">${esc(plain(s))}</button>`).join("");
+    $("chat-sugg").querySelectorAll("button").forEach(b => b.onclick = () => ask(b.textContent));
+  }
+  drawSugg(SUGGESTIONS);   // until GET /agent/suggestions answers with the advisor's questions
+  get("/agent/suggestions").then(x => { const q = (x?.questions || []).filter(s => typeof s === "string" && s.trim()); if (q.length) drawSugg(q.slice(0, 5)); }).catch(() => { /* keep the defaults */ });
   $("chat-form").onsubmit = e => { e.preventDefault(); ask($("chat-in").value); };
   $("chat-in").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); ask($("chat-in").value); } };
   $("brief-close").onclick = closeBrief;

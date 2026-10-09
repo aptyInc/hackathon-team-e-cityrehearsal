@@ -151,6 +151,17 @@
   #weather-ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--tx-3); }
   #weather-ticks span { cursor: pointer; flex: 1; text-align: center; } #weather-ticks span:first-child { text-align: left; } #weather-ticks span:last-child { text-align: right; }
   #weather-ticks span.on { color: var(--tx); font-weight: 600; }
+  /* reported water-logging: droplets on the map, the sentence under the weather slider */
+  .drop { width: 18px; height: 18px; color: var(--c, #fcbf26); filter: drop-shadow(0 1px 3px rgba(0,0,0,.8)); cursor: help; }
+  .drop svg { width: 18px; height: 18px; display: block; }
+  #wl-note { margin: 6px 0 2px; font-size: 12px; }
+  /* junction advisor */
+  #advise { height: 32px; padding: 0 12px; font-size: 12px; flex: none; border-color: var(--sim-line); color: var(--tx); }
+  #advice { margin: 6px 0; font-size: 12px; }
+  #advice table.adv td, #advice table.adv th { font-size: 11px; padding: 3px 3px; }
+  #advice table.adv td.n, #advice table.adv th.n { text-align: right; white-space: nowrap; font-family: var(--mono); }
+  #advice .adv-show { height: 24px; padding: 0 8px; font-size: 11px; }
+  #advice ul { margin: 6px 0 2px; padding-left: 16px; }
   /* right: live junctions accordion */
   #live .lj { padding: 0; }
   #live .lj .hd { width: 100%; height: auto; min-height: 34px; padding: 6px 9px; border: 0; border-radius: 10px; background: transparent; color: var(--tx); font: 600 12px var(--f);
@@ -401,7 +412,9 @@
   <small id="run-note" class="muted"></small>
 
   <h2>Simulated <span class="tag sim">simulated data</span></h2>
-  <div class="row"><select id="iv-j" style="flex:1 1 auto;min-width:0" aria-label="Junction"></select></div>
+  <div class="row"><select id="iv-j" style="flex:1 1 0;min-width:0" aria-label="Junction"></select>
+    <button id="advise" class="ghost" title="What should we do at this junction? Terascope AI's ranked options (pre-computed, or run now)">✦ Advise me</button></div>
+  <div id="advice" class="note" hidden></div>
   <div id="iv-kinds" class="chips" role="group" aria-label="Modification">
     <button data-kind="flyover" aria-pressed="true">Flyover</button>
     <button data-kind="underpass" aria-pressed="false">Underpass</button>
@@ -431,6 +444,7 @@
     <input type="range" id="weather" min="0" max="3" step="1" value="1" aria-label="Weather, from dry to heavy rain" />
     <div id="weather-ticks"></div>
     <small id="weather-note" class="muted"></small>
+    <div id="wl-note" class="note" hidden></div>
   </div>
 
   <h2>Junctions <span class="tag sim">simulated</span></h2>
@@ -722,7 +736,7 @@ async function init() {
   if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; $("t-night").parentElement.title = "Needs the map key"; }
   $("traffic-note").textContent = hasKey ? "Live traffic: live speeds on every road (real data): green flowing, orange slow, red queuing." : "The live traffic layer needs the map key (in .env).";
   bldNote();
-  addMarkers();
+  addMarkers(); renderWl(wxAt());
   overview(false);
   map.once("load", () => overview(false));
   startLive();
@@ -947,7 +961,7 @@ function wxInput() {   // while sliding: the name and what it means
   const w = wxAt();
   $("weather-val").textContent = wxName(w);
   $("weather-ticks").querySelectorAll("span").forEach(el => el.classList.toggle("on", Number(el.dataset.i) === Number($("weather").value)));
-  updateWeatherNote(w);
+  updateWeatherNote(w); renderWl(w);
 }
 function wxCommit() {   // let go: the simulation on screen runs again in that weather
   const w = wxAt(); if (w === pickWeather) return;
@@ -955,6 +969,50 @@ function wxCommit() {   // let go: the simulation on screen runs again in that w
 }
 $("weather").oninput = wxInput;
 $("weather").onchange = wxCommit;
+// Reported water-logging points (GET /weather/factors waterlogging): reported in public sources, not measured by us. Under the
+// slider: where a light or heavy rain what-if expects longer queues; on the map: a droplet per point, coloured by severity.
+const WL_RGB = { high: "#e23d27", medium: "#f58832", low: "#fcbf26" };
+const DROP_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="#1c1c1c" stroke-width="1.5" d="M12 2.5s6.5 7 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 9.5 12 2.5 12 2.5z"/></svg>';
+let wlMarkers = [];
+const wlData = () => wxFactors?.waterlogging || null;
+const joinNames = a => a.length > 1 ? `${a.slice(0, -1).join(", ")} and ${a[a.length - 1]}` : a[0] || "";
+function wlPoints(w) {   // the reported points that flood in this rain setting
+  const wl = wlData(), names = wl?.by_what_if?.[w];
+  return w && w !== "dry" && Array.isArray(names) && Array.isArray(wl.points) ? wl.points.filter(q => names.includes(q.short)) : [];
+}
+function renderWl(w) {
+  const el = $("wl-note"), pts = wlPoints(w);
+  el.hidden = !pts.length;
+  el.innerHTML = pts.length ? `<b>${esc(wxName(w))}:</b> expect longer queues at ${esc(joinNames([...new Set(pts.map(q => q.short))]))} (reported water-logging points) ` +
+    `<span class="tag est" title="${esc(plain(wlData()?.what_this_is || ""))}">reported, not measured by us</span>` : "";
+  wlMarkers.forEach(m => m.remove()); wlMarkers = [];
+  if (!map) return;
+  for (const q of pts) {
+    const j = point(q.junction_id), exact = q.lon != null && q.lat != null, lon = exact ? q.lon : j?.lon, lat = exact ? q.lat : j?.lat;
+    if (lon == null || lat == null) continue;
+    const d = document.createElement("div");
+    d.className = "drop"; d.dataset.jid = q.junction_id; d.dataset.sev = q.severity || "low"; d.style.setProperty("--c", WL_RGB[q.severity] || WL_RGB.low); d.innerHTML = DROP_SVG;
+    d.title = `${q.short}${q.spot ? ` · ${q.spot}` : ""}: water-logging reported (${q.severity || "low"}), not measured by us. ${plain(q.what_reported || "")}`;
+    wlMarkers.push(new maplibregl.Marker({ element: d, offset: exact ? [0, -6] : [15, 12] }).setLngLat([lon, lat]).addTo(map));
+  }
+}
+let wxRef = null;   // the latest run of today's roads as measured (no rain what-if): what a rain run is compared with
+function rainStory(r) {   // a rain run vs as measured: trip and the stretches that slowed (leg times) and the queues that grew (max_queue_m)
+  const ref = wxRef, w = runWeather(r);
+  if (!r || !ref || !w || w === "dry" || (r.interventions || []).length || r.sample) return "";
+  const legs = r.journey.legs.map((l, i) => { const o = ref.journey.legs.find(x => x.from_id === l.from_id && x.to_id === l.to_id) || ref.journey.legs[i]; return { l, d: l.time_s - (o?.time_s ?? l.time_s) }; })
+    .filter(x => x.d >= 30).sort((a, b) => b.d - a.d).slice(0, 3);
+  const qs = (r.junctions || []).map(j => { const o = (ref.junctions || []).find(x => x.id === j.id); return o ? { j, o, d: j.max_queue_m - o.max_queue_m } : null; })
+    .filter(x => x && x.d >= 30).sort((a, b) => b.d - a.d).slice(0, 3);
+  return `<br>Rain vs as measured: trip <b>${signed(mins(r.journey.total_s - ref.journey.total_s))} min</b> (${mins(r.journey.total_s).toFixed(1)} vs ${mins(ref.journey.total_s).toFixed(1)})` +
+    (legs.length ? `; slower stretches: ${legs.map(x => `${esc(short(x.l.from_name || point(x.l.from_id)?.name))} → ${esc(short(x.l.to_name || point(x.l.to_id)?.name))} ${signed(mins(x.d))} min`).join(", ")}` : "") +
+    (qs.length ? `; longer queues: ${qs.map(x => `${esc(short(point(x.j.id)?.name || x.j.name))} ${x.o.max_queue_m} → ${x.j.max_queue_m} m`).join(", ")}` : "") + ` <span class="tag sim">SIMULATED</span>`;
+}
+function wlResultLine(r) {   // after a rain run: the reported points the simulation slowed (inputs.weather.affected_junctions / waterlogging[])
+  const iw = r?.inputs?.weather, wls = Array.isArray(iw?.waterlogging) ? iw.waterlogging : [], aff = Array.isArray(iw?.affected_junctions) ? iw.affected_junctions : [];
+  const names = [...new Set((aff.length ? aff : wls.map(x => x.junction_name || x.name)).map(short))];
+  return names.length ? `<br>Water-logging: slower lanes around ${esc(joinNames(names))} <span class="tag est">reported, not measured by us</span>` : "";
+}
 async function loadWxFactors() {
   if (!apiUp) return;
   try { wxFactors = await get("/weather/factors"); } catch (e) { wxFactors = null; }   // the saved numbers stand in
@@ -1311,7 +1369,7 @@ function showNanalButton() { $("iv-nanal").hidden = !NANAL_PAIR.includes($("iv-j
 function syncKindChips() { document.querySelectorAll("#iv-kinds button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.kind === $("iv-kind").value))); }
 $("iv-kind").onchange = () => { fillParams(); syncPicker(); syncKindChips(); };
 document.querySelectorAll("#iv-kinds button").forEach(b => b.onclick = () => { if (b.disabled) return; $("iv-kind").value = b.dataset.kind; $("iv-kind").onchange(); });
-$("iv-j").onchange = () => { selected = $("iv-j").value; updateMarkers(); syncPicker(); };
+$("iv-j").onchange = () => { selected = $("iv-j").value; updateMarkers(); syncPicker(); if (!advBusy) $("advice").hidden = true; };
 function sortIvs() { interventions.sort((a, b) => points.findIndex(p => p.id === a.junction_id) - points.findIndex(p => p.id === b.junction_id)); }
 const MERGE_NOTE = "Nanal Nagar and Rethibowli are only about 420 m apart, so one 1.2 km flyover over both replaces two separate flyovers.";
 function addIv(iv) {   // one of each kind per junction; adding again updates it. Returns a note to show, or "".
@@ -1345,6 +1403,58 @@ function renderIvs() {
     : `<small class="muted">No changes yet: today's roads.</small>`;
   $("iv-list").querySelectorAll("button").forEach(b => b.onclick = () => { interventions.splice(Number(b.dataset.i), 1); setMergeNote(""); ivsChanged(); });
 }
+
+// ---------- junction advisor: GET /agent/advice/{jid} (pre-computed), else POST /agent/advise/{jid}?async=1 and poll GET /agent/advice/id/{id} ----------
+let advBusy = false, advTimer = null;
+const ADV_POLL_MS = window.ADV_POLL_MS || 2000;
+const advReady = x => !!(x && x.advice && !["running", "queued", "pending"].includes(x.status));
+function adviceHtml(row, jid) {
+  const a = row.advice, opts = (a.options || []).filter(o => o.applicable !== false), m = x => x == null ? "–" : signed(Number(x));
+  return `<div class="adv-hd"><b>${esc(plain(a.headline || a.verdict || "Advice"))}</b> <span class="tag sim">SIMULATED</span>` +
+    `${row.stale ? ' <span class="tag sample" title="The model changed since this advice was worked out">STALE</span>' : ""}</div>` +
+    (opts.length ? `<table class="adv"><tr><th>#</th><th>Option</th><th class="n">Trip min</th><th>Beyond noise?</th><th class="n">Rain</th><th class="n">110%</th><th>Cost</th><th></th></tr>` +
+      opts.map(o => `<tr data-kind="${esc(o.kind)}"><td>${esc(o.rank ?? "")}</td><td>${esc(ivText({ kind: o.kind, params: o.params || {}, junction_id: jid }))}</td>` +
+        `<td class="n"><b class="${o.trip_change_min < 0 ? "ok" : o.trip_change_min > 0 ? "bad" : ""}">${m(o.trip_change_min)}</b></td>` +
+        `<td>${o.beyond_noise ? "yes" : `no${o.noise_min != null ? ` (±${Number(o.noise_min).toFixed(1)})` : ""}`}</td>` +
+        `<td class="n">${m(o.rain_change_min)}</td><td class="n">${m(o.at_110_change_min)}</td><td>${esc(o.cost_class || "–")}</td>` +
+        `<td>${o.run_id ? `<button class="ghost adv-show" data-run="${esc(o.run_id)}">Show on map</button>` : ""}</td></tr>`).join("") + `</table>` : "") +
+    ((a.reasons || []).length ? `<ul>${a.reasons.map(x => `<li>${esc(plain(x))}</li>`).join("")}</ul>` : "") +
+    ((a.caveats || []).length ? `<small class="muted">${a.caveats.map(x => esc(plain(x))).join(" ")}</small>` : "");
+}
+function showAdvice(row, jid) {
+  const box = $("advice"); box.hidden = false;
+  box.innerHTML = adviceHtml(row, jid);
+  const sib = [row.advice?.baseline?.run_id, ...(row.run_ids || [])].filter(Boolean);
+  box.querySelectorAll(".adv-show").forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await planner.loadRun(b.dataset.run, sib); } catch (e) { $("run-note").innerHTML = `<span class="bad">Could not load run ${esc(b.dataset.run)}: ${esc(String(e.detail || e.message).slice(0, 160))}</span>`; }
+    finally { b.disabled = false; }
+  });
+}
+async function advise() {
+  const jid = $("iv-j").value, nm = short(point(jid)?.name), box = $("advice");
+  if (advBusy) return;
+  box.hidden = false; box.innerHTML = `<span class="spin"></span>Looking up advice for ${esc(nm)}…`;
+  const fail = e => { box.innerHTML = `<span class="bad">Advice ${e.status ? `failed (HTTP ${e.status})` : "unavailable"}: ${esc(String(e.detail || e.message).slice(0, 200))}</span>`; };
+  let row = null;
+  try { row = await get(`/agent/advice/${encodeURIComponent(jid)}`); } catch (e) { if (e.status !== 404) return fail(e); }   // 404: none yet
+  if (advReady(row)) return showAdvice(row, jid);
+  advBusy = true; $("advise").disabled = true;
+  const t0 = Date.now(), tick = () => { box.innerHTML = `<span class="spin"></span>Terascope AI is testing options at ${esc(nm)} (several simulations; this can take a few minutes) · <b id="adv-el">${clock((Date.now() - t0) / 1000)}</b>`; };
+  tick(); advTimer = setInterval(tick, 1000);
+  try {
+    let id = row && !["done", "failed"].includes(row.status) ? row.advice_id : null;
+    if (!id) { const a = await post(`/agent/advise/${encodeURIComponent(jid)}?async=1`, {}); if (advReady(a)) row = a; id = a.advice_id; }
+    while (!advReady(row)) {
+      await new Promise(r => setTimeout(r, ADV_POLL_MS));
+      row = await get(`/agent/advice/id/${encodeURIComponent(id)}`);
+      if (row?.status === "failed") throw new HttpError(500, row.error || "the advisor failed", row.error || "the advisor failed");
+    }
+    clearInterval(advTimer); showAdvice(row, jid);
+  } catch (e) { clearInterval(advTimer); fail(e); }
+  finally { advBusy = false; $("advise").disabled = false; clearInterval(advTimer); }
+}
+$("advise").onclick = advise;
 
 // ---------- quick demos ----------
 Object.keys(PRESETS).forEach(id => $(id).onclick = () => {
@@ -1383,13 +1493,14 @@ async function simulate(withChanges) {
     if (withChanges) jobs.push(corridorRun(ivs).then(r => { r._ivs = ivKey(ivs); changed = r; }));
     await Promise.all(jobs);
     const r = withChanges ? changed : base, took = (Date.now() - t0) / 1000;
+    if (base && !runWeather(base) && !base.sample) wxRef = base;
     setRunning(false);
     showSource();
     renderJourney(); renderJunctions(); renderWatch(); render();
     $("status").textContent = `Corridor, ${what}: simulated${r.sample ? " (sample data)" : ""}${took >= 3 ? ` in ${clock(took)}` : ""}, now playing`;
     const odd = r._fallback && withChanges && !(ivs.length === 1 && ivs[0].junction_id === "j07" && ivs[0].kind === "flyover");
     $("run-note").innerHTML = `Simulated window: ${esc(plain(r.time?.label || "calibrated peak"))} · traffic input: <b>${esc(plain(r.inputs?.label || "–"))}</b>${r.inputs?.counts_source && r.inputs.counts_source !== r.inputs?.label ? ` (${esc(plain(r.inputs.counts_source))})` : ""}` +
-      wxResultLine(r) + (odd ? `<br><span class="mid">The sample always shows a flyover at 7 · Tolichowki, whatever you chose.</span>` : "");
+      wxResultLine(r) + wlResultLine(r) + rainStory(base) + (odd ? `<br><span class="mid">The sample always shows a flyover at 7 · Tolichowki, whatever you chose.</span>` : "");
     winPick = null; play(r);   // loads in the background; the panel stays usable
   } catch (e) {
     setRunning(false);
