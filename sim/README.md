@@ -23,7 +23,7 @@ calibrated traffic, 0.8 is the reviewer's 20%-less test.
 | **Runner** (C3 in → C2 + C1 out) | `runner.py` | Builds the option's network and traffic, runs SUMO, measures delay/queues per zone and the approach speeds vs TomTom, writes frames. Wired into the backend for `MOCK_SIM=0` |
 | Flyover option | `templates/flyover.py` | East–west flyover from C3 params; design check flags the 3→2 lane drop at both landings |
 | Other options | — | `signal_retime`, `junction_redesign`, `bus_lane`, `widening` not built yet (runner returns 501 for them) |
-| Gariahat backtest | `networks/gariahat_after.net.xml`, `gariahat_before.net.xml`, `scripts/build_gariahat.sh` | Networks with and without the flyover; the 2004 study's volumes and turns are in `data/gariahat/`; traffic not built yet |
+| Gariahat backtest | `gariahat/backtest.py`, `gariahat/results.json`, `gariahat/README.md` | Before/after the flyover with the 2004 study's counted volumes on a purpose-built 13-node network: Gariahat delay −59% (study −75%); Phari gets slower in the same direction as the study but by less, unless the flyover attracts ~15% more traffic. See `gariahat/README.md` |
 
 ## Calibration (what "today's traffic" means)
 Two TomTom yardsticks exist for the last 240 m of each road into the circle, and they disagree with each other by
