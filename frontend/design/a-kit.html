@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design system · Control room (A)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="a.css">
+<style>
+  body { background: radial-gradient(60% 40% at 80% 0%, rgba(167,139,250,.12), transparent 70%), var(--bg); }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 12px 24px 48px; }
+  h1 { font-size: 30px; letter-spacing: -.04em; margin: 28px 0 4px; font-weight: 600; }
+  .lead { color: var(--tx-2); margin: 0 0 24px; }
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+  .box { padding: 16px; }
+  .c4 { grid-column: span 4; } .c6 { grid-column: span 6; } .c8 { grid-column: span 8; } .c12 { grid-column: span 12; } .c3 { grid-column: span 3; }
+  .ttl { font: 600 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tx-3); margin: 0 0 12px; }
+  .sw { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .swatch { border-radius: 10px; height: 54px; border: 1px solid var(--line); position: relative; }
+  .swatch span { position: absolute; left: 8px; bottom: 6px; font: 500 10px var(--mono); color: rgba(255,255,255,.85); text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .typo div { display: flex; align-items: baseline; gap: 14px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+  .typo small { width: 90px; color: var(--tx-3); font: 500 10.5px var(--mono); flex: none; }
+  .dialog-demo { position: relative; height: 290px; border-radius: 14px; overflow: hidden; background: linear-gradient(135deg, #0d1320, #07090d); border: 1px solid var(--line); }
+  .dialog-demo .scrim { position: absolute; }
+  @media (max-width: 760px) { .c3, .c4, .c6, .c8 { grid-column: span 12; } .tabs, .crumb, .ask .t, .ask .kbd { display: none !important; } .ask { min-width: 0; } .wrap { padding: 8px 12px 32px; } .sw { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav glass">
+    <div class="logo"><span class="mk"><i></i></span>CityRehearsal <span class="crumb">/ Design system</span></div>
+    <div class="tabs"><a href="a-home.html">Overview</a><a href="a-corridor.html">Corridor</a><a href="#">YMCA close-up</a><a href="#">Decisions</a><a href="#">Data</a></div>
+    <div class="sp"></div>
+    <div class="seg-sw"><button class="on"><span class="dot pulse"></span>Live now</button><button>July typical day</button></div>
+    <button class="btn ask"><i data-lucide="sparkles"></i><span class="t">Ask CityRehearsal…</span><span class="kbd">⌘K</span></button>
+  </nav>
+  <h1>Control room · components</h1>
+  <p class="lead">One token file (<span class="mono">a.css</span>), Geist + Geist Mono, Lucide icons. Cyan is always measured, violet is always simulated, magenta is a simulated change.</p>
+
+  <div class="grid">
+    <section class="glass box c6"><p class="ttl">Colour tokens</p>
+      <div class="sw">
+        <div class="swatch" style="background:var(--bg)"><span>--bg #07090d</span></div>
+        <div class="swatch" style="background:var(--glass);backdrop-filter:var(--blur)"><span>--glass</span></div>
+        <div class="swatch" style="background:var(--brand)"><span>--brand</span></div>
+        <div class="swatch" style="background:var(--tx)"><span style="color:#07090d;text-shadow:none">--tx</span></div>
+        <div class="swatch" style="background:var(--real)"><span>--real (TomTom)</span></div>
+        <div class="swatch" style="background:var(--sim)"><span>--sim (model)</span></div>
+        <div class="swatch" style="background:var(--chg)"><span>--chg (with change)</span></div>
+        <div class="swatch" style="background:var(--warn)"><span>--warn / estimated</span></div>
+        <div class="swatch" style="background:var(--good)"><span>--good (faster)</span></div>
+        <div class="swatch" style="background:var(--bad)"><span>--bad (slower)</span></div>
+        <div class="swatch" style="background:linear-gradient(90deg,var(--fast) 33%,var(--mid) 33% 66%,var(--slow) 66%)"><span>map speed ramp</span></div>
+        <div class="swatch" style="background:linear-gradient(90deg,#fb923c 25%,#60a5fa 25% 50%,#facc15 50% 75%,#34d399 75%)"><span>2W · car · auto · bus</span></div>
+      </div>
+    </section>
+    <section class="glass box c6"><p class="ttl">Type</p>
+      <div class="typo">
+        <div><small>display 54/600</small><span style="font-size:40px;font-weight:600;letter-spacing:-.045em;line-height:1">Rehearse the city</span></div>
+        <div><small>metric mono</small><span class="mono" style="font-size:40px;font-weight:600;letter-spacing:-.05em">58.2<span style="font-size:14px;color:var(--tx-3)"> min</span></span></div>
+        <div><small>title 16/600</small><span style="font-size:16px;font-weight:600">Rethibowli jn</span></div>
+        <div><small>body 13/400</small><span>Delay is measured by TomTom probe vehicles, every 60 s.</span></div>
+        <div><small>label mono</small><span class="ph" style="margin:0">01 When</span></div>
+      </div>
+    </section>
+
+    <section class="glass box c4"><p class="ttl">Tags (data provenance)</p>
+      <div class="row"><span class="tag real">real</span><span class="tag real">live</span><span class="tag est">estimated</span><span class="tag sim">sim</span><span class="tag chg">with change</span><span class="tag sim">± 0.9 min</span></div>
+      <p class="muted" style="font-size:12px;margin:12px 0 0">Every number on screen carries one. Never colour-only: the word is always present.</p>
+    </section>
+    <section class="glass box c4"><p class="ttl">Buttons</p>
+      <div class="row"><button class="btn primary"><i data-lucide="flask-conical"></i>Simulate with changes</button><button class="btn"><i data-lucide="play"></i>Simulate today</button></div>
+      <div class="row" style="margin-top:8px"><button class="btn ghost">Cancel</button><button class="btn sm">Small</button><button class="btn icon"><i data-lucide="layers"></i></button><button class="btn" disabled style="opacity:.45">Disabled</button></div>
+    </section>
+    <section class="glass box c4"><p class="ttl">Mode switch · chips · toggle</p>
+      <div class="seg-sw"><button class="on"><span class="dot pulse"></span>Live now</button><button>July typical day</button></div>
+      <div class="chips" style="margin-top:10px"><button class="chip on"><i data-lucide="git-merge"></i>Flyover</button><button class="chip"><i data-lucide="timer"></i>Signal retime</button><button class="chip"><i data-lucide="bus"></i>Bus lane</button></div>
+    </section>
+
+    <section class="glass box c4"><p class="ttl">Day + hour picker · minute slider</p>
+      <div class="row" style="margin-bottom:10px;flex-wrap:nowrap"><div class="field" style="flex:1"><i data-lucide="calendar"></i><span class="v">Mon 6 Jul</span><i data-lucide="chevron-down"></i></div><div class="field" style="width:96px"><i data-lucide="clock"></i><span class="v mono">18:00</span></div></div>
+      <div class="hours" id="hours"></div>
+      <div class="hx"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+      <div class="row" style="margin-top:12px;flex-wrap:nowrap"><span class="muted mono" style="font-size:11px;width:30px">:42</span><div class="slider" style="flex:1"><div class="tr"></div><div class="fl" style="width:70%"></div><div class="th" style="left:70%"></div></div></div>
+    </section>
+    <section class="glass box c4"><p class="ttl">Stat tiles</p>
+      <div class="stats">
+        <div class="stat"><div class="k">Delay now</div><div class="v bad">168<small>s</small></div><div class="s"><span class="tag real">live</span></div></div>
+        <div class="stat"><div class="k">Model</div><div class="v">55.4<small>min</small></div><div class="s"><span class="tag sim">sim</span></div></div>
+        <div class="stat"><div class="k">With change</div><div class="v good">−2.1<small>min</small></div><div class="s"><span class="tag chg">± 0.9</span></div></div>
+      </div>
+      <div class="toast" style="margin-top:12px"><i data-lucide="loader" style="color:var(--sim)"></i><div style="flex:1"><b style="font-weight:500">Running SUMO…</b><div class="progress" style="margin-top:6px"><i></i></div></div><span class="muted mono" style="font-size:11px">0:42</span></div>
+    </section>
+    <section class="glass box c4"><p class="ttl">Data table</p>
+      <table class="t"><thead><tr><th>#</th><th>Junction</th><th>Delay</th><th>Usual</th><th>Queue</th></tr></thead><tbody id="live"></tbody></table>
+    </section>
+
+    <section class="glass box c12"><p class="ttl">Trip strip (measured vs simulated vs with changes)</p><div class="strip" id="strip"></div></section>
+
+    <section class="glass box c4"><p class="ttl">Chat</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="bubble me">What happens if we build one flyover over Nanal Nagar and Rethibowli?</div>
+        <div class="bubble ai">I ran it from the <span class="mono">flyover</span> template: the trip drops by <b class="good">2.1 min</b> (± 0.9, 3 seeds). Masab Tank gets <b class="bad">+0.3 min</b>. <span class="tag sim">sim</span></div>
+        <div class="cin"><span>Ask a follow-up…</span><button class="btn sm primary"><i data-lucide="arrow-up"></i></button></div>
+      </div>
+    </section>
+    <section class="glass box c4"><p class="ttl">Timeline (decision case)</p>
+      <ol class="tl">
+        <li class="done"><span class="ic"><i data-lucide="file-plus"></i></span><b>Proposed by planner</b><div class="meta">Flyover j8–j9 · Fri 21:40 · <span class="hash">sha 3f9a…c21</span></div></li>
+        <li class="done"><span class="ic"><i data-lucide="refresh-cw"></i></span><b>Re-tested by reviewer</b><div class="meta">3 seeds, −2.1 ± 0.9 min · 21:52 · <span class="hash">sha 77be…01d</span></div></li>
+        <li class="now"><span class="ic"><i data-lucide="gavel"></i></span><b>Awaiting decision</b><div class="meta">Commissioner, roads</div></li>
+      </ol>
+    </section>
+    <section class="c4"><div class="dialog-demo"><div class="scrim"><div class="dialog">
+      <header><i data-lucide="send" style="color:var(--sim)"></i><h3>Send for review</h3></header>
+      <div class="body">Flyover over Nanal Nagar + Rethibowli, <b class="good mono">−2.1 ± 0.9 min</b>.<textarea class="inp" rows="2" style="margin-top:10px">Why: worst live delay on the corridor (168 s).</textarea></div>
+      <footer><button class="btn ghost">Cancel</button><button class="btn primary">Send</button></footer>
+    </div></div></div></section>
+  </div>
+</div>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="data.js"></script>
+<script src="kit.js"></script>
+<script>
+  const X = window.CRX;
+  hourBars(document.getElementById("hours"), {}, 18);
+  liveRows(document.getElementById("live"), 3, { sel: "j09" });
+  tripStrip(document.getElementById("strip"), [
+    { key: "real", tag: "Real", tagClass: "real", name: "TomTom measured", legs: X.real, cls: "real" },
+    { key: "sim", tag: "Sim", tagClass: "sim", name: "Simulated today", legs: X.sim, cls: "sim" },
+    { key: "chg", tag: "Sim", tagClass: "chg", name: "With flyover j8–j9", legs: X.chg, cls: "chg" },
+  ], { selLeg: 9 });
+  lucide.createIcons();
+</script>
+</body>
+</html>

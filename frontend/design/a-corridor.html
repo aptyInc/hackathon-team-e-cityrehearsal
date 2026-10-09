@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corridor · Control room (A)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../vendor/maplibre-gl.css">
+<link rel="stylesheet" href="a.css">
+<style>
+  #map { position: fixed; inset: 0; }
+  #map::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(7,9,13,.75)); }
+  .top { position: fixed; top: 12px; left: 12px; right: 12px; z-index: 5; }
+  .left { position: fixed; z-index: 4; top: 76px; left: 12px; width: 344px; bottom: 12px; display: flex; flex-direction: column; overflow: hidden; }
+  .left .scroll { overflow: auto; flex: 1; }
+  .right { position: fixed; z-index: 4; top: 76px; right: 12px; width: 340px; display: flex; flex-direction: column; gap: 10px; }
+  .dock { position: fixed; z-index: 4; left: 368px; right: 12px; bottom: 12px; padding: 12px 16px 6px; }
+  .dock-h { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .dock-h h3 { margin: 0; font-size: 13px; font-weight: 600; }
+  .legend { display: flex; gap: 14px; color: var(--tx-3); font-size: 11px; margin-left: auto; align-items: center; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .play { position: fixed; z-index: 4; right: 364px; top: 76px; display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 14px; }
+  .clock { font: 600 15px var(--mono); padding: 0 6px; letter-spacing: -.02em; }
+  .layers { position: fixed; z-index: 4; left: 368px; top: 76px; display: flex; gap: 6px; padding: 6px; border-radius: 14px; }
+  .jhead { display: flex; align-items: flex-start; gap: 10px; }
+  .jhead h2 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .jhead .sub { color: var(--tx-3); font-size: 12px; }
+  .bignum { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 2px; }
+  .bignum b { font: 600 44px/1 var(--mono); letter-spacing: -.05em; color: var(--bad); text-shadow: 0 0 24px rgba(251,113,133,.35); }
+  .bignum span { color: var(--tx-2); }
+  .meter { height: 6px; border-radius: 6px; background: rgba(255,255,255,.07); position: relative; margin: 10px 0 4px; overflow: hidden; }
+  .meter i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; }
+  .insight { position: fixed; z-index: 4; left: 368px; bottom: 206px; width: 400px; }
+  .chat { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .grow { flex: 1; }
+  .sumline { display: flex; gap: 6px; align-items: center; color: var(--tx-2); font-size: 12px; margin-top: 10px; }
+  .follow { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 30px; height: 18px; border-radius: 99px; background: var(--sim); position: relative; box-shadow: 0 0 10px rgba(167,139,250,.5); }
+  .sw::after { content: ""; position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; }
+
+  @media (max-width: 760px) {
+    body { height: auto; display: flex; flex-direction: column; }
+    .top { order: 0; } .mode-m { order: 1; } #map { order: 2; } .dock { order: 3; } .right { order: 4; } .left { order: 5; }
+    #map { position: relative; height: 380px; inset: auto; }
+    .top { position: sticky; top: 0; left: 0; right: 0; padding: 8px; background: rgba(7,9,13,.8); backdrop-filter: var(--blur); }
+    .top .glass { border-radius: 14px; }
+    .tabs, .crumb, .ask .t, .ask .kbd, .nav .hide-m { display: none !important; }
+    .ask { min-width: 0; }
+    .layers, .play { display: none; }
+    .left, .right, .dock, .insight { position: static; width: auto; margin: 10px; }
+    .left { overflow: visible; } .right { gap: 10px; }
+    .strip .sr { grid-template-columns: 1fr; height: auto; gap: 4px; margin-bottom: 10px; }
+    .strip .st { justify-content: flex-start; }
+    .strip .seg .m { display: none; }
+    .strip .ticks { display: none; }
+    .legend { display: none; }
+    .mode-m { display: flex !important; margin: 0 10px; }
+  }
+  .mode-m { display: none; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<header class="top"><nav class="nav glass">
+  <div class="logo"><span class="mk"><i></i></span>CityRehearsal <span class="crumb">/ Hyderabad</span></div>
+  <div class="tabs"><a href="a-home.html">Overview</a><a class="on" href="#">Corridor</a><a href="#">YMCA close-up</a><a href="#">Decisions</a><a href="#">Data</a></div>
+  <div class="sp"></div>
+  <div class="seg-sw hide-m"><button class="on"><span class="dot pulse"></span>Live now</button><button>July typical day</button></div>
+  <button class="btn ask"><i data-lucide="sparkles"></i><span class="t">Ask CityRehearsal…</span><span class="kbd">⌘K</span></button>
+</nav></header>
+
+<div class="mode-m seg-sw" style="margin-top:10px"><button class="on" style="flex:1;justify-content:center"><span class="dot pulse"></span>Live now</button><button style="flex:1;justify-content:center">July typical day</button></div>
+
+<div class="layers glass">
+  <button class="chip on" style="border-color:var(--real-line);background:var(--real-bg)"><i data-lucide="activity"></i>TomTom speed</button>
+  <button class="chip on" style="border-color:var(--sim-line);background:var(--sim-bg)"><i data-lucide="car"></i>Vehicles</button>
+  <button class="chip"><i data-lucide="building-2"></i>3D</button>
+  <button class="chip"><i data-lucide="layers"></i></button>
+</div>
+
+<div class="play glass">
+  <button class="btn icon primary" style="width:30px;height:30px"><i data-lucide="pause"></i></button>
+  <span class="clock">18:42</span><span class="tag sim">sim</span>
+  <button class="btn sm ghost">10×</button>
+  <span class="follow muted" style="font-size:12px;padding-right:6px"><span class="sw"></span>Follow car</span>
+</div>
+
+<aside class="left glass">
+  <div class="scroll">
+    <section class="sect">
+      <div class="ph"><span class="n">01</span>When<span class="sp"></span><span class="tag real">TomTom</span></div>
+      <div class="row" style="margin-bottom:10px">
+        <div class="field grow"><i data-lucide="calendar"></i><span class="v">Typical July day</span><i data-lucide="chevron-down"></i></div>
+        <div class="field" style="width:96px"><i data-lucide="clock"></i><span class="v mono">18:00</span></div>
+      </div>
+      <div class="hours" id="hours"></div>
+      <div class="hx"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+      <div class="row" style="margin-top:12px;gap:12px">
+        <span class="muted mono" style="font-size:11px;width:34px">:42</span>
+        <div class="slider grow"><div class="tr"></div><div class="fl" style="width:70%"></div><div class="th" style="left:70%"></div></div>
+      </div>
+      <div class="sumline"><b class="mono" style="color:var(--tx)">66.4 min</b> measured trip at 18:00 · peak hour</div>
+    </section>
+    <section class="sect">
+      <div class="ph"><span class="n">02</span>Quick demos</div>
+      <div class="demos">
+        <button class="demo"><span class="ic"><i data-lucide="git-merge"></i></span><b>Flyover at Nallagandla</b><small>j1 · <span class="good mono">−1.9 min</span></small></button>
+        <button class="demo"><span class="ic"><i data-lucide="git-merge"></i></span><b>Flyover at ISB Rd / DLF</b><small>j2 · <span class="good mono">−1.7 min</span></small></button>
+        <button class="demo" style="border-color:rgba(232,121,249,.45);background:var(--chg-bg)"><span class="ic" style="background:rgba(232,121,249,.18);color:var(--chg)"><i data-lucide="spline"></i></span><b>One flyover over Nanal Nagar + Rethibowli</b><small>j8–j9 · <span class="good mono">−2.1 ± 0.9</span></small></button>
+        <button class="demo"><span class="ic"><i data-lucide="traffic-cone"></i></span><b>More green for DLF side roads</b><small>j2 · <span class="bad mono">+2.6 min</span> ripple</small></button>
+      </div>
+    </section>
+    <section class="sect">
+      <div class="ph"><span class="n">03</span>Change a junction</div>
+      <div class="field" style="margin-bottom:10px"><span class="jn">9</span><span class="v">Rethibowli jn</span><i data-lucide="chevron-down"></i></div>
+      <div class="chips" style="margin-bottom:12px">
+        <button class="chip on"><i data-lucide="git-merge"></i>Flyover</button>
+        <button class="chip"><i data-lucide="timer"></i>Signal retime</button>
+        <button class="chip"><i data-lucide="move-horizontal"></i>Widen</button>
+        <button class="chip"><i data-lucide="bus"></i>Bus lane</button>
+      </div>
+      <div style="display:grid;gap:8px">
+        <button class="btn primary" style="height:40px"><i data-lucide="flask-conical"></i>Simulate with changes</button>
+        <button class="btn"><i data-lucide="play"></i>Simulate today (no changes)</button>
+      </div>
+      <p class="muted" style="font-size:11.5px;margin:10px 0 0">Built only from tested templates in <span class="mono">sim/templates</span>. Raw network is never edited.</p>
+    </section>
+  </div>
+</aside>
+
+<div class="right">
+  <section class="glass" style="padding:14px 16px">
+    <div class="jhead"><span class="jn" style="width:26px;height:26px;background:var(--chg);color:#1a0520">9</span>
+      <div class="grow"><h2>Rethibowli jn</h2><div class="sub">North-bound · worst of 8 approaches</div></div>
+      <span class="tag real">live</span></div>
+    <div class="bignum"><b>168<small style="font-size:20px">s</small></b><span>delay now</span><span class="muted" style="margin-left:auto">updated 21:59</span></div>
+    <div class="meter"><i style="width:100%;background:linear-gradient(90deg,rgba(251,113,133,.15),var(--bad))"></i><i style="left:11%;width:2px;background:#fff;border-radius:0"></i></div>
+    <div class="muted" style="font-size:11px">8.8× the usual 19 s for this hour</div>
+    <div class="stats" style="margin-top:12px">
+      <div class="stat"><div class="k">Queue now</div><div class="v">111<small>m</small></div><div class="s"><span class="tag est">TomTom est</span></div></div>
+      <div class="stat"><div class="k">Model queue</div><div class="v">96<small>m</small></div><div class="s"><span class="tag sim">± 14 m</span></div></div>
+      <div class="stat"><div class="k">With flyover</div><div class="v good">18<small>m</small></div><div class="s"><span class="tag chg">−78 m</span></div></div>
+    </div>
+  </section>
+  <section class="glass" style="padding:12px 12px 6px">
+    <div class="ph" style="padding:0 4px"><span>Live at junctions</span><span class="sp"></span><span class="tag real">TomTom · 60 s</span></div>
+    <table class="t"><thead><tr><th>#</th><th>Junction</th><th>Delay</th><th>Usual</th><th>Queue</th></tr></thead><tbody id="live"></tbody></table>
+  </section>
+  <section class="glass chat">
+    <div class="ph" style="margin:0"><i data-lucide="sparkles" style="color:var(--chg)"></i><span>Ask CityRehearsal</span></div>
+    <div class="bubble ai">Flyover over j8–j9 saves <b class="good">2.1 min</b> (± 0.9). Masab Tank gets <b class="bad">+0.3 min</b>: the queue moves east.</div>
+    <div class="cin"><span>Why does Masab Tank get worse?</span><button class="btn sm primary"><i data-lucide="arrow-up"></i></button></div>
+  </section>
+</div>
+
+  
+<section class="dock glass">
+  <div class="dock-h"><h3>The trip, leg by leg</h3><span class="muted" style="font-size:12px">Lingampally → Lakdikapul · 22.4 km · width = minutes</span>
+    <div class="legend"><span><i style="background:var(--real)"></i>Measured</span><span><i style="background:var(--sim)"></i>Simulated</span><span><i style="background:repeating-linear-gradient(135deg,var(--chg) 0 3px,transparent 3px 6px)"></i>With changes</span></div></div>
+  <div class="strip" id="strip"></div>
+</section>
+
+<script src="../vendor/maplibre-gl.js"></script>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="data.js"></script>
+<script src="kit.js"></script>
+<script>
+  const X = window.CRX;
+  hourBars(document.getElementById("hours"), {}, 18);
+  liveRows(document.getElementById("live"), 2, { sel: "j09" });
+  tripStrip(document.getElementById("strip"), [
+    { key: "real", tag: "Real", tagClass: "real", name: "TomTom measured", legs: X.real, cls: "real" },
+    { key: "sim", tag: "Sim", tagClass: "sim", name: "Simulated today", legs: X.sim, cls: "sim" },
+    { key: "chg", tag: "Sim", tagClass: "chg", name: "With flyover j8–j9", legs: X.chg, cls: "chg" },
+  ], { selLeg: 9 });
+  const mobile = innerWidth < 760;
+  corridorMap("map", {
+    style: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+    fast: "#2dd4a7", mid: "#fbbf24", slow: "#f43f5e", glow: true,
+    v2w: "#fb923c", vcar: "#60a5fa", vauto: "#facc15", vbus: "#34d399",
+  }, mobile ? { sel: "j09", fly: ["j04"], pitch: 30, bearing: 0, padding: 30 }
+            : { sel: "j09", fly: ["j04"], padding: { top: 150, bottom: 230, left: 400, right: 380 },
+                callout: '<span class="tag real" style="margin-right:6px">live</span><b style="color:var(--bad)">168 s</b> delay · usual 19 s' });
+  lucide.createIcons();
+</script>
+</body>
+</html>
