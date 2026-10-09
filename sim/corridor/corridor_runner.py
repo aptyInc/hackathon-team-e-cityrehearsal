@@ -1523,6 +1523,91 @@ def rain_on_structures(net_path, interventions, factors):
     return done
 
 
+# ---------- water-logging hotspots (rain what-if, junction-specific) ----------
+WATERLOGGING = ROOT / "data/weather/waterlogging_points.json"
+WATERLOG_LABEL = "assumed, scaled by reported severity"
+WATERLOG_SAMPLE_M = 25.0          # lane shapes are sampled this often when testing the distance to the junction
+
+
+def waterlogging_points():
+    """data/weather/waterlogging_points.json (reported water-logging hotspots per corridor junction) or None."""
+    return json.loads(WATERLOGGING.read_text()) if WATERLOGGING.exists() else None
+
+
+def waterlogging_factors(weather):
+    """[(point, extra speed factor)] for this rain setting: the hotspots that flood in it (factor < 1), in corridor
+    order. [] when dry, or without the data file. The table is the data file's (extra_speed_factor), so the API
+    (/weather/factors) and the simulation always agree."""
+    wl = waterlogging_points()
+    if not wl or weather not in (wl.get("extra_speed_factor") or {}):
+        return []
+    table = wl["extra_speed_factor"][weather]
+    order = {p["id"]: i for i, p in enumerate(cn.CORRIDOR["points"])}
+    out = []
+    for p in wl.get("points", []):
+        f = float(table.get(p.get("severity"), 1.0))
+        if p.get("junction_id") in order and f < 1.0:
+            out.append((p, f))
+    return sorted(out, key=lambda x: order[x[0]["junction_id"]])
+
+
+def rain_at_hotspots(net_path, weather, base):
+    """Extra speed cap on every lane within radius_m of a reported water-logging junction: the corridor approaching
+    and leaving it, its cross arms and the junction's own internal lanes (not a flyover deck above it: that is why a
+    flyover helps there). ON TOP of the per-leg rain factors (the measured average over a leg); the hotspot factor is
+    the local extra the leg average hides. Returns the C5 inputs.weather fields (waterlogging, affected_junctions)."""
+    hot = waterlogging_factors(weather)
+    wl = waterlogging_points() or {}
+    radius = float(wl.get("radius_m", 300))
+    if not hot:
+        return {"waterlogging": [], "affected_junctions": [], "waterlogging_radius_m": radius,
+                "waterlogging_note": "no reported water-logging point floods in this rain setting" if wl else "data/weather/waterlogging_points.json missing"}
+    pts = {p["id"]: p for p in cn.CORRIDOR["points"]}
+    centres = {}
+    for p, f in hot:
+        c = p if p.get("lat") and p.get("lon") else pts[p["junction_id"]]   # a team-supplied spot, else the junction centre
+        centres[p["junction_id"]] = (base.convertLonLat2XY(c["lon"], c["lat"]), f)
+
+    def samples(shape):
+        """Points every WATERLOG_SAMPLE_M along the lane's shape (its vertices included)."""
+        out = []
+        for (x1, y1), (x2, y2) in zip(shape, shape[1:]):
+            n = max(1, int(math.dist((x1, y1), (x2, y2)) / WATERLOG_SAMPLE_M))
+            out += [(x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n) for i in range(n + 1)]
+        return out or shape
+
+    tree = ET.parse(net_path)
+    touched = {jid: 0 for jid in centres}
+    for edge in tree.getroot().iter("edge"):
+        eid = edge.get("id") or ""
+        if eid.startswith("flyover_"):      # the deck is above the water (rain_on_structures slows it by the leg mean)
+            continue
+        for lane in edge.iter("lane"):
+            shape = [tuple(map(float, xy.split(",")[:2])) for xy in (lane.get("shape") or "").split()]
+            if not shape:
+                continue
+            pts_ = samples(shape)
+            gap = {jid: min(math.dist(s, c) for s in pts_) for jid, (c, _) in centres.items()}
+            hit = [jid for jid, d in gap.items() if d <= radius]
+            if hit:
+                jid = min(hit, key=lambda j: (centres[j][1], gap[j]))     # the strongest hotspot, then the nearest
+                lane.set("speed", f"{float(lane.get('speed')) * centres[jid][1]:.2f}")
+                touched[jid] += 1
+    tree.write(net_path)
+    label = f"{WATERLOG_LABEL} ({wl.get('label', 'reported (public sources), not measured by us')})"
+    return {"waterlogging": [{"junction_id": p["junction_id"], "name": p.get("name") or pts[p["junction_id"]]["name"],
+                              "junction_name": pts[p["junction_id"]]["name"], "severity": p.get("severity"),
+                              "extra_speed_factor": f, "lanes_slowed": touched[p["junction_id"]], "label": label,
+                              "what_reported": p.get("what_reported"), "sources": p.get("sources", [])} for p, f in hot],
+            "affected_junctions": [pts[p["junction_id"]]["name"] for p, _ in hot],
+            "waterlogging_radius_m": radius,
+            "waterlogging_note": (f"{weather.replace('_', ' ')}: lanes within {radius:.0f} m of {len(hot)} reported water-logging "
+                                  f"junction(s) get an extra speed cap (x{min(f for _, f in hot)}-x{max(f for _, f in hot)}, "
+                                  f"{WATERLOG_LABEL}) on top of the per-stretch rain factor (the measured leg average). The stretch "
+                                  "factor is the average rain effect over the whole leg; the junction factor is the local extra where "
+                                  "water collects, which that average hides.")}
+
+
 # ---------- hour of the day ----------
 class HourlyUnavailable(LookupError):
     """run(hour=...) without calibration_hourly.json, or without that hour in it."""
@@ -1768,6 +1853,8 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
             rain["structures_slowed"] = rain_on_structures(variant, list(interventions), rain_f)
     else:   # the baseline goes through the same netconvert rebuild as every variant, so they differ only by the change
         cn.rebuild(net_path, variant, lambda prefix: None)
+    if rain:     # reported water-logging junctions: extra local cap on top of the leg factors (rain_at_hotspots)
+        rain.update(rain_at_hotspots(variant, weather, base))
     net_path = variant
     net = sumolib.net.readNet(str(net_path))
     flows, info = demand(net, base_groups, volume_scale, through, cross_scale if cross_scale is not None else cal["cross_scale"],
@@ -1868,6 +1955,10 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                    "sources": sources_note(cal, info) + ([{"input": f"weather what-if: {weather}", "label": "estimated",
                                                            "source": f"{WEATHER_LABEL}: speed caps x per-leg factor relative to "
                                                                      f"{rain['relative_to']}; demand and signals unchanged"}] if rain else [])
+                              + ([{"input": "water-logging hotspots: " + ", ".join(rain["affected_junctions"]), "label": WATERLOG_LABEL,
+                                   "source": f"data/weather/waterlogging_points.json (reported in public sources, not measured by us): extra speed cap "
+                                             f"within {rain['waterlogging_radius_m']:.0f} m of each reported junction, on top of the leg factor"}]
+                                 if rain and rain.get("waterlogging") else [])
                    + ([{"input": f"time of day {hour_cfg.get('window') or hour_label(hour)}", "label": "calibrated",
                                                            "source": f"traffic x{hour_cfg.get('volume_scale', 1.0)}, speed caps x{hour_cfg.get('cap_scale', 1.0)} on the all-day "
                                                                      f"calibration, fitted to TomTom {hour_cfg.get('period', 'hourly leg times')} "
