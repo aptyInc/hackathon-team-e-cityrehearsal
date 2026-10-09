@@ -1,0 +1,23 @@
+<additional>
+  <tlLogic id="G" type="static" programID="0" offset="0">
+    <!-- Gariahat after: cycle 150 s; pcu per lane per hour A 145, B 257, C 228, D 363; phases A+C | B+D -->
+    <phase duration="54" state="GGGGGrrrrrGGGGGGrrrrr"/>
+    <phase duration="3" state="yyyyyrrrrryyyyyyrrrrr"/>
+    <phase duration="2" state="rrrrrrrrrrrrrrrrrrrrr"/>
+    <phase duration="86" state="rrrrrGGGGGrrrrrrGGGGG"/>
+    <phase duration="3" state="rrrrryyyyyrrrrrryyyyy"/>
+    <phase duration="2" state="rrrrrrrrrrrrrrrrrrrrr"/>
+  </tlLogic>
+  <tlLogic id="P" type="static" programID="0" offset="0">
+    <!-- Phari after: cycle 150 s; pcu per lane per hour A 625, B 905, C 517, D 282, E 227; phases C+E | A+B | D -->
+    <phase duration="41" state="GGGGGGrrrrrGGGGGGrrrrrrrrrr"/>
+    <phase duration="3" state="yyyyyyrrrrryyyyyyrrrrrrrrrr"/>
+    <phase duration="2" state="rrrrrrrrrrrrrrrrrrrrrrrrrrr"/>
+    <phase duration="72" state="rrrrrrrrrrrrrrrrrGGGGGGGGGG"/>
+    <phase duration="3" state="rrrrrrrrrrrrrrrrryyyyyyyyyy"/>
+    <phase duration="2" state="rrrrrrrrrrrrrrrrrrrrrrrrrrr"/>
+    <phase duration="22" state="rrrrrrGGGGGrrrrrrrrrrrrrrrr"/>
+    <phase duration="3" state="rrrrrryyyyyrrrrrrrrrrrrrrrr"/>
+    <phase duration="2" state="rrrrrrrrrrrrrrrrrrrrrrrrrrr"/>
+  </tlLogic>
+</additional>

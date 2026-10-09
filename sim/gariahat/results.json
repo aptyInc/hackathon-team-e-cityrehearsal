@@ -1,0 +1,443 @@
+{
+ "what": "Gariahat flyover backtest: Maitra et al. 2004 (study model) vs CityRehearsal SUMO, same layouts, same counted traffic",
+ "comparison": [
+  {
+   "measure": "Gariahat: average delay per vehicle (s)",
+   "study_before": 35.3,
+   "study_after": 8.9,
+   "study_change_pct": -75,
+   "sim_before": 31.0,
+   "sim_after": 14.3,
+   "sim_change_pct": -54,
+   "same_direction": true,
+   "verdict": "match"
+  },
+  {
+   "measure": "Phari: delay on the approach from Gariahat (s)",
+   "study_before": 42.4,
+   "study_after": 110.3,
+   "study_change_pct": 160,
+   "sim_before": 56.0,
+   "sim_after": 63.0,
+   "sim_change_pct": 12,
+   "same_direction": true,
+   "verdict": "partial"
+  },
+  {
+   "measure": "Phari: average delay per vehicle (s)",
+   "study_before": 46.0,
+   "study_after": 70.4,
+   "study_change_pct": 53,
+   "sim_before": 50.8,
+   "sim_after": 52.9,
+   "sim_change_pct": 4,
+   "same_direction": true,
+   "verdict": "partial"
+  },
+  {
+   "measure": "Gariahat: peak-hour delay (veh-h)",
+   "study_before": 38.1,
+   "study_after": 9.7,
+   "study_change_pct": -75,
+   "sim_before": 33.5,
+   "sim_after": 15.4,
+   "sim_change_pct": -54,
+   "same_direction": true,
+   "verdict": "match"
+  },
+  {
+   "measure": "Phari: peak-hour delay (veh-h)",
+   "study_before": 74.4,
+   "study_after": 132.6,
+   "study_change_pct": 78,
+   "sim_before": 82.2,
+   "sim_after": 85.6,
+   "sim_change_pct": 4,
+   "same_direction": true,
+   "verdict": "partial"
+  },
+  {
+   "measure": "Both junctions: peak-hour delay (veh-h)",
+   "study_before": 112.5,
+   "study_after": 142.3,
+   "study_change_pct": 26,
+   "sim_before": 115.7,
+   "sim_after": 101.0,
+   "sim_change_pct": -13,
+   "same_direction": false,
+   "verdict": "mismatch"
+  }
+ ],
+ "before": {
+  "run_id": "gariahat_before",
+  "variant_id": "gariahat_before_flyover",
+  "junctions": [
+   {
+    "id": "gariahat",
+    "avg_delay_s": 31.0,
+    "seed_range_s": [
+     30.4,
+     31.4
+    ],
+    "max_queue_m": 92,
+    "vehicle_hours_delay": 33.5,
+    "vehicles": 4032
+   },
+   {
+    "id": "phari",
+    "avg_delay_s": 50.8,
+    "seed_range_s": [
+     50.5,
+     51.1
+    ],
+    "max_queue_m": 233,
+    "vehicle_hours_delay": 82.2,
+    "vehicles": 5965
+   },
+   {
+    "id": "phari_approach_c",
+    "avg_delay_s": 56.0,
+    "seed_range_s": [
+     53.2,
+     58.3
+    ],
+    "max_queue_m": 182,
+    "vehicles": 1528
+   }
+  ],
+  "corridor_travel_time_s": 326,
+  "corridor_travel_time_by_direction_s": {
+   "northbound": 319,
+   "southbound": 333
+  },
+  "approaches": {
+   "Gariahat_A": {
+    "avg_delay_s": 33.4,
+    "seed_range_s": [
+     31.6,
+     34.5
+    ],
+    "vehicles": 1142,
+    "max_queue_m": 70,
+    "entry_wait_s": 0.0,
+    "study_avg_delay_s": 37.1
+   },
+   "Gariahat_B": {
+    "avg_delay_s": 29.9,
+    "seed_range_s": [
+     29.0,
+     31.0
+    ],
+    "vehicles": 703,
+    "max_queue_m": 78,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 35.7
+   },
+   "Gariahat_C": {
+    "avg_delay_s": 29.2,
+    "seed_range_s": [
+     28.6,
+     29.8
+    ],
+    "vehicles": 1324,
+    "max_queue_m": 92,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 41.2
+   },
+   "Gariahat_D": {
+    "avg_delay_s": 31.6,
+    "seed_range_s": [
+     31.2,
+     32.0
+    ],
+    "vehicles": 863,
+    "max_queue_m": 85,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 23.8
+   },
+   "Phari_A": {
+    "avg_delay_s": 38.4,
+    "seed_range_s": [
+     37.8,
+     38.8
+    ],
+    "vehicles": 1319,
+    "max_queue_m": 132,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 37.1
+   },
+   "Phari_B": {
+    "avg_delay_s": 48.2,
+    "seed_range_s": [
+     45.6,
+     52.4
+    ],
+    "vehicles": 1762,
+    "max_queue_m": 233,
+    "entry_wait_s": 0.4,
+    "study_avg_delay_s": 52.1
+   },
+   "Phari_C": {
+    "avg_delay_s": 56.0,
+    "seed_range_s": [
+     53.2,
+     58.3
+    ],
+    "vehicles": 1528,
+    "max_queue_m": 182,
+    "entry_wait_s": 0.0,
+    "study_avg_delay_s": 42.4
+   },
+   "Phari_D": {
+    "avg_delay_s": 75.1,
+    "seed_range_s": [
+     72.6,
+     77.1
+    ],
+    "vehicles": 600,
+    "max_queue_m": 105,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 77.8
+   },
+   "Phari_E": {
+    "avg_delay_s": 48.4,
+    "seed_range_s": [
+     46.9,
+     49.2
+    ],
+    "vehicles": 756,
+    "max_queue_m": 80,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 29.3
+   }
+  },
+  "warnings": [
+   "250 touches per run where movements that are green together merge (junction box not give-way regulated, see README); vehicles keep going"
+  ],
+  "inputs": {
+   "counts_source": "published_study (Maitra et al. 2004, Tables 3-4)",
+   "label": "counted",
+   "volume_scale": 1.0,
+   "seeds": [
+    1,
+    2,
+    3
+   ],
+   "step_length_s": 0.5,
+   "sublane_model": true,
+   "signal_cycle_s": {
+    "gariahat": 150,
+    "phari": 150
+   }
+  },
+  "wall_seconds_per_run": 109.2
+ },
+ "after": {
+  "run_id": "gariahat_after",
+  "variant_id": "gariahat_after_flyover",
+  "junctions": [
+   {
+    "id": "gariahat",
+    "avg_delay_s": 14.3,
+    "seed_range_s": [
+     11.7,
+     19.1
+    ],
+    "max_queue_m": 114,
+    "vehicle_hours_delay": 15.4,
+    "vehicles": 3978
+   },
+   {
+    "id": "phari",
+    "avg_delay_s": 52.9,
+    "seed_range_s": [
+     51.7,
+     53.8
+    ],
+    "max_queue_m": 213,
+    "vehicle_hours_delay": 85.6,
+    "vehicles": 5955
+   },
+   {
+    "id": "phari_approach_c",
+    "avg_delay_s": 63.0,
+    "seed_range_s": [
+     62.1,
+     63.8
+    ],
+    "max_queue_m": 156,
+    "vehicles": 1518
+   }
+  ],
+  "corridor_travel_time_s": 282,
+  "corridor_travel_time_by_direction_s": {
+   "northbound": 290,
+   "southbound": 275
+  },
+  "approaches": {
+   "Gariahat_A": {
+    "avg_delay_s": 13.6,
+    "seed_range_s": [
+     11.4,
+     15.1
+    ],
+    "vehicles": 1115,
+    "max_queue_m": 55,
+    "entry_wait_s": 0.0,
+    "study_avg_delay_s": 11.2
+   },
+   "Gariahat_B": {
+    "avg_delay_s": 6.7,
+    "seed_range_s": [
+     6.6,
+     6.9
+    ],
+    "vehicles": 703,
+    "max_queue_m": 39,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 23.1
+   },
+   "Gariahat_C": {
+    "avg_delay_s": 24.1,
+    "seed_range_s": [
+     16.5,
+     38.1
+    ],
+    "vehicles": 1297,
+    "max_queue_m": 114,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 13.7
+   },
+   "Gariahat_D": {
+    "avg_delay_s": 6.6,
+    "seed_range_s": [
+     6.3,
+     7.0
+    ],
+    "vehicles": 863,
+    "max_queue_m": 36,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 17.6
+   },
+   "Phari_A": {
+    "avg_delay_s": 37.7,
+    "seed_range_s": [
+     37.2,
+     38.5
+    ],
+    "vehicles": 1319,
+    "max_queue_m": 128,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 37.1
+   },
+   "Phari_B": {
+    "avg_delay_s": 48.0,
+    "seed_range_s": [
+     44.8,
+     51.8
+    ],
+    "vehicles": 1762,
+    "max_queue_m": 213,
+    "entry_wait_s": 0.4,
+    "study_avg_delay_s": 52.1
+   },
+   "Phari_C": {
+    "avg_delay_s": 63.0,
+    "seed_range_s": [
+     62.1,
+     63.8
+    ],
+    "vehicles": 1518,
+    "max_queue_m": 156,
+    "entry_wait_s": 0.0,
+    "study_avg_delay_s": 110.3
+   },
+   "Phari_D": {
+    "avg_delay_s": 80.8,
+    "seed_range_s": [
+     73.0,
+     90.2
+    ],
+    "vehicles": 599,
+    "max_queue_m": 112,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 77.8
+   },
+   "Phari_E": {
+    "avg_delay_s": 48.4,
+    "seed_range_s": [
+     46.5,
+     49.9
+    ],
+    "vehicles": 757,
+    "max_queue_m": 76,
+    "entry_wait_s": 0.3,
+    "study_avg_delay_s": 29.3
+   }
+  },
+  "warnings": [
+   "234 touches per run where movements that are green together merge (junction box not give-way regulated, see README); vehicles keep going"
+  ],
+  "inputs": {
+   "counts_source": "published_study (Maitra et al. 2004, Tables 3-4)",
+   "label": "counted",
+   "volume_scale": 1.0,
+   "seeds": [
+    1,
+    2,
+    3
+   ],
+   "step_length_s": 0.5,
+   "sublane_model": true,
+   "signal_cycle_s": {
+    "gariahat": 150,
+    "phari": 150
+   }
+  },
+  "wall_seconds_per_run": 104.9
+ },
+ "study_source": "data/gariahat/study_results.csv; per-approach delays from the paper's Tables 5, 6 and 8",
+ "approach_letters": {
+  "gariahat": {
+   "A": "GN",
+   "B": "GW",
+   "C": "GS",
+   "D": "GE"
+  },
+  "phari": {
+   "A": "PSW",
+   "B": "PW",
+   "C": "PS",
+   "D": "PNE",
+   "E": "PN"
+  },
+  "label": "estimated (see README)"
+ },
+ "sensitivity_after_flyover": {
+  "what": "After the flyover, with X% more traffic arriving at Phari from the Gariahat side (the paper expects the flyover to raise this inflow but does not say by how much)",
+  "runs": [
+   {
+    "extra_inflow_to_phari_pct": 10,
+    "phari_approach_c_delay_s": 80.4,
+    "phari_avg_delay_s": 58.0,
+    "gariahat_avg_delay_s": 14.2,
+    "phari_approach_c_max_queue_m": 187
+   },
+   {
+    "extra_inflow_to_phari_pct": 20,
+    "phari_approach_c_delay_s": 168.2,
+    "phari_avg_delay_s": 84.2,
+    "gariahat_avg_delay_s": 13.2,
+    "phari_approach_c_max_queue_m": 356
+   },
+   {
+    "extra_inflow_to_phari_pct": 30,
+    "phari_approach_c_delay_s": 281.8,
+    "phari_avg_delay_s": 120.8,
+    "gariahat_avg_delay_s": 13.9,
+    "phari_approach_c_max_queue_m": 497
+   }
+  ]
+ },
+ "wall_seconds_total": 377
+}
