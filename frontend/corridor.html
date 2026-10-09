@@ -170,6 +170,20 @@
   .wxchip svg { width: 16px; height: 16px; flex: none; color: var(--tx-2); }
   .wxchip.wet { background: oklch(0.714 0.143 255 / .13); box-shadow: inset 0 0 0 1px var(--real-line); } .wxchip.wet svg { color: var(--real); }
   .wxchip .wx-src { font-size: 10.5px; color: var(--tx-3); white-space: nowrap; }
+  /* Live now: the live trip (GET /corridor/live_trip, REAL TomTom flow) and Simulate now (a SIMULATED now-cast on the live map) */
+  #nc-box { margin-top: 10px; }
+  .lt-big { font-size: 24px; font-weight: 700; letter-spacing: -.02em; color: var(--tx); }
+  .lt-line { font-size: 12px; color: var(--tx-2); line-height: 1.5; }
+  .lt-stale { display: inline-block; padding: 0 7px; border-radius: 999px; font: 700 9.5px/1.8 var(--f); letter-spacing: .06em; color: #1c1c1c; background: var(--chg); }
+  .lt-strip { display: flex; gap: 2px; height: 16px; margin: 7px 0 2px; }
+  .lt-strip span { min-width: 4px; border-radius: 3px; cursor: pointer; }
+  .lt-strip span:hover { outline: 1.5px solid #fff; }
+  #nc-run { margin-top: 8px; } #nc-change { margin-top: 8px; }
+  #nc-busy, #nc-result { font-size: 12px; margin-top: 6px; line-height: 1.5; }
+  #nc-legend { font-size: 12px; border-color: var(--sim-line); background: var(--sim-bg); }
+  #nc-legend .k { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
+  .nc-clamp { display: inline-block; padding: 0 7px; border-radius: 999px; font: 600 10.5px/1.8 var(--f); color: var(--warn); background: var(--warn-bg); box-shadow: inset 0 0 0 1px var(--chg-line); }
+  .tag.chg { color: var(--chg); background: var(--chg-bg); box-shadow: inset 0 0 0 1px var(--chg-line); }
   #wx-row { margin-top: 2px; } #wx-row label { display: flex; align-items: center; gap: 6px; }
   #wx-now { margin: 8px 0 2px; }
   #weather-note { display: block; margin: 2px 0 4px; }
@@ -292,6 +306,21 @@
   <small>22.4 km commute through 11 junctions · <a href="ymca.html">YMCA Circle close-up</a></small><br>
   <small id="status" class="july-only">API: checking…</small><small id="status-live" class="live-only">API: checking…</small>
   <div id="wx-now" class="wxchip live-only" hidden></div>
+
+  <div id="nc-box" class="live-only" hidden><!-- shown when GET /corridor sim.live.available -->
+    <div id="lt-box" hidden>
+      <h2>Live trip now, A → B <span class="tag real">REAL</span></h2>
+      <div id="lt"></div>
+      <div id="lt-strip" class="lt-strip" aria-label="Live speed on each stretch"></div>
+      <small id="lt-strip-note" class="muted">Each block is one stretch, as wide as its minutes, coloured by TomTom's live speed. Click to fly there.</small>
+    </div>
+    <small id="lt-off" class="muted" hidden></small>
+    <div class="row"><button id="nc-run" title="Simulates the whole corridor now: the July model for this hour, tuned so its trip matches TomTom's live trip. First run in a 10-minute slot takes up to a minute, then it is instant.">Simulate now</button>
+      <button id="nc-change" class="secondary" hidden title="Runs the same now-cast with a change, so you can compare now vs now with the change">Try a change now</button></div>
+    <div id="nc-busy" hidden></div>
+    <div id="nc-result" hidden></div>
+    <div id="nc-legend" class="note" hidden></div>
+  </div>
   <div id="src" class="july-only"></div>
 
   <div id="live-box" class="live-only">
@@ -669,7 +698,11 @@ function setMode(m, write = true) {
     const q = new URLSearchParams(location.hash.replace(/^#/, "")); q.set("mode", mode);
     history.replaceState(null, "", "#" + q.toString().replace(/%3D/g, "="));
   }
-  if (mode === "live") {   // nothing simulated in Live now: stop the playback, the follow camera and the assistant
+  if (mode === "july" && playingRun?._nowcast) {   // the now-cast's vehicles belong to Live now: drop them in July
+    if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
+    frames = []; playingRun = null; playing = false; pos = 0; roads = null; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("clock").textContent = "—";
+  }
+  if (mode === "live") {   // nothing simulated in Live now (unless Simulate now): stop the playback, the follow camera and the assistant
     playing = false; $("play").textContent = "▶ Play"; stopRide(); setFollow(false); setOrbit(false);
     if (document.body.classList.contains("chat-open")) $("chat-close").click();
     loadGeometry();
@@ -679,6 +712,7 @@ function setMode(m, write = true) {
   syncModeHeight();
   if (popup) popup.remove();
   updateMarkers(); renderLive(); render();
+  ltSchedule();
 }
 let trafficTouched = false;   // the viewer switched the live traffic layer off or on: keep their choice
 const trafficShown = () => mode === "live" && $("t-traffic").checked;   // live traffic is a Live now layer only
@@ -1043,6 +1077,120 @@ function renderWxNow() {   // "Clear sky · 27°C", "Light rain 0.8 mm/h · 24°
   el.title = `${w.label || "modelled (Open-Meteo forecast), not a rain gauge"}. ${w.source || ""}${w.location?.name ? `, at ${w.location.name}` : ""}${w.time ? `, ${w.time}` : ""}`;
 }
 
+// ---------- Live now: the live trip (GET /corridor/live_trip) and Simulate now (POST /corridor/runs?async=1, day "live") ----------
+// The live trip is an estimate from TomTom's live flow (REAL speeds); the now-cast is the July model for this hour tuned so its
+// trip matches that estimate (SIMULATED), frozen per 10-minute bucket. Its vehicles play on the live map; the live layers stay on.
+let liveTrip = null, ltTimer = null, ncBase = null, ncChanged = null, ncBusy = false, ncTimer = null;
+const liveCaps = () => corridor?.sim?.live || null;
+const NC_POLL_MS = window.NC_POLL_MS || 2000;
+const nowcastOn = () => mode === "live" && !!playingRun?._nowcast;   // simulated now-cast vehicles on the live map
+const istHHMM = t => /T(\d{2}:\d{2})/.exec(String(t || ""))?.[1] || hhmm(t);
+function ltSchedule() {   // GET /corridor/live_trip now and every refresh_s while Live now is on screen
+  clearInterval(ltTimer); ltTimer = null;
+  const on = mode === "live" && !!liveCaps()?.available;
+  $("nc-box").hidden = !on;
+  if (!on) return;
+  loadLiveTrip();
+  ltTimer = setInterval(() => { if (!document.hidden) loadLiveTrip(); }, window.LT_REFRESH_MS || (liveCaps().refresh_s || 300) * 1000);
+}
+async function loadLiveTrip() {
+  try { liveTrip = await get("/corridor/live_trip"); if (!liveTrip?.trip) throw 0; } catch (e) { liveTrip = null; }
+  renderLiveTrip();
+}
+function renderLiveTrip() {
+  const lt = liveTrip, t = lt?.trip;
+  $("lt-box").hidden = !t; $("lt-off").hidden = !!t; $("nc-run").hidden = !t;
+  if (!t) { $("lt-off").textContent = "Live trip unavailable right now (no TomTom live flow through the API)."; renderNcChange(); return; }
+  const d = t.delta_s != null ? t.delta_s / 60 : t.july_same_hour_min != null ? t.total_min - t.july_same_hour_min : null;
+  const cls = d == null ? "" : d >= 3 ? "bad" : d > 0.5 ? "mid" : "ok";
+  $("lt").innerHTML = `<span class="lt-big" id="lt-total">${t.total_min.toFixed(1)} min</span> <span class="lab estimated" title="${esc(t.label)}: summed from TomTom's live speeds on each stretch">${esc(t.label || "estimated")}</span>` +
+    (lt.stale ? ` <span class="lt-stale" id="lt-stale" title="TomTom's live data is ${Math.round((lt.age_s || 0) / 60)} min old">STALE</span>` : "") +
+    `<div class="lt-line" id="lt-vs">${t.july_same_hour_min != null ? `July same hour <b>${t.july_same_hour_min.toFixed(1)} min</b>` : ""}` +
+    (d != null ? ` · now <b class="${cls}">${signed(d)} min</b>` : "") + `</div>` +
+    `<div class="lt-line" id="lt-asof">Confidence <b>${esc(t.confidence_label || (t.confidence != null ? Math.round(t.confidence * 100) + "%" : "–"))}</b> · as of <b>${esc(lt.time_label || istHHMM(lt.as_of))}</b>` +
+    ` · refreshes every ${Math.round((liveCaps()?.refresh_s || 300) / 60)} min</div>`;
+  const legs = lt.legs || [], tot = legs.reduce((s, l) => s + (l.time_s || 0), 0) || 1;
+  $("lt-strip").innerHTML = legs.map((l, i) => {
+    const kmh = l.flow?.current_speed_kmh ?? l.speed_kmh, ff = l.flow?.free_flow_speed_kmh;
+    return `<span data-i="${i}" style="flex:${(l.time_s || 1) / tot} 1 0;background:rgb(${speedRGB(kmh ?? 20).join(",")})" title="${esc(short(l.from_name || point(l.from_id)?.name))} → ${esc(short(l.to_name || point(l.to_id)?.name))}: ` +
+      `${kmh != null ? Math.round(kmh) + " km/h now" : "no live speed"}${ff != null ? ` (free flow ${Math.round(ff)})` : ""}, ${fmtMin(l.time_s || 0)} min · ${esc(l.flow?.label || l.basis || "")}"></span>`;
+  }).join("");
+  $("lt-strip").querySelectorAll("span").forEach(el => el.onclick = () => flyToLeg(Number(el.dataset.i)));
+  renderNcChange();
+}
+async function runAsync(body) {   // POST ?async=1 -> 202 {run_id, status} (or done + result when cached); poll every ~2 s
+  const a = await post("/corridor/runs?async=1", body);
+  if (a.result) return a.result;
+  for (;;) {
+    await new Promise(r => setTimeout(r, NC_POLL_MS));
+    const s = await get(`/corridor/runs/${a.run_id}`);
+    if (s.status === "done" && s.result) return s.result;
+    if (s.status === "failed") throw new HttpError(s.http_status || 500, s.error || "simulation failed", s.error);
+  }
+}
+function ncSetBusy(on, what) {
+  ncBusy = on; $("nc-run").disabled = on; $("nc-change").disabled = on;
+  clearInterval(ncTimer); $("nc-busy").hidden = !on;
+  if (!on) return;
+  const t0 = Date.now(), show = () => { $("nc-busy").innerHTML = `<span class="spin"></span>${what} · <b id="nc-elapsed">${clock((Date.now() - t0) / 1000)}</b><br>` +
+    `<small class="muted">The first run in a 10-minute slot takes 15-70 s, then it is instant.</small>`; };
+  show(); ncTimer = setInterval(show, 1000);
+}
+const min1 = s => (s / 60).toFixed(1);
+const ncIvs = () => interventions.length ? JSON.parse(JSON.stringify(interventions)) : JSON.parse(JSON.stringify(PRESETS["p-dlf"]));
+function renderNcChange() {   // "Try a change now": the July list of changes, else a flyover at ISB Rd / DLF; once a now-cast is in
+  const b = $("nc-change");
+  b.hidden = !ncBase || !liveTrip;
+  b.textContent = interventions.length ? `Try my ${interventions.length} change${interventions.length > 1 ? "s" : ""} now` : "Try a flyover at ISB Rd / DLF now";
+}
+async function simulateNow(withChange) {
+  if (ncBusy) return;
+  const body = { interventions: [], day: "live", volume_scale: 1.0 };
+  ncSetBusy(true, withChange ? "Simulating now with the change" : "Simulating the corridor now, tuned to TomTom live");
+  $("nc-result").hidden = true;
+  try {
+    if (!withChange || !ncBase) { const r = await runAsync(body); r._nowcast = true; ncBase = r; ncChanged = null; }
+    if (withChange) {
+      const ivs = ncIvs();
+      let r;
+      try { r = await runAsync({ ...body, interventions: ivs, live_bucket: ncBase.time?.bucket }); }
+      catch (e) {
+        if (e.status !== 410) throw e;   // the 10-minute bucket is gone: the baseline must be run again
+        ncBase = ncChanged = null; ncSetBusy(false); renderNowcast(); renderNcChange();
+        $("nc-result").hidden = false; $("nc-result").innerHTML = `<span class="mid">The 10-minute live slot has moved on: press Simulate now again, then try the change.</span>`;
+        return;
+      }
+      r._nowcast = true; r._ivs = ivs; ncChanged = r;
+    }
+    ncSetBusy(false);
+    renderNowcast(); renderNcChange();
+    if (mode === "live") play(withChange ? ncChanged : ncBase);
+  } catch (e) {
+    ncSetBusy(false);
+    $("nc-result").hidden = false;
+    $("nc-result").innerHTML = `<span class="bad">Simulate now failed${e.status ? ` (HTTP ${e.status})` : ""}: ${esc(String(e.detail || e.message).slice(0, 240))}</span>`;
+  }
+}
+function renderNowcast() {
+  const r = ncBase;
+  $("nc-result").hidden = !r; $("nc-legend").hidden = !r;
+  if (!r) return;
+  const lv = r.inputs?.live_trip || {}, at = istHHMM(lv.as_of || r.time?.as_of), tt = r.journey?.tomtom_total_s;
+  const clamped = lv.hour_clamped ? ` <span class="nc-clamp" id="nc-clamped" title="${esc(`${hh(lv.now_hour ?? 0)} is outside the calibrated hours: the model uses the nearest calibrated hour, tuned to the live trip`)}">night: ${hh(lv.hour ?? r.time?.hour ?? 6)} model</span>` : "";
+  const watch = ncChanged ? `<div class="row" style="margin:4px 0 0"><button class="ghost" id="nc-watch-base">Watch now-cast</button><button class="ghost" id="nc-watch-chg">Watch with the change</button></div>` : "";
+  $("nc-result").innerHTML = `<div id="nc-label"><b>${esc(r.time?.label || "Now-cast")}</b> <span class="tag sim">SIMULATED</span>${r.sample ? ' <span class="tag sample">SAMPLE DATA</span>' : ""}${clamped}</div>` +
+    `<div>Simulated trip now <b id="nc-total">${min1(r.journey.total_s)} min</b>${tt ? ` · TomTom live estimate ${min1(tt)} min <span class="tag real">REAL</span>` : ""}</div>` +
+    (ncChanged ? `<div id="nc-cmp">With ${esc(ncChanged._ivs.map(ivText).join("; "))} at ${esc(short(point(ncChanged._ivs[0].junction_id)?.name))}: <b>${min1(ncChanged.journey.total_s)} min</b> ` +
+      `(<b class="${ncChanged.journey.total_s < r.journey.total_s ? "ok" : "bad"}">${signed((ncChanged.journey.total_s - r.journey.total_s) / 60)} min</b> vs the now-cast) <span class="tag chg">WITH CHANGES</span></div>` : "") +
+    `<small id="nc-clock" class="muted"></small>` + watch;
+  if (ncChanged) { $("nc-watch-base").onclick = () => play(ncBase); $("nc-watch-chg").onclick = () => play(ncChanged); }
+  $("nc-legend").innerHTML = `<b>Cars: <span style="color:var(--sim)">SIMULATED</span> now-cast</b>, tuned to TomTom live at ${esc(at || "–")} · ` +
+    `<b>road colours and red queues: <span style="color:var(--real)">REAL</span> TomTom</b><br>` +
+    `<span class="k" style="background:#f58832"></span>two-wheeler <span class="k" style="background:#c9c9c9"></span>car <span class="k" style="background:#fcbf26"></span>auto <span class="k" style="background:#35c177"></span>bus`;
+}
+$("nc-run").onclick = () => simulateNow(false);
+$("nc-change").onclick = () => simulateNow(true);
+
 // ---------- live junctions (TomTom Junction Analytics, GET /corridor/junctions/live) ----------
 // Accepts {junctions: [{junction_id|id, name, time, approaches: [...]}]}, a list of those, {j07: {...}}, or flat approach rows
 // ({junction_id, approach, delay_s, ...}, possibly several snapshots: the latest is shown, the last 60 min averaged).
@@ -1249,7 +1397,7 @@ function addIv(iv) {   // one of each kind per junction; adding again updates it
   return note;
 }
 function setMergeNote(note) { $("iv-merge").hidden = !note; $("iv-merge").textContent = note; }
-function ivsChanged() { renderIvs(); updateMarkers(); renderJourney(); }
+function ivsChanged() { renderIvs(); updateMarkers(); renderJourney(); renderNcChange(); }
 $("iv-add").onclick = () => {
   setMergeNote(addIv({ junction_id: $("iv-j").value, kind: $("iv-kind").value, params: readParams() }));
   ivsChanged();
@@ -1988,6 +2136,17 @@ function render() {
           `${Math.round(o.delay_s)} s delay${o.usual_delay_s != null ? ` (usual ${Math.round(o.usual_delay_s)} s)` : ""} <span class="tag real">REAL</span>` : ""; },
       }));
     }
+    if (nowcastOn()) {   // Simulate now: the now-cast's vehicles (SIMULATED) on the live map; the live layers stay on
+      const st = structures(playingRun);
+      if (st.length) layers.push(new deck.PathLayer({ id: "nc-structures", data: st, widthUnits: "meters", widthMinPixels: 3, jointRounded: true, billboard: false,
+        getPath: d => d.path, getWidth: d => d.lanes * (d.oneWay ? 1 : 2) * 3.5 + 1.5, getColor: d => d.kind === "underpass" ? [70, 70, 78, 230] : [168, 166, 160, 240] }));
+      const vs = frames.length ? currentVehicles(near ? inView() : null) : [];
+      if (vs.length) layers.push(near ? new deck.PolygonLayer({
+        id: "nc-vehicles", data: vs, extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2], getFillColor: v => COLORS[v.type] || [0, 0, 0],
+        material: { ambient: 0.45, diffuse: 0.7, shininess: 20 }, updateTriggers: { getPolygon: pos } })
+        : new deck.ScatterplotLayer({ id: "nc-vehicle-dots", data: vs, radiusUnits: "pixels", getRadius: 2.5, getPosition: v => [v.lon, v.lat, v.z || 0],
+          getFillColor: v => [...(COLORS[v.type] || [0, 0, 0]), 230], updateTriggers: { getPosition: pos } }));
+    }
     overlay.setProps({ layers, effects: lighting(night) });
     return;
   }
@@ -2047,12 +2206,12 @@ function tick(ts) {
     const end = ride.probe.arrive_s ?? ride.probe.points[ride.probe.points.length - 1].t;
     if (ride.t >= end) { ride.t = end; rideTick(); stopRide(true); }
     else { rideTick(); render(); }
-  } else if (playing && frames.length && mode === "july") {
+  } else if (playing && frames.length && (mode === "july" || nowcastOn())) {
     const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
     pos += dt * Number($("speed").value) / frameStep();   // 1× = real time, whatever the frame interval (real runs: ~2 s)
-    if (pos >= frames.length - 1) { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; }
+    if (pos >= frames.length - 1) { if (nowcastOn()) pos = 0; else { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; } }   // the now-cast loops
     $("scrub").value = Math.floor(pos);
-    showClock();
+    showClock(); ncClock();
     followTick();
     render();
   } else lastTick = ts;
@@ -2063,6 +2222,11 @@ function showClock() {   // minutes since the simulation started (no clock time:
   if (ride) return;
   const f = frames[Math.floor(pos)]; if (!f) return;
   $("clock").textContent = `${simDay(playingRun)} · ${simMinTxt(f.t + tOffset)} · ${f.vehicles.length} vehicles`;
+}
+function ncClock() {
+  if (!nowcastOn() || !$("nc-clock")) return;
+  const f = frames[Math.floor(pos)]; if (!f) return;
+  $("nc-clock").textContent = `Playing ${playingRun === ncChanged ? "with the change" : "the now-cast"} · ${simMinTxt(f.t + tOffset)} · ${f.vehicles.length} vehicles`;
 }
 function renderWatch() {
   $("watch").innerHTML = (base ? `<button class="ghost" id="watch-base">Watch roads as they are</button>` : "") + (changed ? `<button class="ghost" id="watch-changed">Watch with changes</button>` : "");
@@ -2075,7 +2239,7 @@ async function play(r) {
   frames = []; nextCache = { i: -1, map: null }; setFollow(false); $("follow").disabled = true; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("scrub").max = 0; $("clock").textContent = "—";
   fillPicker(); renderWindow();
   if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
-  if (r.sample && !r.frames_path) { render(); $("playinfo").textContent = "No vehicle playback for sample data: it comes with the real corridor simulation."; return; }
+  if (r.sample && !r.frames_path) { render(); $("playinfo").textContent = "No vehicle playback for sample data: it comes with the real corridor simulation."; if (r._nowcast) $("nc-clock").textContent = "No vehicle playback for sample data."; return; }
   if (r.roads_path !== null) { try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; } }
   if (playingRun !== r) return;
   render();
@@ -2097,7 +2261,7 @@ async function play(r) {
     };
     ws.onclose = resolve; ws.onerror = resolve;
     setTimeout(() => {
-      if (stream !== ws || !frames.length || mode !== "july" || ride) return;
+      if (stream !== ws || !frames.length || (mode !== "july" && !(r._nowcast && mode === "live")) || ride) return;
       playing = true; $("play").textContent = "❚❚ Pause";
       if (!flown && map.getZoom() < 14 && !following) { flown = true; flyToPoint(focusJunction(r)); }   // vehicles are too small to see from the corridor overview
     }, 1500);

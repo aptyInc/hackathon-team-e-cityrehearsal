@@ -48,6 +48,10 @@ Cases
      what-if is explained with its estimate and 95% range (estimated), sent as `weather` with every run, quick demo and
      re-recorded window, named in the trip rows, clock and result line; changing it re-simulates once; Live now shows the
      weather now (modelled), hidden on 503
+  V  Now-cast (GET /corridor sim.live, /corridor/live_trip and POST /corridor/runs?async=1 day "live" mocked): Live now shows the
+     live trip (minutes vs July same hour, confidence, as of, STALE badge, 12 stretches coloured by live speed); Simulate now
+     posts day "live", polls, shows elapsed time, then time.label, the night badge, the legend (cars SIMULATED, roads REAL) and
+     plays the vehicles on the live map with the live queues on; Try a change now sends live_bucket (410: run again); 503 hides it
   Z  View (frontend/viewguard.js): ctrl+wheel (trackpad pinch) over a panel is cancelled so the page cannot zoom, over the
      map it still zooms the map; viewport meta maximum-scale=1; at 1280x700 every panel fits the window with its own scroll;
      collapse / expand the controls, layers and trip panels; the Reset view pill (and R, not while typing) brings back the
@@ -66,6 +70,7 @@ Screenshots: sim/out/corridor_<case>.png. Exit code 1 if any check fails.
 import csv
 import json
 import math
+import re
 import sys
 import time
 import urllib.request
@@ -330,6 +335,33 @@ def wx_day(day, hour=None):
 
 
 FLY_J07 = [{"junction_id": "j07", "kind": "flyover", "params": {"lanes": 2, "length_m": 600}}]
+NC_BUCKET = "2026-10-10T01:40+05:30"
+
+
+def live_trip_body(stale=False):
+    """GET /corridor/live_trip as backend/app/live_trip.py answers it: the trip vs July same hour and 12 legs with live flow."""
+    kmh = [34, 38, 38, 38, 30, 36, 40, 22, 12, 28, 30, 26]
+    legs = [{"from_id": a, "to_id": z, "from_name": PTS[a]["name"], "to_name": PTS[z]["name"], "distance_m": 1800, "time_s": round(1800 / k * 3.6),
+             "speed_kmh": k, "confidence": 1.0, "basis": "live flow", "label": "estimated",
+             "flow": {"current_speed_kmh": k, "free_flow_speed_kmh": 40, "confidence": 1.0, "label": "measured (TomTom live flow)"}}
+            for (a, z), k in zip(zip(ORDER, ORDER[1:]), kmh)]
+    return {"corridor_id": "lingampally_lakdikapul", "as_of": "2026-10-10T01:49:25+05:30", "time_label": "01:49 IST", "hour": 1, "stale": stale, "age_s": 1200 if stale else 30,
+            "trip": {"total_s": 2020, "total_min": 33.7, "label": "estimated", "confidence": 1.0, "confidence_label": "high",
+                     "july_same_hour_total_s": 2334, "july_same_hour_min": 38.9, "delta_s": -314}, "legs": legs, "warnings": []}
+
+
+def nowcast_result(ivs, run_id):
+    """A now-cast result (POST /corridor/runs day "live"): time.label / bucket, inputs.live_trip, journey vs the live estimate."""
+    r = json.loads(json.dumps(SAMPLE["flyover_j07" if ivs else "baseline"]))
+    r.pop("sample", None)
+    r.update(run_id=run_id, interventions=ivs, frames_path="test", frames_window={"from_s": 900, "to_s": 1200, "step_s": 4, "sim_minutes_total": 54})
+    r["time"] = {"label": "Now-cast 01:49 IST (TomTom live; July 06:00 calibration adjusted; 01:00 is outside the calibrated 06-23, nearest hour used)",
+                 "day": "live", "hour": 6, "as_of": "2026-10-10T01:49:25+05:30", "bucket": NC_BUCKET}
+    r["inputs"] = {"counts_source": "test", "label": "estimated", "volume_scale": 1.0,
+                   "live_trip": {"as_of": "2026-10-10T01:49:25+05:30", "bucket": NC_BUCKET, "total_s": 2020, "hour": 6, "now_hour": 1, "hour_clamped": True, "stale": False}}
+    r["journey"]["total_s"] = 1900 if ivs else 2050
+    r["journey"]["tomtom_total_s"] = 2020
+    return r
 CORS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS"}
 STREAM_JS = """(() => {
   const FRAMES = %s, Real = window.WebSocket;
@@ -348,7 +380,7 @@ STREAM_JS = """(() => {
 })();"""
 
 
-def mock_api(pg, live_body, bodies, mode, counts, real_shape=False, geometry=False, probes=False, weather=False):
+def mock_api(pg, live_body, bodies, mode, counts, real_shape=False, geometry=False, probes=False, weather=False, live_now=False):
     """Corridor endpoints answered in the browser: GET /corridor (route + TomTom legs), live junctions (and their approach
     shapes), calibration, runs (frames_window; another recorded window; `hour` 422 unless mode["hour_ok"]; `weather` echoed),
     roads, probes; GET /weather, /weather/factors (backend/app/weather.py on the repo's files) and /weather/now
@@ -412,6 +444,9 @@ def mock_api(pg, live_body, bodies, mode, counts, real_shape=False, geometry=Fal
     if weather:      # GET /corridor sim: hours and the rain what-if settings (backend/app/corridor.py sim_capabilities)
         corridor["sim"] = {"hours": list(range(6, 24)), "frames_window": True, "probes": True, "weather": ["dry", "light_rain", "heavy_rain"],
                            "weather_label": "estimated (rain factors from TomTom hourly x Open-Meteo, July 2026)"}
+
+    if live_now:     # GET /corridor sim.live: the live trip and Simulate now (backend/app/corridor.py sim_capabilities)
+        corridor.setdefault("sim", {})["live"] = {"available": True, "refresh_s": 300, "bucket_s": 600, "endpoint": "GET /corridor/live_trip", "run": {"day": "live"}}
 
     def wx(route):
         u = urlparse(route.request.url)
@@ -1059,6 +1094,87 @@ with sync_playwright() as p:
     check(pg.is_hidden("#wx-now"), "GET /weather/now 503: the chip is hidden")
     pg.click("#mode-july"); pg.wait_for_timeout(300)
     check(pg.is_hidden("#wx-now"), "weather now only in Live now")
+    pg.close()
+
+    # ---------------- Live now: the live trip and Simulate now (a now-cast on the live map) ----------------
+    case = "V now-cast"; print(case)
+    bodies, mode, counts = [], {"fail": None, "hour_ok": True, "lt": 200, "stale": False, "gone": False}, {}
+    pg = open_page(b, {"width": 1500, "height": 950}, STREAM_JS % (json.dumps(frames_along("j07", "j08")), 60000))
+    pg.add_init_script("window.NC_POLL_MS = 300; window.LT_REFRESH_MS = 600000;")
+    mock_api(pg, lambda c: live_flat(), bodies, mode, counts, real_shape=True, geometry=True, live_now=True)
+    nc_bodies = []
+
+    def lt_route(route):
+        counts["lt"] = counts.get("lt", 0) + 1
+        if mode["lt"] != 200:
+            return route.fulfill(status=503, headers=CORS, content_type="application/json", body=json.dumps({"detail": "live trip unavailable (test)"}))
+        route.fulfill(status=200, headers=CORS, content_type="application/json", body=json.dumps(live_trip_body(mode["stale"])))
+
+    def nc_post(route):
+        if route.request.method == "OPTIONS":
+            return route.fulfill(status=204, headers=CORS)
+        body = json.loads(route.request.post_data or "{}")
+        nc_bodies.append(body)
+        if body.get("live_bucket"):   # a variant fitted to its baseline's bucket: cached, answered at once (or 410 once the bucket is gone)
+            if mode["gone"]:
+                return route.fulfill(status=410, headers=CORS, content_type="application/json", body=json.dumps({"detail": "live bucket gone (test)"}))
+            res = nowcast_result(body["interventions"], "r_nc_chg")
+            return route.fulfill(status=202, headers=CORS, content_type="application/json", body=json.dumps({"run_id": res["run_id"], "status": "done", "cached": True, "result": res}))
+        counts["poll"] = 0
+        route.fulfill(status=202, headers=CORS, content_type="application/json", body=json.dumps({"run_id": "r_nc_base", "status": "queued"}))
+
+    def nc_poll(route):
+        counts["poll"] = counts.get("poll", 0) + 1
+        if counts["poll"] < 4:
+            return route.fulfill(status=200, headers=CORS, content_type="application/json", body=json.dumps({"run_id": "r_nc_base", "status": "running", "elapsed_s": counts["poll"]}))
+        route.fulfill(status=200, headers=CORS, content_type="application/json", body=json.dumps({"run_id": "r_nc_base", "status": "done", "result": nowcast_result([], "r_nc_base")}))
+    pg.route("http://localhost:8000/corridor/live_trip", lt_route)
+    pg.route(re.compile(r".*/corridor/runs\?async=1$"), nc_post)
+    pg.route(re.compile(r".*/corridor/runs/r_nc_[a-z]+$"), nc_poll)
+    goto(pg)
+    check(pg.is_hidden("#nc-box"), "July: no live trip card, no Simulate now")
+    pg.click("#mode-live"); pg.wait_for_timeout(1000)
+    check(pg.is_visible("#lt-box") and pg.inner_text("#lt-total") == "33.7 min" and "REAL" in pg.inner_text("#lt-box h2"), f"Live now: live trip card, 33.7 min: {pg.inner_text('#lt-box')[:80]!r}")
+    vs, asof = pg.inner_text("#lt-vs"), pg.inner_text("#lt-asof")
+    check("July same hour 38.9 min" in vs and "−5.2 min" in vs and "high" in asof and "as of 01:49 IST" in asof, f"vs July same hour, confidence, as of: {vs!r} / {asof!r}")
+    strip = pg.eval_on_selector_all("#lt-strip span", "els => els.map(e => [e.style.backgroundColor, e.title])")
+    check(len(strip) == 12 and "12 km/h now" in strip[8][1] and strip[8][0] == "rgb(226, 61, 39)" and "measured (TomTom live flow)" in strip[0][1], f"12 stretches coloured by live speed: {strip[8] if len(strip) > 8 else strip}")
+    check(pg.is_hidden("#lt-stale"), "fresh data: no stale badge")
+    mode["stale"] = True; pg.evaluate("() => loadLiveTrip()"); pg.wait_for_timeout(400)
+    check(pg.is_visible("#lt-stale") and pg.inner_text("#lt-stale") == "STALE", "stale data: STALE badge")
+    mode["stale"] = False; pg.evaluate("() => loadLiveTrip()"); pg.wait_for_timeout(400)
+    check(pg.is_visible("#nc-run") and pg.inner_text("#nc-run").lower() == "simulate now" and pg.is_hidden("#nc-change"), "Simulate now pill shown (no change button before a now-cast)")
+    check(layer(pg, "nc-vehicles") == -1 and layer(pg, "nc-vehicle-dots") == -1 and layer(pg, "vehicles") == -1, "nothing simulated on the live map before Simulate now")
+    pg.click("#nc-run"); pg.wait_for_timeout(500)
+    busy = pg.inner_text("#nc-busy") if pg.is_visible("#nc-busy") else ""
+    check("Simulating the corridor now" in busy and "0:0" in busy and pg.is_disabled("#nc-run"), f"progress with elapsed time while it runs: {busy[:90]!r}")
+    pg.wait_for_selector("#nc-result:not([hidden])", timeout=15000); pg.wait_for_timeout(2500)
+    check(nc_bodies[:1] == [{"interventions": [], "day": "live", "volume_scale": 1.0}] and counts.get("poll", 0) >= 4, f"POST ?async=1 day live, then polled: {nc_bodies[:1]} / {counts.get('poll')} polls")
+    lab = pg.inner_text("#nc-label")
+    check(lab.startswith("Now-cast 01:49 IST (TomTom live") and "SIMULATED" in lab and pg.is_visible("#nc-clamped"), f"time.label, SIMULATED, night badge: {lab[:100]!r}")
+    res = pg.inner_text("#nc-result")
+    check("Simulated trip now 34.2 min" in res and "TomTom live estimate 33.7 min" in res, f"simulated trip vs live estimate: {res[:140]!r}")
+    leg = pg.inner_text("#nc-legend")
+    check(pg.is_visible("#nc-legend") and "Cars: SIMULATED now-cast, tuned to TomTom live at 01:49" in leg and "road colours and red queues: REAL TomTom" in leg, f"legend: {leg[:140]!r}")
+    nv = max(layer(pg, "nc-vehicles"), layer(pg, "nc-vehicle-dots"))
+    check(nv > 0 and pg.evaluate("() => playing && nowcastOn()") and layer(pg, "live-queues") > 0 and pg.get_attribute("#mode-live", "aria-selected") == "true",
+          f"simulated vehicles drawn on the live map ({nv}), playing, live queues still on ({layer(pg, 'live-queues')})")
+    check("vehicles" in pg.inner_text("#nc-clock"), f"now-cast clock: {pg.inner_text('#nc-clock')!r}")
+    pg.screenshot(path=str(OUT / "corridor_V_nowcast.png"))
+    check(pg.is_visible("#nc-change") and "ISB Rd / DLF" in pg.inner_text("#nc-change"), f"Try a change now offered: {pg.inner_text('#nc-change')!r}")
+    pg.click("#nc-change"); pg.wait_for_selector("#nc-cmp", timeout=10000); pg.wait_for_timeout(800)
+    check(nc_bodies[-1].get("live_bucket") == NC_BUCKET and nc_bodies[-1]["interventions"][0]["junction_id"] == "j02" and nc_bodies[-1]["day"] == "live",
+          f"the change runs with the baseline's live_bucket: {nc_bodies[-1]}")
+    cmp_ = pg.inner_text("#nc-cmp")
+    check("31.7 min" in cmp_ and "−2.5 min" in cmp_ and "WITH CHANGES" in cmp_ and pg.evaluate("() => playingRun === ncChanged"), f"now-cast vs with the change: {cmp_!r}")
+    pg.click("#nc-watch-base"); pg.wait_for_timeout(300)
+    check(pg.evaluate("() => playingRun === ncBase"), "watch the now-cast again")
+    mode["gone"] = True; pg.click("#nc-change"); pg.wait_for_timeout(1200)
+    check("moved on" in pg.inner_text("#nc-result") and pg.is_hidden("#nc-change"), f"410 (bucket gone): asks to Simulate now again: {pg.inner_text('#nc-result')[:90]!r}")
+    mode["lt"] = 503; pg.evaluate("() => loadLiveTrip()"); pg.wait_for_timeout(400)
+    check(pg.is_hidden("#lt-box") and pg.is_hidden("#nc-run") and "unavailable" in pg.inner_text("#lt-off").lower(), f"503: live trip card hidden, 'unavailable': {pg.inner_text('#lt-off')!r}")
+    pg.click("#mode-july"); pg.wait_for_timeout(500)
+    check(pg.is_hidden("#nc-box") and layer(pg, "nc-vehicles") == -1 and layer(pg, "nc-vehicle-dots") == -1 and layer(pg, "vehicles") == -1, "July: the now-cast's vehicles are not shown")
     pg.close()
 
     # ---------------- view: no accidental page zoom, Reset view, panels reachable and collapsible ----------------
