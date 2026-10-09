@@ -5,8 +5,10 @@ flyover and a cheap signal fix, let an AI assistant compare them, and a human re
 tamper-proof record. Build only what was tested.
 
 **Screens**
+- Home: http://localhost:5174/ (top bar links every screen)
 - Corridor: http://localhost:5174/corridor.html (main demo)
-- YMCA Circle (deep-dive junction): http://localhost:5174/index.html
+- YMCA Circle (deep-dive junction): http://localhost:5174/ymca.html
+- Decisions (read-only log): http://localhost:5174/decisions.html · About the data: http://localhost:5174/data.html
 - API (backup, shows every endpoint): http://localhost:8000/docs
 
 **Roles on stage:** Presenter (talks), Driver (clicks). The driver never talks; the presenter never touches the mouse.
@@ -84,7 +86,7 @@ Placeholders in `[[double brackets]]` get filled after the corridor calibration 
 
 **Pre-flight, 30 minutes before**
 1. `MOCK_SIM=0 make dev` running; http://localhost:8000/health answers.
-2. `python3 -m http.server 5174` in `/frontend`; both pages load.
+2. `python3 -m http.server 5174` in `/frontend`; http://localhost:5174/ and every page in its top bar load.
 3. Live panel shows data less than 15 minutes old.
 4. Click each quick demo once: answers instantly (cached).
 5. Planning assistant answers a test question.

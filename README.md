@@ -51,8 +51,11 @@ cd frontend && python3 -m http.server 5174      # screens
 ```
 | What | URL |
 |---|---|
+| Home (links to every screen; top bar on each page) | http://localhost:5174/ |
 | Corridor demo (main screen) | http://localhost:5174/corridor.html |
-| YMCA Circle 3D view (deep-dive junction) | http://localhost:5174/index.html |
+| YMCA Circle 3D close-up (deep-dive junction) | http://localhost:5174/ymca.html |
+| Decision log (read-only) | http://localhost:5174/decisions.html |
+| About the data (REAL vs SIMULATED, calibration) | http://localhost:5174/data.html |
 | API, interactive docs | http://localhost:8000/docs |
 | API health (`mock: true` means sample data) | http://localhost:8000/health |
 
@@ -143,7 +146,7 @@ cp .env.example .env      # paste in the keys you were sent; keep MOCK_SIM=1
 make setup                # creates .venv and installs the backend
 make dev                  # API at http://localhost:8000 — /health shows {"status":"ok","mock":true}
 make smoke                # in a second terminal: must print SMOKE TEST PASSED
-cd frontend && python3 -m http.server 5174   # screens at http://localhost:5174/corridor.html and /index.html
+cd frontend && python3 -m http.server 5174   # screens at http://localhost:5174/ (home), /corridor.html, /ymca.html, /decisions.html, /data.html
 ```
 
 ### 2. Simulation with SUMO (simulation and scenarios laptops, 10 minutes)

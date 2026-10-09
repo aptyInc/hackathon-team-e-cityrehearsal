@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CityRehearsal — About the data</title>
+<!-- Owner: Frontend. What is REAL vs SIMULATED, in plain language, and how well the simulation matches TomTom.
+     Reads (optional; the page keeps its written sections when the API is offline): GET /corridor (TomTom periods),
+     GET /corridor/junctions/live (junctions reporting), GET /corridor/calibration (sim vs TomTom per stretch, knobs, inputs).
+     Wording follows README.md, data/README.md, data/rain/README.md and docs/glossary.md. -->
+<link href="app.css" rel="stylesheet" />
+<style>
+  .pg-h h1 { font-size: 28px; }
+  .pg-h p { margin: 6px 0 0; max-width: 760px; color: #2c3842; font-size: 15px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 0 0; font-size: 13px; }
+  .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .legend dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; margin: 8px 0 0; align-items: baseline; font-size: 13px; }
+  .legend dt { white-space: nowrap; } .legend dd { margin: 0; }
+  .legend .tag { margin-left: 0; }
+  .sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .src h3 { font-size: 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
+  .src h3 .tag { margin-left: 0; }
+  .src p { margin: 8px 0 0; font-size: 13.5px; color: #2c3842; }
+  .src .labs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; font-size: 12px; align-items: center; }
+  .src .key { font-size: 26px; font-weight: 800; line-height: 1.1; margin-top: 10px; }
+  .src .key small { font-size: 13px; font-weight: 400; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .chips span { font-size: 12px; background: #e7f4ea; color: #145c29; padding: 1px 8px; border-radius: 10px; }
+  .chips span.old { background: #fff4e5; color: #8a5200; }
+  a.term { color: inherit; text-decoration: underline dotted #8a96a0; text-underline-offset: 2px; }
+  a.term:hover { color: var(--blue); }
+  .fit { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: baseline; }
+  .fit .big { font-size: 34px; font-weight: 800; letter-spacing: -.5px; }
+  .bar { position: relative; height: 8px; background: #eee; border-radius: 4px; min-width: 70px; }
+  .bar i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+  .bar .mid0 { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: #8a96a0; }
+  .good { color: #1a7f37; font-weight: 600; } .fair { color: #b26a00; font-weight: 600; } .poor { color: var(--bad); font-weight: 600; }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
+  .card h3 { font-size: 15px; margin-bottom: 6px; }
+  .knob { padding: 10px 0; border-bottom: 1px solid var(--line); } .knob:last-child { border-bottom: 0; }
+  .knob .kh { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; font-weight: 700; }
+  .knob .kv { font-family: ui-monospace, Menlo, monospace; font-size: 12px; margin-top: 4px; overflow-wrap: anywhere; }
+  .knob p { margin: 4px 0 0; font-size: 13px; color: #2c3842; }
+  .gl { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 10px 18px; margin: 0; }
+  .gl dt { font-weight: 700; } .gl dd { margin: 0; color: #2c3842; }
+  .gl dt:target, .gl dt:target + dd { background: #fff4e5; }
+  @media (max-width: 820px) {
+    .legend, .sources, .two { grid-template-columns: minmax(0, 1fr); }
+    .gl { grid-template-columns: 1fr; gap: 2px; } .gl dd { margin-bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+<script src="nav.js" data-page="data"></script>
+<main class="wrap">
+  <div class="pg-h">
+    <h1>About the data</h1>
+    <p>Every number on these screens is either <b>measured</b> in the real world or <b>produced by our simulation</b>. This page says which is which,
+      where each one comes from, and how far to trust it.</p>
+    <div class="toc"><a href="#tags">How to read the tags</a><a href="#real">What is real</a><a href="#sim">How well the simulation matches</a><a href="#assumed">What is assumed</a><a href="#glossary">Words used here</a></div>
+  </div>
+
+  <h2 class="sec-h" id="tags">How to read the tags</h2>
+  <div class="legend">
+    <div class="card"><h3>On every number</h3><dl>
+      <dt><span class="tag real">REAL</span></dt><dd>Measured in the real world: by <a class="term" href="#g-tomtom">TomTom</a> (from <a class="term" href="#g-probe">probe vehicles</a>) or by a published traffic study.</dd>
+      <dt><span class="tag sim">SIMULATED</span></dt><dd>Produced by our <a class="term" href="#g-simulation">simulation</a> of the roads. Only as good as its <a class="term" href="#g-calibration">calibration</a>.</dd>
+      <dt><span class="tag sample">SAMPLE DATA</span></dt><dd>A saved example result (the API in <a class="term" href="#g-mock">mock mode</a>), not a simulation of what you asked.</dd>
+    </dl></div>
+    <div class="card"><h3>On every input to the simulation</h3><dl>
+      <dt><span class="lab counted">counted</span> / <span class="lab measured">measured</span></dt><dd>Someone measured it: a traffic count, a study, a probe speed or travel time.</dd>
+      <dt><span class="lab estimated">estimated</span></dt><dd>Worked out from measured data, e.g. TomTom's vehicles-per-hour figure, which is its model's estimate.</dd>
+      <dt><span class="lab calibrated">calibrated</span></dt><dd>Tuned by us until the simulation's trip times match TomTom's. Fitted, not measured.</dd>
+      <dt><span class="lab assumed">assumed</span></dt><dd>A reasonable guess with no data behind it yet, e.g. the split between cars and autos.</dd>
+    </dl></div>
+  </div>
+
+  <h2 class="sec-h" id="real">What is real: the sources</h2>
+  <div class="sources">
+    <div class="card src" id="src-traffic-stats">
+      <h3>TomTom Traffic Stats <span class="tag real">REAL</span></h3>
+      <div class="key" id="ts-key">58 min <small>Lingampally → Lakdikapul by car, a typical July day</small></div>
+      <p>Historic travel times and speeds on our route, from TomTom's <a class="term" href="#g-probe">probe vehicles</a>: July 2026, every day 06:00–23:00,
+        split into the 12 <a class="term" href="#g-leg">stretches</a> between junctions. This is what the simulation is calibrated against.</p>
+      <p id="ts-range" class="muted"></p>
+      <div class="labs"><span class="lab measured">measured</span><span class="muted">used on: corridor trip strip (the REAL bar), calibration below</span></div>
+    </div>
+    <div class="card src" id="src-junctions">
+      <h3>TomTom Junction Analytics <span class="tag real">REAL</span></h3>
+      <div class="key" id="ja-key">– <small>junctions reporting live</small></div>
+      <p>Minute-by-minute data for single junctions: the <b>delay</b> on each <a class="term" href="#g-approach">approach</a> (measured from GPS trips),
+        and the <b>queue length</b> and <b>vehicles per hour</b>, which are TomTom's model <b>estimates</b>, not counts. Also which way traffic turns.</p>
+      <div class="chips" id="ja-chips"></div>
+      <p id="ja-note" class="muted">Loading live data…</p>
+      <div class="labs"><span class="lab measured">delay: measured</span><span class="lab estimated">queue, volume: estimated</span></div>
+    </div>
+    <div class="card src" id="src-osm">
+      <h3>OpenStreetMap roads <span class="tag mix">MAP</span></h3>
+      <p>The road network the simulation drives on: lanes, speed limits, one-way streets and junction shapes, from the free, volunteer-made
+        OpenStreetMap. It is a reference map, not a measurement: where it is wrong (a missing lane, an odd junction shape), the simulation is too.</p>
+      <div class="labs"><span class="lab other">reference</span><span class="muted">used on: every simulation, the route line on the corridor map</span></div>
+    </div>
+    <div class="card src" id="src-buildings">
+      <h3>Overture building footprints <span class="tag mix">MAP</span></h3>
+      <p>About 16,400 building outlines along the corridor (Overture Maps, release 2026-09-23.1) and 3,370 around YMCA Circle. They are only used to
+        draw the 3D city. Most buildings have no recorded height, so heights are <b>assumed</b> from the footprint size (floors × 3.2 m).
+        The simulation does not use them.</p>
+      <div class="labs"><span class="lab counted">footprints: mapped</span><span class="lab assumed">heights: mostly assumed</span></div>
+    </div>
+    <div class="card src" id="src-rain">
+      <h3>Open-Meteo rain <span class="tag real">REAL</span></h3>
+      <div class="key">≈ +5% <small>trip time while it is raining (uncertain)</small></div>
+      <p>Hourly rainfall for July 2026 at three points on the route (a weather <a class="term" href="#g-reanalysis">reanalysis</a>, not a rain gauge), compared with
+        TomTom's daily trip times for 1–15 July. Rainy weekdays were <b>not measurably slower</b> as a whole (61.0 vs 62.0 min). Our best estimate is about
+        <b>5% slower while it is actually raining</b>, but the data allow anything from 11% faster to 21% slower, so treat it as a rough guide.
+        One stretch, Gachibowli Circle → Biodiversity junction, was slower on every rainy day compared.</p>
+      <div class="labs"><span class="lab measured">rain: measured (modelled)</span><span class="lab estimated">effect on traffic: estimated</span></div>
+    </div>
+    <div class="card src" id="src-study">
+      <h3>YMCA Circle traffic count, 2020 study <span class="tag real">REAL</span></h3>
+      <p>Vehicles per hour by type on each road into YMCA Circle, from a published study (IJRAR, June 2020). Used for the YMCA close-up's traffic mix.
+        Traffic has grown since: the 2.0× growth to 2026 is <b>estimated</b> by matching TomTom's speeds.</p>
+      <div class="labs"><span class="lab counted">counts: counted</span><span class="lab estimated">growth to 2026: estimated</span></div>
+    </div>
+  </div>
+
+  <h2 class="sec-h" id="sim">How well the simulation matches TomTom <span class="tag sim">SIMULATED</span> vs <span class="tag real">REAL</span></h2>
+  <div class="card" id="cal-summary"><p class="note"><span class="spin"></span>Loading the latest calibration…</p></div>
+  <div class="two">
+    <div class="card" id="cal-legs-card"><h3>Trip time per stretch</h3><div id="cal-legs" class="tw"></div></div>
+    <div class="card" id="cal-knobs-card"><h3>What we tuned (calibrated knobs)</h3><div id="cal-knobs"></div></div>
+  </div>
+  <div class="two">
+    <div class="card" id="cal-jn-card"><h3>Delay at junctions with TomTom data</h3><div id="cal-jn" class="tw"></div></div>
+    <div class="card" id="cal-vol-card"><h3>Traffic volume on the main road</h3><div id="cal-vol" class="tw"></div></div>
+  </div>
+
+  <h2 class="sec-h" id="assumed">What goes into the simulation, and what is assumed</h2>
+  <div class="card" id="inputs-card"><div id="inputs" class="tw"><p class="note">Loading…</p></div></div>
+
+  <h2 class="sec-h" id="glossary">Words used on this page</h2>
+  <div class="card">
+    <dl class="gl">
+      <dt id="g-tomtom">TomTom</dt><dd>A company that makes maps and collects traffic data from millions of phones, cars and navigation devices. We use two of its products: Traffic Stats (how long trips took) and Junction Analytics (what is happening at a junction now).</dd>
+      <dt id="g-probe">Probe vehicle</dt><dd>Any vehicle that sends its anonymous GPS position to a company like TomTom. TomTom sees only a sample of all traffic: speeds and travel times from probes are reliable; vehicle counts are TomTom's estimate.</dd>
+      <dt id="g-leg">Stretch (leg)</dt><dd>The road between two neighbouring junctions, e.g. Tolichowki → Nanal Nagar. The whole trip is the sum of 12 stretches.</dd>
+      <dt id="g-approach">Approach</dt><dd>One road coming into a junction. A crossroads has four. TomTom reports delay and queue per approach.</dd>
+      <dt id="g-simulation">Simulation</dt><dd>A computer copy of the roads (SUMO, an open-source traffic simulator) where thousands of virtual two-wheelers, cars, autos and buses drive, stop at signals and queue. We change the copy, not the real roads.</dd>
+      <dt id="g-calibration">Calibration</dt><dd>Tuning the simulation until it behaves like the real roads: here, adjusting speed limits per stretch, signal green times and traffic volume until the simulated trip times match TomTom's. It is what makes the “what if” answers worth trusting.</dd>
+      <dt id="g-green">Green share</dt><dd>The part of a signal's green time given to the main road. 80% means the corridor gets 80% of the green and the side roads share the rest.</dd>
+      <dt id="g-reanalysis">Reanalysis</dt><dd>Weather data rebuilt by a weather model from satellite and station records, on a grid of about 9 km. Good for “did it rain here that hour”, less exact than a rain gauge.</dd>
+      <dt id="g-mock">Mock mode</dt><dd>The API returns saved sample results instead of running the simulator (<code>MOCK_SIM=1</code>). Used while building screens and as a demo fallback. The status pill in the top bar says which mode is on.</dd>
+    </dl>
+    <p class="note">The full glossary for the team: <a href="https://github.com/aptyInc/hackathon-team-e-cityrehearsal/blob/main/docs/glossary.md" target="_blank" rel="noopener">docs/glossary.md</a>.
+      Every file and its source: <a href="https://github.com/aptyInc/hackathon-team-e-cityrehearsal/blob/main/data/README.md" target="_blank" rel="noopener">data/README.md</a>.</p>
+  </div>
+</main>
+
+<script src="app.js"></script>
+<script>
+const { $, esc, get, when, hhmm, pointName, POINTS, lab, apiProblem } = CR;
+const KNOBS = {   // plain names for the calibration knobs (sim/corridor/calibration.json)
+  cap_kmh: "Speed cap per stretch", green_share: "Main-road green share at signals", through_vph: "Through traffic, end to end", cross_scale: "Share of TomTom's cross-road volumes",
+};
+const legName = leg => { const [a, b] = String(leg).split("->"); return `${pointName(a)} → ${pointName(b)}`; };
+const LEG_IDS = ["A_lingampally", "j01", "j02", "j03", "j04", "j05", "j06", "j07", "j08", "j09", "j10", "j11", "B_lakdikapul"];
+const pctDiff = (s, t) => t ? (s - t) / t * 100 : 0;
+const fitClass = d => Math.abs(d) <= 10 ? "good" : Math.abs(d) <= 20 ? "fair" : "poor";
+const signed = (x, d = 0) => `${x > 0 ? "+" : x < 0 ? "−" : "±"}${Math.abs(x).toFixed(d)}`;
+const mins = s => (s / 60).toFixed(1);
+function diffBar(d) {   // a small bar from the middle: right = simulation slower, left = faster; full width = ±40%
+  const w = Math.min(50, Math.abs(d) / 40 * 50), col = { good: "#1a7f37", fair: "#b26a00", poor: "#b00020" }[fitClass(d)];
+  return `<div class="bar" aria-hidden="true"><span class="mid0"></span><i style="${d >= 0 ? "left:50%" : `left:${50 - w}%`};width:${w}%;background:${col}"></i></div>`;
+}
+
+async function loadCorridor() {
+  try {
+    const c = await get("/corridor");
+    (c.points || []).forEach(p => { if (p.id && p.name) POINTS[p.id] = p.name.replace(/\s*\(.*?\)\s*/g, " ").trim(); });
+    const ps = c?.tomtom?.periods || [], typ = ps.find(p => p.kind === "average") || ps[0];
+    if (!typ) return;
+    const tot = p => p.total_s ?? (p.legs || []).reduce((s, l) => s + l.time_s, 0);
+    $("ts-key").innerHTML = `${Math.round(tot(typ) / 60)} min <small>Lingampally → Lakdikapul by car, ${esc(typ.label || "a typical July day")}, ${((typ.distance_m || 22416) / 1000).toFixed(1)} km</small>`;
+    const days = ps.filter(p => p !== typ && p.legs && p.legs.length);
+    if (days.length) {
+      const sorted = days.slice().sort((a, b) => tot(a) - tot(b)), lo = sorted[0], hi = sorted[sorted.length - 1];
+      const dow = p => new Date(String(p.date_from || p.period).slice(0, 10) + "T12:00:00+05:30").getUTCDay();
+      const avg = xs => xs.length ? Math.round(xs.reduce((s, p) => s + tot(p), 0) / xs.length / 60) : null;
+      const wk = avg(days.filter(p => dow(p) > 0 && dow(p) < 6)), sun = avg(days.filter(p => dow(p) === 0));
+      $("ts-range").innerHTML = `On the ${days.length} single days we also have (08:00–20:00), the trip took from <b>${Math.round(tot(lo) / 60)} min</b> (${esc(lo.label || lo.period)}) to <b>${Math.round(tot(hi) / 60)} min</b> (${esc(hi.label || hi.period)})` +
+        (wk && sun ? `: weekdays about ${wk} min, Sundays about ${sun} min.` : ".");
+    }
+  } catch (e) { $("ts-range").textContent = "Figures above are the saved July 2026 numbers; the API is not answering for the per-day detail."; }
+}
+
+async function loadLive() {
+  try {
+    const d = await get("/corridor/junctions/live");
+    const js = (d.junctions || []).filter(j => (j.approaches || []).length);
+    if (!js.length) throw Object.assign(new Error("no junctions"), { status: 404 });
+    const n = js.reduce((s, j) => s + j.approaches.length, 0), last = js.map(j => j.time).filter(Boolean).sort().pop();
+    $("ja-key").innerHTML = `${js.length} <small>corridor junctions reporting live, ${n} approaches</small>`;
+    $("ja-chips").innerHTML = js.map(j => `<span class="${j.age_s > 900 ? "old" : ""}" title="${esc(j.name)}${j.tomtom_id ? ` · TomTom junction ${esc(j.tomtom_id)}` : ""}${j.age_s > 900 ? ` · no update for ${Math.round(j.age_s / 60)} min` : ""}">${esc(j.name)}</span>`).join("");
+    $("ja-note").innerHTML = `Last update from TomTom ${esc(hhmm(last))} (IST). Shown live on the corridor screen and the home page.` +
+      (d.labels ? ` Labels from the API: ${Object.entries(d.labels).map(([k, v]) => `${esc(k.replace(/_/g, " "))} <i>${esc(v)}</i>`).join(", ")}.` : "");
+  } catch (e) {
+    $("ja-key").innerHTML = `– <small>junctions reporting live</small>`;
+    $("ja-note").textContent = apiProblem(e, "Live junction data");
+  }
+}
+
+async function loadCalibration() {
+  let c;
+  try { c = await get("/corridor/calibration"); }
+  catch (e) {
+    const msg = e.status === 404 ? "The simulation has not been calibrated on this server yet (GET /corridor/calibration answers 404). Until it is, simulated trip times are not checked against TomTom."
+                                 : apiProblem(e, "The calibration report");
+    $("cal-summary").innerHTML = `<p class="note off" id="cal-off">${esc(msg)}</p>`;
+    ["cal-legs", "cal-knobs", "cal-jn", "cal-vol"].forEach(k => $(k).innerHTML = `<p class="note">Not available.</p>`);
+    $("inputs").innerHTML = `<p class="note">The list of simulation inputs comes with the calibration report. In short: TomTom trip times (measured) are the target; TomTom junction volumes and turns (estimated) feed the side roads; signal plans, the vehicle mix and traffic at junctions without TomTom data are assumed.</p>`;
+    return;
+  }
+  const r = c.result || {}, legs = (r.legs || []).slice().sort((a, b) => LEG_IDS.indexOf(String(a.leg).split("->")[0]) - LEG_IDS.indexOf(String(b.leg).split("->")[0]));
+  // summary
+  const d = pctDiff(r.sim_total_s, r.tomtom_total_s), within = legs.filter(l => Math.abs(pctDiff(l.sim_s, l.tomtom_s)) <= 10).length;
+  const vols = (r.corridor_volumes || []).filter(v => v.tomtom_vph > 0 && v.sim_vph != null), share = vols.length ? vols.reduce((s, v) => s + v.sim_vph / v.tomtom_vph, 0) / vols.length : null;
+  $("cal-summary").innerHTML =
+    `<div class="fit"><div><div class="muted">Whole trip, simulated <span class="tag sim">SIMULATED</span></div><div class="big" id="cal-sim">${r.sim_total_s != null ? mins(r.sim_total_s) + " min" : "–"}</div></div>` +
+    `<div><div class="muted">Whole trip, TomTom <span class="tag real">REAL</span></div><div class="big" id="cal-tt">${r.tomtom_total_s != null ? mins(r.tomtom_total_s) + " min" : "–"}</div></div>` +
+    `<div><div class="muted">Difference</div><div class="big ${fitClass(d)}">${signed(d, 1)}%</div></div>` +
+    `<div><div class="muted">Stretches within ±10%</div><div class="big">${within} of ${legs.length}</div></div></div>` +
+    `<p class="note">Target: ${esc(c.target || "TomTom Traffic Stats")}. Last calibrated ${esc(when(c.calibrated_at) || c.calibrated_at || "–")}` +
+    `${r.total_s_se != null ? `; the simulated trip time varies by about ±${Math.round(r.total_s_se)} s between test cars` : ""}` +
+    `${r.probes_arrived != null ? ` (${r.probes_arrived} test cars drove the whole route)` : ""}.</p>` +
+    `<p class="note info" id="cal-honest"><b>In plain words:</b> the simulated trip takes about as long as TomTom measured, stretch by stretch. That is what it was tuned to do, ` +
+    `so it is a fit, not a prediction. ${share != null ? `To get there the simulation carries fewer vehicles than TomTom's estimates: on the main road, on average <b>${Math.round(share * 100)}%</b> of TomTom's vehicles per hour. ` : ""}` +
+    `Traffic volumes were lowered step by step until the trip times matched, and delays at single junctions match less well (see below). Use the results to compare options with each other, not as exact minutes.</p>`;
+  // per stretch
+  $("cal-legs").innerHTML = legs.length ? `<table id="legs-table"><tr><th>Stretch</th><th class="n">TomTom</th><th class="n">Simulated</th><th class="n">Diff.</th><th></th></tr>` +
+    legs.map(l => { const x = pctDiff(l.sim_s, l.tomtom_s);
+      return `<tr data-leg="${esc(l.leg)}"><td>${esc(legName(l.leg))}</td><td class="n">${mins(l.tomtom_s)} min</td><td class="n">${mins(l.sim_s)} min</td>` +
+             `<td class="n ${fitClass(x)}">${signed(x)}%</td><td style="width:80px">${diffBar(x)}</td></tr>`; }).join("") +
+    `<tr><td><b>Whole trip</b></td><td class="n"><b>${mins(r.tomtom_total_s)} min</b></td><td class="n"><b>${mins(r.sim_total_s)} min</b></td><td class="n ${fitClass(d)}"><b>${signed(d, 1)}%</b></td><td>${diffBar(d)}</td></tr></table>` +
+    `<p class="note">Minutes per stretch, A → B. Green: within 10% of TomTom; amber: 10–20%; red: more. Bar to the right: the simulation is slower.</p>` : `<p class="note">No stretch results in the report.</p>`;
+  // knobs
+  const knobVal = (k, v) => {
+    if (k === "cap_kmh" && Array.isArray(v)) return v.map((x, i) => `${legName(`${LEG_IDS[i]}->${LEG_IDS[i + 1]}`)}: ${x} km/h`).join(" · ");
+    if (k === "green_share" && v && typeof v === "object") return Object.entries(v).map(([j, x]) => `${pointName(j)} ${Math.round(x * 100)}%`).join(" · ");
+    if (k === "through_vph" && v && typeof v === "object") return Object.entries(v).map(([dir, x]) => `${dir === "fwd" ? "towards Lakdikapul" : dir === "rev" ? "towards Lingampally" : dir} ${x} vehicles/hour`).join(" · ");
+    if (k === "cross_scale" && typeof v === "number") return `${Math.round(v * 100)}% of TomTom's estimate`;
+    return typeof v === "object" ? JSON.stringify(v) : String(v);
+  };
+  const knobs = c.knobs || {};
+  $("cal-knobs").innerHTML = Object.keys(knobs).length ? Object.entries(knobs).map(([k, text]) => {
+    const why = String(text).replace(/^\s*(counted|measured|estimated|assumed|calibrated)\s*:\s*/i, "");
+    return `<div class="knob" data-knob="${esc(k)}"><div class="kh"><span>${esc(KNOBS[k] || k)}</span>${lab(text)}</div>` +
+      (c[k] != null ? `<div class="kv">${esc(knobVal(k, c[k]))}</div>` : "") + `<p>${esc(why.replace(/^./, ch => ch.toUpperCase()))}</p></div>`;
+  }).join("") : `<p class="note">The report lists no knobs.</p>`;
+  // junction delays
+  const jd = Object.entries(r.junction_delays || {}).sort((a, b) => a[0].localeCompare(b[0]));
+  $("cal-jn").innerHTML = jd.length ? `<table id="jn-table"><tr><th>Junction</th><th class="n">TomTom</th><th class="n">Simulated</th><th class="n">Diff.</th></tr>` +
+    jd.map(([j, x]) => { const p = pctDiff(x.sim_s, x.target_s);
+      return `<tr data-j="${esc(j)}"><td>${esc(pointName(j))}</td><td class="n">${Number(x.target_s).toFixed(0)} s</td><td class="n">${Number(x.sim_s).toFixed(0)} s</td><td class="n ${fitClass(p)}">${signed(p)}%</td></tr>`; }).join("") + `</table>` +
+    `<p class="note">Average delay per vehicle at the junction, from TomTom Junction Analytics (measured). The calibration fits trip times first; it does not force these to match, so large differences are possible.</p>`
+    : `<p class="note">No junction comparison in the report.</p>`;
+  // volumes
+  $("cal-vol").innerHTML = vols.length ? `<table id="vol-table"><tr><th>Junction, road into it</th><th class="n">TomTom</th><th class="n">Simulated</th></tr>` +
+    vols.map(v => `<tr><td>${esc(pointName(v.junction_id))}<small style="display:block">${esc(v.road || "")} (${esc(v.direction || "")})</small></td>` +
+      `<td class="n">${Math.round(v.tomtom_vph).toLocaleString("en-IN")} /h</td><td class="n">${Math.round(v.sim_vph).toLocaleString("en-IN")} /h</td></tr>`).join("") + `</table>` +
+    `<p class="note">Vehicles per hour on the corridor where it enters each TomTom junction. TomTom's figures are <span class="lab estimated">estimated</span> by its model from probe data; ours are what the simulation carried.</p>`
+    : `<p class="note">No volume comparison in the report.</p>`;
+  // inputs
+  const ins = r.inputs || [];
+  const assumed = ins.filter(x => /^assumed/i.test(x.label || ""));
+  $("inputs").innerHTML = ins.length ? (assumed.length ? `<p class="note warn" id="assumed-note"><b>Assumed, no data behind it yet:</b> ${assumed.map(x => esc(x.input)).join("; ")}. ` +
+      `These are reasonable guesses; better data here would make the simulation more trustworthy.</p>` : "") +
+    `<table id="inputs-table"><tr><th>Input</th><th>Label</th><th>Where it comes from</th></tr>` +
+    ins.map(x => `<tr><td>${esc(x.input)}</td><td>${lab(x.label)}</td><td>${esc(x.source || "")}</td></tr>`).join("") + `</table>`
+    : `<p class="note">The calibration report lists no inputs.</p>`;
+}
+
+loadCorridor().then(loadCalibration);   // plain junction names first
+loadLive();
+if (window.crNav) { let was = null; crNav.onChange(s => { if (was === "offline" && s !== "offline") { loadCorridor().then(loadCalibration); loadLive(); } was = s; }); }
+if (location.hash) setTimeout(() => { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }, 600);
+</script>
+</body>
+</html>

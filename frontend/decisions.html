@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CityRehearsal — Decisions</title>
+<!-- Owner: Frontend. Read-only decision log for reviewers and commissioners. Decisions are made on the corridor screen (step 4);
+     this page only shows the record. Reads: GET /corridor/cases, GET /corridor/cases/{id} (runs, events, fingerprints),
+     GET /briefs/{id}. Deep links: decisions.html#case=<case_id>, decisions.html#stage=<proposed|in_review|decided>. -->
+<link href="app.css" rel="stylesheet" />
+<style>
+  .pg-h { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .pg-h h1 { font-size: 28px; }
+  .pg-h p { margin: 6px 0 0; max-width: 720px; color: #2c3842; }
+  body.detail .pg-h p { display: none; }   /* a case is open: straight to it */
+  /* list */
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 18px 0 10px; }
+  .filters button { background: #e8e4dc; color: var(--ink); font-weight: 600; padding: 6px 12px; border-radius: 999px; }
+  .filters button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .filters .n { font-weight: 400; opacity: .75; margin-left: 2px; }
+  #cases { padding: 4px 0; }
+  a.case-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; padding: 12px 20px; color: inherit; text-decoration: none;
+               border-bottom: 1px solid var(--line); }
+  a.case-row:last-child { border-bottom: 0; }
+  a.case-row:hover { background: var(--soft); }
+  .case-row .t { font-weight: 700; font-size: 15px; }
+  .case-row .m { font-size: 12px; color: var(--muted); grid-column: 1; }
+  .case-row .s { grid-row: 1 / span 2; grid-column: 2; align-self: center; text-align: right; }
+  .empty { padding: 16px 20px; color: var(--muted); }
+  /* detail */
+  .back { display: inline-block; margin: 2px 0 12px; font-weight: 600; text-decoration: none; }
+  .d-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+  .d-head h2 { font-size: 24px; }
+  .d-meta { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+  .d-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stages { display: flex; list-style: none; padding: 0; margin: 16px 0 0; gap: 6px; }
+  .stages li { flex: 1; text-align: center; font-size: 12px; font-weight: 700; padding: 6px 4px; border-radius: 6px; background: #eee; color: var(--muted); }
+  .stages li.done { background: #e7f4ea; color: #1a7f37; } .stages li.now { background: var(--accent); color: #fff; }
+  .verdict { margin: 14px 0 0; padding: 12px 14px; border-radius: 8px; background: #e7f4ea; border-left: 4px solid #1a7f37; }
+  .verdict.reject { background: #fdecea; border-color: var(--bad); } .verdict.revise, .verdict.defer { background: #fff4e5; border-color: var(--mid); }
+  .verdict b { font-size: 15px; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
+  .cols > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
+  .card h3 { font-size: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  /* timeline */
+  .tl { list-style: none; padding: 0 0 0 16px; margin: 4px 0 0; border-left: 2px solid #d6cfc2; }
+  .tl > li { position: relative; margin: 0 0 16px; }
+  .tl > li:last-child { margin-bottom: 4px; }
+  .tl > li::before { content: ""; position: absolute; left: -23px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--paper); }
+  .tl > li[data-kind="review"]::before { background: var(--mid); } .tl > li[data-kind="decision"]::before { background: #1a7f37; }
+  .tl .k { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .tl .who { font-weight: 700; } .tl .what { margin: 3px 0; }
+  .tl .res { margin: 4px 0; padding-left: 18px; font-size: 13px; list-style: disc; } .tl .res li { margin: 2px 0; }
+  .tl .chain { font-size: 12px; color: var(--muted); }
+  /* runs */
+  #runs td small { display: block; margin-top: 2px; }
+  .d-ok { color: #1a7f37; font-weight: 600; } .d-bad { color: var(--bad); font-weight: 600; }
+  /* evidence */
+  .ev dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 8px 0 0; font-size: 13px; }
+  .ev dt { color: var(--muted); } .ev dd { margin: 0; overflow-wrap: anywhere; }
+  .chain-ok { color: #1a7f37; font-weight: 600; } .chain-bad { color: var(--bad); font-weight: 600; }
+  #brief-body { font-size: 14px; }
+  .brief-meta { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  @media (max-width: 820px) {
+    .cols { grid-template-columns: minmax(0, 1fr); }
+    a.case-row { padding: 12px 14px; }
+    .d-head h2 { font-size: 20px; }
+  }
+  @media print {
+    #cr-nav, .filters, #list-view, .back, .d-actions, .noprint { display: none !important; }
+    .cols { grid-template-columns: minmax(0, 1fr); }
+    body.print-brief main > *:not(#detail-view), body.print-brief #detail-view > *:not(.cols),
+    body.print-brief .cols > div > .card:not(#brief-card) { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<script src="nav.js" data-page="decisions"></script>
+<main class="wrap">
+  <div class="pg-h">
+    <div><h1>Decisions <span class="tag rec">RECORDED</span></h1>
+      <p>Every corridor proposal, its re-tests and the final decision, with who did what and when. This page is read-only:
+        proposals, reviews and decisions are made on the <a href="corridor.html">corridor screen</a> (step 4). Records are append-only.</p></div>
+  </div>
+  <div id="msg" role="status"></div>
+
+  <section id="list-view">
+    <div class="filters" id="filters" role="group" aria-label="Filter by stage"></div>
+    <div id="cases" class="card"><div class="empty"><span class="spin"></span>Loading decision records…</div></div>
+  </section>
+
+  <section id="detail-view" hidden>
+    <a class="back" href="#" id="back">← All decisions</a>
+    <div class="card" id="d-card"></div>
+    <div class="cols">
+      <div>
+        <div class="card" id="tl-card"><h3>Record</h3><div id="timeline"></div></div>
+        <div class="card" id="runs-card"><h3>Runs <span class="tag sim">SIMULATED</span></h3><div id="runs" class="tw"></div></div>
+      </div>
+      <div>
+        <div class="card ev" id="ev-card"><h3>Evidence fingerprints</h3><div id="evidence"></div></div>
+        <div class="card" id="brief-card"><h3><span>Decision brief</span><button class="ghost noprint" id="brief-print" hidden>Print brief</button></h3>
+          <div id="brief-body" class="md"></div><div id="brief-meta" class="brief-meta" hidden></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+<script src="md.js"></script>
+<script>
+const { $, esc, get, when, pct, ivText, STAGES, stageName, decisionText, fp, apiProblem } = CR;
+const { md } = window.crMarkdown;
+let cases = null, filter = "all", current = null;
+
+// ---------- list ----------
+function readHash() {
+  const h = location.hash.replace(/^#/, ""), q = new URLSearchParams(h);
+  return { caseId: q.get("case"), stage: q.get("stage") };
+}
+async function loadList() {
+  try {
+    const l = await get("/corridor/cases");
+    cases = (Array.isArray(l) ? l : l?.cases || l?.items || []).slice().sort((a, b) => (Number(b.created) || 0) - (Number(a.created) || 0));
+    $("msg").innerHTML = "";
+  } catch (e) {
+    cases = null;
+    $("cases").innerHTML = `<div class="empty">${esc(apiProblem(e, "Decision records"))}</div>`;
+    $("filters").innerHTML = "";
+    return;
+  }
+  renderList();
+}
+function renderList() {
+  if (!cases) return;
+  const n = s => cases.filter(c => s === "all" || c.stage === s).length;
+  $("filters").innerHTML = [["all", "All"], ...STAGES].map(([k, name]) =>
+    `<button data-stage="${k}" aria-pressed="${filter === k}">${name} <span class="n">${n(k)}</span></button>`).join("");
+  $("filters").querySelectorAll("button").forEach(b => b.onclick = () => {
+    filter = b.dataset.stage;
+    history.replaceState(null, "", filter === "all" ? location.pathname : `#stage=${filter}`);
+    renderList();
+  });
+  const shown = cases.filter(c => filter === "all" || c.stage === filter);
+  $("cases").innerHTML = shown.length ? shown.map(c => `<a class="case-row" href="#case=${encodeURIComponent(c.case_id)}" data-case="${esc(c.case_id)}">` +
+      `<span class="t">${esc(c.title || "Untitled case")}</span>` +
+      `<span class="s"><span class="stage ${esc(c.stage)}">${esc(stageName(c.stage))}</span></span>` +
+      `<span class="m">Proposed by <b>${esc(c.created_by || "–")}</b> · ${esc(when(c.created ?? c.created_at) || "time not recorded")}` +
+      `${c.runs != null ? ` · ${Array.isArray(c.runs) ? c.runs.length : esc(c.runs)} runs` : ""}${c.brief_id ? " · with a decision brief" : ""} · <code>${esc(c.case_id)}</code></span></a>`).join("")
+    : `<div class="empty">${cases.length ? "No cases at this stage." : "No cases recorded yet. Send one for review from the corridor screen (step 4)."}</div>`;
+}
+
+// ---------- detail ----------
+const KIND_STAGE = { proposed: "proposed", review: "in_review", decision: "decided" };
+function reviewVolumeOf(c, runId) {   // a reviewer's re-run: its traffic level is the review's volume_scale
+  for (const e of c.events || []) {
+    const b = e.body || {};
+    if (e.kind === "review" && b.volume_scale != null && (b.results || []).some(r => r.run_id === runId)) return Number(b.volume_scale);
+  }
+  return null;
+}
+function runRows(c) {
+  const fps = c.fingerprints || {};
+  const rows = (c.runs || []).map(r => {
+    const o = typeof r === "string" ? { run_id: r } : r;
+    const vol = (o.role === "review" ? reviewVolumeOf(c, o.run_id) : null) ?? Number(o.volume_scale ?? o.inputs?.volume_scale ?? 1);
+    const ivs = o.interventions || [];
+    const min = o.total_min ?? (o.total_s != null ? o.total_s / 60 : null);
+    return { ...o, vol, ivs, min, label: ivs.length ? ivs.map(ivText).join(" + ") : "Today's roads (no change)", fpr: o.fingerprint || fps[o.run_id] || "" };
+  });
+  rows.forEach(r => {   // change against today's roads, same role and traffic level
+    const b = rows.find(x => !x.ivs.length && x.vol === r.vol && (x.role || "") === (r.role || ""));
+    r.delta = r.ivs.length && b && b.min != null && r.min != null ? r.min - b.min : null;
+  });
+  return rows;
+}
+function eventText(e) {
+  const b = e.body && typeof e.body === "object" ? e.body : {};
+  if (e.kind === "proposed") {
+    const n = Object.keys(b.runs || {}).length;
+    return `Sent for review: <b>${esc(b.title || current.title || "")}</b>${n ? ` with ${n} run${n > 1 ? "s" : ""} as evidence` : ""}${b.brief_id ? ` and brief <code>${esc(b.brief_id)}</code>` : ""}.`;
+  }
+  if (e.kind === "review") {
+    const res = (b.results || []).map(r => `<li>${esc(r.option || r.run_id)}: <b>${r.total_min != null ? Number(r.total_min).toFixed(1) + " min" : "–"}</b>` +
+      `${r.change_vs_baseline_min ? ` <span class="${r.change_vs_baseline_min < 0 ? "d-ok" : "d-bad"}">(${r.change_vs_baseline_min > 0 ? "+" : "−"}${Math.abs(r.change_vs_baseline_min).toFixed(1)} min vs today's roads)</span>` : ""}</li>`).join("");
+    return (b.volume_scale != null ? `Re-tested every option at <b>${pct(b.volume_scale)}</b> traffic.` : "Review note.") +
+      (b.note ? ` Note: “${esc(b.note)}”` : "") + (res ? `<ul class="res">${res}</ul>` : "");
+  }
+  if (e.kind === "decision") return `<b>${esc(decisionText(b.decision))}</b>${b.reason ? `: “${esc(b.reason)}”` : ""}`;
+  return esc(e.what || e.summary || JSON.stringify(b).slice(0, 200));
+}
+function renderDetail(c) {
+  current = c;
+  const at = STAGES.findIndex(s => s[0] === c.stage), events = (c.events || []).slice().sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0));
+  const dec = c.decision && typeof c.decision === "object" ? c.decision : null;
+  const decEv = [...events].reverse().find(e => e.kind === "decision");
+  const runs = runRows(c);
+  $("d-card").innerHTML =
+    `<div class="d-head"><div><h2 id="d-title">${esc(c.title || "Untitled case")}</h2>` +
+    `<p class="d-meta">Case <code>${esc(c.case_id)}</code> · proposed by <b>${esc(c.created_by || "–")}</b> · ${esc(when(c.created ?? c.created_at))} · ${runs.length} run${runs.length === 1 ? "" : "s"}` +
+    `${runs.some(r => r.sample) ? ' <span class="tag sample" title="Results from mock mode (MOCK_SIM=1): the saved sample, not a simulation of the request">SAMPLE DATA</span>' : ""}</p></div>` +
+    `<div class="d-actions"><a class="btn secondary" id="open-corridor" href="corridor.html#case=${encodeURIComponent(c.case_id)}" title="Opens this case in step 4 of the corridor screen, where its runs can be shown on the map">Open in corridor</a>` +
+    `<button class="ghost" id="print-case">Print record</button></div></div>` +
+    `<ol class="stages" aria-label="Stage">${STAGES.map(([k, n], i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}" data-stage="${k}"${i === at ? ' aria-current="step"' : ""}>${n}</li>`).join("")}</ol>` +
+    (c.stage === "decided" && (dec || decEv) ? (() => {
+      const d = dec || decEv.body || {};
+      return `<div class="verdict ${esc(String(d.decision || "").toLowerCase())}" id="verdict"><b>${esc(decisionText(d.decision))}</b>${decEv ? ` by ${esc(decEv.actor || "–")}, ${esc(when(decEv.created))}` : ""}` +
+        `${d.reason ? `<br>Reason: “${esc(d.reason)}”` : ""}<br><small>This record is final and append-only: it cannot be edited or deleted.</small></div>`;
+    })() : "");
+  // timeline
+  $("timeline").innerHTML = events.length ? `<ol class="tl">${events.map((e, i) => {
+      const prev = i ? events[i - 1] : null, linked = i === 0 ? !e.prev : e.prev === prev.fingerprint;
+      return `<li data-kind="${esc(e.kind)}" data-stage="${esc(KIND_STAGE[e.kind] || e.kind)}"><span class="k">${esc(stageName(KIND_STAGE[e.kind] || e.kind))}</span> · ` +
+        `<span class="who">${esc(e.actor || "–")}</span> <small>${esc(when(e.created))}</small><div class="what">${eventText(e)}</div>` +
+        `<div class="chain">Fingerprint ${fp(e.fingerprint)}${i ? ` · follows ${fp(e.prev)} ${linked ? '<span class="chain-ok" title="Matches the previous event">✓</span>' : '<span class="chain-bad">does not match the previous event</span>'}` : " · first event"}</div></li>`;
+    }).join("")}</ol>` : `<p class="note">No events recorded for this case.</p>`;
+  // runs
+  $("runs").innerHTML = runs.length ? `<table><tr><th>Option</th><th>Traffic</th><th class="n">Trip</th><th class="n">vs today</th><th>Evidence</th></tr>` +
+    runs.map(r => `<tr data-run="${esc(r.run_id)}"><td>${esc(r.label)}<small>${r.role === "review" ? "reviewer's re-test" : "proposed option"}${r.added_by ? ` · ${esc(r.added_by)}` : ""}` +
+      `${r.sample ? ' <span class="tag sample">SAMPLE DATA</span>' : ""}</small></td><td>${pct(r.vol)}</td>` +
+      `<td class="n">${r.min != null ? Number(r.min).toFixed(1) + " min" : "–"}</td>` +
+      `<td class="n">${r.delta == null ? "–" : `<span class="${r.delta < -0.05 ? "d-ok" : r.delta > 0.05 ? "d-bad" : ""}">${r.delta > 0 ? "+" : r.delta < 0 ? "−" : "±"}${Math.abs(r.delta).toFixed(1)} min</span>`}</td>` +
+      `<td>${fp(r.fpr)}</td></tr>`).join("") + `</table>` +
+    `<p class="note">Trip = whole Lingampally → Lakdikapul trip in the simulation. Traffic 100% = today's calibrated traffic; the reviewer re-tests with more or less.</p>`
+    : `<p class="note">No runs attached.</p>`;
+  if (runs.some(r => (r.warnings || []).length)) {
+    const ws = [...new Set(runs.flatMap(r => r.warnings || []))];
+    $("runs").innerHTML += `<details><summary class="muted">${ws.length} warning${ws.length > 1 ? "s" : ""} from the simulation</summary><ul class="note">${ws.map(w => `<li>${esc(w)}</li>`).join("")}</ul></details>`;
+  }
+  // evidence
+  const fps = Object.entries(c.fingerprints || {});
+  const chainOk = events.every((e, i) => i === 0 ? !e.prev : e.prev === events[i - 1].fingerprint);
+  $("evidence").innerHTML =
+    `<p class="note info" id="chain-note">Each event's SHA-256 fingerprint covers what it records (its evidence: the runs' and brief's fingerprints) ` +
+    `and the previous event's fingerprint. The events form a chain: changing any earlier step, or any number in its evidence, would change every fingerprint after it.</p>` +
+    (events.length ? `<p id="chain-status" class="${chainOk ? "chain-ok" : "chain-bad"}">${chainOk ? `✓ Chain links intact: each of the ${events.length} events points to the one before it.` : "✕ The chain is broken: an event does not point to the one before it."}</p>` : "") +
+    `<dl>${c.fingerprint ? `<dt>Case (latest event)</dt><dd>${fp(c.fingerprint)}</dd>` : ""}` +
+    fps.map(([k, h]) => `<dt>${k.startsWith("brief:") ? `Brief <code>${esc(k.slice(6))}</code>` : `Run <code>${esc(k)}</code>`}</dt><dd>${fp(h)}</dd>`).join("") + `</dl>` +
+    `<p class="note">Hover over (or focus) a short code to see all 64 characters.</p>`;
+  $("print-case").onclick = () => { document.body.classList.remove("print-brief"); window.print(); };
+  loadBrief(c);
+}
+async function loadBrief(c) {
+  const id = c.brief_id;
+  $("brief-print").hidden = true; $("brief-meta").hidden = true;
+  if (!id) { $("brief-body").innerHTML = `<p class="note">No decision brief is attached to this case. Briefs come from the corridor screen's assistant (“Ask CityRehearsal”).</p>`; return; }
+  $("brief-body").innerHTML = `<p class="note"><span class="spin"></span>Loading brief ${esc(id)}…</p>`;
+  try {
+    const b = await get(`/briefs/${encodeURIComponent(id)}`);
+    if (current !== c) return;
+    $("brief-body").innerHTML = md(b.markdown || "*(empty brief)*");
+    $("brief-meta").hidden = false;
+    $("brief-meta").innerHTML = `Brief <code>${esc(b.brief_id || id)}</code>${b.created_at ? ` · written ${esc(when(b.created_at))}` : ""}${b.fingerprint ? ` · fingerprint ${fp(b.fingerprint)}` : ""}` +
+      `${(b.run_ids || []).length ? ` · runs ${b.run_ids.map(r => `<code>${esc(r)}</code>`).join(", ")}` : ""}`;
+    $("brief-print").hidden = false;
+  } catch (e) {
+    if (current !== c) return;
+    $("brief-body").innerHTML = `<p class="note warn">${esc(e.status === 404 ? `Brief ${id} is not on this server.` : apiProblem(e, "The brief"))}</p>`;
+  }
+}
+async function openCase(id) {
+  $("list-view").hidden = true; $("detail-view").hidden = false; document.body.classList.add("detail");
+  $("d-card").innerHTML = `<p class="note"><span class="spin"></span>Loading case ${esc(id)}…</p>`;
+  ["timeline", "runs", "evidence", "brief-body"].forEach(k => $(k).innerHTML = "");
+  window.scrollTo(0, 0);
+  try { const c = await get(`/corridor/cases/${encodeURIComponent(id)}`); renderDetail(c); document.title = `CityRehearsal — ${c.title || "Decision"}`; }
+  catch (e) { $("d-card").innerHTML = `<p class="note warn">${esc(e.status === 404 ? `Case ${id} is not on this server.` : apiProblem(e, "Decision records"))}</p>`; }
+}
+function route() {
+  const { caseId, stage } = readHash();
+  if (caseId) { openCase(caseId); return; }
+  current = null; document.title = "CityRehearsal — Decisions"; document.body.classList.remove("detail");
+  $("detail-view").hidden = true; $("list-view").hidden = false;
+  if (stage && STAGES.some(s => s[0] === stage)) filter = stage;
+  renderList();
+}
+$("back").onclick = e => { e.preventDefault(); history.pushState(null, "", filter === "all" ? location.pathname : `#stage=${filter}`); route(); };
+$("brief-print").onclick = () => {
+  document.body.classList.add("print-brief");
+  window.print();
+  setTimeout(() => document.body.classList.remove("print-brief"), 500);   // print() blocks in most browsers; the delay covers those that do not
+};
+window.addEventListener("hashchange", route);
+loadList().then(route);
+if (window.crNav) { let was = null; crNav.onChange(s => { if (was === "offline" && s !== "offline") loadList().then(route); was = s; }); }
+</script>
+</body>
+</html>
