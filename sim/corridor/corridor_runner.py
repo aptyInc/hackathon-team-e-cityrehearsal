@@ -1064,7 +1064,8 @@ def allday_trip_s():
 def fit_day_hour(day, hour, cfg, final=None, tol=0.03):
     """Fit one day and hour on demand, from the typical July hour (cfg["base"]) to that day-hour's TomTom trip time:
     at most 2 baseline runs (first guess from the July hour's sensitivity of trip time to traffic, then a secant
-    step); the volume scale moves, the speed caps only when the volume is at its limits. The fit is kept in
+    step); the volume scale moves, the speed caps instead when the July hour needed them too (light traffic at the
+    volume floor, or a network that jams with more traffic) or the volume is at its limits. The fit is kept in
     calibration_days.json (reused while the July hour and TomTom's numbers are unchanged). `final`: {run_id, frames,
     frames_window} when the request itself is the baseline: the trial runs are then that request's run and the last
     one is returned. Returns (fit, result or None)."""
@@ -1086,7 +1087,9 @@ def fit_day_hour(day, hour, cfg, final=None, tol=0.03):
         speed caps only when the volume is already at its limit in the direction needed."""
         nv = v + (target - t) / max(50.0, slope)
         lo, hi = max(HOUR_VOLUME[0], v / 1.25), min(HOUR_VOLUME[1], v * 1.25)
-        if (nv > v and v >= HOUR_VOLUME[1] - 1e-6) or (nv < v and v <= HOUR_VOLUME[0] + 1e-6):
+        if abs(cs_h - 1.0) > 1e-6 or (nv > v and v >= HOUR_VOLUME[1] - 1e-6) or (nv < v and v <= HOUR_VOLUME[0] + 1e-6):
+            # the July hour already needed the caps (light traffic at the volume floor, or a network that jams with
+            # more traffic): the day moves the caps too
             return v, round(min(HOUR_CAP[1], max(HOUR_CAP[0], cs * (t / target) ** 1.3)), 3)
         return round(min(hi, max(lo, nv)), 3), cs
 
