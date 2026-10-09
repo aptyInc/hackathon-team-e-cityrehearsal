@@ -186,9 +186,10 @@ def tomtom_morning_reference():
 
 
 def write_frames(fcd: Path, out: Path) -> int:
+    import gzip
     n = 0
-    with open(out, "w") as f:
-        for _, el in ET.iterparse(fcd, events=("end",)):
+    with open(out, "w") as f, (gzip.open(fcd, "rb") if fcd.suffix == ".gz" else open(fcd, "rb")) as src:
+        for _, el in ET.iterparse(src, events=("end",)):
             if el.tag != "timestep":
                 continue
             t = float(el.get("time"))
@@ -236,8 +237,8 @@ def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, see
     cmd = ["sumo", "-n", str(net_path), "-r", str(rou), "-a", str(run_dir / "add.xml"), "--end", str(SIM_END),
            "--seed", str(seed), "--tripinfo-output", str(run_dir / "tripinfo.xml"),
            "--queue-output", str(run_dir / "queue.xml")] + SUMO_OPTS
-    if frames:
-        cmd += ["--fcd-output", str(run_dir / "fcd.xml"), "--fcd-output.geo", "true",
+    if frames:  # .gz: SUMO compresses the vehicle positions (about 15 MB instead of 150 MB of temporary file)
+        cmd += ["--fcd-output", str(run_dir / "fcd.xml.gz"), "--fcd-output.geo", "true",
                 "--fcd-output.attributes", "id,type,x,y,z,angle,speed", "--device.fcd.begin", str(FRAMES_FROM)]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
@@ -245,7 +246,7 @@ def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, see
     net = sumolib.net.readNet(str(net_path))
     z, approaches = zones(net)
     junctions, travel, trips, speeds, refs, delays, ref_delays, ref_speeds = measure(run_dir, z, approaches)
-    n_frames = write_frames(run_dir / "fcd.xml", run_dir / "frames.jsonl") if frames else 0
+    n_frames = write_frames(run_dir / "fcd.xml.gz", run_dir / "frames.jsonl") if frames else 0
     write_roads(net, run_dir / "edgedata.xml", run_dir / "roads.geojson")
     (run_dir / "queue.xml").unlink(missing_ok=True)  # measured; 1-2 MB per run otherwise
     result = {"run_id": run_id, "variant_id": variant["variant_id"], "junctions": junctions,
