@@ -7,8 +7,8 @@
    "study_after": 8.9,
    "study_change_pct": -75,
    "sim_before": 31.0,
-   "sim_after": 14.3,
-   "sim_change_pct": -54,
+   "sim_after": 12.8,
+   "sim_change_pct": -59,
    "same_direction": true,
    "verdict": "match"
   },
@@ -18,8 +18,8 @@
    "study_after": 110.3,
    "study_change_pct": 160,
    "sim_before": 56.0,
-   "sim_after": 63.0,
-   "sim_change_pct": 12,
+   "sim_after": 63.7,
+   "sim_change_pct": 14,
    "same_direction": true,
    "verdict": "partial"
   },
@@ -29,8 +29,8 @@
    "study_after": 70.4,
    "study_change_pct": 53,
    "sim_before": 50.8,
-   "sim_after": 52.9,
-   "sim_change_pct": 4,
+   "sim_after": 52.4,
+   "sim_change_pct": 3,
    "same_direction": true,
    "verdict": "partial"
   },
@@ -40,8 +40,8 @@
    "study_after": 9.7,
    "study_change_pct": -75,
    "sim_before": 33.5,
-   "sim_after": 15.4,
-   "sim_change_pct": -54,
+   "sim_after": 13.8,
+   "sim_change_pct": -59,
    "same_direction": true,
    "verdict": "match"
   },
@@ -51,8 +51,8 @@
    "study_after": 132.6,
    "study_change_pct": 78,
    "sim_before": 82.2,
-   "sim_after": 85.6,
-   "sim_change_pct": 4,
+   "sim_after": 84.8,
+   "sim_change_pct": 3,
    "same_direction": true,
    "verdict": "partial"
   },
@@ -62,8 +62,8 @@
    "study_after": 142.3,
    "study_change_pct": 26,
    "sim_before": 115.7,
-   "sim_after": 101.0,
-   "sim_change_pct": -13,
+   "sim_after": 98.6,
+   "sim_change_pct": -15,
    "same_direction": false,
    "verdict": "mismatch"
   }
@@ -230,7 +230,7 @@
     "phari": 150
    }
   },
-  "wall_seconds_per_run": 109.2
+  "wall_seconds_per_run": 99.2
  },
  "after": {
   "run_id": "gariahat_after",
@@ -238,145 +238,145 @@
   "junctions": [
    {
     "id": "gariahat",
-    "avg_delay_s": 14.3,
+    "avg_delay_s": 12.8,
     "seed_range_s": [
-     11.7,
-     19.1
+     12.5,
+     13.2
     ],
-    "max_queue_m": 114,
-    "vehicle_hours_delay": 15.4,
-    "vehicles": 3978
+    "max_queue_m": 70,
+    "vehicle_hours_delay": 13.8,
+    "vehicles": 3975
    },
    {
     "id": "phari",
-    "avg_delay_s": 52.9,
+    "avg_delay_s": 52.4,
     "seed_range_s": [
      51.7,
-     53.8
+     53.4
     ],
-    "max_queue_m": 213,
-    "vehicle_hours_delay": 85.6,
+    "max_queue_m": 219,
+    "vehicle_hours_delay": 84.8,
     "vehicles": 5955
    },
    {
     "id": "phari_approach_c",
-    "avg_delay_s": 63.0,
+    "avg_delay_s": 63.7,
     "seed_range_s": [
-     62.1,
-     63.8
+     62.9,
+     64.5
     ],
-    "max_queue_m": 156,
-    "vehicles": 1518
+    "max_queue_m": 143,
+    "vehicles": 1519
    }
   ],
-  "corridor_travel_time_s": 282,
+  "corridor_travel_time_s": 283,
   "corridor_travel_time_by_direction_s": {
-   "northbound": 290,
+   "northbound": 291,
    "southbound": 275
   },
   "approaches": {
    "Gariahat_A": {
-    "avg_delay_s": 13.6,
+    "avg_delay_s": 9.1,
     "seed_range_s": [
-     11.4,
-     15.1
+     8.2,
+     9.9
     ],
     "vehicles": 1115,
-    "max_queue_m": 55,
+    "max_queue_m": 49,
     "entry_wait_s": 0.0,
     "study_avg_delay_s": 11.2
    },
    "Gariahat_B": {
-    "avg_delay_s": 6.7,
+    "avg_delay_s": 18.8,
     "seed_range_s": [
-     6.6,
-     6.9
+     18.1,
+     19.7
     ],
     "vehicles": 703,
-    "max_queue_m": 39,
+    "max_queue_m": 70,
     "entry_wait_s": 0.3,
     "study_avg_delay_s": 23.1
    },
    "Gariahat_C": {
-    "avg_delay_s": 24.1,
+    "avg_delay_s": 8.1,
     "seed_range_s": [
-     16.5,
-     38.1
+     7.3,
+     8.6
     ],
-    "vehicles": 1297,
-    "max_queue_m": 114,
+    "vehicles": 1294,
+    "max_queue_m": 68,
     "entry_wait_s": 0.3,
     "study_avg_delay_s": 13.7
    },
    "Gariahat_D": {
-    "avg_delay_s": 6.6,
+    "avg_delay_s": 19.6,
     "seed_range_s": [
-     6.3,
-     7.0
+     19.5,
+     19.7
     ],
     "vehicles": 863,
-    "max_queue_m": 36,
+    "max_queue_m": 65,
     "entry_wait_s": 0.3,
     "study_avg_delay_s": 17.6
    },
    "Phari_A": {
-    "avg_delay_s": 37.7,
+    "avg_delay_s": 37.6,
     "seed_range_s": [
-     37.2,
-     38.5
+     37.4,
+     38.1
     ],
     "vehicles": 1319,
-    "max_queue_m": 128,
+    "max_queue_m": 125,
     "entry_wait_s": 0.3,
     "study_avg_delay_s": 37.1
    },
    "Phari_B": {
-    "avg_delay_s": 48.0,
+    "avg_delay_s": 48.1,
     "seed_range_s": [
-     44.8,
-     51.8
+     45.5,
+     51.5
     ],
-    "vehicles": 1762,
-    "max_queue_m": 213,
+    "vehicles": 1763,
+    "max_queue_m": 219,
     "entry_wait_s": 0.4,
     "study_avg_delay_s": 52.1
    },
    "Phari_C": {
-    "avg_delay_s": 63.0,
+    "avg_delay_s": 63.7,
     "seed_range_s": [
-     62.1,
-     63.8
+     62.9,
+     64.5
     ],
-    "vehicles": 1518,
-    "max_queue_m": 156,
+    "vehicles": 1519,
+    "max_queue_m": 143,
     "entry_wait_s": 0.0,
     "study_avg_delay_s": 110.3
    },
    "Phari_D": {
-    "avg_delay_s": 80.8,
+    "avg_delay_s": 74.3,
     "seed_range_s": [
-     73.0,
-     90.2
+     71.6,
+     77.4
     ],
-    "vehicles": 599,
-    "max_queue_m": 112,
+    "vehicles": 598,
+    "max_queue_m": 105,
     "entry_wait_s": 0.3,
     "study_avg_delay_s": 77.8
    },
    "Phari_E": {
     "avg_delay_s": 48.4,
     "seed_range_s": [
-     46.5,
-     49.9
+     46.8,
+     49.3
     ],
-    "vehicles": 757,
-    "max_queue_m": 76,
+    "vehicles": 756,
+    "max_queue_m": 79,
     "entry_wait_s": 0.3,
     "study_avg_delay_s": 29.3
    }
   },
   "warnings": [
-   "234 touches per run where movements that are green together merge (junction box not give-way regulated, see README); vehicles keep going"
+   "255 touches per run where movements that are green together merge (junction box not give-way regulated, see README); vehicles keep going"
   ],
   "inputs": {
    "counts_source": "published_study (Maitra et al. 2004, Tables 3-4)",
@@ -394,7 +394,7 @@
     "phari": 150
    }
   },
-  "wall_seconds_per_run": 104.9
+  "wall_seconds_per_run": 89.3
  },
  "study_source": "data/gariahat/study_results.csv; per-approach delays from the paper's Tables 5, 6 and 8",
  "approach_letters": {
@@ -418,26 +418,26 @@
   "runs": [
    {
     "extra_inflow_to_phari_pct": 10,
-    "phari_approach_c_delay_s": 80.4,
-    "phari_avg_delay_s": 58.0,
-    "gariahat_avg_delay_s": 14.2,
-    "phari_approach_c_max_queue_m": 187
+    "phari_approach_c_delay_s": 78.6,
+    "phari_avg_delay_s": 57.0,
+    "gariahat_avg_delay_s": 12.7,
+    "phari_approach_c_max_queue_m": 190
    },
    {
     "extra_inflow_to_phari_pct": 20,
-    "phari_approach_c_delay_s": 168.2,
-    "phari_avg_delay_s": 84.2,
-    "gariahat_avg_delay_s": 13.2,
-    "phari_approach_c_max_queue_m": 356
+    "phari_approach_c_delay_s": 156.9,
+    "phari_avg_delay_s": 80.7,
+    "gariahat_avg_delay_s": 12.7,
+    "phari_approach_c_max_queue_m": 359
    },
    {
     "extra_inflow_to_phari_pct": 30,
-    "phari_approach_c_delay_s": 281.8,
-    "phari_avg_delay_s": 120.8,
-    "gariahat_avg_delay_s": 13.9,
-    "phari_approach_c_max_queue_m": 497
+    "phari_approach_c_delay_s": 279.5,
+    "phari_avg_delay_s": 120.3,
+    "gariahat_avg_delay_s": 13.1,
+    "phari_approach_c_max_queue_m": 533
    }
   ]
  },
- "wall_seconds_total": 377
+ "wall_seconds_total": 281
 }

@@ -441,7 +441,7 @@ def measure(rd: Path, after: bool) -> dict:
             fid = t.get("id")
             key = ("Gariahat_" if fid[0] == "G" else "Phari_" if fid[0] == "P" else "side_") + fid[1]
             backlog.setdefault(key, []).append(dd)
-            trips.append((fid, float(t.get("duration")) + dd, t.get("departLane"), t.get("arrivalLane")))
+            trips.append((fid, float(t.get("duration")) + dd))
     # queues: per step, from the stop line upstream while edges are (nearly) full
     q = {}
     for ts in ET.parse(rd / "queue.xml").getroot().iter("data"):
@@ -466,8 +466,8 @@ def measure(rd: Path, after: bool) -> dict:
     stats = ET.parse(rd / "stats.xml").getroot()
     tele = stats.find("teleports"); coll = stats.find("safety")
     # corridor: Gariahat Road end to end through both junctions (south of Gariahat <-> north of Phari)
-    nb = [d for f, d, *_ in trips if f.startswith("GC_GN_PN")]
-    sb = [d for f, d, *_ in trips if f.startswith("PE_PS_GS")]
+    nb = [d for f, d in trips if f.startswith("GC_GN_PN")]
+    sb = [d for f, d in trips if f.startswith("PE_PS_GS")]
     return {"approaches": approaches, "teleports": int(tele.get("total")) if tele is not None else 0,
             "collisions": int(coll.get("collisions")) if coll is not None else 0,
             "corridor_travel_time_s": {"northbound": round(st.mean(nb)) if nb else None, "southbound": round(st.mean(sb)) if sb else None}}
