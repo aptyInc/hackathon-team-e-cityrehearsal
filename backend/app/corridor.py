@@ -2,10 +2,18 @@
 
     GET  /corridor                  points (data/corridor/corridor.json), TomTom leg times per period (REAL, measured),
                                     and the route through the simulated network as GeoJSON (A->B and B->A, per leg)
-    POST /corridor/runs             {window?, minutes?, volume_scale?, interventions, run_by?, case_id?} -> C5 result
+    POST /corridor/runs             {window?, minutes?, volume_scale?, interventions, run_by?, case_id?, frames_from_min?,
+                                    frames_minutes?, hour?} -> C5 result (frames_window, probe_tracks_path)
     POST /corridor/runs?async=1     same body -> 202 {run_id, status}; poll GET /corridor/runs/{run_id}
     GET  /corridor/runs/{run_id}    {run_id, status: queued|running|done|failed, result?, error?, elapsed_s}
+    GET  /runs/{run_id}/probes      every test car's whole trip (?direction=A->B|B->A, ?number=n)
     GET  /corridor/junctions/live   latest TomTom Junction Analytics snapshot per configured junction + last-60-min mean
+    GET  /corridor/junctions/geometry  each TomTom junction's approaches as lines (to draw live queues)
+
+Frames window: frames_from_min (minutes after warm-up, default 5) and frames_minutes (default 5, 1..10) choose which
+part of the 15 measured minutes the C1 frames cover; the numbers do not change with it (deterministic runs), but it is
+part of the cache key. hour (6..22): that hour of a typical July day, from sim/corridor/calibration_hourly.json; 422
+"hourly data not available yet" until that file exists.
 
 MOCK_SIM=1: POST returns the contract sample (baseline, or flyover_j07 when any intervention is given), with a
 warning when the request asked for something else. MOCK_SIM=0: sim/corridor/corridor_runner.run in a worker thread
@@ -121,19 +129,31 @@ def tomtom_periods() -> list[dict]:
     for r in csv.DictReader(LEGS_CSV.open()):
         p = periods.get(r["period"])
         if p is None:
-            dates, hours = r["period"].split(" ")
-            d0, d1 = dates.split("..")
-            if d0 == d1:
-                d = datetime.fromisoformat(d0)
-                label, kind = f"{DAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {_hours(hours)}", "day"
-            else:
-                label, kind = f"Typical {datetime.fromisoformat(d0).strftime('%B')} day ({_hours(hours)})", "average"
+            try:
+                dates, hours = r["period"].split(" ", 1)
+                d0, d1 = dates.split("..")
+                h0, h1 = (int(x.split(":")[0]) for x in hours.replace(" ", "").split("-"))
+                if d0 == d1:
+                    d = datetime.fromisoformat(d0)
+                    label, kind = f"{DAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {_hours(hours)}", "day"
+                elif (h1 - h0) % 24 == 1:      # TomTom's hourly breakdown: one hour of a typical day
+                    label, kind = f"Typical {datetime.fromisoformat(d0).strftime('%B')} day, {h0:02d}:00-{h1:02d}:00", "hour"
+                else:
+                    label, kind = f"Typical {datetime.fromisoformat(d0).strftime('%B')} day ({_hours(hours)})", "average"
+            except (ValueError, IndexError):   # a period written some other way: listed as it is
+                d0 = d1 = hours = ""
+                label, kind = r["period"], "other"
             p = periods[r["period"]] = {"period": r["period"], "label": label, "kind": kind, "date_from": d0, "date_to": d1,
-                                        "hours": hours, "job": r["job"], "trip_total_s": float(r["trip_total_s"]),
-                                        "source": f"TomTom Traffic Stats job {r['job']}", "data_label": "measured", "legs": []}
-        p["legs"].append({"from_id": r["from_id"], "to_id": r["to_id"], "from_name": r["from"], "to_name": r["to"],
-                          "distance_m": float(r["distance_m"]), "time_s": float(r["time_s"]), "speed_kmh": float(r["speed_kmh"])})
-    out = sorted(periods.values(), key=lambda p: (p["kind"] != "average", p["date_from"]))
+                                        "hours": hours, "job": r["job"], "trip_total_s": float(r.get("trip_total_s") or 0),
+                                        "source": f"TomTom Traffic Stats job {r['job']}", "data_label": "measured", "legs": [],
+                                        "hour": h0 if kind == "hour" else None}
+        try:
+            p["legs"].append({"from_id": r["from_id"], "to_id": r["to_id"], "from_name": r["from"], "to_name": r["to"],
+                              "distance_m": float(r["distance_m"]), "time_s": float(r["time_s"]), "speed_kmh": float(r["speed_kmh"])})
+        except (KeyError, TypeError, ValueError):
+            pass
+    rank = {"average": 0, "hour": 1, "day": 2}
+    out = sorted(periods.values(), key=lambda p: (rank.get(p["kind"], 3), p["date_from"], p["hour"] or 0))
     for p in out:
         p["total_s"] = round(sum(l["time_s"] for l in p["legs"]), 1)
         p["distance_m"] = round(sum(l["distance_m"] for l in p["legs"]))
@@ -245,10 +265,61 @@ class CorridorRunIn(BaseModel):
     interventions: list[InterventionIn] = []
     run_by: str = "engineer"
     case_id: str | None = None
+    frames_from_min: float | None = None   # C1 frames window: minutes after warm-up (default 5)
+    frames_minutes: float | None = None    # ... and its length (default 5, 1..10)
+    hour: int | None = None                # 6..22: hh:00-hh+1:00 of a typical July day (needs calibration_hourly.json)
+
+
+# mirror of sim/corridor/corridor_runner.py (WARMUP, PROBE_SPAN, FRAMES, FRAMES_MAX_S, HOURS): the API checks a request
+# without loading the simulation; the runner checks again and its C5 `frames_window` says what was recorded
+SIM_WARMUP_S, SIM_MEASURED_S, FRAMES_DEFAULT, FRAMES_STEP_S, FRAMES_MAX_MIN = 600, 900, (5.0, 5.0), 4, 10
+HOURS = range(6, 23)
+CALIBRATION_HOURLY = SIM_CORRIDOR / "calibration_hourly.json"
+HOURLY_MISSING = ("hourly data not available yet: the corridor is calibrated to TomTom's all-day July average (06:00-23:00) "
+                  "only. Hours of the day work once TomTom's hourly leg times are in and sim/corridor/calibration_hourly.json "
+                  "has been written (corridor_runner.py calibrate_hourly).")
+
+
+def frames_window(body: CorridorRunIn) -> tuple[int, int]:
+    """(from_s, to_s) simulation seconds of the frames the request asks for (as corridor_runner.frames_window).
+    HTTPException 400 when the window is not inside the measured period."""
+    from_min = FRAMES_DEFAULT[0] if body.frames_from_min is None else body.frames_from_min
+    minutes = FRAMES_DEFAULT[1] if body.frames_minutes is None else body.frames_minutes
+    total = SIM_MEASURED_S / 60
+    if not 1 <= minutes <= FRAMES_MAX_MIN:
+        raise HTTPException(400, f"frames_minutes must be between 1 and {FRAMES_MAX_MIN}, got {minutes:g}")
+    if from_min < 0 or from_min + minutes > total + 1e-9:
+        raise HTTPException(400, f"the frames window must lie inside the {total:g} simulated minutes after warm-up: frames_from_min "
+                                 f"must be between 0 and {total - minutes:g} for {minutes:g} minutes of frames, got {from_min:g}")
+    lo = SIM_WARMUP_S + round(from_min * 60 / FRAMES_STEP_S) * FRAMES_STEP_S
+    return lo, min(SIM_WARMUP_S + SIM_MEASURED_S, lo + round(minutes * 60 / FRAMES_STEP_S) * FRAMES_STEP_S)
+
+
+def frames_info(window: tuple[int, int]) -> dict:
+    """C5 `frames_window` (same shape as corridor_runner.frames_info)."""
+    lo, hi = window
+    return {"from_s": lo, "to_s": hi, "step_s": FRAMES_STEP_S, "from_min": round((lo - SIM_WARMUP_S) / 60, 2),
+            "minutes": round((hi - lo) / 60, 2), "warmup_s": SIM_WARMUP_S, "sim_minutes_total": SIM_MEASURED_S // 60,
+            "period_from_s": SIM_WARMUP_S, "period_to_s": SIM_WARMUP_S + SIM_MEASURED_S, "max_minutes": FRAMES_MAX_MIN,
+            "note": "frames t is simulation seconds; the window can start anywhere from 0 to sim_minutes_total - minutes after warm-up"}
+
+
+def hourly_entry(hour: int) -> dict:
+    """That hour's entry in calibration_hourly.json. 400 outside 6..22, 422 while there is no hourly calibration."""
+    if hour not in HOURS:
+        raise HTTPException(400, f"hour must be between {HOURS[0]} and {HOURS[-1]} (meaning hh:00-hh+1:00), got {hour}")
+    if not CALIBRATION_HOURLY.exists():
+        raise HTTPException(422, HOURLY_MISSING)
+    hours = json.loads(CALIBRATION_HOURLY.read_text()).get("hours") or {}
+    if str(hour) not in hours:
+        have = ", ".join(f"{int(h):02d}" for h in sorted(hours, key=int)) or "none"
+        raise HTTPException(422, f"hourly data not available yet for {hour:02d}:00-{hour + 1:02d}:00 (calibrated hours: {have})")
+    return hours[str(hour)]
 
 
 def validate(body: CorridorRunIn) -> list[dict]:
-    """Checked, normalised and sorted interventions (sorted so the same set in any order is the same run)."""
+    """Checked, normalised and sorted interventions (sorted so the same set in any order is the same run). Also checks
+    the frames window (400) and the hour (400 out of range, 422 without hourly calibration)."""
     ids, seen, out = junction_ids(), set(), []
     for iv in body.interventions:
         if iv.junction_id not in ids:
@@ -263,14 +334,24 @@ def validate(body: CorridorRunIn) -> list[dict]:
         raise HTTPException(400, f"volume_scale must be between 0.1 and 3.0, got {body.volume_scale}")
     if body.minutes is not None and not 1 <= body.minutes <= 24 * 60:
         raise HTTPException(400, f"minutes must be between 1 and 1440, got {body.minutes}")
+    frames_window(body)
+    if body.hour is not None:
+        hourly_entry(body.hour)
     return sorted(out, key=lambda iv: (iv["junction_id"], iv["kind"], json.dumps(iv["params"], sort_keys=True)))
 
 
 def cache_key(ivs: list[dict], body: CorridorRunIn) -> str:
+    """Same interventions, volume, window, frames window, hour, calibration and sim code -> same key. The frames window
+    is part of it (another window records other frames; the numbers are the same, as runs are deterministic)."""
     calib = CALIBRATION.read_text() if CALIBRATION.exists() else None
-    blob = json.dumps({"interventions": ivs, "volume_scale": round(body.volume_scale, 3), "window": body.window,
-                       "minutes": body.minutes, "calibration": calib, "sim": _file_hash(*SIM_SOURCES)}, sort_keys=True)
-    return hashlib.sha256(blob.encode()).hexdigest()
+    blob = {"interventions": ivs, "volume_scale": round(body.volume_scale, 3), "window": body.window,
+            "minutes": body.minutes, "calibration": calib, "sim": _file_hash(*SIM_SOURCES)}
+    if frames_window(body) != frames_window(CorridorRunIn()):     # the default window keeps the key it always had
+        blob["frames"] = list(frames_window(body))
+    if body.hour is not None:
+        blob["hour"] = body.hour
+        blob["calibration_hourly"] = CALIBRATION_HOURLY.read_text() if CALIBRATION_HOURLY.exists() else None
+    return hashlib.sha256(json.dumps(blob, sort_keys=True).encode()).hexdigest()
 
 
 def fingerprint(result: dict) -> str:
@@ -297,7 +378,7 @@ def cache_lookup(key: str) -> dict | None:
     with db() as c:
         r = c.execute("SELECT run_id FROM corridor_cache WHERE key=?", (key,)).fetchone()
     res = stored_run(r["run_id"]) if r else None
-    if not res or any(res.get(k) and not Path(res[k]).exists() for k in ("frames_path", "roads_path")):
+    if not res or any(res.get(k) and not Path(res[k]).exists() for k in ("frames_path", "roads_path", "probe_tracks_path")):
         return None
     return res
 
@@ -355,23 +436,38 @@ def synth_mock(ivs: list[dict], body: CorridorRunIn) -> dict:
     return res
 
 
+def _mock_extras(res: dict, body: CorridorRunIn) -> dict:
+    """Mock results also carry the playback fields a real run has: the frames window asked for (no frames are
+    recorded in mock mode) and, for an hour, that hour's label. GET /runs/{id}/probes makes illustrative tracks."""
+    res["frames_window"] = frames_info(frames_window(body))
+    res.setdefault("probe_tracks_path", None)
+    if body.hour is not None:
+        res["time"] = {**res.get("time", {}), "window": f"July typical {body.hour:02d}:00-{body.hour + 1:02d}:00",
+                       "label": f"July typical {body.hour:02d}:00-{body.hour + 1:02d}:00 (MOCK: sample numbers)", "hour": body.hour}
+    return res
+
+
 def mock_result(ivs: list[dict], body: CorridorRunIn) -> dict:
     samples = json.loads((SAMPLES / "corridor_results.sample.json").read_text())
     res = json.loads(json.dumps(samples["flyover_j07" if ivs else "baseline"]))
     asked = {"interventions": ivs, "volume_scale": body.volume_scale, "window": body.window, "minutes": body.minutes}
+    if body.hour is not None:
+        asked["hour"] = body.hour
+    if body.frames_from_min is not None or body.frames_minutes is not None:
+        asked["frames"] = {"from_min": body.frames_from_min, "minutes": body.frames_minutes}
     sample = {"interventions": res["interventions"], "volume_scale": res["inputs"]["volume_scale"], "window": None, "minutes": None}
     if [(i["junction_id"], i["kind"]) for i in ivs] != [(i["junction_id"], i["kind"]) for i in sample["interventions"]] \
-            or asked["volume_scale"] != sample["volume_scale"] or body.window or body.minutes:
+            or asked["volume_scale"] != sample["volume_scale"] or body.window or body.minutes or body.hour is not None:
         if MOCK_SYNTH:
             res = synth_mock(ivs, body)
             res["run_id"] = "rc_" + uuid.uuid4().hex[:8]
             res["requested"] = asked
-            return res
+            return _mock_extras(res, body)
         res["warnings"].append("MOCK_SIM=1: this is the sample result (" + res["variant_id"] + "), not a simulation of your request "
                                f"({json.dumps(asked)}). Start the API with MOCK_SIM=0 for real runs.")
     res["run_id"] = "rc_" + uuid.uuid4().hex[:8]
     res["requested"] = asked
-    return res
+    return _mock_extras(res, body)
 
 
 # One SUMO run at a time (CPU and disk); a job per run_id; identical requests in flight share one job.
@@ -415,10 +511,20 @@ def _simulate(run_id: str, key: str, ivs: list[dict], body: CorridorRunIn) -> di
                     kwargs[k] = v
                 else:
                     extra.append(f"{k}={v}")
+        if "frames_window" in params:
+            kwargs["frames_window"] = frames_window(body)
+        elif body.frames_from_min is not None or body.frames_minutes is not None:
+            extra.append("frames_from_min/frames_minutes")
+        if body.hour is not None:
+            if "hour" not in params:
+                raise SimError(422, HOURLY_MISSING)
+            kwargs["hour"] = body.hour
         res = corridor_runner.run(**kwargs)
         if extra:
             res["warnings"].append(f"The corridor simulation does not take {', '.join(extra)} yet; this run is the calibrated "
                                    f"typical day ({res['time'].get('label', '')}).")
+    except SimError:
+        raise
     except ValueError as e:      # a template refused the change (bad params)
         raise SimError(400, f"That change cannot be built: {e}")
     except RuntimeError as e:    # gridlock, netconvert failure
@@ -432,9 +538,12 @@ def _simulate(run_id: str, key: str, ivs: list[dict], body: CorridorRunIn) -> di
     except ImportError as e:
         raise SimError(500, f"The simulation needs sumolib ({e}). Run `make setup-sim`.")
     except Exception as e:
+        if type(e).__name__ == "HourlyUnavailable":    # corridor_runner: the hourly calibration went away meanwhile
+            raise SimError(422, str(e))
         raise SimError(500, f"The simulation failed unexpectedly ({type(e).__name__}: {e})")
     res["run_id"] = run_id
-    window = getattr(corridor_runner, "FRAMES", None)
+    fw = res.get("frames_window") or {}
+    window = (fw["from_s"], fw["to_s"]) if "from_s" in fw else getattr(corridor_runner, "FRAMES", None)
     if res.get("frames_path") and window and len(window) >= 2 and Path(res["frames_path"]).exists():
         trim_frames(Path(res["frames_path"]), window[0], window[1])
     res = store(res, body)
@@ -560,6 +669,145 @@ def corridor_run_status(run_id: str):
            "queued_s": round(job.get("started", now) - job["queued"], 1)}
     if job["status"] == "failed":
         out |= {"error": job["error"], "http_status": job["http_status"]}
+    return out
+
+
+# ---------- GET /runs/{run_id}/probes: test cars' whole trips ----------
+def _metres(a, b) -> float:
+    """Distance in metres between two (lon, lat) points (equirectangular; fine at corridor scale)."""
+    import math
+    k = math.cos(math.radians((a[1] + b[1]) / 2))
+    return math.hypot((b[0] - a[0]) * 111320 * k, (b[1] - a[1]) * 110540)
+
+
+def mock_probe_tracks(res: dict, step_s: float = 10.0, per_direction: int = 3) -> list[dict] | None:
+    """Illustrative test-car trips for a mock (sample) corridor run: along the simulated route (GET /corridor's route
+    geometry), each leg at the constant speed of the result's leg time; B->A uses the same leg times. Labelled
+    mock. None when the route geometry is not available (no sumolib)."""
+    lines = {f["properties"]["direction"]: f["geometry"]["coordinates"] for f in (route_geometry() or {}).get("features", [])
+             if f["properties"].get("kind") == "route"}
+    legs = res.get("journey", {}).get("legs") or []
+    if not legs or set(lines) != {"A->B", "B->A"}:
+        return None
+    trips = []
+    for direction, order in (("A->B", list(range(len(legs)))), ("B->A", list(range(len(legs)))[::-1])):
+        line = lines[direction]
+        cum = [0.0]
+        for a, b in zip(line, line[1:]):
+            cum.append(cum[-1] + _metres(a, b))
+        scale = cum[-1] / max(1.0, sum(l["distance_m"] for l in legs))      # result's leg lengths onto this line
+        spans, d = [], 0.0
+        for k in order:
+            spans.append((k, d, d + legs[k]["distance_m"] * scale, float(legs[k]["time_s"])))
+            d += legs[k]["distance_m"] * scale
+
+        def where(dist):
+            i = next((i for i, c in enumerate(cum[1:]) if c >= dist), len(line) - 2)
+            w = (dist - cum[i]) / max(1e-6, cum[i + 1] - cum[i])
+            return [round(line[i][j] + w * (line[i + 1][j] - line[i][j]), 6) for j in (0, 1)]
+
+        total = sum(s[3] for s in spans)
+        for n in range(per_direction):
+            depart, pts, t, i = 600.0 + 30 * n, [], 0.0, 0
+            while True:
+                tt = min(t, total)
+                acc = 0.0
+                for k, d0, d1, dur in spans:
+                    if tt <= acc + dur or k == spans[-1][0]:
+                        frac = min(1.0, (tt - acc) / max(1e-6, dur))
+                        lon, lat = where(d0 + frac * (d1 - d0))
+                        pts.append({"t": round(depart + tt, 1), "lon": lon, "lat": lat, "z": 0,
+                                    "speed": round((d1 - d0) / max(1e-6, dur), 1), "leg": k})
+                        break
+                    acc += dur
+                if tt >= total:
+                    break
+                t += step_s
+            tag = "fwd" if direction == "A->B" else "rev"
+            trips.append({"id": f"probe_{tag}.{n}", "direction": direction, "number": n, "depart_s": depart,
+                          "arrive_s": round(depart + total, 1), "total_s": round(total, 1),
+                          "legs_s": [float(l["time_s"]) for l in legs], "segments": [], "points": pts, "mock": True})
+    return trips
+
+
+@router.get("/runs/{run_id}/probes")
+def run_probes(run_id: str, direction: str | None = None, number: int | None = None):
+    """Every test (probe) car's whole trip in a corridor run: [{id, direction, number, depart_s, arrive_s, total_s,
+    legs_s, segments, points: [{t, lon, lat, z, speed, leg}]}]. `direction`: A->B (also fwd) or B->A (also rev);
+    `number`: one probe. Mock runs: illustrative tracks (each trip has mock: true)."""
+    res = stored_run(run_id)
+    if res is None or "corridor_id" not in res:
+        raise HTTPException(404, "corridor run not found")
+    path = res.get("probe_tracks_path")
+    if path and Path(path).exists():
+        trips = json.loads(Path(path).read_text())["trips"]
+    elif MOCK and (res.get("sample") or res.get("requested") is not None):
+        trips = mock_probe_tracks(res)
+        if trips is None:
+            raise HTTPException(404, "no probe tracks: mock mode without the route geometry (sumolib missing)")
+    else:
+        raise HTTPException(404, "no probe tracks for this run (run before probe tracks existed, or its files were pruned; "
+                                 "run it again)")
+    want = {"fwd": "A->B", "a->b": "A->B", "rev": "B->A", "b->a": "B->A"}.get((direction or "").lower().replace(" ", ""))
+    if direction and not want:
+        raise HTTPException(400, f"direction must be A->B (fwd) or B->A (rev), got {direction!r}")
+    return [t for t in trips if (not want or t["direction"] == want) and (number is None or t["number"] == number)]
+
+
+# ---------- GET /corridor/junctions/geometry ----------
+JA_DEFS = Path(os.getenv("CR_CORRIDOR_JA_DEFS", ROOT / "data/tomtom/junction/corridor"))
+_geom_lock = threading.Lock()
+_geom_mem: dict = {}
+
+
+@router.get("/corridor/junctions/geometry")
+def corridor_junctions_geometry():
+    """For each configured TomTom junction, its approaches' road geometry (TomTom Junction Analytics definitions,
+    data/tomtom/junction/corridor/<jid>_definition.json): coordinates in driving order, the last one where the approach
+    enters the junction, so a queue of queue_m (GET /corridor/junctions/live, same approach_id) is drawn back from the
+    end. Cached until the config or a definition file changes."""
+    config = json.loads(JA_CONFIG.read_text())["junctions"] if JA_CONFIG.exists() else []
+    files = [JA_DEFS / f"{j['corridor_id']}_definition.json" for j in config]
+    stamp = (JA_CONFIG.stat().st_mtime if JA_CONFIG.exists() else 0,) + tuple(f.stat().st_mtime if f.exists() else 0 for f in files)
+    with _geom_lock:
+        if _geom_mem.get("stamp") == stamp:
+            return _geom_mem["out"]
+    points = {p["id"]: p for p in corridor_def()["points"]}
+    junctions = []
+    for j, f in zip(config, files):
+        jid = j["corridor_id"]
+        p = points.get(jid, {})
+        row = {"id": jid, "name": j.get("name", p.get("name", jid)), "tomtom_id": j.get("tomtom_id"),
+               "lon": p.get("lon"), "lat": p.get("lat"), "approaches": []}
+        if not f.exists():
+            row["note"] = "no TomTom definition file yet"
+            junctions.append(row)
+            continue
+        d = json.loads(f.read_text())
+        model = d.get("junctionModel") or {}
+        area = (d.get("rawJunction") or {}).get("geometry")
+        if area:
+            row["area"] = area
+        for a in model.get("approaches", []):
+            coords = []
+            for seg in (a.get("segmentedGeometry") or {}).get("coordinates", []):
+                for c in seg:
+                    c = [round(c[0], 7), round(c[1], 7)]
+                    if not coords or coords[-1] != c:
+                        coords.append(c)
+            if len(coords) < 2:
+                continue
+            row["approaches"].append({"approach_id": str(a["id"]), "name": a.get("name", "").strip() or str(a["id"]),
+                                      "road_name": a.get("roadName"), "direction": a.get("direction"), "frc": a.get("frc"),
+                                      "length_m": round(a["length"], 1) if a.get("length") is not None else None,
+                                      "excluded": bool(a.get("excluded")), "coordinates": coords})
+        junctions.append(row)
+    out = {"source": "TomTom Junction Analytics junction definitions (data/tomtom/junction/corridor/<id>_definition.json)",
+           "data_label": "road geometry as TomTom models the junction (not a measurement)",
+           "order": "coordinates run in driving order; the last point is where the approach enters the junction",
+           "match": "approach_id is the same as in GET /corridor/junctions/live", "junctions": junctions}
+    with _geom_lock:
+        _geom_mem.update(stamp=stamp, out=out)
     return out
 
 

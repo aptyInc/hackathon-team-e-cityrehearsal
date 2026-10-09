@@ -63,10 +63,49 @@ with c.websocket_connect(f"/stream/{base['run_id']}") as ws:  # sample corridor 
     except Exception as e:
         assert "corridor sample run streamed" not in str(e), e
 assert c.get(f"/runs/{base['run_id']}/roads").status_code == 404
+# playback: frames window (part of the cache key, never of the numbers), probe tracks, hour of the day
+fw = base["frames_window"]
+assert (fw["from_s"], fw["to_s"], fw["step_s"], fw["sim_minutes_total"]) == (900, 1200, 4, 15), fw
+w2 = c.post("/corridor/runs", json={"interventions": [], "frames_from_min": 0, "frames_minutes": 10}).json()
+assert (w2["frames_window"]["from_s"], w2["frames_window"]["to_s"]) == (600, 1200) and w2["journey"] == base["journey"], w2["frames_window"]
+for bad in ({"frames_minutes": 11}, {"frames_minutes": 0.5}, {"frames_from_min": -1}, {"frames_from_min": 12}, {"frames_from_min": 6, "frames_minutes": 10}):
+    r = c.post("/corridor/runs", json={"interventions": [], **bad})
+    assert r.status_code == 400 and "frames" in r.json()["detail"], (bad, r.status_code, r.text[:120])
+from app.corridor import CorridorRunIn as _In, cache_key as _key, CALIBRATION_HOURLY as _HOURLY  # noqa: E402
+assert _key([], _In()) == _key([], _In(frames_from_min=5, frames_minutes=5)) != _key([], _In(frames_from_min=0)), "window in the cache key"
+assert c.post("/corridor/runs", json={"interventions": [], "hour": 3}).status_code == 400
+hr = c.post("/corridor/runs", json={"interventions": [], "hour": 8})
+if not _HOURLY.exists():
+    assert hr.status_code == 422 and "hourly data not available yet" in hr.json()["detail"], hr.text[:200]
+else:
+    assert hr.status_code in (200, 422), hr.text[:200]
+    if hr.status_code == 200:
+        assert hr.json()["time"]["hour"] == 8 and "08:00-09:00" in hr.json()["time"]["window"], hr.json()["time"]
+assert c.get("/runs/rc_nothere/probes").status_code == 404
+pr = c.get(f"/runs/{base['run_id']}/probes")
+assert pr.status_code in (200, 404), pr.text[:200]
+if route["features"]:   # mock tracks follow the simulated route
+    trips = pr.json()
+    assert {t["direction"] for t in trips} == {"A->B", "B->A"} and all(t["mock"] for t in trips), [t["id"] for t in trips]
+    t0 = next(t for t in trips if t["direction"] == "A->B")
+    p0, p1 = t0["points"][0], t0["points"][-1]
+    assert set(p0) == {"t", "lon", "lat", "z", "speed", "leg"} and p0["leg"] == 0 and p1["leg"] == 11, (p0, p1)
+    assert abs(p1["t"] - p0["t"] - t0["total_s"]) < 1 and abs(t0["total_s"] - base["journey"]["total_s"]) < 2, t0["total_s"]
+    assert all(t["direction"] == "B->A" for t in c.get(f"/runs/{base['run_id']}/probes?direction=rev").json())
+    assert len(c.get(f"/runs/{base['run_id']}/probes?direction=A->B&number=1").json()) == 1
+    assert c.get(f"/runs/{base['run_id']}/probes?direction=up").status_code == 400
+geo = c.get("/corridor/junctions/geometry")
+assert geo.status_code == 200, geo.text[:200]
+gj = {j["id"]: j for j in geo.json()["junctions"]}
+if gj:
+    assert any(j["approaches"] for j in gj.values()) and all(len(a["coordinates"]) >= 2 for j in gj.values() for a in j["approaches"])
 live = c.get("/corridor/junctions/live")
 assert live.status_code in (200, 404)
 if live.status_code == 200:
     assert live.json()["labels"]["delay_s"] == "measured" and live.json()["junctions"]
+    for j in live.json()["junctions"]:       # live queues are drawn on the geometry: the approach ids match
+        if j["approaches"] and j["id"] in gj and gj[j["id"]]["approaches"]:
+            assert {a["approach_id"] for a in j["approaches"]} <= {a["approach_id"] for a in gj[j["id"]]["approaches"]}, j["id"]
 assert c.get("/corridor/buildings").status_code in (200, 404)
 assert c.get("/corridor/buildings/j07").status_code in (200, 404)
 for bad in ("j99", "..%2F..%2Fcorridor", "corridor"):

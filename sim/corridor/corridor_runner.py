@@ -44,10 +44,22 @@ the junctions it watches (Junction Analytics, `estimated`). We run the baseline,
 The baseline then reproduces the measured trip, and interventions change it through what SUMO does model: junction
 delays, queues, lanes and signals. Every knob is labelled in calibration.json and in the C5 result (inputs.sources).
 
+Playback (for the 3D view)
+  - frames (C1): a window of FRAMES_MAX_S at most, anywhere inside the measured period (the PROBE_SPAN after warm-up);
+    run(frames_window=(from_s, to_s)). Driving is deterministic and recording frames only reads positions, so the
+    journey and junction numbers do not depend on the window.
+  - probe tracks: every probe car's whole trip (A->B and B->A), positions every PROBE_TRACK_S s from SUMO's FCD output
+    (probe cars only), stitched across the sections; written to probes.json (probe_tracks()).
+
+Hour of the day: with calibration_hourly.json (calibrate_hourly(), fitted to TomTom's hourly leg times when those rows
+are in data/raw/corridor_legs_tomtom.csv), run(hour=h) applies that hour's volume scale (and, only where needed, a
+speed-cap scale) on top of the all-day calibration.
+
     python sim/corridor/corridor_runner.py calibrate          # writes sim/corridor/calibration.json
+    python sim/corridor/corridor_runner.py calibrate_hourly [8 9 ...]   # writes sim/corridor/calibration_hourly.json
     python sim/corridor/corridor_runner.py run [j07:flyover]  # prints the C5 result summary
 """
-import csv, heapq, json, math, os, shutil, statistics, subprocess, sys, time, uuid, xml.etree.ElementTree as ET
+import csv, heapq, json, math, os, re, shutil, statistics, subprocess, sys, time, uuid, xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -93,7 +105,14 @@ PARALLEL = int(os.environ.get("CR_SIM_PARALLEL", "6"))   # SUMO processes at onc
 WARMUP = 600                      # s before the first probe leaves
 PROBE_EVERY, PROBE_SPAN = 30, 900   # one probe car each way every 30 s for 15 minutes (30 trips: noise is reported)
 END = WARMUP + PROBE_SPAN + 3900  # long enough for the last probe to arrive (TomTom's trip: 58 min)
-FRAMES = (WARMUP + 300, WARMUP + 600, 4)   # vehicle positions for the 3D view (C1): from, to, every N s (5 min, ~30 MB)
+FRAMES = (WARMUP + 300, WARMUP + 600, 4)   # vehicle positions for the 3D view (C1): from, to, every N s (default window: 5 min, ~26 MB)
+FRAMES_MAX_S = 600                # a frames window is at most 10 minutes (~50 MB) and lies inside WARMUP .. WARMUP + PROBE_SPAN
+PROBE_TRACK_S = 5                 # probe car positions every N s for the whole trip (probes.json)
+HOURLY = HERE / "calibration_hourly.json"
+HOURS = range(6, 23)              # hour h = hh:00-hh+1:00; TomTom's all-day period is 06:00-23:00
+HOUR_VOLUME = (0.5, 1.6)          # calibrate_hourly(): volume scale limits; beyond them it scales the speed caps
+HOUR_CAP = (0.6, 1.8)             # ... within these limits
+HOUR_MAX_KMH = 80                 # ... and no leg faster than this
 SECTIONS = [("A_lingampally", "j01"), ("j01", "j02"), ("j02", "j04"), ("j04", "j07"), ("j07", "j09"), ("j09", "B_lakdikapul")]
 LEAD_IN_M, TAIL_M = 1000, 300     # road simulated before / after each section's legs
 C1_TYPES = {"two_wheeler", "car", "auto", "bus", "truck"}
@@ -102,9 +121,55 @@ JUNCTION_BLOCKER_S = 5            # s a vehicle waits behind one stuck inside th
 
 # ---------- network ----------
 def tomtom_legs():
-    """TomTom July average per leg: [(from_id, to_id, distance_m, time_s, speed_kmh)] in corridor order."""
-    rows = [r for r in csv.DictReader(LEGS_CSV.open()) if r["job"] == TOMTOM_JOB]
+    """TomTom July average per leg: [(from_id, to_id, distance_m, time_s, speed_kmh)] in corridor order (the all-day
+    period of job TOMTOM_JOB; hourly rows, should the job carry them too, are left out)."""
+    rows = [r for r in csv.DictReader(LEGS_CSV.open()) if r["job"] == TOMTOM_JOB and row_hour(r) is None]
     return [(r["from_id"], r["to_id"], float(r["distance_m"]), float(r["time_s"]), float(r["speed_kmh"])) for r in rows]
+
+
+_PERIOD = re.compile(r"(\d{4}-\d{2}-\d{2})(?:\s*(?:\.\.|/|to|–|—)\s*(\d{4}-\d{2}-\d{2}))?[\sT]+(\d{1,2})(?:[:h.](\d{2}))?\s*(?:-|–|—|to)\s*(\d{1,2})(?:[:h.](\d{2}))?")
+
+
+def row_hour(row):
+    """The hour h when a TomTom row covers one hour of the day (hh:00-hh+1:00), else None. Tolerant of the period's
+    format ("2026-07-01..2026-07-31 08:00-09:00", "... 8:00-9:00", "... 08-09", "2026-07-01/2026-07-31 T08:00-09:00")
+    and of a separate `hour` column ("8", "08", "08:00", "08:00-09:00")."""
+    h = (row.get("hour") or "").strip()
+    if h:
+        m = re.match(r"(\d{1,2})(?:[:h.]\d{2})?(?:\s*-\s*(\d{1,2}))?", h)
+        if m and (m.group(2) is None or (int(m.group(2)) - int(m.group(1))) % 24 == 1):
+            return int(m.group(1))
+    m = _PERIOD.search(row.get("period") or "")
+    if not m:
+        return None
+    h0, m0, h1, m1 = int(m.group(3)), int(m.group(4) or 0), int(m.group(5)), int(m.group(6) or 0)
+    return h0 if m0 == 0 and m1 == 0 and (h1 - h0) % 24 == 1 else None
+
+
+def tomtom_hours():
+    """TomTom's hourly rows in LEGS_CSV: {hour: {"period", "job", "legs": {(from_id, to_id): (distance_m, time_s,
+    speed_kmh)}, "trip_total_s"}}. When an hour has several periods, the one covering July 2026 (the all-day
+    calibration's month) wins, else the one with the most legs. {} while TomTom's hourly data is not in."""
+    if not LEGS_CSV.exists():
+        return {}
+    by = {}
+    for r in csv.DictReader(LEGS_CSV.open()):
+        h = row_hour(r)
+        if h is None:
+            continue
+        p = by.setdefault(h, {}).setdefault((r.get("period", ""), r.get("job", "")), {"legs": {}, "trip_total_s": None})
+        f = lambda k: float(r[k]) if (r.get(k) or "").strip() not in ("", "nan", "None") else None  # noqa: E731
+        if r.get("from_id") and r.get("to_id") and f("time_s"):
+            dist, t = f("distance_m"), f("time_s")
+            speed = f("speed_kmh") or (dist / t * 3.6 if dist else None)
+            p["legs"][(r["from_id"], r["to_id"])] = (dist, t, speed)
+        if f("trip_total_s"):
+            p["trip_total_s"] = f("trip_total_s")
+    out = {}
+    for h, periods in by.items():
+        (period, job), p = max(periods.items(), key=lambda kv: ("2026-07" in kv[0][0], len(kv[1]["legs"])))
+        out[h] = {"period": period, "job": job, **p}
+    return out
 
 
 def locate(net, path, reverse=False):
@@ -431,7 +496,7 @@ def section_routes(net, sec, flows, info, out: Path):
     stop = {"fwd": WARMUP + PROBE_SPAN + 60, "rev": end - 300}    # A->B traffic behind the last probe cannot affect it
     lines = ['<routes>', VTYPES.replace('<vType ', f'<vType sigma="{SIGMA}" '),
              f'    <vType id="probe" sigma="{SIGMA}" vClass="passenger" length="4.3" minGap="1.0" tau="0.8" maxSpeed="16.7" accel="2.6" decel="4.5" '
-             'speedFactor="1.0" color="1,1,1"><param key="has.vehroute.device" value="true"/></vType>',
+             'speedFactor="1.0" color="1,1,1"><param key="has.vehroute.device" value="true"/><param key="has.fcd.device" value="true"/></vType>',
              f'    <vTypeDistribution id="mix" vTypes="{" ".join(MIX)}" probabilities="{" ".join(str(v) for v in MIX.values())}"/>']
     entering = {"fwd": 0.0, "rev": 0.0}
     body = []
@@ -496,16 +561,21 @@ def detectors(net, base_groups, sec, out: Path, count_edges=()):
 
 
 # ---------- run and measure ----------
-def simulate(net, net_path: Path, sec, outdir: Path, frames=True, seed=SEED):
-    """Run one section in SUMO. With `frames`, vehicle positions in the FRAMES window (inside the section's own stretch)
-    go to frames_<k>.jsonl through TraCI (SUMO's FCD output cannot stop at the window's end)."""
+def simulate(net, net_path: Path, sec, outdir: Path, frames=True, seed=SEED, window=None):
+    """Run one section in SUMO. With `frames`, vehicle positions in the frames window ((from_s, to_s), default FRAMES;
+    inside the section's own stretch) go to frames_<k>.jsonl through TraCI (SUMO's FCD output cannot stop at the
+    window's end). Probe cars' positions every PROBE_TRACK_S s, whole run, go to fcd_<k>.xml (FCD device on the probe
+    vType only). Neither changes the driving: the same seed gives the same numbers with any window or none."""
     k = sec["k"]
+    lo_t, hi_t = window or FRAMES[:2]
     cmd = [sumolib.checkBinary("sumo"), "-n", str(net_path), "-r", str(outdir / f"routes_{k}.xml"), "-a", str(outdir / f"det_{k}.xml"),
            "--begin", "0", "--end", str(sec["end"]), "--seed", str(seed), "--step-length", str(STEP), "--no-step-log",
            "--log", str(outdir / f"sumo_{k}.log"), "--time-to-teleport", str(TELEPORT_S), "--ignore-route-errors",
            "--ignore-junction-blocker", str(JUNCTION_BLOCKER_S),
            "--device.vehroute.probability", "0", "--vehroute-output", str(outdir / f"probes_{k}.xml"),
-           "--vehroute-output.exit-times", "--statistic-output", str(outdir / f"stats_{k}.xml")]
+           "--vehroute-output.exit-times", "--statistic-output", str(outdir / f"stats_{k}.xml"),
+           "--device.fcd.probability", "0", "--device.fcd.period", str(PROBE_TRACK_S), "--fcd-output", str(outdir / f"fcd_{k}.xml"),
+           "--fcd-output.geo", "--fcd-output.attributes", "x,y,z,speed,lane,pos"]
     if not frames:
         subprocess.run(cmd, cwd=outdir, check=True, capture_output=True)
         return None
@@ -518,12 +588,12 @@ def simulate(net, net_path: Path, sec, outdir: Path, frames=True, seed=SEED):
     centre = min(net.getNodes(), key=lambda n: math.dist(n.getCoord()[:2], ((bx0 + bx1) / 2, (by0 + by1) / 2))).getID()
     lo, hi = sec["lon"]
     try:
-        conn.simulationStep(float(FRAMES[0] - FRAMES[2]))
+        conn.simulationStep(float(lo_t - FRAMES[2]))
         conn.junction.subscribeContext(centre, tc.CMD_GET_VEHICLE_VARIABLE, math.dist((bx0, by0), (bx1, by1)),
                                        [tc.VAR_POSITION3D, tc.VAR_ANGLE, tc.VAR_SPEED, tc.VAR_TYPE])
         with path.open("w") as f:
-            t = FRAMES[0]
-            while t <= FRAMES[1]:
+            t = lo_t
+            while t <= hi_t:
                 conn.simulationStep(float(t))
                 vehicles = []
                 for vid, v in (conn.junction.getContextSubscriptionResults(centre) or {}).items():
@@ -582,6 +652,159 @@ def probe_legs(sec, info, outdir: Path):
         times = [p[n] for p in per_probe]
         out[leg] = (dist, sum(times) / len(times), statistics.pstdev(times))
     return out, len(per_probe), {p[-1]: sum(p[:-1]) for p in per_probe}
+
+
+def point_times(v, sec, tag, info):
+    """{corridor point id: time the probe car passes it} for one probe vehicle (vehroute XML element) of section `sec`
+    driving `tag` ("fwd"/"rev"): into the edge the point lies on, plus the point's share of that edge (as probe_legs())."""
+    path, pos = info["paths"][tag], info["pos"][tag]
+    a = sec[tag][0]
+    depart = float(v.get("depart"))
+    exits = [float(t) for t in v.find("route").get("exitTimes").split()]
+    out = {}
+    for p in sec["points"]:
+        k, off, cum = pos[p]
+        if cum == 0:
+            out[p] = depart
+            continue
+        t_in = depart if k == a else exits[k - 1 - a]
+        out[p] = t_in + off / max(1e-6, path[k].getLength()) * (exits[k - a] - t_in)
+    return out
+
+
+def probe_tracks(net, secs, info, outdir: Path, run_id=""):
+    """Every probe car's whole trip, A->B and B->A, written to probes.json; returns (path, summary).
+    The sections run side by side on one clock and probe N leaves each section's start at the same time, so a whole
+    trip is stitched: section k's part (from its first corridor point to its last, in driving order) follows on where
+    the previous section's part ended.
+      clock      the times a corridor point is passed come from the vehroute exit times exactly as probe_legs() measures
+                 the legs, so an A->B trip's total_s and legs_s are that probe's numbers in the journey (whose total_s is
+                 the mean over the probes, per leg).
+      positions  SUMO's FCD output for the probe cars every PROBE_TRACK_S s, cut where the car passes the section's
+                 corridor points (distance along its route); the car's own times between those points are mapped
+                 linearly onto the clock, so joints between sections meet exactly (a sample moves by a few s at most).
+    segments[] give the C1 vehicle id per section (e.g. probe_fwd_3.12) and the same span on that section's own clock
+    (sim_from_t/sim_to_t: the clock of the C1 frames), so the UI can find the car in the frames. Repeated positions
+    while a car stands still are dropped (first and last kept): interpolate by t."""
+    pts = [p["id"] for p in cn.CORRIDOR["points"]]
+    geo = {}
+    for tag in ("fwd", "rev"):
+        path, cum = info["paths"][tag], [0.0]
+        for e in path:
+            cum.append(cum[-1] + e.getLength())
+        geo[tag] = {"start": {e.getID(): (i, cum[i]) for i, e in enumerate(path)}, "path": path, "cum": cum}
+
+    def where(tag, d):     # (lon, lat) on the route at distance d from its start
+        g = geo[tag]
+        i = next((i for i, c in enumerate(g["cum"][1:]) if c >= d), len(g["path"]) - 1)
+        e = g["path"][i]
+        shape = [q[:2] for q in e.getShape()]
+        frac = min(1.0, max(0.0, (d - g["cum"][i]) / max(1e-6, e.getLength())))
+        return net.convertXY2LonLat(*geomhelper.positionAtShapeOffset(shape, frac * geomhelper.polyLength(shape)))
+
+    times = {}
+    for sec in secs:
+        f = outdir / f"probes_{sec['k']}.xml"
+        if not f.exists():
+            continue
+        for v in ET.parse(f).getroot().iter("vehicle"):
+            vid = v.get("id")
+            if vid.startswith("probe_") and v.get("arrival") is not None:
+                times[vid] = point_times(v, sec, vid.split("_")[1], info)
+    samples = {}   # vehicle id -> [(t, lon, lat, z, speed, d: metres from the route's start)]
+    for sec in secs:
+        f = outdir / f"fcd_{sec['k']}.xml"
+        if not f.exists():
+            continue
+        t, last = None, {}
+        for ev, el in ET.iterparse(f, events=("start", "end")):
+            if ev == "start" and el.tag == "timestep":
+                t = float(el.get("time"))
+            elif ev == "end" and el.tag == "vehicle":
+                vid, lane = el.get("id"), el.get("lane") or ""
+                g = geo[vid.split("_")[1]]
+                hit = g["start"].get(lane.rsplit("_", 1)[0])
+                if hit:
+                    last[vid] = hit[0]
+                    d = hit[1] + float(el.get("pos") or 0)
+                elif lane.startswith(":") and vid in last:     # inside a junction: at the end of the edge it left
+                    d = g["cum"][last[vid] + 1]
+                else:
+                    continue
+                samples.setdefault(vid, []).append((t, float(el.get("x")), float(el.get("y")), float(el.get("z") or 0),
+                                                    float(el.get("speed") or 0), d))
+            elif ev == "end" and el.tag == "timestep":
+                el.clear()
+
+    def crossing(s, d):     # (time, z, speed) where the car passes distance d, linear between samples; None if not seen
+        for a, b in zip(s, s[1:]):
+            if a[5] < d <= b[5]:
+                w = (d - a[5]) / max(1e-9, b[5] - a[5])
+                return tuple(x + w * (y - x) for x, y in zip((a[0], a[3], a[4]), (b[0], b[3], b[4])))
+        return None
+
+    trips, incomplete = [], {"A->B": 0, "B->A": 0}
+    for tag, direction in (("fwd", "A->B"), ("rev", "B->A")):
+        order = secs if tag == "fwd" else secs[::-1]
+        dist = {p: info["pos"][tag][p][2] for p in pts}
+        for n in range(PROBE_SPAN // PROBE_EVERY):
+            clock, depart, points, segments, legs = None, None, [], [], [0.0] * (len(pts) - 1)
+            for sec in order:
+                vid = f"probe_{tag}_{sec['k']}.{n}"
+                c, s = times.get(vid), samples.get(vid)
+                if not c or not s:
+                    break
+                route = sec["points"] if tag == "fwd" else sec["points"][::-1]
+                t0, t1 = c[route[0]], c[route[-1]]
+                d0, d1 = dist[route[0]], dist[route[-1]]
+                if clock is None:
+                    clock = depart = t0
+                for p, q in zip(route, route[1:]):
+                    legs[pts.index(p) if tag == "fwd" else pts.index(q)] += c[q] - c[p]
+                ends = []
+                for d, t_exit in ((d0, t0), (d1, t1)):
+                    x = crossing(s, d)
+                    near = min(s, key=lambda y: abs(y[5] - d))
+                    ends.append((x[0], x[1], x[2]) if x else (t_exit, near[3], near[4]))
+                (tau0, z0, v0), (tau1, z1, v1) = ends
+                scale = (t1 - t0) / max(1e-6, tau1 - tau0)
+                marks = [(dist[p], pts.index(p) if tag == "fwd" else pts.index(q)) for p, q in zip(route, route[1:])]
+                leg_at = lambda d: next((k for m, k in reversed(marks) if d >= m), marks[0][1])  # noqa: E731
+                end = clock + t1 - t0
+                rows = [(clock, *where(tag, d0), z0, v0, d0)]
+                rows += [y for y in ((clock + (x[0] - tau0) * scale, x[1], x[2], x[3], x[4], x[5]) for x in s if d0 < x[5] < d1)
+                         if clock + 0.05 < y[0] < end - 0.05]
+                rows.append((end, *where(tag, d1), z1, v1, d1))
+                if points:
+                    points.pop()           # section joint: the previous part's end point is this part's start
+                for x in rows:
+                    points.append({"t": round(x[0], 1), "lon": round(x[1], 6), "lat": round(x[2], 6),
+                                   "z": round(x[3], 1) if abs(x[3]) >= 0.05 else 0, "speed": round(x[4], 1),
+                                   "leg": leg_at(min(x[5], d1 - 1e-6))})
+                segments.append({"section": sec["k"], "vehicle_id": vid, "from_id": route[0], "to_id": route[-1],
+                                 "from_t": round(clock, 1), "to_t": round(clock + t1 - t0, 1),
+                                 "sim_from_t": round(tau0, 1), "sim_to_t": round(tau1, 1)})
+                clock += t1 - t0
+            else:
+                keep = [p for i, p in enumerate(points) if i in (0, len(points) - 1) or not (
+                    (p["lon"], p["lat"]) == (points[i - 1]["lon"], points[i - 1]["lat"]) == (points[i + 1]["lon"], points[i + 1]["lat"]))]
+                trips.append({"id": f"probe_{tag}.{n}", "direction": direction, "number": n, "depart_s": round(depart, 1),
+                              "arrive_s": round(clock, 1), "total_s": round(clock - depart, 1),
+                              "legs_s": [round(x, 1) for x in legs], "segments": segments, "points": keep})
+                continue
+            incomplete[direction] += 1
+    path = outdir / "probes.json"
+    meta = {"run_id": run_id, "step_s": PROBE_TRACK_S, "probe_every_s": PROBE_EVERY,
+            "clock": "points[].t: seconds on the trip's clock (the first section's simulation clock; each later section's part "
+                     "follows on where the previous one ended). segments[].sim_from_t/sim_to_t: the same part on that section's "
+                     "own clock, the clock of the C1 frames, where the car is segments[].vehicle_id",
+            "legs": [f"{a}->{b}" for a, b in zip(pts, pts[1:])], "leg": "points[].leg: index into legs (A->B order, both directions)",
+            "incomplete": incomplete, "label": "SIMULATED: probe cars in the calibrated simulation (not measured trips)"}
+    path.write_text(json.dumps({"meta": meta, "trips": trips}, separators=(",", ":")))
+    for sec in secs:
+        (outdir / f"fcd_{sec['k']}.xml").unlink(missing_ok=True)
+    return path, {"trips": {d: sum(t["direction"] == d for t in trips) for d in ("A->B", "B->A")}, "incomplete": incomplete,
+                  "points": sum(len(t["points"]) for t in trips), "bytes": path.stat().st_size}
 
 
 def junction_stats(outdir: Path, secs, info):
@@ -685,16 +908,82 @@ def calibration():
             "calibrated": bool(c)}
 
 
+def frames_window(from_min=None, minutes=None):
+    """(from_s, to_s) simulation seconds of the C1 frames: `from_min` minutes after warm-up (default 5), `minutes` long
+    (default 5, 1..FRAMES_MAX_S/60), on the FRAMES step. The window must lie inside the measured period (PROBE_SPAN
+    after WARMUP, while the probe cars leave and the corridor's traffic is steady). ValueError (plain words) if not."""
+    total = PROBE_SPAN / 60
+    from_min = (FRAMES[0] - WARMUP) / 60 if from_min is None else float(from_min)
+    minutes = (FRAMES[1] - FRAMES[0]) / 60 if minutes is None else float(minutes)
+    if not 1 <= minutes <= FRAMES_MAX_S / 60:
+        raise ValueError(f"frames_minutes must be between 1 and {FRAMES_MAX_S // 60}, got {minutes:g}")
+    if from_min < 0 or from_min + minutes > total + 1e-9:
+        raise ValueError(f"the frames window must lie inside the {total:g} simulated minutes after warm-up: frames_from_min "
+                         f"must be between 0 and {total - minutes:g} for {minutes:g} minutes of frames, got {from_min:g}")
+    step = FRAMES[2]
+    lo = WARMUP + round(from_min * 60 / step) * step
+    return lo, min(WARMUP + PROBE_SPAN, lo + round(minutes * 60 / step) * step)
+
+
+def frames_info(window):
+    """C5 `frames_window`: what was recorded and the period a window can be chosen from (for the UI's slider)."""
+    lo, hi = window
+    return {"from_s": lo, "to_s": hi, "step_s": FRAMES[2], "from_min": round((lo - WARMUP) / 60, 2), "minutes": round((hi - lo) / 60, 2),
+            "warmup_s": WARMUP, "sim_minutes_total": PROBE_SPAN // 60, "period_from_s": WARMUP, "period_to_s": WARMUP + PROBE_SPAN,
+            "max_minutes": FRAMES_MAX_S // 60,
+            "note": "frames t is simulation seconds; the window can start anywhere from 0 to sim_minutes_total - minutes after warm-up"}
+
+
+# ---------- hour of the day ----------
+class HourlyUnavailable(LookupError):
+    """run(hour=...) without calibration_hourly.json, or without that hour in it."""
+
+
+def hourly_calibration():
+    """calibration_hourly.json ({"hours": {"8": {"volume_scale", "cap_scale", "tomtom_total_s", ...}}}) or None."""
+    return json.loads(HOURLY.read_text()) if HOURLY.exists() else None
+
+
+def hour_settings(hour):
+    """That hour's entry of calibration_hourly.json; HourlyUnavailable (plain words) when there is none."""
+    if hour not in HOURS:
+        raise ValueError(f"hour must be between {HOURS[0]} and {HOURS[-1]} (hh:00-hh+1:00), got {hour}")
+    h = hourly_calibration()
+    if h is None:
+        raise HourlyUnavailable("hourly data not available yet: the corridor is calibrated to TomTom's all-day July average "
+                                "(06:00-23:00) only; sim/corridor/calibration_hourly.json appears once TomTom's hourly "
+                                "data is in and calibrate_hourly() has run")
+    e = (h.get("hours") or {}).get(str(hour))
+    if e is None:
+        have = sorted(int(k) for k in (h.get("hours") or {}))
+        raise HourlyUnavailable(f"hourly data not available yet for {hour:02d}:00-{hour + 1:02d}:00; calibrated hours: "
+                                f"{', '.join(f'{k:02d}' for k in have) or 'none'}")
+    return e
+
+
+def hour_label(hour):
+    return f"July typical {hour:02d}:00-{hour + 1:02d}:00"
+
+
 def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None, label="July 2026 average, 6 am-11 pm", through=None,
-        cross_scale=None, shares=None, seed=SEED, tomtom=None):
+        cross_scale=None, shares=None, seed=SEED, tomtom=None, frames_window=None, hour=None):
     """Simulate the corridor with `interventions` (C5 shape); return the C5 corridor result. `caps` (km/h per leg),
     `through` ({"fwd", "rev"} veh/h), `cross_scale` and `shares` ({junction id: corridor green share}) override the
-    calibrated values (calibrate() uses them)."""
+    calibrated values (calibrate() uses them). `frames_window`: (from_s, to_s) of the C1 frames (default FRAMES; see
+    frames_window()); it changes nothing else. `hour` (6..22): that hour's scales from calibration_hourly.json on top
+    of the all-day calibration (HourlyUnavailable without them)."""
+    window = tuple(frames_window) if frames_window else FRAMES[:2]
+    hour_cfg = hour_settings(hour) if hour is not None else None
     run_id = run_id or "rc_" + uuid.uuid4().hex[:8]
     outdir = OUT / run_id
     outdir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     cal = calibration()
+    asked_scale = volume_scale
+    if hour_cfg:
+        volume_scale = volume_scale * float(hour_cfg.get("volume_scale", 1.0))
+        caps = [min(HOUR_MAX_KMH, round(c * float(hour_cfg.get("cap_scale", 1.0)), 1)) for c in (caps if caps is not None else cal["cap_kmh"])]
+        label = f"{hour_label(hour)} (TomTom hourly calibration)"
     through = through or cal["through_vph"]
     base = sumolib.net.readNet(str(NET))
     base_groups = {j: [n.getID() for n in g] for j, g in cn.junction_groups(base).items() if g}
@@ -718,8 +1007,9 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
         section_routes(net, sec, flows, info, outdir / f"routes_{sec['k']}.xml")
         detectors(net, base_groups, sec, outdir / f"det_{sec['k']}.xml", count_edges)
     with ThreadPoolExecutor(min(len(secs), PARALLEL)) as pool:
-        frame_files = list(pool.map(lambda s: simulate(net, net_path, s, outdir, frames, seed), secs))
+        frame_files = list(pool.map(lambda s: simulate(net, net_path, s, outdir, frames, seed, window), secs))
     frames_path = merge_frames(frame_files, outdir / "frames.jsonl") if frames else None
+    tracks_path, tracks = probe_tracks(net, secs, info, outdir, run_id)
     legs, n_probes, trips = {}, [], {}
     for sec in secs:
         got, n, per = probe_legs(sec, info, outdir)
@@ -738,6 +1028,16 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                          # TomTom's measured speed on this leg, over the simulated leg's length
                          "tomtom_time_s": round(dist / (tt_kmh / 3.6)),
                          "time_s_sd": round(leg_sd, 1)})       # spread between the probe cars
+    if hour_cfg:     # TomTom's times for that hour: its own leg speeds when the hourly rows have every leg, else scaled
+        ids = [p["id"] for p in pts]
+        hl = tomtom_hours().get(hour, {}).get("legs", {})
+        if all(hl.get((a, b), (None, None, None))[2] for a, b in zip(ids, ids[1:])):
+            for l in out_legs:
+                l["tomtom_time_s"] = round(l["distance_m"] / (hl[(l["from_id"], l["to_id"])][2] / 3.6))
+        elif hour_cfg.get("tomtom_total_s"):
+            f = float(hour_cfg["tomtom_total_s"]) / max(1, sum(l["tomtom_time_s"] for l in out_legs))
+            for l in out_legs:
+                l["tomtom_time_s"] = round(l["tomtom_time_s"] * f)
     teleports = loaded = waiting = 0
     for sec in secs:
         stats = ET.parse(outdir / f"stats_{sec['k']}.xml").getroot()
@@ -755,7 +1055,8 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
     result = {
         "run_id": run_id, "variant_id": "baseline" if not interventions else "+".join(f"{i['kind']}_{i['junction_id']}" for i in interventions),
         "corridor_id": CORRIDOR_ID,
-        "time": {"window": "2026-07", "minutes": PROBE_SPAN // 60, "label": label},
+        "time": {"window": hour_label(hour) if hour_cfg else "2026-07", "minutes": PROBE_SPAN // 60, "label": label}
+                | ({"hour": hour, "data_label": "calibrated to TomTom's hourly leg times (" + str(hour_cfg.get("period", "July 2026")) + ")"} if hour_cfg else {}),
         "interventions": list(interventions),
         "journey": {"total_s": sum(l["time_s"] for l in out_legs), "distance_m": sum(l["distance_m"] for l in out_legs),
                     "tomtom_total_s": sum(l["tomtom_time_s"] for l in out_legs), "legs": out_legs,
@@ -771,12 +1072,16 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
         "junctions": junction_stats(outdir, secs, info),
         "warnings": warnings,
         "inputs": {"counts_source": "estimated" if measured else "assumed", "label": "estimated" if measured else "assumed",
-                   "volume_scale": volume_scale, "cross_traffic": cross,
+                   "volume_scale": asked_scale, "cross_traffic": cross,
+                   **({"hour": hour, "hour_volume_scale": hour_cfg.get("volume_scale", 1.0), "hour_cap_scale": hour_cfg.get("cap_scale", 1.0),
+                       "volume_scale_effective": round(volume_scale, 4)} if hour_cfg else {}),
                    "through_vph": round(through["fwd"] * volume_scale),
                    "through_vph_by_direction": {"A->B": round(through["fwd"] * volume_scale), "B->A": round(through["rev"] * volume_scale)},
                    "cross_vph_per_approach": round(CROSS_VPH * volume_scale),
                    "corridor_volumes": corridor_volumes(outdir, secs, info["corridor"], approaches),
-                   "sources": sources_note(cal, info),
+                   "sources": sources_note(cal, info) + ([{"input": f"hour of day {hour_label(hour)}", "label": "calibrated",
+                                                           "source": f"traffic x{hour_cfg.get('volume_scale', 1.0)}, speed caps x{hour_cfg.get('cap_scale', 1.0)} on the all-day "
+                                                                     f"calibration, fitted to TomTom {hour_cfg.get('period', 'hourly leg times')} (calibration_hourly.json)"}] if hour_cfg else []),
                    "calibrated_to": f"TomTom Traffic Stats job {TOMTOM_JOB}, July 2026 06:00-23:00, leg speeds",
                    "speeds_source": "counted (TomTom probe data)", "probes_arrived": min(n_probes), "teleports": teleports,
                    "vehicles_loaded": loaded, "vehicles_not_inserted": waiting,
@@ -784,7 +1089,10 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                                 for s, n in zip(secs, n_probes)],
                    "sim_seconds": max(s["end"] for s in secs), "wall_seconds": round(time.time() - t0, 1), "templates": sorted(kinds)},
         "frames_path": str(frames_path) if frames_path else None,
+        "frames_window": frames_info(window) if frames_path else None,
         "roads_path": str(write_roads(net, outdir)),
+        "probe_tracks_path": str(tracks_path),
+        "probe_tracks": tracks,
     }
     (outdir / "result.json").write_text(json.dumps(result, indent=1))
     return result
