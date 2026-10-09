@@ -11,6 +11,8 @@ Cases
   H  Layers: TomTom traffic, model congestion, buildings, vehicles on/off; night view and back
   I  Data panel: history, July and count charts; model-vs-TomTom bars after a run
   J  Camera: recenter and orbit
+  M  View (frontend/viewguard.js): ctrl+wheel over a panel cannot zoom the page, panels and the Reset view pill inside the
+     window, live and layers panels collapse, Reset view (and R) brings back the circle, stops the orbit, reopens panels
   K  The panel stays usable during every run; no page errors at any point
 
 Usage (API on :8000 with MOCK_SIM=0, frontend/ served on :5174; the page is ymca.html, index.html is the home page):
@@ -204,6 +206,29 @@ with sync_playwright() as p:
     check(abs(z - 17.2) < 0.3, f"recenter returns to the circle (zoom {z:.1f})")
     b0 = pg.evaluate("() => map.getBearing()"); pg.click("#orbit"); pg.wait_for_timeout(1500); b1 = pg.evaluate("() => map.getBearing()"); pg.click("#orbit")
     check(abs(b1 - b0) > 1, f"orbit turns the view ({b0:.0f} -> {b1:.0f} deg)")
+
+    case = "M view"; print(case)
+    check("maximum-scale=1" in pg.get_attribute("meta[name=viewport]", "content"), "viewport meta: no touch pinch-zoom of the page")
+    wheel = "(id, ctrl) => !document.getElementById(id).dispatchEvent(new WheelEvent('wheel', { ctrlKey: ctrl, deltaY: -120, bubbles: true, cancelable: true }))"
+    check(pg.evaluate(f"() => ({wheel})('left', true)") and pg.evaluate(f"() => ({wheel})('live', true)") and not pg.evaluate(f"() => ({wheel})('left', false)"),
+          "ctrl+wheel (trackpad pinch) over a panel is cancelled; a plain wheel still scrolls it")
+    pg.keyboard.down("Control"); pg.mouse.move(200, 500); pg.mouse.wheel(0, -400); pg.keyboard.up("Control"); pg.wait_for_timeout(300)
+    vv = pg.evaluate("() => [visualViewport.scale, devicePixelRatio]")
+    check(vv == [1, 1], f"a real ctrl+wheel over the controls leaves the page at its zoom: {vv}")
+    rc = pg.evaluate("() => ['left', 'right', 'live', 'reset-view'].map(id => document.getElementById(id).getBoundingClientRect().bottom)")
+    check(all(x <= 950 for x in rc) and pg.is_visible("#reset-view"), f"every panel and the Reset view pill inside the window: {rc}")
+    pg.click("#orbit"); pg.wait_for_timeout(300)
+    check(pg.evaluate("() => orbiting"), "orbiting")
+    pg.click("#live > .pcollapse"); pg.click("#right > .pcollapse"); pg.wait_for_timeout(200)
+    check(pg.is_hidden("#live-body") and pg.is_hidden("#t-roads") and pg.get_attribute("#live > .pcollapse", "aria-expanded") == "false", "live and layers panels collapse")
+    pg.evaluate("() => map.jumpTo({ center: [78.48, 17.40], zoom: 14, pitch: 10, bearing: 80 })")
+    pg.click("#reset-view"); pg.wait_for_timeout(1500)
+    cam = pg.evaluate("() => [map.getZoom(), map.getPitch(), map.getBearing(), orbiting]")
+    check(abs(cam[0] - 17.2) < 0.3 and abs(cam[1] - 58) < 1 and abs(cam[2] + 25) < 1 and cam[3] is False and pg.is_visible("#live-body") and pg.is_visible("#t-roads"),
+          f"Reset view: back at the circle from the usual angle, orbit stopped, panels open: {[round(x, 1) if isinstance(x, float) else x for x in cam]}")
+    pg.evaluate("() => map.jumpTo({ center: [78.48, 17.40], zoom: 14 })"); pg.keyboard.press("r"); pg.wait_for_timeout(1500)
+    check(abs(pg.evaluate("() => map.getZoom()") - 17.2) < 0.3, "the R key resets the view too")
+    pg.screenshot(path="sim/out/ui_test_M.png")
     b.close()
 
 case = "K overall"
