@@ -15,16 +15,30 @@ the same request twice returns the stored result instantly (`cached: true`), and
 running joins that run instead of starting a second one. Results are stored in the runs table (append-only) with a
 SHA-256 fingerprint, so GET /runs/{id}, WS /stream/{id} and GET /runs/{id}/roads work for corridor runs too.
 """
-import asyncio, csv, hashlib, json, os, shutil, sys, threading, time, uuid
+import asyncio, csv, hashlib, json, os, shutil, sqlite3, sys, threading, time, uuid
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
-from .main import MOCK, ROOT, SAMPLES, db
+from dotenv import load_dotenv
+
+# same settings and database as main.py (not imported from it, so this module also loads on its own: no import cycle)
+ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(ROOT / ".env")
+MOCK = os.getenv("MOCK_SIM", "1") == "1"
+SAMPLES = ROOT / "contracts" / "samples"
+DB = ROOT / "backend" / "cityrehearsal.db"
+
+
+def db():
+    con = sqlite3.connect(DB)
+    con.row_factory = sqlite3.Row
+    return con
+
 
 router = APIRouter()
 
@@ -40,6 +54,8 @@ SIM_SOURCES = [SIM_CORRIDOR / "corridor_runner.py", SIM_CORRIDOR / "corridor_net
 CACHE_DIR = ROOT / "backend/.cache"
 SIM_OUT = Path(os.getenv("CR_SIM_OUT", ROOT / "sim/out"))
 KEEP_RUNS = int(os.getenv("CR_KEEP_RUNS", "15"))
+KEEP_MB = int(os.getenv("CR_KEEP_RUNS_MB", "1500"))   # and never more than this in run folders (per output dir)
+BUILDINGS = Path(os.getenv("CR_CORRIDOR_BUILDINGS", ROOT / "data/corridor/buildings"))
 KINDS = ("flyover", "underpass", "signal_retime", "widening", "one_way", "u_turn")
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -57,16 +73,38 @@ def junction_ids() -> list[str]:
 
 
 # ---------- disk safeguard ----------
-def prune_runs(keep: int = KEEP_RUNS, busy: set[str] = frozenset()):
-    """Keep only the newest `keep` run folders the API created (r_*, rc_*) under the YMCA and corridor output dirs.
-    Calibration and test folders are left alone; folders of runs still in progress are never touched."""
+def _size(p: Path) -> int:
+    return sum(f.stat().st_size for f in p.rglob("*") if f.is_file())
+
+
+def prune_runs(keep: int = KEEP_RUNS, busy: set[str] = frozenset(), keep_mb: int = KEEP_MB):
+    """Keep only the newest `keep` run folders the API created (r_*, rc_*) under the YMCA and corridor output dirs,
+    and drop older ones beyond `keep_mb` in total (the newest folder always stays). Calibration and test folders are
+    left alone; folders of runs still in progress are never touched."""
     for d in (SIM_OUT / "runs", SIM_OUT / "corridor"):
         if not d.is_dir():
             continue
         runs = sorted((p for p in d.iterdir() if p.is_dir() and p.name.startswith(("r_", "rc_")) and p.name not in busy),
                       key=lambda p: p.stat().st_mtime, reverse=True)
-        for p in runs[keep:]:
-            shutil.rmtree(p, ignore_errors=True)
+        total = 0
+        for k, p in enumerate(runs):
+            total += _size(p)
+            if k >= keep or (k > 0 and total > keep_mb * 1e6):
+                shutil.rmtree(p, ignore_errors=True)
+
+
+def trim_frames(path: Path, lo: float, hi: float):
+    """Keep only the frames in [lo, hi] s (the runner's FRAMES window). The runner writes vehicle positions from `lo`
+    to the end of the simulation (~0.5 GB per run) while the 3D view plays the window only. Kept lines are unchanged."""
+    tmp = path.with_suffix(".tmp")
+    with path.open() as src, tmp.open("w") as dst:
+        for line in src:
+            t = float(line[5:line.index(",")]) if line.startswith('{"t":') else json.loads(line)["t"]
+            if t > hi:
+                break
+            if t >= lo:
+                dst.write(line)
+    tmp.replace(path)
 
 
 # ---------- GET /corridor ----------
@@ -338,6 +376,9 @@ def _simulate(run_id: str, key: str, ivs: list[dict], body: CorridorRunIn) -> di
     except Exception as e:
         raise SimError(500, f"The simulation failed unexpectedly ({type(e).__name__}: {e})")
     res["run_id"] = run_id
+    window = getattr(corridor_runner, "FRAMES", None)
+    if res.get("frames_path") and window and len(window) >= 2 and Path(res["frames_path"]).exists():
+        trim_frames(Path(res["frames_path"]), window[0], window[1])
     res = store(res, body)
     with db() as c:
         c.execute("INSERT OR REPLACE INTO corridor_cache VALUES(?,?,?)", (key, run_id, time.time()))
@@ -475,3 +516,25 @@ def corridor_junctions_live(window_minutes: int = 60):
             "labels": {"delay_s": "measured", "usual_delay_s": "measured", "travel_time_s": "measured",
                        "free_flow_travel_time_s": "measured", "queue_m": "estimated", "volume_per_hour": "estimated"},
             "junctions": junctions}
+
+
+# ---------- buildings for the 3D view ----------
+@router.get("/corridor/buildings")
+def corridor_buildings_index():
+    """Index of the building footprints around each corridor point (data/corridor/buildings/index.json)."""
+    path = BUILDINGS / "index.json"
+    if not path.exists():
+        raise HTTPException(404, "corridor buildings are not there yet (data/corridor/buildings/index.json is missing)")
+    return FileResponse(path, media_type="application/json")
+
+
+@router.get("/corridor/buildings/{point_id}")
+def corridor_buildings(point_id: str):
+    """Building footprints around one corridor point (A_lingampally, j01..j11, B_lakdikapul) as GeoJSON."""
+    ids = [p["id"] for p in corridor_def()["points"]]
+    if point_id not in ids:   # only known ids reach the file system: no path traversal
+        raise HTTPException(404, f"unknown corridor point {point_id!r}; use one of {', '.join(ids)}")
+    path = BUILDINGS / f"{point_id}.geojson"
+    if not path.exists():
+        raise HTTPException(404, f"no buildings for {point_id} yet (data/corridor/buildings/{point_id}.geojson is missing)")
+    return FileResponse(path, media_type="application/geo+json")

@@ -9,6 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +20,7 @@ DB = ROOT / "backend" / "cityrehearsal.db"
 
 app = FastAPI(title="CityRehearsal API", version="0.1")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(GZipMiddleware, minimum_size=2000)  # GeoJSON (routes, roads, buildings) shrinks ~5x
 
 
 def db():
@@ -374,6 +376,6 @@ def decide(case_id: str, body: DecideIn):
     return get_case(case_id)
 
 
-from .corridor import router as corridor_router  # noqa: E402  (corridor endpoints; imports db and MOCK from here)
+from .corridor import router as corridor_router  # noqa: E402  (corridor endpoints)
 
 app.include_router(corridor_router)

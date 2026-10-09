@@ -75,8 +75,9 @@ The backend serves the corridor screen (`frontend/corridor.html`); code in `back
 - `POST /corridor/runs` `{interventions: [{junction_id: "j07", kind: "flyover", params: {}}], volume_scale}`: a **simulated** journey. With `MOCK_SIM=1` it returns the sample (with a warning when you asked for something else). With `MOCK_SIM=0` it runs SUMO (1-2 minutes, one run at a time) and needs `sim/corridor/calibration.json`. The same request again returns the stored result instantly (`cached: true`); a change to the calibration or to the runner/template code starts a fresh run.
 - Long runs: `POST /corridor/runs?async=1` answers at once with `{run_id, status}`; poll `GET /corridor/runs/{run_id}` until `status` is `done` (with `result`) or `failed` (with `error`).
 - `GET /corridor/junctions/live`: the latest TomTom Junction Analytics minute per approach at Tolichowki, Nanal Nagar and Rethibowli, plus the last-60-minute mean (delay **measured**, queue and volume **estimated**). Reads `data/raw/tomtom_corridor_junction_live.csv`, or the path in `CR_CORRIDOR_JA_LIVE`.
-- Corridor runs work with `GET /runs/{id}`, `WS /stream/{id}` and `GET /runs/{id}/roads` like YMCA runs.
-- Disk: after each real run the API keeps only the newest 15 run folders (`CR_KEEP_RUNS`) under `sim/out/runs` and `sim/out/corridor` (or `CR_SIM_OUT`).
+- `GET /corridor/buildings` (`data/corridor/buildings/index.json`) and `GET /corridor/buildings/{point_id}` (`A_lingampally`, `j01`..`j11`, `B_lakdikapul`): building footprints for the 3D view; 404 with a message until the files exist. Large responses are gzipped.
+- Corridor runs work with `GET /runs/{id}`, `WS /stream/{id}` (vehicle `z` passed through, > 0 on flyovers) and `GET /runs/{id}/roads` like YMCA runs.
+- Disk: after each real run the API keeps only the newest 15 run folders (`CR_KEEP_RUNS`), at most 1.5 GB (`CR_KEEP_RUNS_MB`), under `sim/out/runs` and `sim/out/corridor` (or `CR_SIM_OUT`), and trims a corridor run's vehicle frames to the runner's playback window (`FRAMES`).
 
 Deployed URL: _(add if deployed)_
 

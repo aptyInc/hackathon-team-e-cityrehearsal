@@ -65,4 +65,9 @@ live = c.get("/corridor/junctions/live")
 assert live.status_code in (200, 404)
 if live.status_code == 200:
     assert live.json()["labels"]["delay_s"] == "measured" and live.json()["junctions"]
+assert c.get("/corridor/buildings").status_code in (200, 404)
+assert c.get("/corridor/buildings/j07").status_code in (200, 404)
+for bad in ("j99", "..%2F..%2Fcorridor", "corridor"):
+    r = c.get(f"/corridor/buildings/{bad}")
+    assert r.status_code == 404 and "geometry" not in r.text, (bad, r.text[:80])
 print("SMOKE TEST PASSED")
