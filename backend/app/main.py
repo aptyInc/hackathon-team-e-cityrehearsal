@@ -83,7 +83,8 @@ TEMPLATES = {"baseline", "signal_retime", "junction_redesign", "bus_lane", "wide
 
 
 # ---------- simulation runner ----------
-def run_simulation(variant_id: str, template: str, volume_scale: float) -> dict:
+def run_simulation(variant_id: str, template: str, volume_scale: float, params: dict | None = None,
+                   run_id: str | None = None) -> dict:
     if MOCK:
         samples = json.loads((SAMPLES / "run_results.sample.json").read_text())
         key = variant_id if variant_id in samples else ("flyover_3lane_400m" if template == "flyover" else "baseline")
@@ -93,8 +94,17 @@ def run_simulation(variant_id: str, template: str, volume_scale: float) -> dict:
         result["inputs"]["volume_scale"] = volume_scale
         result["variant_id"] = variant_id
         return result
-    # TODO (sim workstream): call the real SUMO runner and return a C2 dict
-    raise HTTPException(501, "Real SUMO runner not wired yet; set MOCK_SIM=1")
+    # Real SUMO run (sim/runner.py): a few seconds per run; writes C1 frames next to the result.
+    import sys
+    sys.path.insert(0, str(ROOT / "sim"))
+    import runner  # noqa: E402
+    try:
+        return runner.run({"variant_id": variant_id, "template": template, "params": params or {}},
+                          volume_scale, run_id=run_id)
+    except NotImplementedError as e:
+        raise HTTPException(501, str(e))
+    except RuntimeError as e:
+        raise HTTPException(500, f"simulation failed: {e}")
 
 
 # ---------- endpoints ----------
@@ -143,8 +153,10 @@ def create_run(body: RunIn):
     with db() as c:
         v = c.execute("SELECT * FROM variants WHERE id=?", (body.variant_id,)).fetchone()
     template = v["template"] if v else "baseline"
-    result = run_simulation(body.variant_id, template, body.volume_scale)
-    result["run_id"] = "r_" + uuid.uuid4().hex[:8]
+    run_id = "r_" + uuid.uuid4().hex[:8]
+    result = run_simulation(body.variant_id, template, body.volume_scale,
+                            params=json.loads(v["params"]) if v else {}, run_id=run_id)
+    result["run_id"] = run_id
     with db() as c:
         c.execute("INSERT INTO runs VALUES(?,?,?,?,?,?)",
                   (result["run_id"], body.case_id, body.variant_id, body.run_by, json.dumps(result), time.time()))
@@ -163,10 +175,19 @@ def get_run(run_id: str):
 @app.websocket("/stream/{run_id}")
 async def stream(ws: WebSocket, run_id: str):
     await ws.accept()
-    frames = json.loads((SAMPLES / "vehicle_frames.sample.json").read_text()) if MOCK else []
-    for f in frames:  # TODO (sim workstream): stream real C1 frames when MOCK_SIM=0
-        await ws.send_json(f)
-        await asyncio.sleep(0.1)
+    if MOCK:
+        for f in json.loads((SAMPLES / "vehicle_frames.sample.json").read_text()):
+            await ws.send_json(f)
+            await asyncio.sleep(0.1)
+    else:  # replay the run's C1 frames (one per simulated second) at 10 frames a second
+        with db() as c:
+            r = c.execute("SELECT result FROM runs WHERE id=?", (run_id,)).fetchone()
+        path = json.loads(r["result"]).get("frames_path") if r else None
+        if path and Path(path).exists():
+            with open(path) as fh:
+                for line in fh:
+                    await ws.send_text(line.rstrip("\n"))
+                    await asyncio.sleep(0.1)
     await ws.close()
 
 

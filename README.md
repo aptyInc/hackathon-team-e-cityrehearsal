@@ -52,8 +52,9 @@ SUMO 1.28 is installed from the official `eclipse-sumo` Python package into `.ve
 make setup-sim            # installs eclipse-sumo, sumolib, traci, pyproj; prints the SUMO version
 make network              # sim/networks/ymca.osm.xml -> sim/networks/ymca.net.xml
 make sim-test             # 10 minutes of random traffic; expect "Inserted: 400", "Running: 0", "Waiting: 0"
-python sim/scripts/build_demand.py --scale 0.9   # real baseline traffic (inside .venv)
-python sim/scripts/calibrate.py 0.9              # simulated vs TomTom speeds per road
+make sim-run              # one real run of today's traffic: C2 result + C1 frames in sim/out/runs/<id>/
+python sim/scripts/compare_variants.py           # baseline vs flyover (inside .venv)
+MOCK_SIM=0 make dev       # the API runs real simulations instead of sample data
 ```
 Status, calibration results and next steps: [sim/README.md](sim/README.md).
 - The road map is an OpenStreetMap extract of the YMCA Circle area (`sim/networks/ymca.osm.xml`, downloaded 9 Oct 2026). To refresh it: `curl -A "cityrehearsal" "https://api.openstreetmap.org/api/0.6/map?bbox=78.4843,17.3902,78.4975,17.4005" -o sim/networks/ymca.osm.xml`
