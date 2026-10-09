@@ -32,6 +32,7 @@
   .road { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; }
   .road b { font-weight: 600; }
   .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .5px; padding: 1px 6px; border-radius: 4px; vertical-align: 1px; margin-left: 6px; }
+  .band { padding: 4px 9px; font-size: 12px; background: #e8e4dc; color: var(--ink); } .band.on { background: var(--blue); color: #fff; } .band:disabled { opacity: .4; }
   .tag.real { background: #1a7f37; color: #fff; } .tag.sim { background: #c4561c; color: #fff; } .tag.mix { background: #5b6670; color: #fff; }
 </style>
 </head>
@@ -47,6 +48,7 @@
     <select id="hour-sel" disabled><option>09:00</option></select>
     <button id="run-live" class="ghost" title="Refresh TomTom and simulate the last 15 minutes">● Live now</button>
   </div>
+  <div id="bands" class="row" style="display:none"></div>
   <small id="time-note" class="muted">Calibrated morning peak: 2020 count × 2.0, turns from TomTom, speeds checked against TomTom.</small>
   <h2>2 · Choose what to simulate <span class="tag sim">simulated</span></h2>
   <div class="row">
@@ -112,7 +114,7 @@ const TRAFFIC_TILES = () => `https://api.tomtom.com/traffic/map/4/tile/flow/rela
 
 let cfg = { tomtom_maps_key: "", junction: { lon: 78.4903, lat: 17.3954 } };
 let map, overlay, buildings = null, roads = null, frames = [], runs = [], caseId = null, history = [];
-let playing = false, pos = 0, lastTick = 0, orbiting = false, clockBase = 8 * 60;
+let playing = false, pos = 0, lastTick = 0, orbiting = false, lastOrbit = 0, clockBase = 8 * 60, stream = null;
 
 async function get(path) { const r = await fetch(API + path); if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`); return r.json(); }
 async function post(path, body) { const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`); return r.json(); }
@@ -152,28 +154,52 @@ async function loadHistory() {
     $("date-sel").value = "typical"; fillHours(); updateTimeNote();
   } catch (e) { $("time-note").textContent = "TomTom history not available; only the typical morning can be simulated."; }
 }
+const BANDS = [[8, 10, "8–10 am"], [10, 12, "10–12"], [12, 14, "12–2 pm"], [16, 18, "4–6 pm"], [18, 20, "6–8 pm"], [20, 22, "8–10 pm"]];
+let band = null;   // [startHour, endHour, label] when a quick button is chosen, else null (single hour)
 function fillHours() {
   const date = $("date-sel").value, hours = [...new Set(history.filter(b => b.time.startsWith(date)).map(b => b.time.slice(11, 13)))];
   $("hour-sel").disabled = date === "typical";
   $("hour-sel").innerHTML = (date === "typical" ? ["09"] : hours).map(h => `<option value="${h}">${h}:00</option>`).join("");
+  fillBands();
+}
+function fillBands() {   // quick peak-hour buttons for the chosen date; greyed out where TomTom has no data yet
+  const date = $("date-sel").value;
+  $("bands").style.display = date === "typical" ? "none" : "flex";
+  if (date === "typical") { band = null; return; }
+  const have = new Set(history.filter(b => b.time.startsWith(date)).map(b => Number(b.time.slice(11, 13))));
+  if (band && ![...Array(band[1] - band[0]).keys()].some(i => have.has(band[0] + i))) band = null;
+  $("bands").innerHTML = BANDS.map(([a, z, lab], i) => {
+    const n = [...Array(z - a).keys()].filter(k => have.has(a + k)).length;
+    const on = band && band[0] === a;
+    return `<button class="band${on ? " on" : ""}" data-i="${i}" ${n ? "" : "disabled"} title="${n ? (n < z - a ? "partly recorded so far" : "TomTom data for both hours") : "no TomTom data for this window yet"}">${lab}</button>`;
+  }).join("");
+  const hs = $("hour-sel"), blank = hs.querySelector('option[value=""]');   // the hour box shows "–" while a quick button is on
+  if (band && !blank) hs.insertAdjacentHTML("afterbegin", '<option value="">–</option>');
+  if (band) hs.value = ""; else if (blank) { blank.remove(); if (!hs.value && hs.options.length) hs.value = hs.options[0].value; }
+  $("bands").querySelectorAll("button").forEach(btn => btn.onclick = () => {
+    const b = BANDS[Number(btn.dataset.i)]; band = band && band[0] === b[0] ? null : b; live = false; fillBands(); updateTimeNote();
+  });
 }
 function currentTime() {   // what step 1 says: {window, minutes, label}
   if (live) return { window: "live", minutes: 15, label: "Live" };
   const date = $("date-sel").value;
   if (date === "typical") return { window: null, minutes: 15, label: "Typical morning" };
+  if (band) return { window: `${date}T${String(band[0]).padStart(2, "0")}:00`, minutes: (band[1] - band[0]) * 60, label: `${dayLabel(date)} ${band[2]}` };
   return { window: `${date}T${$("hour-sel").value}:00`, minutes: 60, label: `${dayLabel(date)} ${$("hour-sel").value}:00` };
 }
 function updateTimeNote() {
   const t = currentTime();
   if (t.window === "live") { $("time-note").innerHTML = `<b>Live:</b> TomTom's last 15 minutes drive the simulation; the live panel and the traffic layer are on.`; return; }
   if (!t.window) { $("time-note").textContent = "Calibrated morning peak: 2020 count × 2.0, turns from TomTom, speeds checked against TomTom."; return; }
-  const bs = history.filter(b => b.time.startsWith(t.window.slice(0, 13)));
+  const start = new Date(t.window + ":00+05:30").getTime(), end = start + t.minutes * 60000;
+  const bs = history.filter(b => { const x = new Date(b.time + ":00+05:30").getTime(); return x >= start && x < end; });
+  if (!bs.length) { $("time-note").innerHTML = `<b>${t.label}</b>: TomTom has no data for this window yet.`; return; }
   const avg = k => { const v = bs.map(b => b[k]); return { NE: v.reduce((s, x) => s + (x.NE || 0), 0) / v.length, E: v.reduce((s, x) => s + (x.E || 0), 0) / v.length, S: v.reduce((s, x) => s + (x.S || 0), 0) / v.length, W: v.reduce((s, x) => s + (x.W || 0), 0) / v.length }; };
   const d = avg("delay_s"), q = avg("queue_m");
-  $("time-note").innerHTML = `<b>${t.label}</b>, TomTom measured: delay NE ${d.NE.toFixed(0)} s · E ${d.E.toFixed(0)} s · S ${d.S.toFixed(0)} s · W ${d.W.toFixed(0)} s; longest queue ${Math.max(q.NE, q.E, q.S, q.W).toFixed(0)} m. Vehicles and turns for the simulation come from this hour.`;
+  $("time-note").innerHTML = `<b>${t.label}</b>, TomTom measured: delay NE ${d.NE.toFixed(0)} s · E ${d.E.toFixed(0)} s · S ${d.S.toFixed(0)} s · W ${d.W.toFixed(0)} s; longest queue ${Math.max(q.NE, q.E, q.S, q.W).toFixed(0)} m. Vehicles and turns for the simulation come from ${t.minutes > 60 ? `these ${t.minutes / 60} hours` : "this hour"}${bs.length * 15 < t.minutes ? ` (${bs.length * 15} of ${t.minutes} minutes recorded so far)` : ""}.`;
 }
 $("date-sel").onchange = () => { live = false; fillHours(); updateTimeNote(); };
-$("hour-sel").onchange = () => { live = false; updateTimeNote(); };
+$("hour-sel").onchange = () => { if (!$("hour-sel").value) return; live = false; band = null; fillBands(); updateTimeNote(); };
 
 function addTrafficLayer() {
   if (!cfg.tomtom_maps_key || map.getSource("tomtom-traffic")) return;
@@ -245,7 +271,7 @@ function tick(ts) {
     $("clock").textContent = `${String(Math.floor(clockMin / 60)).padStart(2, "0")}:${String(clockMin % 60).padStart(2, "0")} simulated · ${frames[Math.floor(pos)].vehicles.length} vehicles on the map`;
     render();
   } else lastTick = ts;
-  if (orbiting) map.setBearing(map.getBearing() + 0.08);
+  if (orbiting) { const now = performance.now(); if (lastOrbit) map.setBearing(map.getBearing() + (now - lastOrbit) / 1000 * 6); lastOrbit = now; } else lastOrbit = 0;  // 6 degrees a second
   requestAnimationFrame(tick);
 }
 
@@ -267,7 +293,8 @@ async function runVariant(vid, template, params, scale, option) {
     if (dup >= 0) runs[dup] = r; else runs.push(r);   // one row per option; a re-run replaces it
     showResults();
     $("status").textContent = `${r.label}: simulated in ${r.wall_seconds ?? "?"} s, now playing`;
-    await play(r);
+    btns.forEach(b => $(b).disabled = false);
+    play(r);   // loads in the background; the panel stays usable
   } catch (e) { $("status").innerHTML = `<span class="bad">${e.message.slice(0, 200)}</span>`; }
   btns.forEach(b => $(b).disabled = false);
 }
@@ -280,7 +307,7 @@ function showResults() {
       <td>${c.avg_delay_s ?? "–"} s</td><td>${c.max_queue_m ?? "–"} m</td><td>${r.corridor_travel_time_s} s</td>
       <td>${ripple || "<span class=ok>none</span>"}</td><td><button class="ghost" onclick="play(runs[${i}])">Play</button></td></tr>`
       + (r.warnings.length ? `<tr><td colspan=6><div class=warn>⚠ ${r.warnings.join("<br>⚠ ")}</div></td></tr>` : "")
-      + (r.tomtom_window ? `<tr><td colspan=6><small><span class="tag mix">simulated vs real</span> delay per road in that quarter hour: ` +
+      + (r.tomtom_window ? `<tr><td colspan=6><small><span class="tag mix">simulated vs real</span> delay per road in that window: ` +
           Object.keys(r.tomtom_window).map(d => `${d.toUpperCase()} ${r.approach_delay_s?.[d] ?? "–"} s vs TomTom ${r.tomtom_window[d].delay_s} s`).join(" · ") + `</small></td></tr>` : "");
   }).join("");
   const last = runs[runs.length - 1];
@@ -295,8 +322,9 @@ async function play(r) {
   try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; }
   render();
   $("playinfo").textContent = "Loading vehicle positions…";
+  if (stream) { stream.onmessage = null; stream.close(); }   // a new run replaces the one still loading
   await new Promise(resolve => {
-    const ws = new WebSocket(API.replace("http", "ws") + `/stream/${r.run_id}`);
+    const ws = stream = new WebSocket(API.replace("http", "ws") + `/stream/${r.run_id}`);
     ws.onmessage = e => { frames.push(JSON.parse(e.data)); if (frames.length === 1) { $("scrub").disabled = false; $("play").disabled = false; } $("scrub").max = frames.length - 1; if (frames.length % 50 === 0) $("playinfo").textContent = `${frames.length} frames loaded…`; };
     ws.onclose = resolve; ws.onerror = resolve;
     setTimeout(() => { if (frames.length) { playing = true; $("play").textContent = "❚❚ Pause"; } }, 1500);  // start while the rest streams in
@@ -376,7 +404,10 @@ $("play").onclick = () => { playing = !playing; $("play").textContent = playing 
 $("scrub").oninput = e => { pos = Number(e.target.value); render(); };
 ["t-roads", "t-buildings", "t-vehicles"].forEach(id => $(id).onchange = render);
 $("t-traffic").onchange = e => map.getLayer("tomtom-traffic") && map.setLayoutProperty("tomtom-traffic", "visibility", e.target.checked ? "visible" : "none");
-$("t-night").onchange = e => { if (cfg.tomtom_maps_key) map.setStyle(STYLE(e.target.checked)); render(); };
+$("t-night").onchange = e => {
+  if (cfg.tomtom_maps_key) { map.setStyle(STYLE(e.target.checked), { diff: false }); map.once("idle", addTrafficLayer); }
+  render();
+};
 $("recenter").onclick = () => map.easeTo({ center: [cfg.junction.lon, cfg.junction.lat], zoom: 17.2, pitch: 58, bearing: -25 });
 $("orbit").onclick = () => { orbiting = !orbiting; $("orbit").textContent = orbiting ? "Stop orbit" : "Orbit"; };
 init();

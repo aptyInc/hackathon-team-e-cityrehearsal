@@ -319,15 +319,18 @@ async def stream(ws: WebSocket, run_id: str):
         for f in json.loads((SAMPLES / "vehicle_frames.sample.json").read_text()):
             await ws.send_json(f)
             await asyncio.sleep(0.1)
-    else:  # replay the run's C1 frames (one per simulated second) at 10 frames a second
+    else:  # send the run's C1 frames (one per simulated second) as fast as the client takes them; it plays them at its own pace
         with db() as c:
             r = c.execute("SELECT result FROM runs WHERE id=?", (run_id,)).fetchone()
         path = json.loads(r["result"]).get("frames_path") if r else None
         if path and Path(path).exists():
-            with open(path) as fh:
-                for line in fh:
-                    await ws.send_text(line.rstrip("\n"))
-                    await asyncio.sleep(0.1)
+            try:
+                with open(path) as fh:
+                    for line in fh:
+                        await ws.send_text(line.rstrip("\n"))
+                        await asyncio.sleep(0)
+            except Exception:  # client switched to another run
+                return
     await ws.close()
 
 
