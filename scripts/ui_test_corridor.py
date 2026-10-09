@@ -55,6 +55,12 @@ Cases
      95% range (estimated), sent as `weather` with every run, quick demo and re-recorded window, named in today's line, the changes bar,
      clock and result line; changing it re-simulates once; the header shows the weather now ("Real data · live"), hidden
      on 503
+  WL Water-logging (GET /weather/factors waterlogging mocked): Heavy / Light rain on the slider names the reported points
+     ("reported, not measured by us") and drops a droplet per point on the map (exact spot when given), none when dry or
+     as measured; a rain run's result line names the slower lanes and compares with the as-measured run (trip, stretches,
+     queues). The junction advisor (GET /agent/advice/{jid} 404 -> POST /agent/advise/{jid}?async=1, polled; or 200
+     pre-computed): progress with a clock, headline, SIMULATED, the ranked options table, Show on map loads the run
+     (GET /runs/{id}); another junction hides it. Chat suggestions from GET /agent/suggestions
   V  Now-cast (GET /corridor sim.live, /corridor/live_trip and POST /corridor/runs?async=1 day "live" mocked): the right panel
      shows the live trip (minutes vs typical day same hour, confidence, as of, STALE badge, 12 stretches coloured by live
      speed); Simulate now posts day "live", polls, shows elapsed time, then time.label, the night badge, the legend (cars
@@ -392,6 +398,35 @@ def nowcast_result(ivs, run_id):
     r["journey"]["total_s"] = 1900 if ivs else 2050
     r["journey"]["tomtom_total_s"] = 2020
     return r
+WATERLOG = {"label": "reported in public sources, not measured by us", "what_this_is": "Spots news reports name as water-logged in rain (test).",
+            "by_what_if": {"light_rain": ["Lakdikapul", "Shaikpet", "Tolichowki"],
+                           "heavy_rain": ["Gachibowli", "Biodiversity jn", "Shaikpet", "Tolichowki", "Nanal Nagar", "Masab Tank", "Lakdikapul"]},
+            "points": [{"junction_id": "j03", "short": "Gachibowli", "severity": "medium", "what_reported": "test", "sources": []},
+                       {"junction_id": "j04", "short": "Biodiversity jn", "severity": "medium", "what_reported": "test", "sources": []},
+                       {"junction_id": "j06", "short": "Shaikpet", "severity": "high", "lat": 17.4135, "lon": 78.3950, "spot": "Shaikpet Nala", "what_reported": "test", "sources": []},
+                       {"junction_id": "j07", "short": "Tolichowki", "severity": "high", "spot": "Galaxy Theatre", "what_reported": "test", "sources": []},
+                       {"junction_id": "j08", "short": "Nanal Nagar", "severity": "medium", "what_reported": "test", "sources": []},
+                       {"junction_id": "j11", "short": "Masab Tank", "severity": "medium", "what_reported": "test", "sources": []},
+                       {"junction_id": "B_lakdikapul", "short": "Lakdikapul", "severity": "high", "what_reported": "test", "sources": []}]}
+
+
+def wl_run(run_id, minutes, q07, ivs):
+    """A C2 result taking `minutes` (legs scaled), the Tolichowki queue q07 m, with the given changes (water-logging case)."""
+    r = json.loads(json.dumps(SAMPLE["baseline"]))
+    r.pop("sample", None)
+    k = minutes * 60 / r["journey"]["total_s"]
+    for leg in r["journey"]["legs"]:
+        leg["time_s"] = round(leg["time_s"] * k, 1)
+    r["journey"]["total_s"] = round(minutes * 60, 1)
+    r["journey"]["tomtom_total_s"] = 3373
+    for j in r["junctions"]:
+        if j["id"] == "j07":
+            j["max_queue_m"] = q07
+    r.update(run_id=run_id, interventions=ivs, frames_path="test", frames_window={"from_s": 900, "to_s": 1200, "step_s": 4, "sim_minutes_total": 54},
+             inputs={"counts_source": "test", "label": "estimated", "volume_scale": 1.0})
+    return r
+
+
 CORS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS"}
 STREAM_JS = """(() => {
   const FRAMES = %s, Real = window.WebSocket;
@@ -541,6 +576,15 @@ def set_tl(pg, sec):
 
 def set_win(pg, m):
     set_tl(pg, m * 60 + 10)
+
+
+def settle(pg, ms=6000):
+    """Wait for the camera to stop (a busy machine renders flights slowly)."""
+    try:
+        pg.wait_for_function("() => !map.isMoving()", timeout=ms)
+    except Exception:
+        pass
+    pg.wait_for_timeout(200)
 
 
 def api_status(path):
@@ -785,10 +829,12 @@ with sync_playwright() as p:
     check(ok, f"marker 3 flies to Gachibowli (off by {c['lng']:.0f}, {c['lat']:.0f} px)")
     pg.screenshot(path=str(OUT / "corridor_F.png"))
     pg.click("#strips [data-strip=tomtom] .leg[data-leg='6']"); pg.wait_for_timeout(1800)
+    settle(pg)
     c = pg.evaluate("() => map.getCenter()")
     mid = ((PTS["j06"]["lon"] + PTS["j07"]["lon"]) / 2, (PTS["j06"]["lat"] + PTS["j07"]["lat"]) / 2)
     check(abs(c["lng"] - mid[0]) < 0.02 and abs(c["lat"] - mid[1]) < 0.02, f"strip block 6 shows Shaikpet → Tolichowki ({c['lng']:.4f}, {c['lat']:.4f})")
     pg.click("#overview"); pg.wait_for_timeout(1600)
+    settle(pg)
     check(pg.evaluate("() => map.getZoom()") < 13.5, "Whole corridor returns to the overview")
 
     case = "G layers"; print(case)
@@ -926,7 +972,9 @@ with sync_playwright() as p:
         pg.wait_for_function("() => map.getZoom() > 14 && !map.isMoving()", timeout=8000)
     except Exception:
         pass
-    pg.wait_for_timeout(300)
+    t0 = time.time()
+    while layer(pg, "vehicles") <= 0 and time.time() - t0 < 5:
+        pg.wait_for_timeout(250)
     v = layer(pg, "vehicles")
     check(v > 0, f"vehicles drawn from WS frames: {v}")
     check(pg.evaluate("() => map.getZoom()") > 14 and center_near(pg, "j07", 80)[0], "camera flew to the changed junction for playback")
@@ -1071,8 +1119,14 @@ with sync_playwright() as p:
         pg.screenshot(path=str(OUT / "corridor_O_night.png"))
         pg.uncheck("#t-night"); pg.wait_for_timeout(800)
     pg.click("#overview"); pg.wait_for_timeout(1500)
+    try:
+        pg.wait_for_function("() => map.getZoom() < 13.5 && !map.isMoving()", timeout=6000)
+    except Exception:
+        pass
+    pg.wait_for_timeout(500)
     dots = layer_props(pg, "vehicle-dots", "l => l.props.data.length")
-    check(layer(pg, "vehicles") == -1 and dots == 54, f"whole corridor: every vehicle as a dot ({dots}), no 3D boxes")
+    cam = pg.evaluate("() => [map.getZoom(), map.isMoving(), following, orbiting, !!ride, playing]")
+    check(layer(pg, "vehicles") == -1 and dots == 54, f"whole corridor: every vehicle as a dot ({dots}), no 3D boxes (zoom, moving, following, orbiting, ride, playing: {cam})")
     check(layer(pg, "buildings") == -1, "no buildings drawn from the overview")
 
     case = "L long runs"; print(case)
@@ -1108,6 +1162,7 @@ with sync_playwright() as p:
         check(bodies[-1]["interventions"] == [{"junction_id": jid, "kind": "flyover", "params": {"lanes": 2, "length_m": 600}}] and pg.input_value("#iv-j") == jid
               and pg.is_hidden("#iv-merge") and pg.is_hidden("#iv-exists"), f"{pid} body: {bodies[-1]}")
     # a flyover where one already exists: note first, then the result's warning, readable, in the trip panel and step 3
+    pg.wait_for_timeout(2500); settle(pg)   # playback's own camera flight selects a junction in the picker ~1.5 s after a run
     clear_ivs(pg)
     pick_kind(pg, "flyover"); pg.select_option("#iv-j", "j06"); pg.wait_for_timeout(100)
     check(pg.inner_text("#iv-exists") == "The main road already crosses Narne Rd jn Shaikpet on the Shaikpet Flyover; this would duplicate it.", f"note: {pg.inner_text('#iv-exists')}")
@@ -1196,6 +1251,113 @@ with sync_playwright() as p:
     mode["wx_now"] = None
     pg.evaluate("() => loadWxNow()"); pg.wait_for_timeout(500)
     check(pg.is_hidden("#wx-now"), "GET /weather/now 503: the chip is hidden")
+    pg.close()
+
+    # ---------------- water-logging points, the junction advisor, the assistant's suggested questions ----------------
+    case = "WL waterlog+advice"; print(case)
+    bodies, mode, counts = [], {"fail": None}, {}
+    pg = open_page(b, {"width": 1500, "height": 950}, STREAM_JS % (json.dumps(frames_along("j07", "j08")), 60000) + "\nwindow.ADV_POLL_MS = 300;")
+    mock_api(pg, lambda c: live_flat(), bodies, mode, counts, real_shape=True, weather=True)
+    wl_body = dict(WX.weather_factors(), waterlogging=WATERLOG)
+    pg.route("http://localhost:8000/weather/factors", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(wl_body)))
+
+    def wl_runs(route):   # as measured 56.6 min, heavy rain 63.8 (Tolichowki queue 150 -> 320 m), light rain 58.1
+        if route.request.method == "OPTIONS":
+            return route.fulfill(status=204, headers=CORS)
+        body = json.loads(route.request.post_data or "{}")
+        bodies.append(body)
+        w = body.get("weather")
+        r = wl_run("r_wl_" + (w or "measured"), {"heavy_rain": 63.8, "light_rain": 58.1}.get(w, 56.6), 320 if w == "heavy_rain" else 150, body.get("interventions", []))
+        if w:
+            r["time"] = dict(r["time"], weather=w)
+            r["inputs"]["weather"] = {"weather": w, "label": "estimated", "expected_trip_time_factor_vs_dry": WX_TRIP[w], "expected_trip_time_factor_vs_dry_ci95": WX_CI[w],
+                                      "affected_junctions": ["Gachibowli Circle", "Tolichowki"],
+                                      "waterlogging": [{"junction_id": "j07", "name": "Galaxy Theatre", "junction_name": "Tolichowki", "severity": "high", "extra_speed_factor": 0.8, "label": "reported"}]}
+        route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(r))
+    pg.route("http://localhost:8000/corridor/runs", wl_runs)
+    adv = {"get": 0, "post": 0, "poll": 0}
+    ADV_OPTS = [{"rank": 1, "kind": "signal_retime", "params": {"cycle_s": 120, "corridor_green_share": 0.3}, "trip_change_min": -3.1, "noise_min": 0.8, "beyond_noise": True,
+                 "ripple": {"worse": []}, "rain_change_min": -2.4, "at_110_change_min": -4.0, "cost_class": "low", "run_id": "r_adv_1", "applicable": True},
+                {"rank": 2, "kind": "flyover", "params": {"lanes": 2, "length_m": 600}, "trip_change_min": -0.5, "noise_min": 0.8, "beyond_noise": False,
+                 "ripple": {"worse": []}, "rain_change_min": -0.2, "at_110_change_min": -0.9, "cost_class": "high", "run_id": "r_adv_2", "applicable": True},
+                {"rank": 3, "kind": "one_way", "params": {}, "trip_change_min": 0.4, "noise_min": 0.8, "beyond_noise": False, "cost_class": "low", "run_id": None, "applicable": False}]
+    ADV_ROW = {"status": "done", "stale": False, "advice": {"verdict": "retime", "verdict_code": "retime_signal", "headline": "Retime the DLF signal: about 3 min faster, beyond the noise",
+                                                          "options": ADV_OPTS, "reasons": ["The side roads get too much green."], "caveats": ["Typical day only."], "brief_id": None,
+                                                          "baseline": {"run_id": "r_adv_base"}}}
+
+    def adv_route(route):
+        u = urlparse(route.request.url).path
+        if route.request.method == "OPTIONS":
+            return route.fulfill(status=204, headers=CORS)
+        if u.startswith("/agent/advice/id/"):
+            adv["poll"] += 1
+            row = dict(ADV_ROW, advice_id="adv1") if adv["poll"] >= 3 else {"advice_id": "adv1", "status": "running"}
+            return route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(row))
+        if u.startswith("/agent/advise/"):
+            adv["post"] += 1
+            return route.fulfill(status=202, content_type="application/json", headers=CORS, body=json.dumps({"advice_id": "adv1", "status": "queued"}))
+        adv["get"] += 1
+        if u.endswith("/j07"):   # pre-computed
+            return route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(ADV_ROW))
+        route.fulfill(status=404, content_type="application/json", headers=CORS, body=json.dumps({"detail": "no advice yet"}))
+    pg.route(re.compile(r"http://localhost:8000/agent/advi(c|s)e/.*"), adv_route)
+    SUGG = ["Why is Nanal Nagar slow at 6 pm?", "What would a flyover at DLF change?", "Is the Tolichowki queue getting worse?"]
+    pg.route("http://localhost:8000/agent/suggestions", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps({"questions": SUGG})))
+    pg.route("http://localhost:8000/runs/r_adv_*", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(
+        wl_run("r_adv_1", 53.5, 150, [{"junction_id": "j02", "kind": "signal_retime", "params": {"cycle_s": 120, "corridor_green_share": 0.3}}])
+        if r.request.url.endswith("r_adv_1") else wl_run("r_adv_base", 56.6, 150, []))))
+    goto(pg)
+    sg = pg.eval_on_selector_all("#chat-sugg .sugg", "els => els.map(e => e.textContent)")
+    check(sg == SUGG, f"chat suggestions from GET /agent/suggestions: {sg}")
+    drops = lambda: pg.eval_on_selector_all(".drop[data-jid]", "els => els.map(e => [e.dataset.jid, e.dataset.sev, e.title])")
+    check(pg.is_hidden("#wl-note") and not drops(), "As measured: no water-logging note, no droplets")
+    set_weather(pg, 3); pg.wait_for_timeout(300)
+    wn = pg.inner_text("#wl-note") if pg.is_visible("#wl-note") else ""
+    d = drops()
+    check(wn.startswith("Heavy rain: expect longer queues at Gachibowli, Biodiversity jn, Shaikpet, Tolichowki, Nanal Nagar, Masab Tank and Lakdikapul (reported water-logging points)")
+          and "reported, not measured by us" in wn, f"heavy rain: where queues grow, reported points: {wn!r}")
+    sh = [x for x in d if x[0] == "j06"]
+    ll = pg.evaluate("() => { const m = [...document.querySelectorAll('.drop[data-jid=j06]')][0]; if (!m) return null; const r = m.getBoundingClientRect(), p = map.project([78.3950, 17.4135]), c = map.getContainer().getBoundingClientRect(); return [r.left + r.width / 2 - c.left - p.x, r.top + r.height / 2 - c.top - p.y]; }")
+    check(len(d) == 7 and sorted(x[0] for x in d) == sorted(["j03", "j04", "j06", "j07", "j08", "j11", "B_lakdikapul"]) and sh and sh[0][1] == "high" and "Shaikpet · Shaikpet Nala" in sh[0][2]
+          and ll and abs(ll[0]) < 12 and abs(ll[1]) < 16, f"7 droplets on the map, severity, title, Shaikpet at its exact spot ({ll}): {[x[:2] for x in d]}")
+    set_weather(pg, 2); pg.wait_for_timeout(300)
+    wn = pg.inner_text("#wl-note") if pg.is_visible("#wl-note") else ""
+    check(wn.startswith("Light rain: expect longer queues at Shaikpet, Tolichowki and Lakdikapul") and sorted(x[0] for x in drops()) == ["B_lakdikapul", "j06", "j07"], f"light rain: 3 points: {wn!r}")
+    set_weather(pg, 0); pg.wait_for_timeout(300)
+    check(pg.is_hidden("#wl-note") and not drops(), "Dry: no note, no droplets")
+    set_weather(pg, 1); pg.wait_for_timeout(300)
+    check(pg.is_hidden("#wl-note") and not drops() and not bodies, "As measured again: none (nothing simulated yet)")
+    simulate(pg, "#sim-today", "today's roads")
+    n0 = len(bodies)
+    set_weather(pg, 3)
+    st, _ = wait_status(pg, ["heavy rain (what-if): simulated", "failed"], 30); pg.wait_for_timeout(500)
+    rn = pg.inner_text("#run-note")
+    check([x.get("weather") for x in bodies[n0:]] == ["heavy_rain"], f"heavy rain re-simulates today once: {bodies[n0:]} / {st}")
+    check(re.search(r"Water-logging: slower lanes around Gachibowli[^\n]*Tolichowki", rn) and rn.count("reported, not measured by us") >= 1, f"result line: water-logging, reported: {rn!r}")
+    check("Rain vs as measured: trip +7.2 min (63.8 vs 56.6)" in rn and "slower stretches:" in rn and "Tolichowki 150 → 320 m" in rn, f"rain vs as measured: trip, stretches, queues: {rn[-260:]!r}")
+    # the advisor: none stored (404) -> POST ?async=1 and poll, then the ranked options; Show on map loads the run
+    pg.wait_for_timeout(2500)   # playback flies to (and selects) a junction first
+    pg.select_option("#iv-j", "j02"); pg.wait_for_timeout(100)
+    pg.click("#advise"); pg.wait_for_timeout(250)
+    busy = pg.inner_text("#advice") if pg.is_visible("#advice") else ""
+    check("Terascope AI is testing options at ISB Rd / DLF" in busy and pg.locator("#adv-el").count() == 1, f"while the advisor runs: {busy[:100]!r}")
+    pg.wait_for_selector("#advice table.adv", timeout=10000); pg.wait_for_timeout(200)
+    th = pg.eval_on_selector_all("#advice table.adv th", "els => els.map(e => e.textContent.trim())")
+    rows = pg.eval_on_selector_all("#advice table.adv tr[data-kind]", "els => els.map(e => [...e.cells].slice(0, 7).map(c => c.textContent.trim()))")
+    check(adv["get"] == 1 and adv["post"] == 1 and adv["poll"] >= 3, f"GET (404), POST ?async=1, polled: {adv}")
+    check("Retime the DLF signal" in pg.inner_text("#advice .adv-hd") and "SIMULATED" in pg.inner_text("#advice .adv-hd") and th[:7] == ["#", "Option", "Trip min", "Beyond noise?", "Rain", "110%", "Cost"],
+          f"headline, SIMULATED, columns: {th}")
+    check(rows == [["1", "Signal timing, 120 s cycle, 30% green to main road", "−3.1", "yes", "−2.4", "−4.0", "low"], ["2", "Flyover, 2 lanes, 600 m", "−0.5", "no (±0.8)", "−0.2", "−0.9", "high"]],
+          f"one row per applicable option: {rows}")
+    pg.click("#advice .adv-show >> nth=0"); pg.wait_for_timeout(1500)
+    check([x[0] for x in strips(pg)] == ["tomtom", "changed"] and ivs(pg) == ["2 · ISB Rd / DLF jn: Signal timing, 120 s cycle, 30% green to main road"], f"Show on map loads the run: {[x[0] for x in strips(pg)]} / {ivs(pg)}")
+    pg.select_option("#iv-j", "j07"); pg.wait_for_timeout(200)
+    check(pg.is_hidden("#advice"), "another junction: the advice is hidden")
+    pg.click("#advise"); pg.wait_for_selector("#advice table.adv", timeout=5000)
+    check(adv["post"] == 1 and adv["get"] == 2, f"pre-computed advice (GET 200): shown at once, nothing run: {adv}")
+    bt = banned_text(pg)
+    check(not bt, f"no 'TomTom' or 'July' with the advice and the rain line on screen: {bt}")
+    pg.screenshot(path=str(OUT / "corridor_WL.png"))
     pg.close()
 
     # ---------------- the live trip and Simulate now (a now-cast on the same map) ----------------

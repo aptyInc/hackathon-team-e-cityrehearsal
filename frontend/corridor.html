@@ -1675,10 +1675,10 @@ let popup = null;
 const VIEW_OFFSET = [44, 30];   // put the junction in the middle of the map area the panels leave free (left 400 px, right 320, playback pill on top, trip at the bottom)
 const narrow = () => window.innerWidth <= 820;   // narrow screens: the panels sit below the map, nothing to keep clear of
 const pad = (desk) => narrow() ? 30 : desk;
-function flyToPoint(id) {
+function flyToPoint(id, pick = true) {   // pick: the junction picker follows (not for the automatic flight after a run)
   const p = point(id); if (!p) return;
   selected = id; updateMarkers();
-  if (p.kind === "junction") { $("iv-j").value = id; syncPicker(); }
+  if (pick && p.kind === "junction") { $("iv-j").value = id; syncPicker(); }
   map.flyTo({ center: [p.lon, p.lat], zoom: 16.2, pitch: 58, bearing: -20, duration: 1800, essential: true, offset: narrow() ? [0, 0] : VIEW_OFFSET });
   const b = base && base.junctions.find(j => j.id === id), c = changed && changed.junctions.find(j => j.id === id);
   const stat = (r, lab) => r ? `<br>${lab}: ${r.avg_delay_s} s delay, ${r.max_queue_m} m queue` : "";
@@ -2334,7 +2334,7 @@ async function play(r, seek = null) {   // seek: simulation seconds to start fro
       if (stream !== ws || ride) return;
       if (!frames.length) return setTimeout(start, 500);
       setPlaying(true); render();
-      if (!flown && map.getZoom() < 14 && !following) { flown = true; flyToPoint(focusJunction(r)); }   // vehicles are too small to see from the corridor overview
+      if (!flown && map.getZoom() < 14 && !following) { flown = true; flyToPoint(focusJunction(r), false); }   // vehicles are too small to see from the corridor overview
     };
     setTimeout(start, 1500);
   });
