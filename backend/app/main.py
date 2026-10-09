@@ -220,7 +220,13 @@ def counts():
     if not path.exists():
         raise HTTPException(404, "data/raw/ymca_counts.csv missing")
     rows = list(csv.DictReader(open(path)))
-    return {"source": "Sohail, Faheem, Aquil, IJRAR June 2020, Table 2 (counted)", "calibrated_scale": 1.2,
+    import sys
+    sys.path.insert(0, str(ROOT / "sim"))
+    try:
+        from runner import CALIBRATED_SCALE
+    except Exception:
+        CALIBRATED_SCALE = None
+    return {"source": "Sohail, Faheem, Aquil, IJRAR June 2020, Table 2 (counted)", "calibrated_scale": CALIBRATED_SCALE,
             "rows": [{k: (int(v) if v.isdigit() else v) for k, v in r.items()} for r in rows]}
 
 

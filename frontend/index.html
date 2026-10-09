@@ -191,7 +191,8 @@ function tick(ts) {
     pos += dt * Number($("speed").value);
     if (pos >= frames.length - 1) { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; }
     $("scrub").value = Math.floor(pos);
-    const t = frames[Math.floor(pos)].t; $("clock").textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")} into the morning peak · ${frames[Math.floor(pos)].vehicles.length} vehicles`;
+    const t = frames[Math.floor(pos)].t, clockMin = 8 * 60 + Math.floor(t / 60);  // simulated morning peak, shown as if it started at 08:00
+    $("clock").textContent = `${String(Math.floor(clockMin / 60)).padStart(2, "0")}:${String(clockMin % 60).padStart(2, "0")} simulated · ${frames[Math.floor(pos)].vehicles.length} vehicles on the map`;
     render();
   } else lastTick = ts;
   if (orbiting) map.setBearing(map.getBearing() + 0.08);
@@ -305,7 +306,8 @@ function showCalibration(r) {
   const bars = dirs.map(d => { const s = r.approach_speed_kmh[d], t = r.tomtom_speed_kmh[d] || 0, w = v => Math.min(100, v / 35 * 100);
     return `<div style="margin:4px 0"><small><b>${d}</b> simulated ${s} km/h · TomTom ${t} km/h</small><div style="background:#eee;border-radius:3px;height:6px;margin:2px 0"><div style="width:${w(s)}%;background:${ROAD_COLORS[d]};height:6px;border-radius:3px"></div></div><div style="background:#eee;border-radius:3px;height:6px"><div style="width:${w(t)}%;background:#999;height:6px;border-radius:3px"></div></div></div>`; }).join("");
   const mix = frames.length ? (() => { const f = frames[Math.floor(frames.length / 2)], c = {}; f.vehicles.forEach(v => c[v.type] = (c[v.type] || 0) + 1); return `On screen at once: ` + Object.entries(c).map(([k, v]) => `${v} ${k.replace("_", "-")}s`).join(", "); })() : "";
-  $("d-calib").innerHTML = `<b>Does the model match reality? (${r.label})</b><br><small>Speed on the last 240 m of each road, simulation (colour) vs TomTom measured (grey). Delay per road: simulated ${dirs.map(d => `${d} ${r.approach_delay_s?.[d] ?? "–"} s`).join(", ")}; TomTom median this morning ${dirs.map(d => `${d} ${r.tomtom_delay_s?.[d] ?? "–"} s`).join(", ")}.</small>${bars}<small>${mix}</small>`;
+  const js = r.tomtom_junction_speed_kmh ? ` TomTom's own junction data this morning gives ${dirs.map(d => `${d} ${r.tomtom_junction_speed_kmh[d] ?? "–"}`).join(", ")} km/h on the same roads; the two TomTom sources differ by 3–6 km/h.` : "";
+  $("d-calib").innerHTML = `<b>Does the model match reality? (${r.label})</b><br><small>Speed on the last 240 m of each road, simulation (colour) vs TomTom July 09:00 (grey).${js} Delay per road: simulated ${dirs.map(d => `${d} ${r.approach_delay_s?.[d] ?? "–"} s`).join(", ")}; TomTom median this morning ${dirs.map(d => `${d} ${r.tomtom_delay_s?.[d] ?? "–"} s`).join(", ")}.</small>${bars}<small>${mix}</small>`;
 }
 $("data-toggle").onclick = () => { const open = $("data").style.display === "none"; $("data").style.display = open ? "block" : "none"; $("data-toggle").textContent = open ? "hide" : "show"; if (open && !$("d-july").innerHTML) loadData(); };
 

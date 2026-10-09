@@ -30,15 +30,31 @@ LEG_TO_APPROACH = {
     "Narayanaguda road": "Narayanguda Road North Bound",
 }
 CAR_SHARE_OF_LMV = 0.70  # assumed
+ROAD_SCALE = {}          # optional per-approach multipliers (TomTom approach name -> factor); see --mix tomtom
 
-VTYPES = """    <!-- Sublane model: run SUMO with lateral-resolution 0.3 so two-wheelers and autos filter between cars. -->
-    <vType id="two_wheeler" vClass="motorcycle" length="1.9" width="0.75" minGap="1.0" maxSpeed="16.7" accel="3.0" decel="5.0"
+
+def tomtom_road_scale():
+    """Rescale the 2020 study's split between roads to TomTom's morning shares (08:00-11:00 median veh/h)."""
+    import statistics as st
+    vol = {}
+    for r in csv.DictReader(open(ROOT / "data/raw/tomtom_ymca_junction_live.csv")):
+        if "08:00" <= r["time"][11:16] < "11:00":
+            vol.setdefault(r["approach"], []).append(float(r["volume_per_hour"]))
+    tomtom = {a: st.median(v) for a, v in vol.items()}
+    study = {LEG_TO_APPROACH[r["approach"]]: float(r["total_vehicles"]) for r in csv.DictReader(open(ROOT / "data/raw/ymca_counts.csv"))}
+    ts, ss = sum(tomtom.values()), sum(study.values())
+    return {a: (tomtom[a] / ts) / (study[a] / ss) for a in study if a in tomtom}
+
+VTYPES = """    <!-- Sublane model: run SUMO with lateral-resolution 0.3 so two-wheelers and autos filter between cars.
+         minGap / tau (following distance and reaction time) are set close, as Indian city traffic drives (assumed):
+         with SUMO's defaults the circle carried only ~3,300 vehicles/h at TomTom's speeds; with these, ~5,700/h. -->
+    <vType id="two_wheeler" vClass="motorcycle" length="1.9" width="0.75" minGap="0.5" tau="0.6" maxSpeed="16.7" accel="3.0" decel="5.0"
            speedFactor="normc(0.85,0.1,0.5,1.2)" latAlignment="arbitrary" minGapLat="0.3" lcSublane="2.0" lcPushy="0.6" color="1,0.6,0"/>
-    <vType id="auto" vClass="passenger" length="2.7" width="1.4" minGap="1.2" maxSpeed="12.5" accel="1.8" decel="4.0"
+    <vType id="auto" vClass="passenger" length="2.7" width="1.4" minGap="0.7" tau="0.7" maxSpeed="12.5" accel="1.8" decel="4.0"
            speedFactor="normc(0.85,0.1,0.5,1.1)" latAlignment="arbitrary" minGapLat="0.4" lcSublane="1.5" lcPushy="0.4" color="0.2,0.7,0.2"/>
-    <vType id="car" vClass="passenger" length="4.3" width="1.75" minGap="1.5" maxSpeed="16.7" accel="2.6" decel="4.5"
+    <vType id="car" vClass="passenger" length="4.3" width="1.75" minGap="1.0" tau="0.8" maxSpeed="16.7" accel="2.6" decel="4.5"
            speedFactor="normc(0.85,0.1,0.5,1.2)" latAlignment="center" minGapLat="0.5" color="0.3,0.5,0.9"/>
-    <vType id="bus" vClass="bus" length="11" width="2.5" minGap="2.0" maxSpeed="13.9" accel="1.2" decel="4.0"
+    <vType id="bus" vClass="bus" length="11" width="2.5" minGap="1.5" tau="1.0" maxSpeed="13.9" accel="1.2" decel="4.0"
            speedFactor="normc(0.8,0.1,0.5,1.0)" latAlignment="center" minGapLat="0.6" color="0.8,0.1,0.1"/>
 """
 
@@ -111,7 +127,9 @@ def main():
     ap.add_argument("--since", help="use TomTom turn ratios from this time of day (HH:MM)")
     ap.add_argument("--until", help="... up to this time of day (HH:MM)")
     ap.add_argument("--begin", type=int, default=0); ap.add_argument("--end", type=int, default=4200)
+    ap.add_argument("--mix", choices=["study", "tomtom"], default="study", help="split between roads: 2020 study or TomTom's morning shares")
     args = ap.parse_args()
+    road_scale = tomtom_road_scale() if args.mix == "tomtom" else dict(ROAD_SCALE)
 
     net = sumolib.net.readNet(str(NET))
     definition = json.loads((ROOT / "data/tomtom/junction/ymca_definition.json").read_text())
@@ -127,9 +145,9 @@ def main():
              ' study legs matched to approaches by place name. -->',
              '<routes>', VTYPES]
     for leg, approach in LEG_TO_APPROACH.items():
-        c = counts[leg]
-        per_class = {"two_wheeler": float(c["motorcycle"]), "car": float(c["light_motor_vehicle"]) * CAR_SHARE_OF_LMV,
-                     "auto": float(c["light_motor_vehicle"]) * (1 - CAR_SHARE_OF_LMV), "bus": float(c["heavy_vehicle"])}
+        c = counts[leg]; k = road_scale.get(approach, 1.0)
+        per_class = {"two_wheeler": float(c["motorcycle"]) * k, "car": float(c["light_motor_vehicle"]) * CAR_SHARE_OF_LMV * k,
+                     "auto": float(c["light_motor_vehicle"]) * (1 - CAR_SHARE_OF_LMV) * k, "bus": float(c["heavy_vehicle"]) * k}
         origin = walk(ins[approach], UPSTREAM_M, backwards=True)
         lines.append(f'    <!-- {leg} -> {approach}: enters on {origin.getID()} -->')
         for exit_name, share in sorted(shares[approach].items(), key=lambda kv: -kv[1]):

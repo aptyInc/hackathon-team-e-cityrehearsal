@@ -43,8 +43,8 @@ WARMUP = 300          # statistics start here, once the roads have filled
 FRAMES_FROM, FRAMES_TO = 300, 1200   # 15 minutes of C1 frames for the 3D view
 NEAR_M, FAR_M = 240, 700             # zone limits along each road from the circle
 UPSTREAM_M = 600      # where vehicles start and end, measured from the circle
-CALIBRATED_SCALE = 1.2  # 2020 study counts x 1.2 reproduce TomTom's July 2026 09:00 speeds (3-seed mean within 1.3 km/h)
-SEED = 1              # the circle is bistable near capacity; seed 1 reproduces TomTom's congested morning (1.3 km/h off)
+CALIBRATED_SCALE = 2.0  # 2020 study counts x 2.0 (with close following) reproduce TomTom's 09:00 speeds within ~3 km/h (3-seed mean)
+SEED = 2              # closest of 9 seeds to their mean (speeds within 0.3 km/h of it); demo runs are reproducible
 SUMO_OPTS = ["--lateral-resolution", "0.3", "--time-to-teleport", "300", "--no-step-log", "--no-warnings"]
 DIRECTION = {  # TomTom approach / exit names -> compass label used in junction ids
     "Narayanguda Road South Bound": "ne", "Narayanguda Road North Bound": "s",
@@ -160,20 +160,29 @@ def measure(run_dir: Path, z: dict, approaches: dict):
     circle["time_loss_through_zone_s"] = circle["avg_delay_s"]
     total = sum(weights.values())
     circle["avg_delay_s"] = round(sum(delays[d] * weights[d] for d in delays if delays[d] is not None) / total, 1) if total else 0.0
-    ref_delays = tomtom_morning_delays()
+    ref_delays, ref_speeds = tomtom_morning_reference()
     trips = [t for t in ET.parse(run_dir / "tripinfo.xml").getroot().iter("tripinfo") if float(t.get("depart")) >= WARMUP]
     travel = sum(float(t.get("duration")) for t in trips) / len(trips) if trips else 0.0
-    return junctions, round(travel), len(trips), speeds, refs, delays, ref_delays
+    return junctions, round(travel), len(trips), speeds, refs, delays, ref_delays, ref_speeds
 
 
-def tomtom_morning_delays():
-    """Median delay per approach measured by TomTom Junction Analytics on Fri 9 Oct 2026, 08:00-11:00."""
-    by = {}
+def tomtom_morning_reference():
+    """TomTom Junction Analytics, Fri 9 Oct 2026 08:00-11:00: median delay per approach, and the median speed over
+    the approach (its length / median travel time). A second yardstick next to the July route speeds."""
+    delays, travel = {}, {}
     if TOMTOM_JUNCTION.exists():
         for r in csv.DictReader(open(TOMTOM_JUNCTION)):
             if "08:00" <= r["time"][11:16] < "11:00" and r["approach"] in DIRECTION:
-                by.setdefault(DIRECTION[r["approach"]], []).append(float(r["delay_s"]))
-    return {d: round(sorted(v)[len(v) // 2], 1) for d, v in by.items()}
+                d = DIRECTION[r["approach"]]
+                delays.setdefault(d, []).append(float(r["delay_s"])); travel.setdefault(d, []).append(float(r["travel_time_s"]))
+    lengths = {}
+    if DEFINITION.exists():
+        for a in json.loads(DEFINITION.read_text())["junctionModel"]["approaches"]:
+            if a["name"] in DIRECTION:
+                lengths[DIRECTION[a["name"]]] = float(a["length"])
+    med = lambda v: sorted(v)[len(v) // 2]  # noqa: E731
+    return ({d: round(med(v), 1) for d, v in delays.items()},
+            {d: round(lengths[d] / med(v) * 3.6, 1) for d, v in travel.items() if d in lengths and med(v) > 0})
 
 
 def write_frames(fcd: Path, out: Path) -> int:
@@ -235,7 +244,7 @@ def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, see
         raise RuntimeError(f"sumo failed: {proc.stderr[-800:]}")
     net = sumolib.net.readNet(str(net_path))
     z, approaches = zones(net)
-    junctions, travel, trips, speeds, refs, delays, ref_delays = measure(run_dir, z, approaches)
+    junctions, travel, trips, speeds, refs, delays, ref_delays, ref_speeds = measure(run_dir, z, approaches)
     n_frames = write_frames(run_dir / "fcd.xml", run_dir / "frames.jsonl") if frames else 0
     write_roads(net, run_dir / "edgedata.xml", run_dir / "roads.geojson")
     (run_dir / "queue.xml").unlink(missing_ok=True)  # measured; 1-2 MB per run otherwise
@@ -243,8 +252,10 @@ def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, see
               "corridor_travel_time_s": travel, "warnings": warnings,
               "inputs": {"counts_source": "published_study_2020 + tomtom_turns_2026", "label": "estimated",
                          "volume_scale": volume_scale, "count_scale": round(volume_scale * CALIBRATED_SCALE, 3),
-                         "calibration": f"2020 counts x {CALIBRATED_SCALE} match TomTom Jul-2026 09:00 speeds "
-                                        "within 1.3 km/h (3-seed mean)", "seed": seed, "upstream_m": upstream_m},
+                         "calibration": f"2020 counts x {CALIBRATED_SCALE} with close following match TomTom 09:00 "
+                                        "speeds within ~3 km/h (3-seed mean); ~5,700 vehicles/h through the circle",
+                         "seed": seed, "upstream_m": upstream_m},
+              "tomtom_junction_speed_kmh": ref_speeds,
               "approach_speed_kmh": speeds, "tomtom_speed_kmh": refs,
               "approach_delay_s": delays, "tomtom_delay_s": ref_delays,
               "frames_path": str(run_dir / "frames.jsonl") if frames else None, "frames": n_frames, "trips": trips,
