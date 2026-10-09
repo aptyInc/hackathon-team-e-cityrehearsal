@@ -113,9 +113,9 @@ FRAMES_MAX_S = 600                # a frames window is at most 10 minutes (~50 M
 PROBE_TRACK_S = 5                 # probe car positions every N s for the whole trip (probes.json)
 HOURLY = HERE / "calibration_hourly.json"
 HOURS = range(6, 24)              # hour h = hh:00-hh+1:00: 06:00-07:00 .. 23:00-24:00
-DAYS_FILE = HERE / "calibration_days.json"   # on-demand fits of single days and hours (fit_day_hour)
+DAYS_FILE = OUT / "calibration_days.json"    # on-demand fits of single days and hours (fit_day_hour): a cache, not committed
 HOUR_VOLUME = (0.5, 1.6)          # calibrate_hourly(): volume scale limits; beyond them it scales the speed caps
-HOUR_CAP = (0.6, 1.8)             # ... within these limits
+HOUR_CAP = (0.6, 2.2)             # ... within these limits
 HOUR_MAX_KMH = 80                 # ... and no leg faster than this
 SECTIONS = [("A_lingampally", "j01"), ("j01", "j02"), ("j02", "j04"), ("j04", "j07"), ("j07", "j09"), ("j09", "B_lakdikapul")]
 LEAD_IN_M, TAIL_M = 1000, 300     # road simulated before / after each section's legs
@@ -1094,6 +1094,7 @@ def fit_day_hour(day, hour, cfg, final=None, tol=0.03):
     store.setdefault("fits", {})[f"{day} {hour:02d}"] = fit
     store["note"] = ("on-demand fits of a single day and hour (fit_day_hour): the typical July hour's scales "
                      "(calibration_hourly.json) adjusted so the simulated trip matches that day-hour's TomTom trip time")
+    DAYS_FILE.parent.mkdir(parents=True, exist_ok=True)
     DAYS_FILE.write_text(json.dumps(store, indent=1))
     if final:
         res["inputs"]["day_fit"] = {k: fit[k] for k in ("volume_scale", "cap_scale", "ratio", "within_tolerance", "target_basis", "trials")}
@@ -1457,9 +1458,27 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
     out.setdefault("hours", {})
     if not asked:
         todo = [h for h in todo if str(h) not in out["hours"]]
+    # start with the hour most like the all-day average (the all-day calibration fits it best), then outwards, so
+    # each hour starts from a fitted neighbour
+    ref = allday_trip_s()
+    first = min(todo, key=lambda h: abs((data[h].get("trip_total_s") or ref) - ref))
+    todo.sort(key=lambda h: (abs(h - first), h))
     for h in todo:
         d = data[h]
-        v, cs, hist, best, seen = 1.0, 1.0, [], None, []
+        # warm start from the nearest hour already fitted (neighbouring hours are alike): its volume, and its speed-cap
+        # scale only when its volume was at the floor (the caps were needed there)
+        done = [int(k) for k in out["hours"] if int(k) != h]
+        near = out["hours"][str(min(done, key=lambda k: (abs(k - h), k)))] if done else None
+        v, cs = 1.0, 1.0
+        if near and near.get("tomtom_trip_total_s") and d.get("trip_total_s"):
+            t_near = float(near["tomtom_total_s"])
+            t_est = t_near * d["trip_total_s"] / near["tomtom_trip_total_s"]     # this hour's target, roughly
+            if near["volume_scale"] <= HOUR_VOLUME[0] + 1e-6 and near["cap_scale"] > 1:    # caps regime (light traffic)
+                v, cs = HOUR_VOLUME[0], max(1.0, round(near["cap_scale"] * (t_near / t_est) ** 1.3, 3))
+            else:
+                slope = near.get("slope_s_per_volume") or 600.0
+                v = round(min(HOUR_VOLUME[1], max(HOUR_VOLUME[0], near["volume_scale"] + (t_est - t_near) / slope)), 3)
+        hist, best, seen = [], None, []
         for r in range(rounds):
             caps = [min(HOUR_MAX_KMH, round(c * cs, 1)) for c in cal["cap_kmh"]]
             rid = f"calib_h{h:02d}_{r}"
@@ -1496,7 +1515,10 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
                     nv = v * (target / t) ** 3      # the trip responds weakly to traffic away from capacity: a bold first step
                 v = round(min(HOUR_VOLUME[1], max(HOUR_VOLUME[0], v / 1.5, min(v * 1.5, nv))), 3)
             else:                                       # volume at its limit: the time is in the road speeds
-                cs = round(min(HOUR_CAP[1], max(HOUR_CAP[0], cs * (t / target) ** 1.3)), 3)
+                ncs = cs * (t / target) ** 1.3
+                if (cs > 1 > ncs) or (cs < 1 < ncs):
+                    ncs = 1.0                           # back to the plain caps: the volume takes over again
+                cs = round(min(HOUR_CAP[1], max(HOUR_CAP[0], ncs)), 3)
             if hist and (v, cs) == hist[-1][:2]:
                 break                                   # nothing left to change
         b = best
