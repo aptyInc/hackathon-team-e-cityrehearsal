@@ -42,6 +42,12 @@ Cases
      hour picker next to the day: disabled ("hourly TomTom data arriving tonight") with no hourly data and the API answering 422;
      with GET /corridor tomtom.hourly (N) it sets the measured row (24-hour sparkline, days from tomtom.hourly.days), and once
      POST /corridor/runs takes `day` + `hour` (mocked in N) the simulation too, labelled "Simulated Wed 8 Jul, 18:00–19:00"
+  W  Weather (GET /corridor sim.weather, GET /weather, /weather/factors, /weather/now mocked with backend/app/weather.py): a
+     Weather control next to the day and hour (As measured / Dry / Light rain / Heavy rain), a chip with that day and hour's
+     weather (typical July: share of days with rain), a 24-hour rain strip under the sparkline (click picks the hour); a
+     what-if is explained with its estimate and 95% range (estimated), sent as `weather` with every run, quick demo and
+     re-recorded window, named in the trip rows, clock and result line; changing it re-simulates once; Live now shows the
+     weather now (modelled), hidden on 503
   K  No page errors at any point
 
 The first page talks to the real API on :8000 (if running) except POST /corridor/runs, which is answered 404 so the
@@ -59,10 +65,13 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 from playwright.sync_api import sync_playwright
 
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5180/frontend/corridor.html"
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "backend"))
+from app import weather as WX  # noqa: E402  (the weather endpoints' own code answers the mocked GET /weather*)
 OUT = ROOT / "sim/out"
 OUT.mkdir(parents=True, exist_ok=True)
 SAMPLE = json.loads((ROOT / "contracts/samples/corridor_results.sample.json").read_text())
@@ -301,6 +310,20 @@ def hourly_min(d, h):
     return round(sum(x["time_s"] for x in API_LEGS if x["period"] == HSRC[d]) * HF[d](h) / 60)
 
 
+WX_TRIP = {"dry": 1.0, "light_rain": 1.04, "heavy_rain": 1.079}   # rain what-if: trip time factor vs dry (as in rain_factors.json)
+WX_CI = {"dry": [1.0, 1.0], "light_rain": [1.005, 1.069], "heavy_rain": [0.961, 1.161]}
+WX_NOW_RAIN = {"time": "2026-10-10T00:15", "interval_s": 900, "rain_mm": 0.2, "rain_mm_per_hour": 0.8, "is_raining": True, "rain_class": "light",
+               "what_if": "light_rain", "temperature_c": 24.2, "is_day": False, "weather_code": 61, "text": "Light rain",
+               "location": {"name": "Khajaguda X Roads (corridor midpoint by distance)"}, "cached": False, "age_s": 0,
+               "rain_effect": {"what_if": "light_rain", "trip_time_pct": 4.0, "trip_time_pct_ci95": [0.5, 6.9], "label": "estimated"},
+               "source": "Open-Meteo forecast API (test)", "label": "modelled (Open-Meteo forecast), not a rain gauge"}
+
+
+def wx_day(day, hour=None):
+    """GET /weather as backend/app/weather.py answers it (July 2026 hourly CSV)."""
+    return WX.get_weather(day=day, hour=hour)
+
+
 FLY_J07 = [{"junction_id": "j07", "kind": "flyover", "params": {"lanes": 2, "length_m": 600}}]
 CORS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS"}
 STREAM_JS = """(() => {
@@ -320,9 +343,11 @@ STREAM_JS = """(() => {
 })();"""
 
 
-def mock_api(pg, live_body, bodies, mode, counts, real_shape=False, geometry=False, probes=False):
+def mock_api(pg, live_body, bodies, mode, counts, real_shape=False, geometry=False, probes=False, weather=False):
     """Corridor endpoints answered in the browser: GET /corridor (route + TomTom legs), live junctions (and their approach
-    shapes), calibration, runs (frames_window; another recorded window; `hour` 422 unless mode["hour_ok"]), roads, probes."""
+    shapes), calibration, runs (frames_window; another recorded window; `hour` 422 unless mode["hour_ok"]; `weather` echoed),
+    roads, probes; GET /weather, /weather/factors (backend/app/weather.py on the repo's files) and /weather/now
+    (mode["wx_now"], else 503). weather=True: GET /corridor lists sim.weather (and sim.hours), so the page offers the what-if."""
     def corridor_runs(route):
         if route.request.method == "OPTIONS":
             return route.fulfill(status=204, headers=CORS)
@@ -355,6 +380,15 @@ def mock_api(pg, live_body, bodies, mode, counts, real_shape=False, geometry=Fal
         if "hour" in body:   # the simulated day and hour, echoed
             r["time"] = dict(r["time"], day=body.get("day"), hour=body["hour"])
             r["run_id"] += f"_{body.get('day')}_{body['hour']}"
+        if "weather" in body:   # the rain what-if, echoed as corridor_runner does (slower legs; the estimate vs dry)
+            w = body["weather"]
+            for leg in r["journey"]["legs"]:
+                leg["time_s"] = round(leg["time_s"] * WX_TRIP[w], 1)
+            r["journey"]["total_s"] = round(r["journey"]["total_s"] * WX_TRIP[w], 1)
+            r["time"] = dict(r["time"], weather=w)
+            r["inputs"]["weather"] = {"weather": w, "label": "estimated (rain factors from TomTom hourly x Open-Meteo, July 2026)",
+                                      "expected_trip_time_factor_vs_dry": WX_TRIP[w], "expected_trip_time_factor_vs_dry_ci95": WX_CI[w]}
+            r["run_id"] += f"_{w}"
         route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(r))
 
     def live(route):
@@ -370,6 +404,23 @@ def mock_api(pg, live_body, bodies, mode, counts, real_shape=False, geometry=Fal
         corridor = dict(CORRIDOR, tomtom={"source": "test", "periods": per, "hourly": hourly_body()}, route={"type": "FeatureCollection", "features": feats})
     else:            # other shapes the page also accepts: legs rows with a period, one bendy line per direction (cut by the page)
         corridor = dict(CORRIDOR, legs=API_LEGS, route=route_geojson())
+    if weather:      # GET /corridor sim: hours and the rain what-if settings (backend/app/corridor.py sim_capabilities)
+        corridor["sim"] = {"hours": list(range(6, 24)), "frames_window": True, "probes": True, "weather": ["dry", "light_rain", "heavy_rain"],
+                           "weather_label": "estimated (rain factors from TomTom hourly x Open-Meteo, July 2026)"}
+
+    def wx(route):
+        u = urlparse(route.request.url)
+        counts.setdefault("wx", []).append(u.path + ("?" + u.query if u.query else ""))
+        if u.path == "/weather/now":
+            now = mode.get("wx_now")
+            return route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(now)) if now else \
+                route.fulfill(status=503, content_type="application/json", headers=CORS, body=json.dumps({"detail": "current weather unavailable (test)"}))
+        if u.path == "/weather/factors":
+            return route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(WX.weather_factors()))
+        q = parse_qs(u.query)
+        h = q.get("hour", [None])[0]
+        route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(wx_day(q.get("day", ["july"])[0], None if h is None else int(h))))
+    pg.route("http://localhost:8000/weather**", wx)
     pg.route("http://localhost:8000/corridor/runs", corridor_runs)
     pg.route("http://localhost:8000/corridor/junctions/live", live)
     pg.route("http://localhost:8000/corridor", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(corridor)))
@@ -924,6 +975,85 @@ with sync_playwright() as p:
     pg.click("#p-dlf-retime")
     st, _ = wait_status(pg, ["failed", "simulated"], 30)
     check("netconvert failed at j08: test" in st and "{" not in st, f"FastAPI detail shown as plain text: {st[:100]}")
+    pg.close()
+
+    # ---------------- weather: chips, the rain what-if, the weather now ----------------
+    case = "W weather"; print(case)
+    bodies, mode, counts = [], {"fail": None, "hour_ok": True, "wx_now": WX_NOW_RAIN}, {}
+    pg = open_page(b, {"width": 1500, "height": 950}, STREAM_JS % (json.dumps(frames_along("j07", "j08")), 60000))
+    mock_api(pg, lambda c: live_flat(), bodies, mode, counts, real_shape=True, weather=True)
+    goto(pg)
+    opts = pg.eval_on_selector_all("#weather option", "els => els.map(e => [e.value, e.textContent])")
+    check(pg.is_visible("#weather") and opts == [["", "As measured"], ["dry", "Dry"], ["light_rain", "Light rain"], ["heavy_rain", "Heavy rain"]] and pg.input_value("#weather") == "",
+          f"Weather control next to the day and hour, from GET /corridor sim.weather, As measured by default: {opts}")
+    check("As measured" in pg.inner_text("#weather-note") and "rain that actually fell" in pg.inner_text("#weather-note"), f"as measured explained: {pg.inner_text('#weather-note')[:90]!r}")
+    jw = wx_day("july")["hours"]
+    share_day = round(100 * sum(x["share_of_days_with_rain"] for x in jw if 6 <= x["hour"] <= 22) / 17)
+    chip = pg.inner_text("#wx-chip")
+    check(pg.is_visible("#wx-chip") and f"July, 06–23: rain in {share_day}% of hours" in chip and "Open-Meteo" in chip, f"typical day chip: {chip!r}")
+    pg.select_option("#hour", "18"); pg.wait_for_timeout(500)
+    j18 = wx_day("july", 18)
+    chip = pg.inner_text("#wx-chip")
+    check(f"Rain on {round(j18['share_of_days_with_rain'] * 100)}% of July days at 18:00 · {round(j18['temperature_c'])}°C" in chip, f"typical July 18:00 chip from GET /weather: {chip!r}")
+    g = pg.eval_on_selector_all("#rain-strip g", "els => els.map(e => [e.dataset.h, e.getAttribute('class'), Number(e.querySelector('.rbar').getAttribute('height'))])")
+    check(pg.is_visible("#rain-strip") and len(g) == 24 and g[18][1] == "on" and g[8][1] == "pick" and g[3][1] == "" and max(x[2] for x in g) > 5 and "share of July days" in pg.inner_text("#rain-strip"),
+          f"24-hour rain strip under the sparkline, 18:00 marked: {g[16:20]}")
+    pg.select_option("#when", "2026-07-20..2026-07-20"); pg.select_option("#hour", "22"); pg.wait_for_timeout(600)
+    d22 = wx_day("2026-07-20", 22)
+    chip = pg.inner_text("#wx-chip")
+    check(f"Mon 20 Jul 22:00 · {d22['text']} {d22['rain_mm']:.1f} mm · {round(d22['temperature_c'])}°C" in chip and pg.eval_on_selector("#wx-chip", "e => e.classList.contains('wet')"),
+          f"one day's rainy hour: {chip!r}")
+    check("Rain by hour, Mon 20 Jul (Open-Meteo)" in pg.inner_text("#rain-strip") and "most at 22:00" in pg.inner_text("#rain-strip"), f"strip for that day: {pg.inner_text('#rain-strip')!r}")
+    pg.click("#rain-strip g[data-h='7']"); pg.wait_for_timeout(400)
+    check(pg.input_value("#hour") == "7" and "Mon 20 Jul 07:00" in pg.inner_text("#wx-chip"), "clicking an hour on the rain strip picks it")
+    pg.select_option("#when", "2026-07-08..2026-07-08 8:00-20:00"); pg.select_option("#hour", "18"); pg.wait_for_timeout(400)
+    d18 = wx_day("2026-07-08", 18)
+    check(f"Wed 8 Jul 18:00 · {d18['text']} · {round(d18['temperature_c'])}°C" in pg.inner_text("#wx-chip"), f"a dry hour: {pg.inner_text('#wx-chip')!r}")
+    pg.select_option("#weather", "heavy_rain"); pg.wait_for_timeout(300)
+    note = pg.inner_text("#weather-note")
+    check("Heavy rain what-if" in note and "+7.9% (95% range −3.9% to +16.1%)" in note and "estimated" in note and "low to moderate" in note and "not a cloudburst" in note,
+          f"heavy rain explained with the estimate and its range (GET /weather/factors): {note!r}")
+    check("The weather what-if changes the simulation only" in pg.inner_text("#when-note"), "the TomTom row stays as measured, said so")
+    n0 = len(bodies)
+    simulate(pg, "#sim-today", "heavy rain (what-if)")
+    check(bodies[n0:] == [{"interventions": [], "volume_scale": 1.0, "day": "2026-07-08", "hour": 18, "weather": "heavy_rain"}], f"weather sent with the run: {bodies[n0:]}")
+    pg.wait_for_timeout(2000)
+    s = strips(pg)
+    rn = pg.inner_text("#run-note")
+    check(s[0][3].startswith("Simulated Wed 8 Jul, 18:00–19:00, heavy rain, roads as they are") and s[1][3].startswith("Measured by TomTom, Wed 8 Jul, 18:00–19:00"),
+          f"trip rows say the weather (simulated) and the TomTom row stays as measured: {[x[3][:60] for x in s]}")
+    check("Weather what-if: heavy rain" in rn and "+7.9% (95% range −3.9% to +16.1%)" in rn and pg.locator("#run-note .tag.est").count() == 1,
+          f"result line: estimate, range, estimated tag: {rn[-120:]!r}")
+    check(pg.inner_text("#clock").startswith("Simulated Wed 8 Jul, 18:00–19:00, heavy rain · minute"), f"clock: {pg.inner_text('#clock')!r}")
+    n0 = len(bodies)
+    set_win(pg, 20); pg.wait_for_timeout(2500)
+    check(bodies[n0:] == [{"interventions": [], "volume_scale": 1.0, "frames_from_min": 20, "frames_minutes": 5, "day": "2026-07-08", "hour": 18, "weather": "heavy_rain"}],
+          f"re-recording another window keeps the weather: {bodies[n0:]}")
+    n0 = len(bodies)
+    pg.click("#p-nanal"); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(1500)
+    check(bodies[n0:] == [{"interventions": [{"junction_id": "j08", "kind": "flyover", "params": {"lanes": 2, "length_m": 1200}}], "volume_scale": 1.0, "day": "2026-07-08", "hour": 18, "weather": "heavy_rain"}]
+          and "both in heavy rain (what-if)" in pg.inner_text("#deltas") and strips(pg)[2][3].startswith("Simulated Wed 8 Jul, 18:00–19:00, heavy rain, with your changes"),
+          f"a quick demo in heavy rain: {bodies[n0:]} / {pg.inner_text('#deltas')[:120]!r}")
+    pg.screenshot(path=str(OUT / "corridor_W_weather.png"))
+    n0 = len(bodies)
+    pg.select_option("#weather", "dry")
+    st, _ = wait_status(pg, ["dry (what-if): simulated", "failed"], 30); pg.wait_for_timeout(800)
+    check(sorted(x.get("weather") for x in bodies[n0:]) == ["dry", "dry"] and len(bodies[n0:]) == 2 and strips(pg)[0][3].startswith("Simulated Wed 8 Jul, 18:00–19:00, dry, roads as they are"),
+          f"another weather re-simulates both rows once: {[x.get('weather') for x in bodies[n0:]]} / {st}")
+    n0 = len(bodies)
+    pg.select_option("#weather", ""); wait_status(pg, ["18:00–19:00: simulated", "failed"], 30); pg.wait_for_timeout(800)
+    check(len(bodies[n0:]) == 2 and all("weather" not in x for x in bodies[n0:]) and strips(pg)[0][3].startswith("Simulated Wed 8 Jul, 18:00–19:00, roads as they are")
+          and "Weather what-if" not in pg.inner_text("#run-note"), f"As measured: no weather sent, no weather in the labels: {bodies[n0:]}")
+    pg.click("#mode-live"); pg.wait_for_timeout(800)
+    now = pg.inner_text("#wx-now")
+    check(pg.is_visible("#wx-now") and "Weather now: Light rain 0.8 mm/h · 24°C" in now and "+4% to the trip" in now and "modelled" in now
+          and "not a rain gauge" in pg.get_attribute("#wx-now", "title"), f"Live now: the weather now (GET /weather/now), modelled: {now!r}")
+    pg.screenshot(path=str(OUT / "corridor_W_live.png"))
+    mode["wx_now"] = None
+    pg.evaluate("() => loadWxNow()"); pg.wait_for_timeout(500)
+    check(pg.is_hidden("#wx-now"), "GET /weather/now 503: the chip is hidden")
+    pg.click("#mode-july"); pg.wait_for_timeout(300)
+    check(pg.is_hidden("#wx-now"), "weather now only in Live now")
     pg.close()
 
     # ---------------- narrow screen ----------------

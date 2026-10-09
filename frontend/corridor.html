@@ -159,6 +159,22 @@
   #hour-spark rect.on { fill: var(--real); filter: drop-shadow(0 0 6px oklch(0.714 0.143 255 / .8)); }
   #hour-spark rect.pick { cursor: pointer; } #hour-spark rect.pick:hover { fill: oklch(0.714 0.143 255 / .7); }
   #hour-spark .cap { font-size: 11px; color: var(--tx-3); }
+  /* weather: the hour's weather (GET /weather), the rain what-if (sim.weather, GET /weather/factors), weather now (GET /weather/now) */
+  .wxchip { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; padding: 4px 11px 4px 9px; border-radius: 999px; font-size: 12px; line-height: 1.3; color: var(--tx-2);
+    background: oklch(0.714 0.143 255 / .07); box-shadow: inset 0 0 0 1px oklch(0.714 0.143 255 / .28); box-sizing: border-box; max-width: 100%; }
+  .wxchip b { color: var(--tx); font-weight: 600; }
+  .wxchip svg { width: 16px; height: 16px; flex: none; color: var(--tx-2); }
+  .wxchip.wet { background: oklch(0.714 0.143 255 / .13); box-shadow: inset 0 0 0 1px var(--real-line); } .wxchip.wet svg { color: var(--real); }
+  .wxchip .wx-src { font-size: 10.5px; color: var(--tx-3); white-space: nowrap; }
+  #wx-row { margin-top: 2px; } #wx-row label { display: flex; align-items: center; gap: 6px; }
+  #wx-now { margin: 8px 0 2px; }
+  #weather-note { display: block; margin: 2px 0 4px; }
+  .tag.est { color: var(--warn); background: var(--warn-bg); box-shadow: inset 0 0 0 1px oklch(0.837 0.164 84 / .35); }
+  #rain-strip { margin: 0 0 4px; } #rain-strip svg { width: 100%; height: 16px; display: block; }
+  #rain-strip .trk { fill: oklch(1 0 0 / .03); } #rain-strip .rbar { fill: oklch(0.714 0.143 255 / .5); }
+  #rain-strip g.on .rbar { fill: var(--real); } #rain-strip g.on .trk { fill: oklch(0.714 0.143 255 / .12); }
+  #rain-strip g.pick { cursor: pointer; } #rain-strip g.pick:hover .trk { fill: oklch(0.714 0.143 255 / .15); }
+  #rain-strip .cap { font-size: 11px; color: var(--tx-3); }
   /* Ask Terascope AI (planner.js) */
   #ask-open { position: absolute; top: calc(var(--nav-h, 0px) + 12px); right: 280px; z-index: 4; height: 38px; padding: 0 18px; border-radius: 999px; font-weight: 700;
     color: #fff; background: var(--cta); border: 0; box-shadow: 0 8px 22px -8px oklch(0 0 0 / .7); }
@@ -271,6 +287,7 @@
   <h1>Lingampally → Lakdikapul</h1>
   <small>22.4 km commute through 11 junctions · <a href="ymca.html">YMCA Circle close-up</a></small><br>
   <small id="status" class="july-only">API: checking…</small><small id="status-live" class="live-only">API: checking…</small>
+  <div id="wx-now" class="wxchip live-only" hidden></div>
   <div id="src" class="july-only"></div>
 
   <div id="live-box" class="live-only">
@@ -297,8 +314,12 @@
   <h2>1 · When <span class="tag real">TomTom data</span></h2>
   <div class="row"><select id="when" style="max-width:100%;flex:1 1 190px;min-width:0" title="The day: TomTom's July average, or one day"></select>
     <label class="muted" id="hour-box" title="hourly TomTom data arriving tonight">Hour <select id="hour" disabled></select></label></div>
+  <div class="row" id="wx-row"><label class="muted" id="weather-box" hidden title="Rain what-if for the simulation: As measured is the simulation as calibrated to TomTom, rain included as it fell">Weather <select id="weather"></select></label>
+    <span id="wx-chip" class="wxchip" hidden></span></div>
+  <small id="weather-note" class="muted"></small>
   <small id="hour-note" class="mid" style="display:block"></small>
   <div id="hour-spark" hidden></div>
+  <div id="rain-strip" hidden></div>
   <small id="when-note" class="muted"></small>
   <div id="live-link" class="note" hidden></div>
 
@@ -524,8 +545,9 @@ async function sampleRun(ivs, why) {
 
 // The day (#when: TomTom's July average or one day) and the hour (#hour, 06-22 = 06:00-07:00 .. 22:00-23:00) set the measured
 // row, and the simulation too once the API takes `day` + `hour` (hourOk); until then the simulation is the typical July day.
-let pickHour = null, hourOk = null;
-const simParams = () => hourOk && pickHour != null ? { day: dayId($("when").value), hour: pickHour } : {};
+// The weather (#weather: "" as measured, or a rain what-if from GET /corridor sim.weather) goes with every simulation request.
+let pickHour = null, hourOk = null, pickWeather = "";
+const simParams = () => ({ ...(hourOk && pickHour != null ? { day: dayId($("when").value), hour: pickHour } : {}), ...(pickWeather ? { weather: pickWeather } : {}) });
 async function corridorRun(ivs) {
   try { return await post("/corridor/runs", { interventions: ivs, volume_scale: 1.0, ...simParams() }); }
   catch (e) {
@@ -596,7 +618,8 @@ async function init() {
   await loadTomTom(corridor.legs || corridor.tomtom?.periods || corridor.tomtom);
   addHourly(corridor.tomtom?.hourly);
   if (apiUp) { try { calib = await get("/corridor/calibration"); } catch (e) { calib = null; } }
-  fillWhen(); fillJunctions(); fillParams(); fillHours(); renderIvs(); renderJourney(); renderJunctions();
+  fillWhen(); fillJunctions(); fillParams(); fillHours(); fillWeather(); renderIvs(); renderJourney(); renderJunctions();
+  loadWxFactors();
 
   const hasKey = !!cfg.tomtom_maps_key;
   map = new maplibregl.Map({ container: "map", style: hasKey ? STYLE($("t-night").checked) : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
@@ -627,6 +650,7 @@ async function init() {
   render();
   requestAnimationFrame(tick);
   loadLive(); setInterval(loadLive, LIVE_MS);
+  loadWxNow(); setInterval(loadWxNow, WX_NOW_MS);
   if (apiUp) setTimeout(probeHour, 1500);
 }
 
@@ -823,7 +847,9 @@ function updateWhenNote() {
     (pickHour != null ? (measured() ? `<br>${esc(pickLabel())}: TomTom measured <b>${Math.round(mins(sumT(tomtom[measured()])))} min</b>.` :
       `<br><span class="mid">No hourly TomTom data for ${esc(pickLabel())} yet.</span>`) : "") +
     (hourOk ? `<br><b>The day and hour set both the measured (TomTom) row and the simulation.</b>` :
-      `<br><b>Changes the measured (TomTom) row only; the simulation is the typical July day.</b>`);
+      `<br><b>Changes the measured (TomTom) row only; the simulation is the typical July day.</b>`) +
+    (pickWeather ? ` The weather what-if changes the simulation only: the TomTom row stays as measured.` : "");
+  renderWx();
 }
 function hourProfile() {   // [{h, min}] for the chosen day, from its hourly periods
   const d = dayRange($("when").value), out = [];
@@ -859,6 +885,158 @@ function pickChanged() {   // the measured row follows at once; the simulation f
 }
 $("when").onchange = pickChanged;
 $("hour").onchange = () => { pickHour = $("hour").value === "" ? null : Number($("hour").value); pickChanged(); };
+$("weather").onchange = () => { pickWeather = $("weather").value; updateWeatherNote(); pickChanged(); };
+
+// ---------- weather: the chosen day and hour's weather, the rain what-if, the weather now ----------
+// GET /weather?day=july|2026-07-DD -> {label, source, note, hours: [24 slots]} (measured: Open-Meteo reanalysis, a weather model);
+// GET /weather/factors -> {what_if: {dry|light_rain|heavy_rain: {trip_time_pct, trip_time_pct_ci95, meaning}}} (estimated);
+// GET /weather/now -> {text, temperature_c, rain_mm_per_hour, is_raining, rain_effect, label} (modelled), 503 when Open-Meteo is down.
+const WX_NAMES = { "": "As measured", dry: "Dry", light_rain: "Light rain", heavy_rain: "Heavy rain" };
+const WX_PLAIN = { dry: "no rain this hour or the hour before", light_rain: "light rain (0.1–1 mm an hour) for an hour or more",
+                   heavy_rain: "the wettest hours July had (1–5 mm an hour) for an hour or more; not a cloudburst" };
+// The hourly July 2026 analysis (data/rain/README.md), used until GET /weather/factors answers
+const WX_FALLBACK = { dry: { trip_time_pct: 0, trip_time_pct_ci95: [0, 0] }, light_rain: { trip_time_pct: 4.0, trip_time_pct_ci95: [0.5, 6.9] },
+                      heavy_rain: { trip_time_pct: 7.9, trip_time_pct_ci95: [-3.9, 16.1] } };
+const WX_NOW_MS = window.WX_NOW_MS || 600000;   // the API caches the weather now for 10 minutes
+const WX_SVG = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const WX_ICON = {
+  rain: WX_SVG('<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M16 14v6M8 14v6M12 16v6"/>'),
+  cloud: WX_SVG('<path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/>'),
+  sun: WX_SVG('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/>'),
+  moon: WX_SVG('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'),
+};
+let wxOptions = [], wxFactors = null, wxNow = null;
+const wxDays = {}, wxReq = {};   // "july" | "2026-07-08" -> GET /weather?day= answer (null: not available)
+const wxName = w => WX_NAMES[w || ""] ?? String(w).replace(/_/g, " ");
+const runWeather = r => r?.time?.weather ?? r?.requested?.weather ?? r?.inputs?.weather?.weather ?? null;
+const runParams = r => ({ ...(runHour(r) != null ? { day: runDay(r) || "july", hour: runHour(r) } : {}), ...(runWeather(r) ? { weather: runWeather(r) } : {}) });
+const pctTxt = (x, d = 1) => `${x > 0 ? "+" : x < 0 ? "−" : "±"}${Math.abs(x).toFixed(d)}%`;
+const share = x => `${Math.round(x * 100)}%`;
+const mmTxt = x => x >= 10 ? x.toFixed(0) : x.toFixed(1);
+const isWet = (code, mm) => (mm != null && mm >= 0.1) || (code != null && code >= 51);
+function wxIcon(code, wet, day = true) { return wet ? WX_ICON.rain : code != null && code <= 1 ? (day ? WX_ICON.sun : WX_ICON.moon) : WX_ICON.cloud; }
+function wxSetting(w) { return wxFactors?.what_if?.[w] || WX_FALLBACK[w] || null; }
+function wxEstimate(w, r) {   // [pct, [lo, hi]] vs dry: from the run (inputs.weather), else GET /weather/factors, else the saved numbers
+  const iw = r?.inputs?.weather, f = iw?.expected_trip_time_factor_vs_dry, ci = iw?.expected_trip_time_factor_vs_dry_ci95;
+  if (f != null) return [(f - 1) * 100, Array.isArray(ci) ? ci.map(x => (x - 1) * 100) : null];
+  const s = wxSetting(w); return s && s.trip_time_pct != null ? [s.trip_time_pct, s.trip_time_pct_ci95] : null;
+}
+const estTxt = (e, w) => !e ? "" : `${pctTxt(e[0])}${w !== "dry" && e[1] && e[1][0] != null ? ` (95% range ${pctTxt(e[1][0])} to ${pctTxt(e[1][1])})` : ""}`;
+function fillWeather() {   // the what-if settings GET /corridor sim.weather lists; none (older API, no rain factors): the control stays hidden
+  wxOptions = (Array.isArray(corridor?.sim?.weather) ? corridor.sim.weather : []).filter(w => typeof w === "string" && w);
+  $("weather").innerHTML = ["", ...wxOptions].map(w => `<option value="${esc(w)}"${WX_PLAIN[w] ? ` title="${esc(WX_PLAIN[w])}"` : ""}>${esc(wxName(w))}</option>`).join("");
+  if (!wxOptions.includes(pickWeather)) pickWeather = "";
+  $("weather").value = pickWeather;
+  $("weather-box").hidden = !wxOptions.length;
+  updateWeatherNote();
+}
+async function loadWxFactors() {
+  if (!apiUp) return;
+  try { wxFactors = await get("/weather/factors"); } catch (e) { wxFactors = null; }   // the saved numbers stand in
+  updateWeatherNote();
+}
+function updateWeatherNote() {   // what the chosen weather means, with the estimate and its range
+  const el = $("weather-note"), w = pickWeather;
+  if (!wxOptions.length) { el.innerHTML = ""; return; }
+  if (!w) {
+    const d = dayId($("when").value), h = pickHour, s = h != null ? (wxDays[d]?.hours || []).find(x => x.hour === h) : null;
+    el.innerHTML = `<b>As measured:</b> the simulation as calibrated to TomTom, with the rain that actually fell` +
+      (d !== "july" && h != null ? " in that hour" : s && s.share_of_days_with_rain != null ? ` (at ${hh(h)} it rained on ${share(s.share_of_days_with_rain)} of July days)` : " (in a typical July hour it rained on about 4 days in 10)") +
+      `. Pick Dry, Light rain or Heavy rain for a rain what-if.`;
+    return;
+  }
+  const e = wxEstimate(w);
+  el.innerHTML = `<b>${esc(wxName(w))} what-if:</b> ${esc(WX_PLAIN[w] || wxSetting(w)?.meaning || w)}. ` +
+    (e ? `Trip time vs dry: <b>${estTxt(e, w)}</b> <span class="tag est" title="From TomTom's hourly trip times and Open-Meteo's hourly rain, July 2026 (data/rain/README.md)">estimated</span>` +
+      `${w !== "dry" ? " · confidence low to moderate" : ""}. ` : "") +
+    `Only road speeds change; traffic and signals stay as they are (assumed).`;
+}
+function wxDay(d) {   // GET /weather?day= once per day
+  if (!apiUp) { wxDays[d] = null; return Promise.resolve(null); }
+  return wxReq[d] ||= get(`/weather?day=${encodeURIComponent(d)}`)
+    .then(x => (wxDays[d] = Array.isArray(x?.hours) && x.hours.length ? x : null))
+    .catch(e => { wxDays[d] = null; return null; });
+}
+function renderWx() {   // the chip next to the day and hour, and the rain strip under the hour sparkline
+  const d = dayId($("when").value), x = wxDays[d];
+  if (x === undefined) {
+    $("wx-chip").hidden = true; $("rain-strip").hidden = true;
+    wxDay(d).then(() => { if (dayId($("when").value) === d && wxDays[d] !== undefined) renderWx(); });
+    return;
+  }
+  renderWxChip(d, x); renderRainStrip(d, x);
+  if (!pickWeather) updateWeatherNote();
+}
+function renderWxChip(d, x) {   // "Fri 17 Jul 15:00 · Rain 2.9 mm · 25°C", "Rain on 42% of July days at 18:00 · 26°C"
+  const el = $("wx-chip"), hrs = x?.hours || [];
+  let html = "", wet = false, code = null;
+  if (pickHour != null) {
+    const s = hrs.find(q => q.hour === pickHour);
+    if (s && d === "july") {
+      wet = /rain|drizzle|shower|thunder/i.test(s.most_common_text || "");
+      html = `Rain on <b>${share(s.share_of_days_with_rain)}</b> of July days at ${hh(pickHour)}${s.temperature_c != null ? ` · ${Math.round(s.temperature_c)}°C` : ""}`;
+    } else if (s) {
+      code = s.weather_code; wet = isWet(null, s.rain_mm);
+      html = `${dayLabel(d)} ${hh(pickHour)} · <b>${esc(s.text)}${wet ? ` ${mmTxt(s.rain_mm)} mm` : ""}</b>${s.temperature_c != null ? ` · ${Math.round(s.temperature_c)}°C` : ""}`;
+    }
+  } else if (hrs.length) {
+    const day = hrs.filter(q => q.hour >= 6 && q.hour <= 22);
+    if (d === "july") {
+      const m = day.reduce((a, q) => a + q.share_of_days_with_rain, 0) / day.length;
+      html = `July, 06–23: rain in <b>${share(m)}</b> of hours`;
+    } else {
+      const tot = day.reduce((a, q) => a + (q.rain_mm || 0), 0), top = day.reduce((a, q) => (q.rain_mm > a.rain_mm ? q : a), day[0]);
+      wet = tot >= 0.1;
+      html = `${dayLabel(d)}, 06–23: <b>${wet ? `${mmTxt(tot)} mm of rain` : "dry"}</b>${wet && top ? `, most at ${hh(top.hour)} (${mmTxt(top.rain_mm)} mm)` : ""}`;
+    }
+  }
+  el.hidden = !html;
+  if (!html) { el.innerHTML = ""; return; }
+  el.classList.toggle("wet", wet);
+  el.innerHTML = `${wxIcon(code, wet)}<span>${html}</span><span class="wx-src">Open-Meteo</span>`;
+  el.title = `${x.label || "measured (Open-Meteo reanalysis)"}: ${x.source || "Open-Meteo"}. ${x.note || ""}`.trim();
+}
+function renderRainStrip(d, x) {   // 24 bars under the TomTom sparkline: mm of rain that day, or the share of July days with rain
+  const el = $("rain-strip"), hrs = x?.hours || [], july = d === "july";
+  el.hidden = $("hour-spark").hidden || hrs.length < 2;
+  if (el.hidden) { el.innerHTML = ""; return; }
+  const v = q => (july ? q.share_of_days_with_rain : q.rain_mm) || 0, max = july ? 1 : Math.max(2, ...hrs.map(v));   // 2 mm or more fills a bar
+  const bars = hrs.map(q => {
+    const ht = v(q) > 0 ? Math.max(1.5, v(q) / max * 15) : 0, ok = q.hour >= 6 && q.hour <= 22;
+    const tip = `${hourSpan(q.hour)}: ${july ? `rain on ${share(v(q))} of July days` : `${mmTxt(v(q))} mm, ${q.text}`} (Open-Meteo)`;
+    return `<g data-h="${q.hour}" class="${q.hour === pickHour ? "on" : ok ? "pick" : ""}"><title>${esc(tip)}</title>` +
+      `<rect class="trk" x="${q.hour * 10 + 1}" y="0" width="8" height="16"/><rect class="rbar" x="${q.hour * 10 + 1}" y="0" width="8" height="${ht.toFixed(1)}"/></g>`;
+  }).join("");
+  const day = hrs.filter(q => q.hour >= 6 && q.hour <= 22), top = day.reduce((a, q) => (v(q) > v(a) ? q : a), day[0]);
+  const tot = day.reduce((a, q) => a + v(q), 0);
+  el.innerHTML = `<svg viewBox="0 0 240 16" preserveAspectRatio="none" role="img" aria-label="Rain by hour">${bars}</svg>` +
+    `<div class="cap">${july ? `Rain by hour, share of July days with rain (Open-Meteo): most often at ${hh(top.hour)} (${share(v(top))}).`
+      : tot >= 0.1 ? `Rain by hour, ${dayLabel(d)} (Open-Meteo): ${mmTxt(tot)} mm from 06:00 to 23:00, most at ${hh(top.hour)}.` : `Rain by hour, ${dayLabel(d)} (Open-Meteo): dry from 06:00 to 23:00.`}</div>`;
+  el.querySelectorAll("g.pick, g.on").forEach(g => g.onclick = () => { if ($("hour").disabled) return; $("hour").value = g.dataset.h; $("hour").onchange(); });
+}
+function wxResultLine(r) {   // the run's weather what-if for the result line: name, estimate with its range, label
+  const w = runWeather(r); if (!w) return "";
+  const e = wxEstimate(w, r), mock = /MOCK_SIM/.test(r?.inputs?.weather?.note || "");
+  return `<br>Weather what-if: <b>${esc(wxName(w).toLowerCase())}</b>${e ? ` · expected trip time vs dry <b>${estTxt(e, w)}</b>` : ""} <span class="tag est">estimated</span>` +
+    (mock ? ` <span class="mid">(mock mode: not applied to these sample numbers)</span>` : "");
+}
+async function loadWxNow() {   // Live now: the weather at the corridor's midpoint; hidden when the API cannot get it (503)
+  if (!apiUp) { wxNow = null; renderWxNow(); return; }
+  try { wxNow = await get("/weather/now"); } catch (e) { wxNow = null; }
+  renderWxNow();
+}
+function renderWxNow() {   // "Clear sky · 27°C", "Light rain 0.8 mm/h · 24°C · rain like this adds about +4% to the trip"
+  const el = $("wx-now"), w = wxNow;
+  el.hidden = !w || (!w.text && w.temperature_c == null);
+  if (el.hidden) { el.innerHTML = ""; return; }
+  const wet = !!w.is_raining, eff = w.rain_effect;
+  el.classList.toggle("wet", wet);
+  el.innerHTML = wxIcon(w.weather_code, wet, w.is_day !== false) +
+    `<span>Weather now: <b>${esc(w.text || "–")}${wet && w.rain_mm_per_hour != null ? ` ${mmTxt(w.rain_mm_per_hour)} mm/h` : ""}</b>${w.temperature_c != null ? ` · ${Math.round(w.temperature_c)}°C` : ""}` +
+    (wet && eff && eff.trip_time_pct ? ` · rain like this adds about ${pctTxt(eff.trip_time_pct, 0)} to the trip <span class="tag est">estimated</span>` : "") + `</span>` +
+    `<span class="wx-src">modelled${w.stale && w.age_s ? `, ${Math.round(w.age_s / 60)} min old` : ""}</span>`;
+  el.title = `${w.label || "modelled (Open-Meteo forecast), not a rain gauge"}. ${w.source || ""}${w.location?.name ? `, at ${w.location.name}` : ""}${w.time ? `, ${w.time}` : ""}`;
+}
 
 // ---------- live junctions (TomTom Junction Analytics, GET /corridor/junctions/live) ----------
 // Accepts {junctions: [{junction_id|id, name, time, approaches: [...]}]}, a list of those, {j07: {...}}, or flat approach rows
@@ -1109,7 +1287,8 @@ async function simulate(withChanges) {
   if (withChanges && !interventions.length) { $("run-note").innerHTML = `<span class="mid">Add at least one change in step 2 first.</span>`; return; }
   const ivs = JSON.parse(JSON.stringify(interventions)), t0 = Date.now();
   simKeyRun = JSON.stringify(simParams());
-  const what = (withChanges ? `with ${ivs.length} change${ivs.length > 1 ? "s" : ""}` : "today's roads") + (simParams().hour != null ? `, ${pickLabel()}` : "");
+  const what = (withChanges ? `with ${ivs.length} change${ivs.length > 1 ? "s" : ""}` : "today's roads") + (simParams().hour != null ? `, ${pickLabel()}` : "") +
+    (simParams().weather ? `, ${wxName(simParams().weather).toLowerCase()} (what-if)` : "");
   $("status").textContent = `Simulating the corridor, ${what}${withChanges && !base ? " (and today's roads to compare)" : ""}…`;
   $("run-note").textContent = "";
   setRunning(true);
@@ -1125,7 +1304,7 @@ async function simulate(withChanges) {
     $("status").textContent = `Corridor, ${what}: simulated${r.sample ? " (sample data)" : ""}${took >= 3 ? ` in ${clock(took)}` : ""}, now playing`;
     const odd = r._fallback && withChanges && !(ivs.length === 1 && ivs[0].junction_id === "j07" && ivs[0].kind === "flyover");
     $("run-note").innerHTML = `Simulated window: ${esc(r.time?.label || "calibrated peak")} · traffic input: <b>${esc(r.inputs?.label || "–")}</b>${r.inputs?.counts_source && r.inputs.counts_source !== r.inputs?.label ? ` (${esc(r.inputs.counts_source)})` : ""}` +
-      (odd ? `<br><span class="mid">The sample always shows a flyover at 7 · Tolichowki, whatever you chose.</span>` : "");
+      wxResultLine(r) + (odd ? `<br><span class="mid">The sample always shows a flyover at 7 · Tolichowki, whatever you chose.</span>` : "");
     winPick = null; play(r);   // loads in the background; the panel stays usable
   } catch (e) {
     setRunning(false);
@@ -1178,9 +1357,9 @@ function renderJourney() {
 }
 const runHour = r => num(r?.time?.hour ?? r?.hour ?? r?.requested?.hour);
 const runDay = r => r?.time?.day ?? r?.day ?? r?.requested?.day ?? null;
-function simDay(r) {   // "Simulated typical July day", "Simulated Wed 8 Jul, 18:00–19:00"
-  const h = runHour(r), d = runDay(r), day = /^\d{4}-\d{2}-\d{2}$/.test(d || "") ? dayLabel(d) : "typical July day";
-  return `Simulated ${day}${h != null ? `, ${hourSpan(h)}` : ""}`;
+function simDay(r) {   // "Simulated typical July day", "Simulated Wed 8 Jul, 18:00–19:00", "Simulated typical July day, heavy rain"
+  const h = runHour(r), d = runDay(r), day = /^\d{4}-\d{2}-\d{2}$/.test(d || "") ? dayLabel(d) : "typical July day", w = runWeather(r);
+  return `Simulated ${day}${h != null ? `, ${hourSpan(h)}` : ""}${w ? `, ${wxName(w).toLowerCase()}` : ""}`;
 }
 // Why the simulated and measured rows differ in length: our simulated route is a little shorter than TomTom's. Numbers from the
 // result (journey.distance_m, journey.tomtom_total_s: TomTom's speeds over our route) and GET /corridor/calibration tomtom_basis_detail.
@@ -1216,7 +1395,8 @@ function renderDeltas() {
   const cls = dm < -0.05 ? "ok" : dm > 0.05 ? "bad" : "";
   const stale = changed._ivs && changed._ivs !== ivKey(interventions) ? `<div class="mid" style="font-size:12px">Your list of changes was edited after this run: simulate again to update.</div>` : "";
   $("deltas").innerHTML = `<div class="headline">Whole trip: <b>${Math.round(mins(b))} → ${Math.round(mins(c))} min, <span class="${cls}">${signed(dm)} min</span></b>${tagsFor(changed)}` +
-    ` <small>· with ${(changed.interventions || []).map(iv => `${ivText(iv).toLowerCase()} at ${short(point(iv.junction_id)?.name)}`).join("; ")}</small></div>` + stale +
+    ` <small>· with ${(changed.interventions || []).map(iv => `${ivText(iv).toLowerCase()} at ${short(point(iv.junction_id)?.name)}`).join("; ")}` +
+    `${runWeather(changed) ? `, both in ${esc(wxName(runWeather(changed)).toLowerCase())} (what-if)` : ""}</small></div>` + stale +
     `<div id="run-warn">${warnBox("Warnings for this run", changed.warnings || [])}</div>` +
     moved.map(x => `<span class="delta ${x.d > 0 ? "up" : "down"}" data-leg="${x.i}" title="${fmtMin(x.l.time_s - x.d)} → ${fmtMin(x.l.time_s)} min">` +
       `${short(x.l.from_name || point(x.l.from_id)?.name)} → ${short(x.l.to_name || point(x.l.to_id)?.name)} <b>${signed(mins(x.d))} min</b>` +
@@ -1710,7 +1890,7 @@ const winFrom = w => w.from_min != null ? Math.round(w.from_min) : Math.round(w.
 const winTo = w => w.from_min != null && w.minutes != null ? Math.round(w.from_min + w.minutes) : Math.round(w.to_s / 60);
 const frameNowS = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.t + tOffset : 0; };
 const winCache = {};   // "<run key>|<from minute>" -> the same run, recorded from that minute
-const runKey = r => `${ivKey(r.interventions || [])}|${volOf(r)}|${runDay(r) ?? ""}|${runHour(r) ?? ""}`;
+const runKey = r => `${ivKey(r.interventions || [])}|${volOf(r)}|${runDay(r) ?? ""}|${runHour(r) ?? ""}|${runWeather(r) ?? ""}`;
 let winBusy = false, winPick = null;
 function renderWindow() {
   const r = playingRun, w = fwin(r);
@@ -1737,7 +1917,7 @@ async function watchFrom(m) {
   $("win").disabled = true;
   let err = "";
   try {
-    const x = await post("/corridor/runs", { interventions: r.interventions || [], volume_scale: volOf(r), frames_from_min: m, frames_minutes: 5, ...(runHour(r) != null ? { day: runDay(r) || "july", hour: runHour(r) } : {}) });
+    const x = await post("/corridor/runs", { interventions: r.interventions || [], volume_scale: volOf(r), frames_from_min: m, frames_minutes: 5, ...runParams(r) });
     const xw = fwin(x);
     if (!xw || winFrom(xw) !== m) throw new Error("this API does not record another window yet");
     x._ivs = r._ivs; winCache[key] = x;

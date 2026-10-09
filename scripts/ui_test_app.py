@@ -7,8 +7,9 @@ Cases
      corridor's left panel still ends inside the window; links navigate
   B  Status pill: Real simulation (/health mock false), Mock (mock true), /health missing -> /config decides, API offline
   C  Home (mocked API): one-line pitch, corridor card (58 min, 22.4 km, 11 junctions, 12 coloured legs, REAL), live strip
-     (junctions reporting, stale ones flagged, update time, worst delay now with its road and junction, REAL), decisions
-     card (count, latest case and its stage), YMCA card, How it works in 3 steps, card links
+     (junctions reporting, stale ones flagged, update time, worst delay now with its road and junction, REAL; the weather
+     now from GET /weather/now, modelled, hidden on 503), decisions card (count, latest case and its stage), YMCA card,
+     How it works in 3 steps, card links
   D  Decisions (mocked): list newest first with stage, author, time; stage filters with counts (and #stage= links);
      case detail: stage tracker, verdict, timeline proposed -> in review -> decided with actor, time, decision, reason,
      re-test results; runs table (option in words, traffic level incl. the review's 120%, trip minutes, change vs today,
@@ -20,7 +21,8 @@ Cases
   F  About the data (mocked /corridor/calibration): sources REAL vs SIMULATED, live junction count, TomTom 58 min and the
      day range, per-stretch table (12 stretches + whole trip, sim vs TomTom, coloured difference), calibrated knobs with
      labels, junction delays, volumes with the "fewer vehicles than TomTom" note, inputs table with what is assumed,
-     glossary anchors; calibration 404 explained
+     glossary anchors; calibration 404 explained; rain hour by hour (GET /weather/factors): headline with 95% ranges,
+     12-stretch table with the 3 stretches slower beyond chance marked
   G  Real API on :8000 (skipped when it is not running): home, decisions and data page numbers match the API
   H  API offline: every page still loads; home falls back to the saved TomTom numbers; decisions and data say the API is
      not answering; pill says offline
@@ -50,6 +52,12 @@ TT_ROWS = list(csv.DictReader((ROOT / "data/raw/corridor_legs_tomtom.csv").open(
 TYPICAL = "2026-07-01..2026-07-31 6:00-23:00"
 CORS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS"}
 PAGES = [("home", "index.html"), ("corridor", "corridor.html"), ("ymca", "ymca.html"), ("decisions", "decisions.html"), ("data", "data.html")]
+sys.path.insert(0, str(ROOT / "backend"))
+from app import weather as WX  # noqa: E402  (GET /weather/factors answered by the endpoint's own code on the repo's files)
+WX_FACTORS = WX.weather_factors()
+WX_NOW = {"time": "2026-10-10T00:15", "rain_mm_per_hour": 0.0, "is_raining": False, "rain_class": "dry", "what_if": "dry", "temperature_c": 26.6,
+          "weather_code": 0, "is_day": True, "text": "Clear sky", "label": "modelled (Open-Meteo forecast), not a rain gauge",
+          "location": {"name": "Khajaguda X Roads (corridor midpoint by distance)"}, "cached": False, "age_s": 0}
 errors, results = [], []
 case = ""
 
@@ -162,8 +170,8 @@ INIT_JS = "window.print = () => { window.__printed = (window.__printed || 0) + 1
 class Backend:
     """The API answered in the browser. health: 'real' | 'mock' | 'none' (404 -> /config decides); offline aborts every call."""
 
-    def __init__(self, health="real", offline=False, calibration=True):
-        self.health, self.offline, self.calibration, self.calls = health, offline, calibration, []
+    def __init__(self, health="real", offline=False, calibration=True, wx_now=WX_NOW):
+        self.health, self.offline, self.calibration, self.calls, self.wx_now = health, offline, calibration, [], wx_now
 
     def reply(self, route, status=200, body=None):
         if body is None:
@@ -195,6 +203,10 @@ class Backend:
             return self.reply(route, body=CASES[cid]) if cid in CASES else self.reply(route, 404)
         if path.startswith("/briefs/"):
             return self.reply(route, body=BRIEF) if path.endswith("/b_1") else self.reply(route, 404)
+        if path == "/weather/now":   # 503 when Open-Meteo cannot be reached
+            return self.reply(route, body=self.wx_now) if self.wx_now else self.reply(route, 503, {"detail": "current weather unavailable (test)"})
+        if path == "/weather/factors":
+            return self.reply(route, body=WX_FACTORS)
         return self.reply(route, 404)
 
 
@@ -296,7 +308,14 @@ with sync_playwright() as p:
     check(pg.inner_text("#d-count") == "3" and "Signal retime at Tolichowki" in pg.inner_text("#d-line") and pg.inner_text("#d-stage") == "In review", f"decisions card: {pg.inner_text('#d-line')[:90]!r}")
     check(pg.eval_on_selector_all(".steps li h3", "els => els.map(e => e.textContent)") == ["Predict", "Mitigate first", "Build what was tested, on the record"], "How it works: 3 steps")
     check(pg.get_attribute("footer a", "href") == "data.html", "footer links About the data")
+    wx = pg.inner_text("#wx-now") if pg.is_visible("#wx-now") else ""
+    check("Weather now: Clear sky · 27°C" in wx and "modelled" in wx and "not a rain gauge" in (pg.get_attribute("#wx-now", "title") or "") and pg.locator("#wx-now svg").count() == 1,
+          f"weather now in the live strip (GET /weather/now), modelled: {wx!r}")
     pg.screenshot(path=str(OUT / "app_C_home.png"), full_page=True)
+    pg.close()
+    pg = open_page(b, "index.html", Backend(wx_now=None))
+    wait_for(pg, "() => document.getElementById('lv-worst')")
+    check(pg.is_hidden("#wx-now") and "Weather" not in pg.inner_text("#live"), "GET /weather/now 503: no weather chip")
     pg.close()
 
     # ---------------- D: decisions, mocked ----------------
@@ -385,8 +404,18 @@ with sync_playwright() as p:
     check(labs == ["counted", "measured", "estimated", "calibrated", "assumed"], f"input labels explained: {labs}")
     check(pg.inner_text("#ts-key").startswith("58 min") and "49 min (Sun 5 Jul" in pg.inner_text("#ts-range") and "65 min (Wed 8 Jul" in pg.inner_text("#ts-range"), f"Traffic Stats: {pg.inner_text('#ts-key')[:40]} / {pg.inner_text('#ts-range')[:110]}")
     check(pg.inner_text("#ja-key").startswith("3") and pg.locator("#ja-chips span").count() == 3 and pg.locator("#ja-chips span.old").count() == 1 and "17:17" in pg.inner_text("#ja-note"), f"Junction Analytics live: {pg.inner_text('#ja-key')}")
-    for sid, words in (("src-osm", "OpenStreetMap"), ("src-buildings", "assumed"), ("src-rain", "5%"), ("src-rain", "uncertain")):
+    for sid, words in (("src-osm", "OpenStreetMap"), ("src-buildings", "assumed"), ("src-rain", "low to moderate"), ("src-rain", "same day")):
         check(words in pg.inner_text(f"#{sid}"), f"{sid}: mentions {words!r}")
+    check(wait_for(pg, "() => document.getElementById('rain-legs-table')"), "rain: per-stretch table from GET /weather/factors")
+    h = WX_FACTORS["headline"]
+    heads = pg.inner_text("#rain-heads")
+    check(pg.inner_text("#rain-any").startswith(f"+{h['any_rain']['pct']}%") and f"95% range +{h['any_rain']['ci95_pct'][0]}% to +{h['any_rain']['ci95_pct'][1]}%" in heads
+          and f"+{h['sustained']['moderate']['pct']}%" in heads and "only 34 such hours" in heads and "low to moderate" in heads, f"rain headline, hour by hour, with ranges: {heads[:160]!r}")
+    rows = pg.eval_on_selector_all("#rain-legs-table tr[data-leg]", "els => els.map(e => [e.dataset.leg, e.className, e.cells[0].textContent])")
+    clear = [r[0] for r in rows if r[1] == "clear"]
+    check(len(rows) == 12 and clear == ["j01-j02", "j03-j04", "j05-j06"] and rows[1][2] == "Nallagandla Rd jn → ISB Rd / DLF jn",
+          f"12 stretches, the 3 slower in light rain beyond chance marked: {clear}")
+    check("21% slower" not in pg.inner_text("#src-rain") and "≈ +5%" not in pg.inner_text("#src-rain"), "the old daily '+5%' first look is gone from the card")
     legs = pg.eval_on_selector_all("#legs-table tr[data-leg]", "els => els.map(e => [...e.cells].slice(0, 4).map(c => c.textContent))")
     check(len(legs) == 12 and legs[0][0] == "Lingampally → Nallagandla Rd jn" and legs[-1][0] == "Masab Tank → Lakdikapul", f"12 stretches named A -> B: {legs[0][0]} … {legs[-1][0]}")
     check(legs[2][3] == "−14%" and pg.eval_on_selector("#legs-table tr[data-leg='j02->j03'] td:nth-child(4)", "e => e.classList.contains('fair')"), f"difference coloured: {legs[2]}")

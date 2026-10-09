@@ -37,29 +37,33 @@ window.planner = (() => {
     return (runCache[id] = r);
   }
   const vol = r => Number(r?.inputs?.volume_scale ?? 1);
+  const cond = r => JSON.stringify([vol(r), runParams(r)]);   // same traffic, hour and weather: runs that can be compared
   async function loadRun(id, siblings = []) {
     const r = JSON.parse(JSON.stringify(await fetchRun(id)));
     const ivs = r.interventions || [];
     let baseNote = "";
-    if (!ivs.length) { base = r; if (changed && vol(changed) !== vol(r)) changed = null; }
+    if (!ivs.length) { base = r; if (changed && cond(changed) !== cond(r)) changed = null; }
     else {
       interventions = JSON.parse(JSON.stringify(ivs)); sortIvs();
       setMergeNote(ivs.some(coversBoth) ? MERGE_NOTE : "");
       r._ivs = ivKey(interventions); changed = r;
-      if (!base || vol(base) !== vol(r) || base._fallback) {   // a baseline to compare with: one the agent ran at the same traffic, else simulate today
+      if (!base || cond(base) !== cond(r) || base._fallback) {   // a baseline to compare with: one the agent ran at the same traffic (hour, weather), else simulate today
         let b = null;
         for (const s of siblings.filter(s => s !== id)) {
-          try { const x = await fetchRun(s); if (!(x.interventions || []).length && vol(x) === vol(r)) { b = JSON.parse(JSON.stringify(x)); break; } } catch (e) { /* skip */ }
+          try { const x = await fetchRun(s); if (!(x.interventions || []).length && cond(x) === cond(r)) { b = JSON.parse(JSON.stringify(x)); break; } } catch (e) { /* skip */ }
         }
-        if (!b && vol(r) === 1) { try { const x = await corridorRun([]); if (!x._fallback) b = x; } catch (e) { /* compare without a baseline */ } }
+        if (!b && vol(r) === 1) {   // today's roads at the run's own hour and weather (the page's choice when they match, with its sample fallback)
+          const own = runParams(r), same = JSON.stringify(own) === JSON.stringify(simParams());
+          try { const x = same ? await corridorRun([]) : await post("/corridor/runs", { interventions: [], volume_scale: 1.0, ...own }); if (!x._fallback) b = x; } catch (e) { /* compare without a baseline */ }
+        }
         if (b) base = b; else { base = null; baseNote = " (no run of today's roads at the same traffic to compare with)"; }
       }
     }
     showSource(); ivsChanged(); renderJunctions(); renderWatch(); render();
     const what = ivs.length ? `with ${ivs.map(iv => `${ivText(iv).toLowerCase()} at ${short(point(iv.junction_id)?.name || iv.junction_id)}`).join("; ")}` : "today's roads";
-    $("status").textContent = `Showing the assistant's run ${r.run_id}: ${what}`;
+    $("status").textContent = `Showing the assistant's run ${r.run_id}: ${what}${runHour(r) != null || runWeather(r) ? ` (${simDay(r).replace(/^Simulated /, "")})` : ""}`;
     $("run-note").innerHTML = `Loaded from the assistant: run <code>${esc(r.run_id)}</code>${vol(r) !== 1 ? ` at <b>${pct(vol(r))}</b> traffic` : ""}${esc(baseNote)} · ` +
-      `traffic input: <b>${esc(r.inputs?.label || "–")}</b> (${esc(r.inputs?.counts_source || "–")})`;
+      `traffic input: <b>${esc(r.inputs?.label || "–")}</b> (${esc(r.inputs?.counts_source || "–")})` + wxResultLine(r);
     play(r);
     return r;
   }

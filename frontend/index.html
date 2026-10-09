@@ -6,7 +6,7 @@
 <title>Terascope AI · Test it in a twin</title>
 <!-- Owner: Frontend. Home page: what Terascope AI is, the corridor and YMCA screens, the decision log and a live TomTom strip.
      Reads (all optional, the page degrades to saved numbers when the API is offline): GET /corridor (tomtom.periods, points),
-     GET /corridor/junctions/live, GET /corridor/cases. -->
+     GET /corridor/junctions/live, GET /corridor/cases, GET /weather/now (weather at the corridor's midpoint; hidden when it fails). -->
 <link href="app.css" rel="stylesheet" />
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400..800&display=swap" rel="stylesheet" />
 <style>
@@ -48,6 +48,8 @@
   @keyframes pulse { 50% { box-shadow: 0 0 0 6px oklch(0.714 0.143 255 / 0); } }
   #live .lv-item b { font-weight: 700; color: var(--tx); }
   #live .lv-item b.bad { color: var(--bad); } #live .lv-item b.mid { color: var(--warn); }
+  #wx-now { display: inline-flex; align-items: center; gap: 7px; } #wx-now svg.lucide { color: var(--tx-2); } #wx-now.wet svg.lucide { color: var(--real); }
+  #wx-now .wx-src { font-size: 11px; color: var(--tx-3); }
   /* cards */
   .grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
   .side { display: grid; gap: 16px; align-content: start; }
@@ -118,6 +120,7 @@
   <div id="live" class="card" aria-live="polite">
     <span class="lv-h"><span class="dot off" id="live-dot"></span>Live at corridor junctions <span class="tag real">REAL</span></span>
     <span id="live-body" class="muted">Loading TomTom live data…</span>
+    <span id="wx-now" class="lv-item" hidden></span>
     <a id="live-map" href="corridor.html#mode=live">See it on the map →</a>
   </div>
 
@@ -272,10 +275,26 @@ async function loadCases() {
     $("d-line").innerHTML = `<span class="muted">${esc(apiProblem(e, "Decision records"))}</span>`;
   }
 }
-function loadAll() { loadCorridor(); loadLive(); loadCases(); }
+// Weather now at the corridor's midpoint (GET /weather/now: Open-Meteo forecast, modelled, cached 10 min by the API; 503 when
+// Open-Meteo cannot be reached): "Clear sky · 27°C" or "Light rain 0.8 mm/h · 24°C". Hidden when there is no answer.
+async function loadWeather() {
+  let w = null;
+  try { w = await get("/weather/now"); } catch (e) { w = null; }
+  const el = $("wx-now");
+  el.hidden = !w || (!w.text && w.temperature_c == null);
+  if (el.hidden) { el.innerHTML = ""; return; }
+  const wet = !!w.is_raining, icon = wet ? "cloud-rain" : w.weather_code != null && w.weather_code <= 1 ? (w.is_day === false ? "moon" : "sun") : "cloud";
+  el.classList.toggle("wet", wet);
+  el.innerHTML = `<i data-lucide="${icon}"></i><span>Weather now: <b>${esc(w.text || "–")}${wet && w.rain_mm_per_hour != null ? ` ${Number(w.rain_mm_per_hour).toFixed(1)} mm/h` : ""}</b>` +
+    `${w.temperature_c != null ? ` · ${Math.round(w.temperature_c)}°C` : ""}</span><span class="wx-src">modelled</span>`;
+  el.title = `${w.label || "modelled (Open-Meteo forecast), not a rain gauge"}${w.location?.name ? `, at ${w.location.name}` : ""}`;
+  if (window.lucide) lucide.createIcons();
+}
+function loadAll() { loadCorridor(); loadLive(); loadCases(); loadWeather(); }
 if (window.lucide) lucide.createIcons();
 loadAll();
 setInterval(() => { loadLive(); loadCases(); }, window.HOME_REFRESH_MS || 60000);
+setInterval(loadWeather, window.HOME_WX_MS || 600000);
 if (window.crNav) { let was = null; crNav.onChange(s => { if (was === "offline" && s !== "offline") loadAll(); was = s; }); }   // API came back: refresh
 </script>
 </body>
