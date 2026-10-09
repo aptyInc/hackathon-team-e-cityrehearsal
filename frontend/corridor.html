@@ -115,6 +115,10 @@
   #follow-card b { font-size: 13px; }
   #follow-pick { max-width: 100%; flex: 1 1 140px; min-width: 0; }
   #ride-note { display: block; }
+  #hour-spark { margin: 4px 0 2px; } #hour-spark svg { width: 100%; height: 40px; display: block; }
+  #hour-spark rect { fill: #c9c1b2; } #hour-spark rect.day { fill: #8f9aa3; } #hour-spark rect.on { fill: var(--accent); }
+  #hour-spark rect.pick { cursor: pointer; } #hour-spark rect.pick:hover { fill: var(--blue); }
+  #hour-spark .cap { font-size: 11px; color: var(--muted); }
   /* Ask CityRehearsal (planner.js) */
   #ask-open { position: absolute; top: calc(var(--nav-h, 0px) + 12px); right: 276px; z-index: 4; box-shadow: 0 2px 10px rgba(0,0,0,.25); font-weight: 600; }
   body.chat-open #ask-open { right: 434px; }
@@ -209,7 +213,7 @@
 <div id="left" class="panel">
   <h1>CityRehearsal · Lingampally → Lakdikapul</h1>
   <small>22.4 km commute through 11 junctions · <a href="ymca.html">YMCA Circle close-up</a></small><br>
-  <small id="status">API: checking…</small>
+  <small id="status" class="july-only">API: checking…</small><small id="status-live" class="live-only">API: checking…</small>
   <div id="src" class="july-only"></div>
 
   <div id="live-box" class="live-only">
@@ -237,6 +241,7 @@
   <div class="row"><select id="when" style="max-width:100%;flex:1 1 190px;min-width:0" title="The day: TomTom's July average, or one day"></select>
     <label class="muted" id="hour-box" title="hourly TomTom data arriving tonight">Hour <select id="hour" disabled></select></label></div>
   <small id="hour-note" class="mid" style="display:block"></small>
+  <div id="hour-spark" hidden></div>
   <small id="when-note" class="muted"></small>
   <div id="live-link" class="note" hidden></div>
 
@@ -369,8 +374,8 @@
 <script>
 const API = "http://localhost:8000";
 const $ = id => document.getElementById(id);
-window.onerror = (msg, src, line) => { const s = $("status"); if (s) s.innerHTML = `<span class="bad">Page error: ${String(msg).slice(0, 160)} (line ${line})</span>`; };
-window.onunhandledrejection = e => { const s = $("status"); if (s) s.innerHTML = `<span class="bad">Error: ${String(e.reason && e.reason.message || e.reason).slice(0, 160)}</span>`; };
+window.onerror = (msg, src, line) => ["status", "status-live"].forEach(id => { const s = $(id); if (s) s.innerHTML = `<span class="bad">Page error: ${String(msg).slice(0, 160)} (line ${line})</span>`; });
+window.onunhandledrejection = e => ["status", "status-live"].forEach(id => { const s = $(id); if (s) s.innerHTML = `<span class="bad">Error: ${String(e.reason && e.reason.message || e.reason).slice(0, 160)}</span>`; });
 if (typeof maplibregl === "undefined" || typeof deck === "undefined") $("status").innerHTML = '<span class="bad">Map libraries failed to load (frontend/vendor). Reload the page.</span>';
 const COLORS = { two_wheeler: [232,116,59], car: [47,111,159], auto: [240,200,40], bus: [40,160,90], truck: [120,120,120] };
 const SIZE = { two_wheeler: [1.9, 0.75, 1.2], car: [4.3, 1.75, 1.5], auto: [2.7, 1.4, 1.7], bus: [11, 2.5, 3.2], truck: [8, 2.4, 3] };
@@ -527,10 +532,12 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "
 async function init() {
   try { cfg = await get("/config"); apiUp = true; $("status").textContent = `API: ok${cfg.mock ? " (mock mode)" : " (real SUMO runs)"}`; }
   catch (e) { $("status").textContent = "API not running (run `make dev`): the page uses sample data."; }
+  $("status-live").textContent = apiUp ? "API: ok · live data from TomTom through the API" : "API not running (run `make dev`): live TomTom data comes through the API.";
   try { corridor = await get("/corridor"); if (!Array.isArray(corridor?.points) || corridor.points.length < 2) throw 0; } catch (e) { corridor = CORRIDOR_EMBED; }
   points = corridor.points;
   legPaths = cutRoute(corridor.route);
   await loadTomTom(corridor.legs || corridor.tomtom?.periods || corridor.tomtom);
+  addHourly(corridor.tomtom?.hourly);
   if (apiUp) { try { calib = await get("/corridor/calibration"); } catch (e) { calib = null; } }
   fillWhen(); fillJunctions(); fillParams(); fillHours(); renderIvs(); renderJourney(); renderJunctions();
 
@@ -543,6 +550,16 @@ async function init() {
   map.on("style.load", addTrafficLayer);
   map.on("moveend", () => { buildingsInView(); if (!playing) render(); });   // vehicles and buildings are drawn for what is in view
   map.on("dragstart", () => { if (following || ride) { stopRide(); setFollow(false); } });
+  map.on("click", e => {   // click any vehicle to follow it: the one drawn nearest the click (the interleaved overlay passes no clicks to layers)
+    if (mode !== "july" || !frames.length || ride || !$("t-vehicles").checked) return;
+    const vp = overlay._deck?.getViewports?.()[0], at = v => vp ? vp.project([v.lon, v.lat, (v.z || 0) + 0.8]) : [map.project([v.lon, v.lat]).x, map.project([v.lon, v.lat]).y];
+    let best = null;
+    for (const v of currentVehicles(map.getZoom() >= 14 ? inView() : null)) {
+      const [x, y] = at(v), d = Math.hypot(x - e.point.x, y - e.point.y);
+      if (d < 14 && (!best || d < best.d)) best = { v, d };
+    }
+    if (best) startFollow(best.v.id);
+  });
   if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; $("t-night").parentElement.title = "Needs the TomTom map key"; }
   $("traffic-note").textContent = hasKey ? "TomTom's live speeds on every road: green flowing, orange slow, red queuing." : "The TomTom live traffic layer needs the TomTom map key (TOMTOM_MAPS_KEY in .env).";
   bldNote();
@@ -644,6 +661,26 @@ async function loadTomTom(apiLegs) {
   typical = tomtom[TYPICAL] ? TYPICAL : Object.keys(tomtom).find(isMultiDay) || Object.keys(tomtom)[0];
 }
 
+// GET /corridor tomtom.hourly: {legs: [{from_id, to_id, distance_m}], days: [{day: "july" | "2026-07-08", label}], hours,
+// by_day: {day: {"18": {total_s, legs_s: [12]}}}} becomes one period per day and hour ("2026-07-08..2026-07-08 18:00-19:00",
+// July: "2026-07-01..2026-07-31 18:00-19:00"), the same keys the CSV uses, so the measured row reads them like any period.
+let hourlyDays = {};   // day key "2026-07-08..2026-07-08" -> label from the API
+function addHourly(h) {
+  if (!h || !h.by_day || !Array.isArray(h.legs)) return;
+  const july = Object.keys(tomtom).find(isMultiDay) || TYPICAL, jm = PERIOD_RE.exec(july);
+  const range = d => d === "july" ? `${jm[1]}..${jm[2]}` : `${d}..${d}`;
+  for (const x of h.days || []) if (x && x.day) hourlyDays[range(x.day)] = x.label;
+  for (const [d, hours] of Object.entries(h.by_day)) {
+    if (d !== "july" && !/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
+    for (const [hr, v] of Object.entries(hours || {})) {
+      const n = Number(hr); if (!(n >= 0 && n < 24) || !Array.isArray(v?.legs_s) || v.legs_s.length !== h.legs.length) continue;
+      const legs = h.legs.map((l, k) => ({ from_id: l.from_id, to_id: l.to_id, from_name: point(l.from_id)?.name, to_name: point(l.to_id)?.name,
+        distance_m: +l.distance_m, time_s: +v.legs_s[k], speed_kmh: l.distance_m / v.legs_s[k] * 3.6 }));
+      if (legs.every(l => l.time_s > 0 && l.distance_m > 0)) tomtom[`${range(d)} ${String(n).padStart(2, "0")}:00-${String(n + 1).padStart(2, "0")}:00`] = legs;
+    }
+  }
+}
+
 // ---------- real route line (GET /corridor `route`) ----------
 // Accepts a LineString, MultiLineString, Feature, FeatureCollection, a list of these, or {ab: ..., ba: ...}. The A -> B line is
 // the one that starts nearest A and ends nearest B (a line running B -> A is reversed if it is the only one).
@@ -707,25 +744,49 @@ function cutRoute(route) {   // {"from|to": path} for each consecutive pair of c
 }
 
 // ---------- 1 · when ----------
-function fillWhen() {   // days only: the hourly periods are picked with the hour
-  const ps = Object.keys(tomtom).filter(p => !isHourly(p)).sort((a, b) => (a === typical ? -1 : b === typical ? 1 : a.localeCompare(b)));
-  $("when").innerHTML = ps.map(p => `<option value="${esc(p)}">${esc(periodLabel(p))} · ${Math.round(mins(sumT(tomtom[p])))} min</option>`).join("");
+const dayRange = p => { const m = PERIOD_RE.exec(p || ""); return m ? `${m[1]}..${m[2]}` : p; };
+function fillWhen() {   // days only (the all-day periods, plus days TomTom has in one-hour slots only); the hour is picked next to it
+  const all = Object.keys(tomtom).filter(p => !isHourly(p)), have = new Set(all.map(dayRange));
+  const extra = [...new Set([...Object.keys(hourlyDays), ...Object.keys(tomtom).filter(isHourly).map(dayRange)])].filter(d => !have.has(d) && !(isMultiDay(d) && all.some(isMultiDay)));
+  const ps = [...all, ...extra].sort((a, b) => (a === typical ? -1 : b === typical ? 1 : a.localeCompare(b)));
+  $("when").innerHTML = ps.map(p => `<option value="${esc(p)}">${esc(periodLabel(p))} · ${tomtom[p] ? `${Math.round(mins(sumT(tomtom[p])))} min` : "by the hour"}</option>`).join("");
   $("when").value = typical;
   updateWhenNote();
 }
 function updateWhenNote() {
-  const daily = Object.keys(tomtom).filter(p => p !== typical && PERIOD_RE.test(p) && !isMultiDay(p));
+  const daily = Object.keys(tomtom).filter(p => p !== typical && PERIOD_RE.test(p) && !isMultiDay(p) && !isHourly(p));
   const dow = p => new Date(p.slice(0, 10) + "T12:00:00+05:30").getUTCDay();
   const sun = daily.filter(p => dow(p) === 0), wk = daily.filter(p => dow(p) > 0 && dow(p) < 6);
   const avg = ps => ps.length ? Math.round(ps.reduce((s, p) => s + mins(sumT(tomtom[p])), 0) / ps.length) : "–";
   const p = $("when").value, tot = Math.round(mins(sumT(tomtom[p] || []))), h = hoursOf(p).replace(/(\d+)/g, "$1:00");
+  renderSpark();
   const when = !PERIOD_RE.test(p) ? `for ${esc(p)}` : isMultiDay(p) ? `on an average ${typicalName(p).replace("typical ", "")}${h ? ", " + h : ""}` : `on ${dayLabel(p.slice(0, 10))}${h ? ", averaged " + h : ""}`;
-  $("when-note").innerHTML = `TomTom measured the whole trip at <b>${tot} min</b> ${when}. ` +
+  $("when-note").innerHTML = (tomtom[p] ? `TomTom measured the whole trip at <b>${tot} min</b> ${when}. ` : `TomTom has ${esc(periodShort(p))} in one-hour slots: pick an hour. `) +
     (daily.length ? `Weekdays ≈ ${avg(wk)} min, Sundays (${sun.map(x => Number(x.slice(8, 10))).join(" and ")} ${MON[Number((sun[0] || p).slice(5, 7)) - 1] || ""}) ≈ ${avg(sun)} min. ` : "") +
     (pickHour != null ? (measured() ? `<br>${esc(pickLabel())}: TomTom measured <b>${Math.round(mins(sumT(tomtom[measured()])))} min</b>.` :
       `<br><span class="mid">No hourly TomTom data for ${esc(pickLabel())} yet.</span>`) : "") +
     (hourOk ? `<br><b>The day and hour set both the measured (TomTom) row and the simulation.</b>` :
       `<br><b>Changes the measured (TomTom) row only; the simulation is the typical July day.</b>`);
+}
+function hourProfile() {   // [{h, min}] for the chosen day, from its hourly periods
+  const d = dayRange($("when").value), out = [];
+  for (const [p, legs] of Object.entries(tomtom)) {
+    if (!isHourly(p) || dayRange(p) !== d) continue;
+    out.push({ h: Number(PERIOD_RE.exec(p)[3]), min: mins(sumT(legs)) });
+  }
+  return out.sort((a, b) => a.h - b.h);
+}
+function renderSpark() {
+  const prof = hourProfile(), el = $("hour-spark");
+  el.hidden = prof.length < 2;
+  if (el.hidden) { el.innerHTML = ""; return; }
+  const max = Math.max(...prof.map(x => x.min)), lo = prof.reduce((a, b) => (b.min < a.min ? b : a)), hi = prof.reduce((a, b) => (b.min > a.min ? b : a));
+  const bars = prof.map(x => { const ht = Math.max(2, x.min / max * 30), ok = x.h >= 6 && x.h <= 22;
+    return `<rect data-h="${x.h}" class="${x.h === pickHour ? "on" : ok ? "day pick" : ""}" x="${x.h * 10 + 1}" y="${32 - ht}" width="8" height="${ht}"><title>${hourSpan(x.h)}: ${x.min.toFixed(1)} min (TomTom)</title></rect>`; }).join("");
+  el.innerHTML = `<svg viewBox="0 0 240 40" preserveAspectRatio="none" role="img" aria-label="Trip minutes by hour">${bars}` +
+    [0, 6, 12, 18, 23].map(h => `<text x="${h * 10 + 5}" y="40" font-size="7" text-anchor="middle" fill="#5b6670">${h}</text>`).join("") + `</svg>` +
+    `<div class="cap">Trip by hour, ${esc(periodShort($("when").value))} <span class="tag real">REAL</span>: ${Math.round(lo.min)} min at ${hh(lo.h)}, ${Math.round(hi.min)} min at ${hh(hi.h)}. Click an hour to pick it.</div>`;
+  el.querySelectorAll("rect.pick, rect.on").forEach(r => r.onclick = () => { if ($("hour").disabled) return; $("hour").value = r.dataset.h; $("hour").onchange(); });
 }
 let simKeyRun = "{}", rerunTimer = null;   // the day and hour the shown simulation was asked for
 function pickChanged() {   // the measured row follows at once; the simulation follows too (run again) once the API simulates hours
@@ -1407,11 +1468,18 @@ function camera(v) {
   followBearing += da * 0.08;
   map.jumpTo({ center: [v.lon, v.lat], zoom: Math.max(map.getZoom(), 16.5), pitch: 60, bearing: followBearing });
 }
+let followLast = null;   // the followed vehicle's last position, to hand over when it leaves the recorded frames
+function handOver(last) {   // the model runs the corridor in sections, each with its own vehicles: carry on with the nearest one like it
+  const probe = isProbe(last.id), d = q => metres([q.lon, q.lat], [last.lon, last.lat]);
+  const near = currentVehicles().filter(x => x.id !== last.id && (probe ? isProbe(x.id) : x.type === last.type) && d(x) < (probe ? 400 : 80)).sort((a, b) => d(a) - d(b))[0];
+  return near || (probe ? probes()[0] : null);
+}
 function followTick() {
   if (!following || ride) return;
   let v = vehicleAt(following);
-  if (!v && isProbe(following)) { const p = probes()[0]; if (p) { following = p.id; v = p; followUI(); } }   // that test car finished: the next one
-  if (!v) { $("playinfo").textContent = "That vehicle left the recorded stretch (or the recorded minutes): pick another one."; following = null; followUI(); return; }
+  if (!v && followLast && followLast.id === following) { const n = handOver(followLast); if (n) { following = n.id; v = n; followUI(); } }
+  if (!v) { $("playinfo").textContent = "That vehicle left the recorded stretch (or the recorded minutes): pick another one."; following = null; followLast = null; followUI(); return; }
+  followLast = v;
   camera(v);
   $("follow-card").innerHTML = carCard(v, frameNowS());
   $("playinfo").textContent = `Following ${carName(v.id, v.type)}`;
@@ -1699,12 +1767,11 @@ function render() {
       getFillColor: v => v.id === hl ? FOLLOW_RGB : COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
       updateTriggers: { getPolygon: pos, getFillColor: hl }, pickable: true,
       onHover: ({ object }) => { if (!following && !ride) $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h · click to follow it` : ""; },
-      onClick: ({ object }) => { if (object) startFollow(object.id); },
     }));
     else layers.push(new deck.ScatterplotLayer({   // whole-corridor view: a dot per vehicle, too small for boxes
       id: "vehicle-dots", data: currentVehicles(keep), radiusUnits: "pixels", getRadius: v => v.id === hl ? 6 : 2, getPosition: v => [v.lon, v.lat, v.z || 0],
       getFillColor: v => v.id === hl ? [...FOLLOW_RGB, 255] : [...(COLORS[v.type] || [0, 0, 0]), 220], updateTriggers: { getPosition: pos, getRadius: hl, getFillColor: hl },
-      pickable: true, onClick: ({ object }) => { if (object) startFollow(object.id); },
+      pickable: true,
     }));
   }
   if (fc) {   // the followed car: a short trail, a halo, and (riding) the car itself

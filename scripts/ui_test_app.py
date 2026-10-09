@@ -15,7 +15,8 @@ Cases
      SAMPLE DATA tag); evidence fingerprints short with the full SHA-256 on hover; chain explanation and link check
      (intact and broken); brief rendered as markdown with HTML escaped; Print brief; Open in corridor link; back to list;
      unknown case and missing brief say so
-  E  Corridor deep link: corridor.html#case=<id> opens that case in step 4
+  E  Corridor deep link: corridor.html#case=<id> opens that case in step 4 (July typical day mode); corridor.html#mode=live
+     (the home page's "See it on the map") opens Live now
   F  About the data (mocked /corridor/calibration): sources REAL vs SIMULATED, live junction count, TomTom 58 min and the
      day range, per-stretch table (12 stretches + whole trip, sim vs TomTom, coloured difference), calibrated knobs with
      labels, junction delays, volumes with the "fewer vehicles than TomTom" note, inputs table with what is assumed,
@@ -286,6 +287,7 @@ with sync_playwright() as p:
     check(pg.eval_on_selector_all("#c-legs span", "els => els.length") == 12 and "REAL" in pg.inner_text("#card-corridor") and "Typical July day" in pg.inner_text("#c-src"),
           "12 coloured legs, REAL, labelled from the API")
     check(pg.get_attribute("#card-corridor", "href") == "corridor.html" and pg.get_attribute("#card-ymca", "href") == "ymca.html" and pg.get_attribute("#card-decisions", "href") == "decisions.html", "card links")
+    check(pg.get_attribute("#live-map", "href") == "corridor.html#mode=live" and pg.is_visible("#live-map"), "live strip links to the corridor's Live now")
     lv = pg.inner_text("#live")
     check("REAL" in lv and "3 TomTom junctions reporting" in lv and "1 not updated for 15+ min" in lv and "updated 17:17" in lv, f"live strip: {lv[:140]!r}")
     check("178 s" in pg.inner_text("#lv-worst") and "Mandela Gudem Road North Bound at Rethibowli jn" in pg.inner_text("#lv-worst") and "usually 131 s" in pg.inner_text("#lv-worst"),
@@ -368,6 +370,10 @@ with sync_playwright() as p:
     pg = open_page(b, "corridor.html", Backend(), hash_="#case=c_3", wait=2500)
     check(wait_for(pg, "() => !document.getElementById('case').hidden && /Flyover at Tolichowki/.test(document.querySelector('#case .case-hd').innerText)"), "corridor.html#case=c_3 opens the case in step 4")
     check(pg.inner_text("#case .stages li.now") == "Decided" and pg.locator("#case .tl li").count() == 3, "with its stage and record")
+    check(pg.get_attribute("#mode-july", "aria-selected") == "true" and pg.is_visible("#dec"), "a case link opens in July typical day (where decisions are)")
+    pg.close()
+    pg = open_page(b, "corridor.html", Backend(), hash_="#mode=live", wait=2500)
+    check(pg.get_attribute("#mode-live", "aria-selected") == "true" and pg.is_visible("#live-box") and pg.is_hidden("#journey"), "corridor.html#mode=live opens Live now")
     pg.close()
 
     # ---------------- F: about the data, mocked ----------------

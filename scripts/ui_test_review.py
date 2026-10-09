@@ -297,8 +297,8 @@ with sync_playwright() as p:
     names = pg.eval_on_selector_all("#strips .strip[data-strip] .name", "els => els.map(e => e.textContent)")
     check(names[0].startswith("Simulated typical July day, roads as they are") and names[2].startswith("Simulated typical July day, with your changes"),
           f"trip rows say what is simulated: {names}")
-    check(be.hour_probes == 1 and pg.is_disabled("#hour") and pg.get_attribute("#hour-box", "title") == "hourly TomTom data arriving tonight",
-          f"hour picker asked the API once (422 now): disabled, 'hourly TomTom data arriving tonight' ({be.hour_probes} probe)")
+    check(be.hour_probes == 1 and pg.get_attribute("#hour-box", "title") in ("hourly TomTom data arriving tonight", "The hour sets the measured (TomTom) row; the simulation is still the typical July day"),
+          f"hour picker asked the API once (422 now): the simulation stays the typical July day ({be.hour_probes} probe; {pg.get_attribute('#hour-box', 'title')})")
     check(pg.eval_on_selector("#jt tr[data-id=j07]", "e => e.classList.contains('has')") and "85 → 120 s" in pg.inner_text("#jt tr[data-id=j08]"), "junction table before → after")
     check(pg.eval_on_selector("#chat-log .show-run[data-run=r_agent_fly]", "e => e.classList.contains('on')"), "button marks what is shown")
     pg.click("#chat-log .show-run[data-run=r_agent_retime]"); pg.wait_for_timeout(600)
