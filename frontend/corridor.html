@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CityRehearsal — Corridor</title>
+<!-- Owner: Frontend and 3D workstream. Corridor view, Lingampally to Lakdikapul.
+     Talks to the backend over C4 (contracts/api.md, corridor section): GET /corridor, POST /corridor/runs -> C5 result,
+     WS /stream/{run_id} -> C1 frames, GET /runs/{run_id}/roads. TomTom measured leg times from data/raw/corridor_legs_tomtom.csv. -->
+<link href="vendor/maplibre-gl.css" rel="stylesheet" />
+<script src="vendor/maplibre-gl.js"></script>
+<script src="vendor/deck.gl.min.js"></script>
+<style>
+  :root { --ink: #16202a; --paper: rgba(255,253,248,.96); --accent: #c4561c; --blue: #2f6f9f; --muted: #5b6670; }
+  body { margin: 0; font-family: Inter, system-ui, sans-serif; color: var(--ink); background: #e8e4dc; }
+  #map { position: absolute; inset: 0; }
+  .panel { position: absolute; background: var(--paper); border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 14px rgba(0,0,0,.18); font-size: 13px; box-sizing: border-box; }
+  #left { top: 12px; left: 12px; width: 380px; max-height: calc(100vh - 24px); overflow: auto; }
+  #right { top: 12px; right: 12px; width: 250px; max-height: calc(100vh - 300px); overflow: auto; }
+  #journey { left: 404px; right: 12px; bottom: 12px; max-height: 46vh; overflow: auto; padding: 12px 16px; }
+  h1 { font-size: 17px; margin: 0 0 2px; } h2 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  button { padding: 7px 11px; border: 0; border-radius: 7px; background: var(--accent); color: #fff; cursor: pointer; font-size: 13px; }
+  button.secondary { background: var(--blue); } button.ghost { background: #e8e4dc; color: var(--ink); } button:disabled { opacity: .5; cursor: default; }
+  select { font-size: 13px; padding: 4px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; } td, th { text-align: left; padding: 4px 4px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: top; } th { color: var(--muted); font-weight: 600; }
+  .warn { background: #fdecea; border-left: 3px solid #b00020; padding: 6px 8px; margin: 6px 0; font-size: 12px; border-radius: 4px; }
+  .ok { color: #1a7f37; } .bad { color: #b00020; } .mid { color: #b26a00; }
+  .muted { color: var(--muted); } small { color: var(--muted); }
+  label.t { display: flex; align-items: center; gap: 8px; margin: 6px 0; cursor: pointer; }
+  input[type=range] { width: 100%; }
+  .chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .5px; padding: 1px 6px; border-radius: 4px; vertical-align: 1px; margin-left: 6px; text-transform: none; }
+  .tag.real { background: #1a7f37; color: #fff; } .tag.sim { background: #c4561c; color: #fff; } .tag.mix { background: #5b6670; color: #fff; }
+  .tag.sample { background: #7b2d8b; color: #fff; }
+  a { color: var(--blue); }
+  /* journey strip */
+  .strip { display: grid; grid-template-columns: 200px 1fr 86px; gap: 10px; align-items: center; margin: 3px 0; }
+  .strip .name { font-size: 12px; line-height: 1.25; }
+  .bar { display: flex; height: 26px; }
+  .leg { height: 100%; flex: none; box-sizing: border-box; border-right: 2px solid var(--paper); color: #fff; font-size: 11px; font-weight: 600;
+         display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; cursor: pointer; }
+  .leg:first-child { border-radius: 5px 0 0 5px; } .leg:last-child { border-radius: 0 5px 5px 0; border-right: 0; }
+  .leg.changed { box-shadow: inset 0 0 0 2px var(--ink); }
+  .leg:hover { filter: brightness(1.12); }
+  .total { font-weight: 700; font-size: 15px; text-align: right; white-space: nowrap; }
+  .ticks { position: relative; height: 14px; font-size: 10px; color: var(--muted); }
+  .ticks span { position: absolute; transform: translateX(-50%); cursor: pointer; }
+  .deltas { margin-top: 8px; }
+  .delta { display: inline-block; padding: 2px 8px; border-radius: 10px; margin: 2px 4px 2px 0; font-size: 12px; cursor: pointer; }
+  .delta.up { background: #fdecea; color: #b00020; } .delta.down { background: #e7f4ea; color: #1a7f37; }
+  .headline { font-size: 15px; margin: 4px 0; }
+  /* map pins */
+  .pin { width: 22px; height: 22px; border-radius: 50%; background: var(--blue); color: #fff; font: 700 11px/22px Inter, system-ui, sans-serif; text-align: center;
+         border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); cursor: pointer; }
+  .pin.end { background: var(--ink); } .pin.has { background: var(--accent); } .pin.sel { outline: 3px solid rgba(196,86,28,.55); outline-offset: 1px; }
+  /* interventions and junction table */
+  .iv { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 5px 8px; background: #f4f0e8; border-radius: 6px; margin: 4px 0; }
+  .iv button { padding: 2px 8px; font-size: 12px; }
+  #jt tr.j { cursor: pointer; } #jt tr.j:hover td { background: #f4f0e8; } #jt tr.has td:first-child { color: var(--accent); font-weight: 700; }
+  .d { font-size: 11px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="left" class="panel">
+  <h1>CityRehearsal · Lingampally → Lakdikapul</h1>
+  <small>22.5 km commute through 11 junctions · <a href="index.html">YMCA Circle view</a></small><br>
+  <small id="status">API: checking…</small>
+  <div id="src"></div>
+
+  <h2>1 · When <span class="tag real">TomTom data</span></h2>
+  <div class="row"><select id="when" style="max-width:100%"></select></div>
+  <small id="when-note" class="muted"></small>
+
+  <h2>2 · Change a junction</h2>
+  <div class="row">
+    <select id="iv-j"></select>
+    <select id="iv-kind">
+      <option value="flyover">Flyover</option>
+      <option value="underpass">Underpass</option>
+      <option value="signal_retime">Signal timing</option>
+      <option value="widening" disabled>Road widening (soon)</option>
+      <option value="one_way" disabled>One-way (soon)</option>
+      <option value="u_turn" disabled>U-turn change (soon)</option>
+    </select>
+  </div>
+  <div class="row" id="iv-params"></div>
+  <div class="row"><button id="iv-add" class="secondary">Add</button></div>
+  <div id="iv-list"><small class="muted">No changes yet: today's roads.</small></div>
+
+  <h2>3 · Simulate <span class="tag sim">simulated</span></h2>
+  <div class="row">
+    <button id="sim-today">Simulate today</button>
+    <button id="sim-changes" class="secondary">Simulate with changes</button>
+  </div>
+  <small id="run-note" class="muted"></small>
+
+  <h2>Junctions <span class="tag sim">simulated</span></h2>
+  <div id="jt"><small class="muted">Run a simulation to see delay and queues at each junction. Click a junction to fly there.</small></div>
+  <div id="warnings"></div>
+</div>
+
+<div id="right" class="panel">
+  <h2 style="margin-top:0">Layers</h2>
+  <label class="t"><input type="checkbox" id="t-traffic" /> TomTom live traffic <span class="tag real">real</span></label>
+  <label class="t"><input type="checkbox" id="t-route" checked /> Route coloured by speed</label>
+  <label class="t"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
+  <label class="t"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
+  <small id="route-src" class="muted"></small>
+  <div class="row" style="margin-top:8px"><button id="overview" class="ghost">Whole corridor</button></div>
+  <h2>Playback <span class="tag sim">simulated</span></h2>
+  <div class="row">
+    <button id="play" class="ghost" disabled>▶ Play</button>
+    <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option></select>
+  </div>
+  <div class="row" id="watch"></div>
+  <input type="range" id="scrub" min="0" max="0" value="0" disabled />
+  <small id="clock" class="muted">—</small><br>
+  <small id="playinfo"></small>
+  <div style="margin-top:8px;font-size:11px" class="muted">
+    <span class="chip" style="background:rgb(26,152,80)"></span>≥ 25 km/h
+    <span class="chip" style="background:rgb(222,140,30)"></span>15–25
+    <span class="chip" style="background:rgb(215,48,39)"></span>&lt; 15<br>
+    <span class="chip" style="background:rgb(232,116,59)"></span>two-wheeler <span class="chip" style="background:rgb(47,111,159)"></span>car
+    <span class="chip" style="background:rgb(240,200,40)"></span>auto <span class="chip" style="background:rgb(40,160,90)"></span>bus
+  </div>
+</div>
+
+<div id="journey" class="panel">
+  <div class="row" style="margin:0 0 4px;justify-content:space-between">
+    <b>The trip, leg by leg <small class="muted" style="font-weight:400">· block width = minutes · click a block to fly there</small></b>
+    <span id="journey-tags"></span>
+  </div>
+  <div id="strips"></div>
+  <div id="deltas" class="deltas"></div>
+</div>
+
+<script>
+const API = "http://localhost:8000";
+const $ = id => document.getElementById(id);
+window.onerror = (msg, src, line) => { const s = $("status"); if (s) s.innerHTML = `<span class="bad">Page error: ${String(msg).slice(0, 160)} (line ${line})</span>`; };
+window.onunhandledrejection = e => { const s = $("status"); if (s) s.innerHTML = `<span class="bad">Error: ${String(e.reason && e.reason.message || e.reason).slice(0, 160)}</span>`; };
+if (typeof maplibregl === "undefined" || typeof deck === "undefined") $("status").innerHTML = '<span class="bad">Map libraries failed to load (frontend/vendor). Reload the page.</span>';
+const COLORS = { two_wheeler: [232,116,59], car: [47,111,159], auto: [240,200,40], bus: [40,160,90], truck: [120,120,120] };
+const SIZE = { two_wheeler: [1.9, 0.75, 1.2], car: [4.3, 1.75, 1.5], auto: [2.7, 1.4, 1.7], bus: [11, 2.5, 3.2], truck: [8, 2.4, 3] };
+const STYLE = () => `https://api.tomtom.com/map/1/style/20.4.5-*/basic_main.json?key=${cfg.tomtom_maps_key}`;
+const TRAFFIC_TILES = () => `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${cfg.tomtom_maps_key}`;
+const KINDS = { flyover: "Flyover", underpass: "Underpass", signal_retime: "Signal timing", widening: "Road widening", one_way: "One-way", u_turn: "U-turn change" };
+const PARAMS = {   // choices offered per intervention: [param key, label, values, unit]
+  flyover: [["lanes", "Lanes", [2, 3], ""], ["length_m", "Length", [400, 600], " m"]],
+  underpass: [["lanes", "Lanes", [2, 3], ""], ["length_m", "Length", [400, 600], " m"]],
+  signal_retime: [["cycle_s", "Signal cycle", [90, 120, 150], " s"]],
+};
+const TYPICAL = "2026-07-01..2026-07-31 6:00-23:00";
+
+// Real corridor definition (data/corridor/corridor.json), used when GET /corridor is not there yet.
+const CORRIDOR_EMBED = /*@CORRIDOR@*/{"id":"lingampally_lakdikapul","name":"Lingampally to Lakdikapul","points":[{"id":"A_lingampally","name":"Lingampally (Old Bombay Rd, route start)","lat":17.4878,"lon":78.3142,"kind":"end"},{"id":"j01","name":"Nallagandla Rd jn","lat":17.4795,"lon":78.31992,"kind":"junction"},{"id":"j02","name":"ISB Rd / DLF jn","lat":17.44527,"lon":78.35255,"kind":"junction"},{"id":"j03","name":"Gachibowli Circle","lat":17.43887,"lon":78.36373,"kind":"junction"},{"id":"j04","name":"Biodiversity jn (flyover)","lat":17.42909,"lon":78.37452,"kind":"junction"},{"id":"j05","name":"Khajaguda X Roads","lat":17.42266,"lon":78.38211,"kind":"junction"},{"id":"j06","name":"Narne Rd jn Shaikpet","lat":17.41412,"lon":78.39443,"kind":"junction"},{"id":"j07","name":"Tolichowki","lat":17.39894,"lon":78.41542,"kind":"junction"},{"id":"j08","name":"Nanal Nagar jn","lat":17.39597,"lon":78.42776,"kind":"junction"},{"id":"j09","name":"Rethibowli jn","lat":17.39598,"lon":78.43171,"kind":"junction"},{"id":"j10","name":"NMDC / Masab Tank Rd","lat":17.39948,"lon":78.45039,"kind":"junction"},{"id":"j11","name":"Masab Tank","lat":17.40352,"lon":78.45639,"kind":"junction"},{"id":"B_lakdikapul","name":"Lakdikapul","lat":17.40422,"lon":78.46465,"kind":"end"}]};
+// TomTom measured leg times (data/raw/corridor_legs_tomtom.csv), used when the CSV cannot be fetched (page served from /frontend only).
+const TOMTOM_EMBED = /*@TOMTOM@*/{"legs":[["A_lingampally","j01","Lingampally (Old Bombay Rd, route start)","Nallagandla Rd jn"],["j01","j02","Nallagandla Rd jn","ISB Rd / DLF jn"],["j02","j03","ISB Rd / DLF jn","Gachibowli Circle"],["j03","j04","Gachibowli Circle","Biodiversity jn (flyover)"],["j04","j05","Biodiversity jn (flyover)","Khajaguda X Roads"],["j05","j06","Khajaguda X Roads","Narne Rd jn Shaikpet"],["j06","j07","Narne Rd jn Shaikpet","Tolichowki"],["j07","j08","Tolichowki","Nanal Nagar jn"],["j08","j09","Nanal Nagar jn","Rethibowli jn"],["j09","j10","Rethibowli jn","NMDC / Masab Tank Rd"],["j10","j11","NMDC / Masab Tank Rd","Masab Tank"],["j11","B_lakdikapul","Masab Tank","Lakdikapul"]],"periods":{"2026-07-01..2026-07-31 6:00-23:00":[[1911,402.2,17.1],[5414,829.8,23.5],[1386,240.5,20.8],[1581,184.1,30.9],[1078,151,25.7],[1621,175.2,33.3],[2830,282,36.1],[1370,243.1,20.3],[418,71.6,21],[2241,451.8,17.9],[930,148.8,22.5],[1636,312.3,18.9]],"2026-07-01..2026-07-01 8:00-20:00":[[2005,572,12.6],[5405,825.2,23.6],[1386,256.1,19.5],[1581,183.8,31],[1078,160.5,24.2],[1621,175.8,33.2],[2830,282.8,36],[1370,254.9,19.4],[418,77.2,19.5],[2241,486.3,16.6],[930,146,22.9],[1671,298.4,20.2]],"2026-07-02..2026-07-02 8:00-20:00":[[2005,539.2,13.4],[5405,797,24.4],[1386,285.5,17.5],[1581,313.6,18.1],[1078,195.1,19.9],[1621,173,33.7],[2830,280.2,36.3],[1370,222.3,22.2],[418,72.3,20.8],[2241,454,17.8],[930,147.1,22.8],[1671,325.1,18.5]],"2026-07-03..2026-07-03 8:00-20:00":[[2005,513,14.1],[5405,780.1,24.9],[1386,210.5,23.7],[1581,216.3,26.3],[1078,164.5,23.6],[1621,168.9,34.5],[2830,267.9,38],[1370,255.4,19.3],[418,90.6,16.6],[2241,409.8,19.7],[930,146.5,22.8],[1671,291,20.7]],"2026-07-04..2026-07-04 8:00-20:00":[[2005,642,11.2],[5405,745.2,26.1],[1386,199.2,25.1],[1581,171.1,33.3],[1078,120.4,32.2],[1621,156.5,37.3],[2830,267.9,38],[1370,267.1,18.5],[418,92.3,16.3],[2241,441.7,18.3],[930,152.5,21.9],[1671,418,14.4]],"2026-07-05..2026-07-05 8:00-20:00":[[2005,460.2,15.7],[5405,672,29],[1386,181.3,27.5],[1581,146.3,38.9],[1078,104.5,37.2],[1621,147.3,39.6],[2830,236.5,43.1],[1370,168.2,29.3],[418,61.7,24.4],[2241,355,22.7],[930,137.9,24.3],[1671,246.9,24.4]],"2026-07-06..2026-07-06 8:00-20:00":[[2005,553.9,13],[5405,931.1,20.9],[1386,253.7,19.7],[1581,176,32.3],[1078,143.5,27],[1621,175.1,33.3],[2830,282.9,36],[1370,250,19.7],[418,89.9,16.7],[2241,456.5,17.7],[930,149.3,22.4],[1671,363.6,16.5]],"2026-07-07..2026-07-07 8:00-20:00":[[2005,486.4,14.8],[5405,882.7,22],[1386,267.4,18.7],[1581,186.9,30.4],[1078,175.9,22.1],[1621,176.7,33],[2830,280.2,36.3],[1370,261.2,18.9],[418,72.2,20.8],[2241,448.8,18],[930,150.6,22.2],[1671,374.7,16.1]],"2026-07-08..2026-07-08 8:00-20:00":[[2005,534.3,13.5],[5405,971.2,20],[1386,308,16.2],[1581,182.1,31.2],[1078,173.9,22.3],[1621,179.5,32.5],[2830,284.3,35.8],[1370,272.6,18.1],[418,77.1,19.5],[2241,473.8,17],[930,146.1,22.9],[1671,302.1,19.9]],"2026-07-09..2026-07-09 8:00-20:00":[[2005,500,14.4],[5405,912.2,21.3],[1386,268.4,18.6],[1581,185.1,30.7],[1078,157.6,24.6],[1621,176.7,33],[2830,286,35.6],[1370,291.6,16.9],[418,79,19],[2241,517.2,15.6],[930,151,22.2],[1671,298.6,20.1]],"2026-07-10..2026-07-10 8:00-20:00":[[2005,507.1,14.2],[5405,766,25.4],[1386,229.5,21.7],[1581,168.5,33.8],[1078,141.4,27.5],[1621,167.5,34.8],[2830,260.2,39.2],[1370,253.7,19.4],[418,94.9,15.9],[2241,397.1,20.3],[930,147.5,22.7],[1671,360.4,16.7]],"2026-07-11..2026-07-11 8:00-20:00":[[2005,515.9,14],[5405,938.8,20.7],[1386,189.6,26.3],[1581,141.3,40.3],[1078,105.3,36.8],[1621,153.3,38.1],[2830,261.9,38.9],[1370,204.6,24.1],[418,108.3,13.9],[2241,429.2,18.8],[930,152.7,21.9],[1671,317.1,19]],"2026-07-12..2026-07-12 8:00-20:00":[[2005,449.9,16],[5405,650.5,29.9],[1386,174.3,28.6],[1581,137.8,41.3],[1078,101.5,38.2],[1621,143.6,40.6],[2830,232.2,43.9],[1370,159.2,31],[418,56.2,26.7],[2241,339.8,23.7],[930,136.5,24.5],[1671,269.2,22.3]],"2026-07-13..2026-07-13 8:00-20:00":[[2005,496.9,14.5],[5405,849.6,22.9],[1386,255.6,19.5],[1581,164.8,34.5],[1078,159.1,24.4],[1621,174.3,33.5],[2830,276,36.9],[1370,275.8,17.9],[418,107.4,14],[2241,483.7,16.7],[930,151.6,22.1],[1671,331.3,18.2]],"2026-07-14..2026-07-14 8:00-20:00":[[2005,493.8,14.6],[5405,817.7,23.8],[1386,255.2,19.6],[1581,173.3,32.8],[1078,228.5,17],[1621,175.1,33.3],[2830,276.8,36.8],[1370,265.5,18.6],[418,72.9,20.6],[2241,429.3,18.8],[930,148.1,22.6],[1671,316.8,19]],"2026-07-15..2026-07-15 8:00-20:00":[[2005,481.2,15],[5405,846.4,23],[1386,271.4,18.4],[1581,173.6,32.8],[1078,189.9,20.4],[1621,175,33.3],[2830,286.7,35.5],[1370,307.9,16],[418,104.9,14.3],[2241,536.6,15],[930,149.8,22.3],[1671,341,17.6]]}};
+
+let cfg = { tomtom_maps_key: "" }, map, overlay, apiUp = false;
+let corridor = null, points = [], tomtom = {};          // tomtom: {period: [{from_id, to_id, from_name, to_name, distance_m, time_s, speed_kmh}]}
+let interventions = [], base = null, changed = null, selected = null;
+let roads = null, frames = [], playing = false, pos = 0, lastTick = 0, clockBase = 8 * 60, stream = null, playingRun = null;
+const markers = {};
+
+class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
+async function get(path) { const r = await fetch(API + path); if (!r.ok) throw new HttpError(r.status, `${path}: ${r.status} ${(await r.text()).slice(0, 120)}`); return r.json(); }
+async function post(path, body) { const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); if (!r.ok) throw new HttpError(r.status, `${path}: ${r.status} ${(await r.text()).slice(0, 160)}`); return r.json(); }
+
+// ===== SAMPLE FALLBACK: remove this block and the one call in corridorRun() once POST /corridor/runs is live =====
+const SAMPLE_URL = "../contracts/samples/corridor_results.sample.json";   // works when the repo root is served
+const SAMPLE_EMBED = /*@SAMPLE@*/{"baseline":{"run_id":"r_sample_corridor_base","variant_id":"baseline","corridor_id":"lingampally_lakdikapul","time":{"window":"2026-10-09T08:00","minutes":120,"label":"Fri 9 Oct 8-10 am"},"interventions":[],"journey":{"total_s":5852,"distance_m":24329,"tomtom_total_s":5559,"legs":[{"from_id":"A_lingampally","to_id":"j01","from_name":"Lingampally (railway station)","to_name":"Nallagandla Rd jn","distance_m":498,"time_s":100,"speed_kmh":18,"tomtom_time_s":95},{"from_id":"j01","to_id":"j02","from_name":"Nallagandla Rd jn","to_name":"ISB Rd / DLF jn","distance_m":6438,"time_s":1053,"speed_kmh":22,"tomtom_time_s":1000},{"from_id":"j02","to_id":"j03","from_name":"ISB Rd / DLF jn","to_name":"Gachibowli Circle","distance_m":1731,"time_s":445,"speed_kmh":14,"tomtom_time_s":423},{"from_id":"j03","to_id":"j04","from_name":"Gachibowli Circle","to_name":"Biodiversity jn (flyover)","distance_m":1976,"time_s":445,"speed_kmh":16,"tomtom_time_s":423},{"from_id":"j04","to_id":"j05","from_name":"Biodiversity jn (flyover)","to_name":"Khajaguda X Roads","distance_m":1348,"time_s":255,"speed_kmh":19,"tomtom_time_s":242},{"from_id":"j05","to_id":"j06","from_name":"Khajaguda X Roads","to_name":"Narne Rd jn Shaikpet","distance_m":2022,"time_s":485,"speed_kmh":15,"tomtom_time_s":461},{"from_id":"j06","to_id":"j07","from_name":"Narne Rd jn Shaikpet","to_name":"Tolichowki","distance_m":3497,"time_s":1144,"speed_kmh":11,"tomtom_time_s":1087},{"from_id":"j07","to_id":"j08","from_name":"Tolichowki","to_name":"Nanal Nagar jn","distance_m":1690,"time_s":676,"speed_kmh":9,"tomtom_time_s":642},{"from_id":"j08","to_id":"j09","from_name":"Nanal Nagar jn","to_name":"Rethibowli jn","distance_m":525,"time_s":158,"speed_kmh":12,"tomtom_time_s":150},{"from_id":"j09","to_id":"j10","from_name":"Rethibowli jn","to_name":"NMDC / Masab Tank Rd","distance_m":2528,"time_s":535,"speed_kmh":17,"tomtom_time_s":508},{"from_id":"j10","to_id":"j11","from_name":"NMDC / Masab Tank Rd","to_name":"Masab Tank","distance_m":975,"time_s":251,"speed_kmh":14,"tomtom_time_s":238},{"from_id":"j11","to_id":"B_lakdikapul","from_name":"Masab Tank","to_name":"Lakdikapul","distance_m":1101,"time_s":305,"speed_kmh":13,"tomtom_time_s":290}]},"junctions":[{"id":"j01","name":"Nallagandla Rd jn","lat":17.4795,"lon":78.31992,"avg_delay_s":12,"max_queue_m":80,"vehicles":2400},{"id":"j02","name":"ISB Rd / DLF jn","lat":17.44527,"lon":78.35255,"avg_delay_s":25,"max_queue_m":150,"vehicles":3100},{"id":"j03","name":"Gachibowli Circle","lat":17.43887,"lon":78.36373,"avg_delay_s":48,"max_queue_m":320,"vehicles":4200},{"id":"j04","name":"Biodiversity jn (flyover)","lat":17.42909,"lon":78.37452,"avg_delay_s":30,"max_queue_m":210,"vehicles":3900},{"id":"j05","name":"Khajaguda X Roads","lat":17.42266,"lon":78.38211,"avg_delay_s":22,"max_queue_m":140,"vehicles":3300},{"id":"j06","name":"Narne Rd jn Shaikpet","lat":17.41412,"lon":78.39443,"avg_delay_s":35,"max_queue_m":230,"vehicles":2900},{"id":"j07","name":"Tolichowki","lat":17.39894,"lon":78.41542,"avg_delay_s":70,"max_queue_m":480,"vehicles":4100},{"id":"j08","name":"Nanal Nagar jn","lat":17.39597,"lon":78.42776,"avg_delay_s":85,"max_queue_m":520,"vehicles":3800},{"id":"j09","name":"Rethibowli jn","lat":17.39598,"lon":78.43171,"avg_delay_s":40,"max_queue_m":260,"vehicles":3200},{"id":"j10","name":"NMDC / Masab Tank Rd","lat":17.39948,"lon":78.45039,"avg_delay_s":28,"max_queue_m":190,"vehicles":3500},{"id":"j11","name":"Masab Tank","lat":17.40352,"lon":78.45639,"avg_delay_s":33,"max_queue_m":210,"vehicles":3600}],"warnings":[],"inputs":{"counts_source":"sample","label":"assumed","volume_scale":1},"frames_path":null,"roads_path":null,"sample":true},"flyover_j07":{"run_id":"r_sample_corridor_fly","variant_id":"flyover_j07","corridor_id":"lingampally_lakdikapul","time":{"window":"2026-10-09T08:00","minutes":120,"label":"Fri 9 Oct 8-10 am"},"interventions":[{"junction_id":"j07","kind":"flyover","params":{"lanes":2,"length_m":600}}],"journey":{"total_s":5631,"distance_m":24329,"tomtom_total_s":5559,"legs":[{"from_id":"A_lingampally","to_id":"j01","from_name":"Lingampally (railway station)","to_name":"Nallagandla Rd jn","distance_m":498,"time_s":100,"speed_kmh":18,"tomtom_time_s":95},{"from_id":"j01","to_id":"j02","from_name":"Nallagandla Rd jn","to_name":"ISB Rd / DLF jn","distance_m":6438,"time_s":1053,"speed_kmh":22,"tomtom_time_s":1000},{"from_id":"j02","to_id":"j03","from_name":"ISB Rd / DLF jn","to_name":"Gachibowli Circle","distance_m":1731,"time_s":445,"speed_kmh":14,"tomtom_time_s":423},{"from_id":"j03","to_id":"j04","from_name":"Gachibowli Circle","to_name":"Biodiversity jn (flyover)","distance_m":1976,"time_s":445,"speed_kmh":16,"tomtom_time_s":423},{"from_id":"j04","to_id":"j05","from_name":"Biodiversity jn (flyover)","to_name":"Khajaguda X Roads","distance_m":1348,"time_s":255,"speed_kmh":19,"tomtom_time_s":242},{"from_id":"j05","to_id":"j06","from_name":"Khajaguda X Roads","to_name":"Narne Rd jn Shaikpet","distance_m":2022,"time_s":485,"speed_kmh":15,"tomtom_time_s":461},{"from_id":"j06","to_id":"j07","from_name":"Narne Rd jn Shaikpet","to_name":"Tolichowki","distance_m":3497,"time_s":686,"speed_kmh":11,"tomtom_time_s":1087},{"from_id":"j07","to_id":"j08","from_name":"Tolichowki","to_name":"Nanal Nagar jn","distance_m":1690,"time_s":913,"speed_kmh":9,"tomtom_time_s":642},{"from_id":"j08","to_id":"j09","from_name":"Nanal Nagar jn","to_name":"Rethibowli jn","distance_m":525,"time_s":158,"speed_kmh":12,"tomtom_time_s":150},{"from_id":"j09","to_id":"j10","from_name":"Rethibowli jn","to_name":"NMDC / Masab Tank Rd","distance_m":2528,"time_s":535,"speed_kmh":17,"tomtom_time_s":508},{"from_id":"j10","to_id":"j11","from_name":"NMDC / Masab Tank Rd","to_name":"Masab Tank","distance_m":975,"time_s":251,"speed_kmh":14,"tomtom_time_s":238},{"from_id":"j11","to_id":"B_lakdikapul","from_name":"Masab Tank","to_name":"Lakdikapul","distance_m":1101,"time_s":305,"speed_kmh":13,"tomtom_time_s":290}]},"junctions":[{"id":"j01","name":"Nallagandla Rd jn","lat":17.4795,"lon":78.31992,"avg_delay_s":12,"max_queue_m":80,"vehicles":2400},{"id":"j02","name":"ISB Rd / DLF jn","lat":17.44527,"lon":78.35255,"avg_delay_s":25,"max_queue_m":150,"vehicles":3100},{"id":"j03","name":"Gachibowli Circle","lat":17.43887,"lon":78.36373,"avg_delay_s":48,"max_queue_m":320,"vehicles":4200},{"id":"j04","name":"Biodiversity jn (flyover)","lat":17.42909,"lon":78.37452,"avg_delay_s":30,"max_queue_m":210,"vehicles":3900},{"id":"j05","name":"Khajaguda X Roads","lat":17.42266,"lon":78.38211,"avg_delay_s":22,"max_queue_m":140,"vehicles":3300},{"id":"j06","name":"Narne Rd jn Shaikpet","lat":17.41412,"lon":78.39443,"avg_delay_s":35,"max_queue_m":230,"vehicles":2900},{"id":"j07","name":"Tolichowki","lat":17.39894,"lon":78.41542,"avg_delay_s":15,"max_queue_m":90,"vehicles":4100},{"id":"j08","name":"Nanal Nagar jn","lat":17.39597,"lon":78.42776,"avg_delay_s":120,"max_queue_m":690,"vehicles":3800},{"id":"j09","name":"Rethibowli jn","lat":17.39598,"lon":78.43171,"avg_delay_s":40,"max_queue_m":260,"vehicles":3200},{"id":"j10","name":"NMDC / Masab Tank Rd","lat":17.39948,"lon":78.45039,"avg_delay_s":28,"max_queue_m":190,"vehicles":3500},{"id":"j11","name":"Masab Tank","lat":17.40352,"lon":78.45639,"avg_delay_s":33,"max_queue_m":210,"vehicles":3600}],"warnings":["flyover_j07: 2 flyover lanes land 180 m before Nanal Nagar jn; queues from the junction reach the landing at peak"],"inputs":{"counts_source":"sample","label":"assumed","volume_scale":1},"frames_path":null,"roads_path":null,"sample":true}};
+let sampleCache = null;
+async function sampleRun(ivs, why) {
+  if (!sampleCache) { try { const r = await fetch(SAMPLE_URL); if (!r.ok) throw 0; sampleCache = await r.json(); } catch (e) { sampleCache = SAMPLE_EMBED; } }
+  const r = JSON.parse(JSON.stringify(ivs.length ? sampleCache.flyover_j07 : sampleCache.baseline));
+  r.sample = true; r._fallback = why;
+  return r;
+}
+// ===== end SAMPLE FALLBACK =====
+
+async function corridorRun(ivs) {
+  try { return await post("/corridor/runs", { interventions: ivs, volume_scale: 1.0 }); }
+  catch (e) {
+    if (e.status && ![404, 405].includes(e.status)) throw e;           // a real failure of the simulation: show it
+    return sampleRun(ivs, e.status ? `corridor API answered ${e.status}` : "API not reachable");   // FALLBACK
+  }
+}
+
+// ---------- helpers ----------
+const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function dayLabel(date) { const d = new Date(date + "T12:00:00+05:30"); return `${DAY[d.getUTCDay()]} ${d.getUTCDate()} ${MON[d.getUTCMonth()]}`; }
+function periodLabel(p) { return p === TYPICAL ? "Typical July day (TomTom, 06–23)" : `${dayLabel(p.slice(0, 10))}, 08–20`; }
+function periodShort(p) { return p === TYPICAL ? "typical July day" : dayLabel(p.slice(0, 10)); }
+const sumT = legs => legs.reduce((s, l) => s + l.time_s, 0);
+const mins = s => s / 60;
+const fmtMin = s => { const m = s / 60; return m < 10 ? m.toFixed(1) : m.toFixed(0); };
+const signed = (x, d = 1) => (x > 0 ? "+" : x < 0 ? "−" : "±") + Math.abs(x).toFixed(d);
+const short = n => String(n || "").replace(/\s*\(.*?\)\s*/g, " ").trim();
+function pointLabel(id) { const i = points.findIndex(p => p.id === id); return i <= 0 ? "A" : i === points.length - 1 ? "B" : String(i); }
+function point(id) { return points.find(p => p.id === id); }
+function speedRGB(kmh) { return kmh >= 25 ? [26, 152, 80] : kmh >= 15 ? [222, 140, 30] : [215, 48, 39]; }
+function legSpeed(l) { return l.speed_kmh ?? (l.distance_m && l.time_s ? l.distance_m / l.time_s * 3.6 : 20); }
+function tagsFor(r) { return `<span class="tag sim">SIMULATED</span>${r && r.sample ? '<span class="tag sample">SAMPLE DATA</span>' : ""}`; }
+function ivText(iv) {
+  const p = iv.params || {}, bits = [];
+  if (p.lanes) bits.push(`${p.lanes} lanes`); if (p.length_m) bits.push(`${p.length_m} m`); if (p.cycle_s) bits.push(`${p.cycle_s} s cycle`);
+  return `${KINDS[iv.kind] || iv.kind}${bits.length ? ", " + bits.join(", ") : ""}`;
+}
+const ivKey = ivs => JSON.stringify(ivs.map(i => [i.junction_id, i.kind, i.params]));
+
+// ---------- load ----------
+async function init() {
+  try { cfg = await get("/config"); apiUp = true; $("status").textContent = `API: ok${cfg.mock ? " (mock mode)" : " (real SUMO runs)"}`; }
+  catch (e) { $("status").textContent = "API not running (run `make dev`): the page uses sample data."; }
+  try { corridor = await get("/corridor"); } catch (e) { corridor = CORRIDOR_EMBED; }
+  points = corridor.points;
+  await loadTomTom();
+  fillWhen(); fillJunctions(); fillParams(); renderIvs(); renderJourney(); renderJunctions();
+
+  const hasKey = !!cfg.tomtom_maps_key;
+  map = new maplibregl.Map({ container: "map", style: hasKey ? STYLE() : "https://tiles.openfreemap.org/styles/liberty",
+                             center: [78.39, 17.43], zoom: 12, antialias: true });
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+  overlay = new deck.MapboxOverlay({ interleaved: true, layers: [] });
+  map.addControl(overlay);
+  map.on("style.load", addTrafficLayer);
+  let wasNear = false; map.on("zoomend", () => { const near = map.getZoom() > 14; if (near !== wasNear) { wasNear = near; render(); } });
+  if (!hasKey) $("t-traffic").disabled = true;
+  addMarkers();
+  overview(false);
+  map.once("load", () => overview(false));
+  render();
+  requestAnimationFrame(tick);
+}
+
+function parseCsv(text) {
+  const split = line => { const out = []; let cur = "", q = false; for (const ch of line) { if (ch === '"') q = !q; else if (ch === "," && !q) { out.push(cur); cur = ""; } else cur += ch; } out.push(cur); return out; };
+  const lines = text.trim().split(/\r?\n/), head = split(lines[0]);
+  return lines.slice(1).map(l => { const v = split(l), o = {}; head.forEach((h, i) => o[h] = v[i]); return o; });
+}
+async function loadTomTom() {
+  tomtom = {};
+  try {
+    const r = await fetch("../data/raw/corridor_legs_tomtom.csv"); if (!r.ok) throw 0;
+    for (const x of parseCsv(await r.text())) (tomtom[x.period] ||= []).push({ from_id: x.from_id, to_id: x.to_id, from_name: x.from, to_name: x.to,
+      distance_m: +x.distance_m, time_s: +x.time_s, speed_kmh: +x.speed_kmh });
+    if (!tomtom[TYPICAL]) throw 0;
+  } catch (e) {
+    tomtom = {};
+    for (const [p, arr] of Object.entries(TOMTOM_EMBED.periods)) tomtom[p] = arr.map(([d, t, s], i) => {
+      const [from_id, to_id, from_name, to_name] = TOMTOM_EMBED.legs[i]; return { from_id, to_id, from_name, to_name, distance_m: d, time_s: t, speed_kmh: s };
+    });
+  }
+}
+
+// ---------- 1 · when ----------
+function fillWhen() {
+  const ps = Object.keys(tomtom).sort((a, b) => (a === TYPICAL ? -1 : b === TYPICAL ? 1 : a.localeCompare(b)));
+  $("when").innerHTML = ps.map(p => `<option value="${p}">${periodLabel(p)} · ${Math.round(mins(sumT(tomtom[p])))} min</option>`).join("");
+  $("when").value = TYPICAL;
+  updateWhenNote();
+}
+function updateWhenNote() {
+  const daily = Object.keys(tomtom).filter(p => p !== TYPICAL);
+  const sun = daily.filter(p => new Date(p.slice(0, 10) + "T12:00:00+05:30").getUTCDay() === 0), wk = daily.filter(p => { const d = new Date(p.slice(0, 10) + "T12:00:00+05:30").getUTCDay(); return d > 0 && d < 6; });
+  const avg = ps => ps.length ? Math.round(ps.reduce((s, p) => s + mins(sumT(tomtom[p])), 0) / ps.length) : "–";
+  const p = $("when").value, tot = Math.round(mins(sumT(tomtom[p] || [])));
+  $("when-note").innerHTML = `TomTom measured the whole trip at <b>${tot} min</b> ${p === TYPICAL ? "on an average July day, 06:00–23:00" : `on ${dayLabel(p.slice(0, 10))}, averaged 08:00–20:00`}. ` +
+    `Weekdays ≈ ${avg(wk)} min, Sundays (${sun.map(x => Number(x.slice(8, 10))).join(" and ")} Jul) ≈ ${avg(sun)} min. ` +
+    `This choice sets the measured trip shown under the simulation; the simulation runs the model's calibrated peak.`;
+}
+$("when").onchange = () => { updateWhenNote(); renderJourney(); render(); };
+
+// ---------- 2 · change a junction ----------
+function fillJunctions() {
+  $("iv-j").innerHTML = points.filter(p => p.kind === "junction").map(p => `<option value="${p.id}">${pointLabel(p.id)} · ${short(p.name)}</option>`).join("");
+  const j7 = point("j07"); if (j7) $("iv-j").value = "j07";
+}
+function fillParams() {
+  const kind = $("iv-kind").value;
+  $("iv-params").innerHTML = (PARAMS[kind] || []).map(([k, lab, vals, unit]) =>
+    `<label class="muted">${lab} <select data-k="${k}">${vals.map((v, i) => `<option value="${v}" ${i === (k === "cycle_s" ? 1 : 0) ? "selected" : ""}>${v}${unit}</option>`).join("")}</select></label>`).join("");
+}
+$("iv-kind").onchange = fillParams;
+$("iv-j").onchange = () => { selected = $("iv-j").value; updateMarkers(); };
+$("iv-add").onclick = () => {
+  const params = {}; $("iv-params").querySelectorAll("select").forEach(s => params[s.dataset.k] = Number(s.value));
+  const iv = { junction_id: $("iv-j").value, kind: $("iv-kind").value, params };
+  const same = interventions.findIndex(x => x.junction_id === iv.junction_id && x.kind === iv.kind);
+  if (same >= 0) interventions[same] = iv; else interventions.push(iv);   // one of each kind per junction; adding again updates it
+  interventions.sort((a, b) => points.findIndex(p => p.id === a.junction_id) - points.findIndex(p => p.id === b.junction_id));
+  renderIvs(); updateMarkers(); renderJourney();
+};
+function renderIvs() {
+  $("iv-list").innerHTML = interventions.length ? interventions.map((iv, i) =>
+    `<div class="iv"><span><b>${pointLabel(iv.junction_id)} · ${short(point(iv.junction_id)?.name)}</b>: ${ivText(iv)}</span><button class="ghost" data-i="${i}" title="Remove this change">✕</button></div>`).join("")
+    : `<small class="muted">No changes yet: today's roads.</small>`;
+  $("iv-list").querySelectorAll("button").forEach(b => b.onclick = () => { interventions.splice(Number(b.dataset.i), 1); renderIvs(); updateMarkers(); renderJourney(); });
+}
+
+// ---------- 3 · simulate ----------
+async function simulate(withChanges) {
+  if (withChanges && !interventions.length) { $("run-note").innerHTML = `<span class="mid">Add at least one change in step 2 first.</span>`; return; }
+  const btns = ["sim-today", "sim-changes"], ivs = JSON.parse(JSON.stringify(interventions));
+  btns.forEach(b => $(b).disabled = true);
+  const what = withChanges ? `with ${ivs.length} change${ivs.length > 1 ? "s" : ""}` : "today's roads";
+  $("status").textContent = `Simulating the corridor, ${what}${withChanges && !base ? " (and today's roads to compare)" : ""}…`;
+  try {
+    const jobs = [];
+    if (!withChanges || !base) jobs.push(corridorRun([]).then(r => { base = r; }));
+    if (withChanges) jobs.push(corridorRun(ivs).then(r => { r._ivs = ivKey(ivs); changed = r; }));
+    await Promise.all(jobs);
+    const r = withChanges ? changed : base;
+    showSource();
+    renderJourney(); renderJunctions(); renderWatch(); render();
+    $("status").textContent = `Corridor, ${what}: simulated${r.sample ? " (sample data)" : ""}, now playing`;
+    const odd = r._fallback && withChanges && !(ivs.length === 1 && ivs[0].junction_id === "j07" && ivs[0].kind === "flyover");
+    $("run-note").innerHTML = `Simulated window: ${r.time?.label || "calibrated peak"} · traffic input: ${r.inputs?.label || "–"} (${r.inputs?.counts_source || "–"})` +
+      (odd ? `<br><span class="mid">The sample always shows a flyover at 7 · Tolichowki, whatever you chose.</span>` : "");
+    btns.forEach(b => $(b).disabled = false);
+    play(r);   // loads in the background; the panel stays usable
+  } catch (e) { $("status").innerHTML = `<span class="bad">${String(e.message).slice(0, 200)}</span>`; }
+  btns.forEach(b => $(b).disabled = false);
+}
+function showSource() {
+  const fb = [base, changed].find(r => r && r._fallback), smp = [base, changed].some(r => r && r.sample);
+  $("src").innerHTML = smp ? `<div class="warn" style="background:#f4ecf6;border-color:#7b2d8b"><span class="tag sample" style="margin:0 6px 0 0">SAMPLE DATA</span>` +
+    `Corridor results are the sample file, not a simulation${fb ? ` (${fb._fallback})` : ""}.</div>` : "";
+}
+$("sim-today").onclick = () => simulate(false);
+$("sim-changes").onclick = () => simulate(true);
+
+// ---------- journey strip ----------
+function stripRow(title, tags, legs, max, opts = {}) {
+  const tot = opts.total ?? sumT(legs);
+  const blocks = legs.map((l, i) => {
+    const w = l.time_s / max * 100, d = opts.ref ? l.time_s - (opts.ref[i]?.time_s ?? l.time_s) : 0;
+    const tip = `${pointLabel(l.from_id)} ${short(l.from_name || point(l.from_id)?.name)} → ${pointLabel(l.to_id)} ${short(l.to_name || point(l.to_id)?.name)}: ` +
+      `${fmtMin(l.time_s)} min, ${(l.distance_m / 1000).toFixed(1)} km, ${Math.round(legSpeed(l))} km/h${opts.ref ? ` (${signed(mins(d))} min)` : ""}`;
+    return `<div class="leg${Math.abs(d) >= 30 ? " changed" : ""}" data-leg="${i}" title="${tip}" style="width:${w}%;background:rgb(${speedRGB(legSpeed(l))})">${w > 2.6 ? fmtMin(l.time_s) : ""}</div>`;
+  }).join("");
+  return `<div class="strip" data-strip="${opts.key}"><div class="name">${title}${tags}</div><div class="bar">${blocks}</div><div class="total">${Math.round(mins(tot))} min</div></div>`;
+}
+function renderJourney() {
+  const p = $("when").value, tt = tomtom[p] || [];
+  const rows = [];
+  if (base) rows.push({ key: "base", title: "Simulated, today's roads", tags: tagsFor(base), legs: base.journey.legs, total: base.journey.total_s });
+  rows.push({ key: "tomtom", title: `Measured by TomTom, ${periodShort(p)}`, tags: '<span class="tag real">REAL</span>', legs: tt });
+  if (changed) rows.push({ key: "changed", title: "Simulated with changes", tags: tagsFor(changed), legs: changed.journey.legs, total: changed.journey.total_s, ref: base && base.journey.legs });
+  const max = Math.max(...rows.map(r => Math.max(r.total ?? 0, sumT(r.legs))), 1);
+  let h = "";
+  rows.forEach((r, k) => {
+    h += stripRow(r.title, r.tags, r.legs, max, r);
+    if (k === 0) {   // where each junction falls on the first strip
+      let c = 0; const t = [`<span style="left:0%;transform:none" data-p="${r.legs[0]?.from_id}">A</span>`];
+      r.legs.forEach(l => { c += l.time_s; t.push(`<span style="left:${c / max * 100}%" data-p="${l.to_id}" title="${short(point(l.to_id)?.name || l.to_name)}">${pointLabel(l.to_id)}</span>`); });
+      h += `<div class="strip" style="margin-top:0"><div></div><div class="ticks">${t.join("")}</div><div></div></div>`;
+    }
+  });
+  $("strips").innerHTML = h;
+  $("strips").querySelectorAll(".leg").forEach(el => el.onclick = () => flyToLeg(Number(el.dataset.leg)));
+  $("strips").querySelectorAll(".ticks span").forEach(el => el.onclick = () => flyToPoint(el.dataset.p));
+  $("journey-tags").innerHTML = (base || changed) && [base, changed].some(r => r && r.sample) ? '<span class="tag sample">SAMPLE DATA</span>' : "";
+  renderDeltas();
+}
+function renderDeltas() {
+  if (!base) { $("deltas").innerHTML = `<small class="muted">Press “Simulate today” to compare the model with TomTom, then add changes and “Simulate with changes”.</small>`; return; }
+  const tt = tomtom[$("when").value] || [];
+  if (!changed) {
+    $("deltas").innerHTML = `<small>Model ${Math.round(mins(base.journey.total_s))} min vs TomTom ${Math.round(mins(sumT(tt)))} min (${periodShort($("when").value)})` +
+      `${base.journey.tomtom_total_s ? `; TomTom for the simulated window: ${Math.round(mins(base.journey.tomtom_total_s))} min` : ""}.</small>`;
+    return;
+  }
+  const b = base.journey.total_s, c = changed.journey.total_s, dm = mins(c - b);
+  const ivIdx = (changed.interventions || []).map(iv => points.findIndex(p => p.id === iv.junction_id));
+  const diffs = changed.journey.legs.map((l, i) => {
+    const o = base.journey.legs.find(x => x.from_id === l.from_id && x.to_id === l.to_id) || base.journey.legs[i];
+    const fi = points.findIndex(p => p.id === l.from_id);
+    const up = ivIdx.filter(j => j <= fi && j >= 0);   // an intervention at or before the start of this leg
+    return { i, l, d: l.time_s - o.time_s, knock: up.length ? points[Math.max(...up)] : null };
+  });
+  const moved = diffs.filter(x => Math.abs(x.d) >= 6).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)), same = diffs.length - moved.length;
+  const cls = dm < -0.05 ? "ok" : dm > 0.05 ? "bad" : "";
+  const stale = changed._ivs && changed._ivs !== ivKey(interventions) ? `<div class="mid" style="font-size:12px">Your list of changes was edited after this run: simulate again to update.</div>` : "";
+  $("deltas").innerHTML = `<div class="headline">Whole trip: <b>${Math.round(mins(b))} → ${Math.round(mins(c))} min, <span class="${cls}">${signed(dm)} min</span></b>${tagsFor(changed)}` +
+    ` <small>· with ${(changed.interventions || []).map(iv => `${ivText(iv).toLowerCase()} at ${short(point(iv.junction_id)?.name)}`).join("; ")}</small></div>` + stale +
+    moved.map(x => `<span class="delta ${x.d > 0 ? "up" : "down"}" data-leg="${x.i}" title="${fmtMin(x.l.time_s - x.d)} → ${fmtMin(x.l.time_s)} min">` +
+      `${short(x.l.from_name || point(x.l.from_id)?.name)} → ${short(x.l.to_name || point(x.l.to_id)?.name)} <b>${signed(mins(x.d))} min</b>` +
+      `${x.d > 0 && x.knock ? ` · knock-on from ${pointLabel(x.knock.id)}` : ""}</span>`).join("") +
+    (same ? ` <small class="muted">${same} other leg${same > 1 ? "s" : ""} unchanged</small>` : "");
+  $("deltas").querySelectorAll(".delta").forEach(el => el.onclick = () => flyToLeg(Number(el.dataset.leg)));
+}
+
+// ---------- junction table ----------
+function renderJunctions() {
+  const r0 = base || changed;
+  if (!r0) return;
+  const one = (r, id) => r && r.junctions.find(j => j.id === id);
+  const ivAt = id => interventions.concat(changed ? changed.interventions || [] : []).find(iv => iv.junction_id === id);
+  const cell = (b, c, k, unit) => {
+    if (!b && !c) return "–";
+    if (!c || !b) return `${(c || b)[k]} ${unit}`;
+    const d = c[k] - b[k];
+    if (d === 0) return `${b[k]} ${unit} <span class="muted">(same)</span>`;
+    return `${b[k]} → ${c[k]} ${unit}<br><span class="d ${d < 0 ? "ok" : "bad"}">${signed(d, 0)} ${unit}</span>`;
+  };
+  const ids = points.filter(p => p.kind === "junction").map(p => p.id);
+  $("jt").innerHTML = `<table><tr><th>#</th><th>Junction</th><th>Avg delay${changed && base ? "<br>before → after" : ""}</th><th>Longest queue${changed && base ? "<br>before → after" : ""}</th></tr>` +
+    ids.map(id => { const b = one(base, id), c = one(changed, id), iv = ivAt(id);
+      return `<tr class="j${iv ? " has" : ""}" data-id="${id}"><td>${pointLabel(id)}</td><td>${short(point(id)?.name)}${iv ? `<br><small>${ivText(iv)}</small>` : ""}</td>` +
+             `<td>${cell(b, c, "avg_delay_s", "s")}</td><td>${cell(b, c, "max_queue_m", "m")}</td></tr>`; }).join("") + `</table>`;
+  $("jt").querySelectorAll("tr.j").forEach(tr => tr.onclick = () => flyToPoint(tr.dataset.id));
+  const ws = [...new Set([...(base?.warnings || []), ...(changed?.warnings || [])])];
+  $("warnings").innerHTML = ws.length ? `<div class="warn"><b>Warnings</b><br>⚠ ${ws.join("<br>⚠ ")}</div>` : "";
+}
+
+// ---------- map ----------
+function addTrafficLayer() {
+  if (!cfg.tomtom_maps_key || map.getSource("tomtom-traffic")) return;
+  map.addSource("tomtom-traffic", { type: "raster", tiles: [TRAFFIC_TILES()], tileSize: 256, attribution: "© TomTom" });
+  map.addLayer({ id: "tomtom-traffic", type: "raster", source: "tomtom-traffic", paint: { "raster-opacity": 0.9 },
+                 layout: { visibility: $("t-traffic").checked ? "visible" : "none" } });
+}
+function addMarkers() {
+  points.forEach(p => {
+    const el = document.createElement("div");
+    el.className = "pin" + (p.kind === "end" ? " end" : ""); el.textContent = pointLabel(p.id); el.title = p.name; el.dataset.id = p.id;
+    el.onclick = e => { e.stopPropagation(); flyToPoint(p.id); };
+    markers[p.id] = new maplibregl.Marker({ element: el }).setLngLat([p.lon, p.lat]).addTo(map);
+  });
+  updateMarkers();
+}
+function updateMarkers() {
+  for (const [id, m] of Object.entries(markers)) {
+    const el = m.getElement();
+    el.classList.toggle("has", interventions.some(iv => iv.junction_id === id));
+    el.classList.toggle("sel", selected === id);
+  }
+}
+let popup = null;
+const VIEW_OFFSET = [65, -105];   // put the junction in the middle of the map area the panels leave free (left 400 px, right 270, bottom 250)
+function flyToPoint(id) {
+  const p = point(id); if (!p) return;
+  selected = id; updateMarkers();
+  if (p.kind === "junction") $("iv-j").value = id;
+  map.flyTo({ center: [p.lon, p.lat], zoom: 16.2, pitch: 55, bearing: -20, duration: 1600, offset: VIEW_OFFSET });
+  const b = base && base.junctions.find(j => j.id === id), c = changed && changed.junctions.find(j => j.id === id);
+  const stat = (r, lab) => r ? `<br>${lab}: ${r.avg_delay_s} s delay, ${r.max_queue_m} m queue` : "";
+  if (popup) popup.remove();
+  popup = new maplibregl.Popup({ offset: 16, closeButton: true }).setLngLat([p.lon, p.lat])
+    .setHTML(`<b>${pointLabel(id)} · ${p.name}</b>${stat(b, "Today")}${stat(c, "With changes")}${b || c ? ' <span class="tag sim">SIMULATED</span>' : ""}`).addTo(map);
+}
+function flyToLeg(i) {
+  const legs = (changed || base)?.journey.legs || tomtom[$("when").value] || [], l = legs[i]; if (!l) return;
+  const a = point(l.from_id), z = point(l.to_id); if (!a || !z) return;
+  selected = null; updateMarkers(); if (popup) popup.remove();
+  map.fitBounds([[Math.min(a.lon, z.lon), Math.min(a.lat, z.lat)], [Math.max(a.lon, z.lon), Math.max(a.lat, z.lat)]],
+                { padding: { top: 80, bottom: 300, left: 430, right: 300 }, maxZoom: 16, pitch: 40, duration: 1400 });
+}
+function overview(animate = true) {
+  if (!map || !points.length) return;
+  const lons = points.map(p => p.lon), lats = points.map(p => p.lat);
+  map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+                { padding: { top: 60, bottom: 260, left: 420, right: 280 }, pitch: 0, bearing: 0, duration: animate ? 1200 : 0 });
+}
+function routeLegs() {   // what colours the route: the latest simulation, else TomTom for the chosen day
+  const r = changed || base, legs = r ? r.journey.legs : (tomtom[$("when").value] || []);
+  $("route-src").textContent = `Route coloured by ${r ? (changed ? "the run with changes" : "today's simulation") + (r.sample ? " (sample)" : "") : `TomTom, ${periodShort($("when").value)}`}. Straight lines between junctions for now.`;
+  return legs.map(l => { const a = point(l.from_id), z = point(l.to_id); return a && z ? { path: [[a.lon, a.lat], [z.lon, z.lat]], kmh: legSpeed(l) } : null; }).filter(Boolean);
+}
+
+// ---------- vehicles (C1 frames), same drawing as the YMCA page ----------
+function box(v) {
+  const [L, W] = SIZE[v.type] || SIZE.car, a = v.angle * Math.PI / 180;
+  const fx = Math.sin(a), fy = Math.cos(a), rx = Math.cos(a), ry = -Math.sin(a);
+  const mLat = 1 / 111320, mLon = 1 / (111320 * Math.cos(v.lat * Math.PI / 180)), z = v.z || 0;
+  return [[+1, +1], [+1, -1], [-1, -1], [-1, +1]].map(([s, t]) => {
+    const dx = s * fx * L / 2 + t * rx * W / 2, dy = s * fy * L / 2 + t * ry * W / 2;
+    return [v.lon + dx * mLon, v.lat + dy * mLat, z];
+  });
+}
+function roadColor(p) {
+  if (p.speed_kmh == null || !p.vehicles) return [160, 160, 160, 90];
+  const r = p.speed_kmh / Math.max(p.limit_kmh, 1);
+  return r >= 0.7 ? [26, 152, 80, 200] : r >= 0.45 ? [253, 174, 97, 220] : [215, 48, 39, 230];
+}
+function currentVehicles() {
+  if (!frames.length) return [];
+  const i = Math.min(Math.floor(pos), frames.length - 1), f = pos - i;
+  const a = frames[i], b = frames[Math.min(i + 1, frames.length - 1)];
+  if (f < 0.02 || a === b) return a.vehicles;
+  const next = new Map(b.vehicles.map(v => [v.id, v]));
+  return a.vehicles.map(v => {
+    const n = next.get(v.id); if (!n) return v;
+    const da = ((n.angle - v.angle + 540) % 360) - 180;
+    return { ...v, lon: v.lon + (n.lon - v.lon) * f, lat: v.lat + (n.lat - v.lat) * f, z: (v.z || 0) + ((n.z || 0) - (v.z || 0)) * f, angle: v.angle + da * f, speed: n.speed };
+  });
+}
+function render() {
+  if (!overlay) return;
+  const layers = [];
+  if ($("t-route").checked) layers.push(new deck.PathLayer({
+    id: "route", data: routeLegs(), widthUnits: "pixels", getWidth: 7, capRounded: true, opacity: map.getZoom() > 14 ? 0.35 : 0.85,   // faint up close: straight placeholder lines
+    getPath: d => d.path, getColor: d => [...speedRGB(d.kmh), 220], updateTriggers: { getColor: [base, changed, $("when").value] },
+  }));
+  if (roads && $("t-roads").checked) layers.push(new deck.PathLayer({
+    id: "roads", data: roads, widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
+    getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], f.properties.flyover ? 6.5 : 0.3]),
+    getWidth: f => (f.properties.lanes || 2) * 3.2, getColor: f => roadColor(f.properties),
+  }));
+  if ($("t-vehicles").checked) layers.push(new deck.PolygonLayer({
+    id: "vehicles", data: currentVehicles(), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
+    getFillColor: v => COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
+    updateTriggers: { getPolygon: pos }, pickable: true,
+    onHover: ({ object }) => { $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h` : ""; },
+  }));
+  overlay.setProps({ layers, effects: [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: 1.1 }),
+    sun: new deck.DirectionalLight({ color: [255, 250, 240], intensity: 1.6, direction: [-1, -2, -3] }) })] });
+}
+function tick(ts) {
+  if (playing && frames.length) {
+    const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
+    pos += dt * Number($("speed").value);
+    if (pos >= frames.length - 1) { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; }
+    $("scrub").value = Math.floor(pos);
+    showClock();
+    render();
+  } else lastTick = ts;
+  requestAnimationFrame(tick);
+}
+function showClock() {
+  const f = frames[Math.floor(pos)]; if (!f) return;
+  const m = (clockBase + Math.floor(f.t / 60)) % 1440;
+  $("clock").textContent = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")} simulated · ${f.vehicles.length} vehicles`;
+}
+function renderWatch() {
+  $("watch").innerHTML = (base ? `<button class="ghost" id="watch-base">Watch today</button>` : "") + (changed ? `<button class="ghost" id="watch-changed">Watch with changes</button>` : "");
+  if (base) $("watch-base").onclick = () => play(base);
+  if (changed) $("watch-changed").onclick = () => play(changed);
+}
+async function play(r) {
+  playingRun = r;
+  const w = r.time && r.time.window; clockBase = w && w.length >= 16 ? Number(w.slice(11, 13)) * 60 + Number(w.slice(14, 16)) : 8 * 60;
+  frames = []; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("scrub").max = 0; $("clock").textContent = "—";
+  if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
+  if (r.sample && !r.frames_path) { render(); $("playinfo").textContent = "No vehicle playback for sample data: it comes with the real corridor simulation."; return; }
+  if (r.roads_path !== null) { try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; } }
+  if (playingRun !== r) return;
+  render();
+  $("playinfo").textContent = "Loading vehicle positions…";
+  let flown = false;
+  await new Promise(resolve => {
+    const ws = stream = new WebSocket(API.replace("http", "ws") + `/stream/${r.run_id}`);
+    ws.onmessage = e => {
+      if (stream !== ws) return;
+      frames.push(JSON.parse(e.data));
+      if (frames.length === 1) { $("scrub").disabled = false; $("play").disabled = false; }
+      $("scrub").max = frames.length - 1;
+      if (frames.length % 50 === 0) $("playinfo").textContent = `${frames.length} frames loaded…`;
+    };
+    ws.onclose = resolve; ws.onerror = resolve;
+    setTimeout(() => {
+      if (stream !== ws || !frames.length) return;
+      playing = true; $("play").textContent = "❚❚ Pause";
+      if (!flown && map.getZoom() < 14) { flown = true; flyToPoint(focusJunction(r)); }   // vehicles are too small to see from the corridor overview
+    }, 1500);
+  });
+  if (playingRun !== r) return;
+  $("playinfo").textContent = frames.length ? `${frames.length} frames · ${r.variant_id}` : "No vehicle positions for this run.";
+}
+function focusJunction(r) {   // first changed junction, else the one with the longest queue
+  if (r.interventions && r.interventions.length) return r.interventions[0].junction_id;
+  return [...r.junctions].sort((a, b) => b.max_queue_m - a.max_queue_m)[0]?.id || "j07";
+}
+
+// ---------- controls ----------
+$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "❚❚ Pause" : "▶ Play"; lastTick = 0; };
+$("scrub").oninput = e => { pos = Number(e.target.value); showClock(); render(); };
+["t-route", "t-roads", "t-vehicles"].forEach(id => $(id).onchange = render);
+$("t-traffic").onchange = e => map.getLayer("tomtom-traffic") && map.setLayoutProperty("tomtom-traffic", "visibility", e.target.checked ? "visible" : "none");
+$("overview").onclick = () => { selected = null; updateMarkers(); if (popup) popup.remove(); overview(true); };
+init();
+</script>
+</body>
+</html>
