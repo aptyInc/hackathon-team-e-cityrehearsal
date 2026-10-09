@@ -34,7 +34,7 @@ junction. They rarely show what happens at the next junction, and they are not r
 
 | Figure | Value | Label |
 |---|---|---|
-| Our corridor, Lingampally to Lakdikapul (22.5 km) | **58.2 min** on an average July 2026 day (06:00-23:00), about 23 km/h | measured (`data/raw/corridor_legs_tomtom.csv`) |
+| Our corridor, Lingampally to Lakdikapul (22.4 km) | **58.2 min** on an average July 2026 day (06:00-23:00), about 23 km/h | measured (`data/raw/corridor_legs_tomtom.csv`) |
 | Same trip, weekday vs Sunday (1-15 July, 08:00-20:00) | about 62 min on a weekday vs about 48 min on a Sunday | measured (`data/rain/README.md`) |
 | Slowest stretch | Nallagandla jn to ISB Rd / DLF jn, 13.8 min for 5.4 km | measured |
 | Vehicles on the main road at corridor junctions | About 3,600 to 5,000 vehicles per hour on the busiest main-road approach at Tolichowki, Nanal Nagar, Rethibowli and NMDC (median, Fri 9 Oct 17:30-18:35) | estimated by TomTom (Junction Analytics live feed, `data/raw/tomtom_corridor_junction_live.csv`) |
@@ -83,7 +83,8 @@ A "user" is a named person who runs, reviews or approves cases.
 | **Total** | **12 months** | | **100** | |
 
 **What we publish to earn trust:** the YMCA Circle calibration (model within about 3 km/h of TomTom speeds), the
-Gariahat backtest, and the corridor run against TomTom trip times. Every number labelled real or simulated.
+Gariahat backtest, and the corridor run against TomTom trip times (55.4 min simulated vs 56.2 min measured on the same
+roads, every stretch within about 5%). Every number labelled real or simulated.
 
 ---
 

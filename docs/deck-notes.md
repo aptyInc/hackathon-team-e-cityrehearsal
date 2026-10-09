@@ -3,8 +3,9 @@
 One key message per slide. Few words on the slide, the rest in the speaker notes. The live demo sits in the middle
 (slide 5); if the demo fails, slide 5 has screenshots as backup (see `docs/demo-script.md`, fallback plan).
 
-Numbers in `[[double brackets]]` are filled after the corridor calibration run. Figures marked *(to verify)* must be
-checked before they go on a slide, or dropped.
+All corridor numbers come from the calibrated runs (Fri 9 Oct, evening; table in `docs/demo-script.md`, "The
+numbers"). The only open placeholder is `[[ASK]]`. Figures marked *(to verify)* must be checked before they go on a
+slide, or dropped.
 
 ---
 
@@ -36,13 +37,15 @@ Biodiversity flyover on our own corridor was closed weeks after opening in 2019 
 ### 3. Our corridor: a real one-hour commute
 **Key message:** We picked a real, painful trip and measured it.
 
-**On the slide:** Map of Lingampally to Lakdikapul. "22.5 km · 11 junctions · 58 minutes (TomTom, July 2026 average)."
-Trip strip: slowest stretch Nallagandla to ISB Rd, 13.8 min.
+**On the slide:** Map of Lingampally to Lakdikapul. "22.4 km · 11 junctions · 58 minutes (TomTom, July 2026 average)."
+"5 flyovers already on the route · signals at 5 junctions · live data at 10." Trip strip: slowest stretch Nallagandla
+to ISB Rd / DLF, 13.8 min; next, Rethibowli to NMDC, 7.5 min.
 
 **Speaker notes:** "This is a commute thousands of people make every day, from Lingampally to Lakdikapul. TomTom
 measured it at 58 minutes on an average July day; about 62 on a weekday, 48 on a Sunday. We split it into 12
-stretches between junctions, so we can see exactly where the time goes. And five of the junctions send us live data
-every minute."
+stretches between junctions, so we can see exactly where the time goes. The main road already crosses five flyovers;
+it stops at signals at five junctions: Nallagandla, ISB Road / DLF, Khajaguda, Nanal Nagar and Rethibowli. And ten of
+the eleven junctions send us live data every minute."
 
 ---
 
@@ -63,12 +66,16 @@ measured, or SIMULATED. Every input says whether it was counted, estimated or as
 ### 5. Live demo
 **Key message:** See it work on the real corridor.
 
-**On the slide:** Just the URL and the word "Demo". Backup: 4 screenshots (trip strip, live panel, flyover in 3D,
-fingerprint).
+**On the slide:** Just the URL and the word "Demo". Backup: 6 screenshots (trip strip with the live panel,
+"Tolichowki already has a flyover", the new flyover over Nanal Nagar + Rethibowli in 3D, the DLF ripple chip, the
+assistant's answer, the case at 120% with its fingerprint).
 
-**Speaker notes:** Follow `docs/demo-script.md`, beats 0:20 to 3:35 (about 3 minutes). Wow moments: live TomTom panel;
-58 minutes measured vs [[SIM_BASE_MIN]] simulated; flyover at Tolichowki saves [[X]] min; cars driving over the
-flyover in 3D; assistant tries signal retime first; reviewer re-test at 120%; commissioner approves; fingerprint.
+**Speaker notes:** Follow `docs/demo-script.md`, beats 0:15 to 3:40 (about 3.5 minutes). Storyline: Predict (58 min
+measured, where it goes, live panel) → Trust (55.4 simulated vs 56.2 measured on the same roads; YMCA; Gariahat;
+"Tolichowki already has a flyover") → Build where it pays (one flyover over Nanal Nagar + Rethibowli, −2.1 min, cars
+on the deck) → Mitigate first and watch the ripple (more green for DLF's side roads: +2.6 min) → the assistant tries
+the cheap fix first and advises against a weak DLF flyover → reviewer re-test at 120% (still −2.0 min) →
+commissioner approves with a reason; fingerprint.
 
 ---
 
@@ -78,12 +85,18 @@ flyover in 3D; assistant tries signal retime first; reviewer re-test at 120%; co
 **On the slide:** Three proof points:
 - YMCA Circle, Hyderabad: model speeds within about 3 km/h of TomTom.
 - Gariahat, Kolkata: our replay cuts delay at Gariahat by 59% (study: 75%); Phari slows in the same direction, and its approach delay doubles if the flyover draws ~15% more traffic (the study expected the inflow to "increase substantially" but gave no number).
-- Corridor: simulated trip [[SIM_BASE_MIN]] min vs 58.2 min measured.
-Small print: rain adds about 5% while it rains (not statistically certain).
+- Corridor: simulated trip 55.4 min vs 56.2 min measured by TomTom on the same 21.6 km; every one of the 12
+  stretches within about 5%. It drives over the five flyovers that already exist, and refuses to "build" a sixth at
+  Tolichowki ("already has a flyover").
+Visual: `sim/gariahat/chart.png` (study vs simulator, before and after).
+Small print: run-to-run noise about ±0.9 min per option. Simulated main-road traffic is below TomTom's evening
+estimates (calibrated to the all-day trip). Rain adds about 5% while it rains (not statistically certain).
 
-**Speaker notes:** "A simulator is only useful if it matches reality. We calibrated YMCA Circle to TomTom speeds, to
-within about 3 km/h. We replayed a real flyover from Kolkata and got the same lesson the researchers did. And we say
-what we don't know: for example, rain only adds about 5% on this trip, and we can't be sure even of that."
+**Speaker notes:** "A simulator is only useful if it matches reality. On our corridor it is within 2 percent of
+TomTom's trip time, and every stretch within about 5. We calibrated YMCA Circle to TomTom speeds, to within about
+3 km/h. We replayed a real flyover from Kolkata and got the same main lesson the researchers did. And we say what we
+don't know: our traffic is lighter than TomTom's evening estimates, every result has about a minute of noise, and
+rain adds about 5% that we can't be sure of."
 
 ---
 
@@ -131,9 +144,11 @@ the tool recommends, people decide, and the sealed record shows what was known a
 ### 10. What we built in 24 hours
 **Key message:** It is real, and it runs.
 
-**On the slide:** OpenStreetMap network of a 22.5 km corridor with 11 junctions (10 with signals); 5 live TomTom junctions;
-5 kinds of fixes (flyover, underpass, signal timing, widening, one-way); 3D view with simulated vehicles; review and
-approval flow with SHA-256 fingerprints; YMCA Circle calibrated; Gariahat backtest.
+**On the slide:** OpenStreetMap network of a 22.4 km corridor with 11 junctions (main road over 5 existing flyovers,
+signals at 5); calibrated to TomTom (55.4 vs 56.2 min); live TomTom data at 10 junctions; 5 kinds of fixes (flyover,
+underpass, signal timing, widening, one-way); 3D view with simulated vehicles; AI planning assistant (Claude with
+tool use, about 7 US cents a question); review and approval flow with SHA-256 fingerprints; YMCA Circle calibrated;
+Gariahat backtest.
 
 **Speaker notes:** Credit each workstream: Simulation, Scenarios, AI agent, Frontend and 3D, Data and proof, Business
 and pitch. Mention that every number on screen is tagged real or simulated.
@@ -144,9 +159,14 @@ and pitch. Mention that every number on screen is tagged real or simulated.
 
 | Question | Answer |
 |---|---|
-| How accurate is it? | At YMCA Circle, within about 3 km/h of TomTom speeds. On the corridor, [[CAL_GAP_PCT]]% of the measured trip time. We show both side by side on every screen. |
+| How accurate is it? | On the corridor: 55.4 min simulated vs 56.2 min measured on the same roads (1.4%), every stretch within about 5%. At YMCA Circle, within about 3 km/h of TomTom speeds. Run to run, results move by about ±0.9 min. We show real and simulated side by side on every screen. |
+| Is 2 minutes worth a flyover? | That is the city's call, with the cost in hand; we have no sourced cost yet. Our job is the honest number: 2.1 min, still 2.0 at 20% more traffic, for every trip on the corridor. |
+| Why not a flyover at Tolichowki? | There already is one. The main road crosses Tolichowki on the Tolichowki Flyover; the tool says so and builds nothing. |
+| Your traffic looks lighter than TomTom's. | Yes. The model carries 1,500 vehicles an hour each way through, plus half of TomTom's evening cross-road volumes: below TomTom's evening estimates. We calibrated to the all-day trip time. That is why the reviewer re-tests at 120%. |
+| Why did the assistant's DLF flyover save less than the button? | It chose its own design (50 km/h, default length): −0.9 min against the button's −1.7 (600 m). Both are small and within about a minute of noise of each other; neither is a strong case. |
+| Can a cheap fix make things worse? | Yes, and the tool shows it: giving DLF's side roads more green makes the trip 2.6 min slower, as the queue backs up towards Nallagandla. |
 | Why not just use Google Maps or TomTom? | They tell you today's traffic. They can't tell you what happens if you build a flyover. We use their data as the starting point. |
-| Is the AI making decisions? | No. It proposes and tests options from fixed templates and writes a brief. A reviewer re-tests; a commissioner approves with a reason. |
+| Is the AI making decisions? | No. It proposes and tests options from fixed templates and writes a brief. In our run it advised *against* a flyover at DLF. A reviewer re-tests; a commissioner approves with a reason. |
 | What does the data cost? | We used TomTom trial accounts. A commercial price is the biggest unknown in our business case; we would also use the city's own counts. |
 | What about two-wheelers and autos? | SUMO's sublane model lets two-wheelers share and filter between lanes; driver settings tuned to Hyderabad speeds. |
 | What about rain? | On this corridor, light monsoon rain added about 5% while raining; not statistically certain from 15 days of data. |

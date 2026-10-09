@@ -19,17 +19,33 @@ and see what happens to the trip **before** building anything.
 New to the words? See the [glossary](docs/glossary.md).
 
 ## The demo: Lingampally to Lakdikapul, Hyderabad
-A real commute of about **22.5 km**, split at **11 junctions** (among them Gachibowli Circle, Tolichowki, Nanal Nagar,
+A real commute of about **22.4 km**, split at **11 junctions** (among them Gachibowli Circle, Tolichowki, Nanal Nagar,
 Rethibowli and Masab Tank; full list in `data/corridor/corridor.json`). TomTom measured it at **58.2 minutes** on an average July 2026 day.
-The slowest stretch is Nallagandla to the ISB Rd / DLF junction (13.8 min).
+The slowest stretch is Nallagandla to the ISB Rd / DLF junction (13.8 min). The main road already crosses five flyovers
+(Gachibowli, Bio-Diversity Park, Shaikpet, Tolichowki, Masab Tank) and meets signals at five junctions (Nallagandla,
+ISB Rd / DLF, Khajaguda, Nanal Nagar, Rethibowli). The calibrated simulation gives **55.4 min** against TomTom's
+**56.2 min** on the same 21.6 km, with every stretch within about 5% (`sim/corridor/calibration.json`). Its traffic
+(1,500 vehicles an hour each way, plus half of TomTom's evening cross-road volumes) is lighter than TomTom's evening
+estimates: it is calibrated to the all-day trip time.
 
 On the corridor screen you can:
 1. See the trip split by stretch: **measured** by TomTom (REAL) next to our **simulation** (SIMULATED).
-2. See **live** delay and queues at 5 junctions (TomTom Junction Analytics: Gachibowli, Tolichowki, Nanal Nagar,
-   Rethibowli, NMDC).
+2. See **live** delay and queues at 10 of the 11 junctions (TomTom Junction Analytics; all except Masab Tank).
 3. Add a change at any junction (flyover, underpass, signal retime, widening, one-way side road) and see how many
    minutes the trip gains or loses, and which junction gets worse (ripple).
 4. Watch it in 3D, with simulated vehicles driving over the new flyover.
+5. Try the quick demos (about 2 s each once the cache is warm, 1-2 min each the first time; warm-up steps in
+   `docs/demo-script.md`). Simulated, ± about 0.9 min run to run:
+
+| Quick demo | Trip | Change | At 120% traffic |
+|---|---|---|---|
+| Today's roads | 55.4 min | - | trip 57.0 min |
+| Flyover at Nallagandla (2 lanes, 600 m) | 53.5 min | −1.9 | −1.5 |
+| Flyover at ISB Rd / DLF (2 lanes, 600 m) | 53.8 min | −1.7 | −1.4 |
+| One flyover over Nanal Nagar + Rethibowli (1.2 km) | 53.4 min | −2.1 | −2.0 |
+| Give DLF's side roads more green (30% to the main road) | 58.0 min | +2.6 (the stretch before DLF +2.7) | - |
+
+Asking for a flyover at Tolichowki answers "already has a flyover; nothing built".
 
 Two more places back up the model:
 - **YMCA Circle, Narayanaguda** (Hyderabad): the deep-dive junction. The model's speeds match TomTom within about
@@ -94,16 +110,22 @@ Each workstream owns one folder (see `CLAUDE.md`). Team members are listed at th
 
 **The proposed solution.** CityRehearsal is a virtual environment where cities simulate proposed decisions, compare alternatives, identify unintended consequences and record an evidence-based approval process before construction begins.
 
-**What the team actually built** (status Fri 9 Oct, evening; the 24-hour build is the roads and traffic module):
-- Lingampally to Lakdikapul corridor: road network from OpenStreetMap, TomTom stretch times, live data at 5 junctions,
-  the corridor API and the 3D corridor screen with quick demos.
+**What the team actually built** (status Fri 9 Oct, 21:30; the 24-hour build is the roads and traffic module):
+- Lingampally to Lakdikapul corridor: road network from OpenStreetMap routed over the five existing flyovers, TomTom
+  stretch times, live data at 10 junctions, the corridor API and the 3D corridor screen with quick demos.
+- Corridor calibrated to TomTom: 55.4 min simulated vs 56.2 min measured on the same roads, every stretch within about 5%.
 - Five kinds of fixes as templates, each with design checks (for example a warning when flyover lanes squeeze into
   fewer lanes).
 - YMCA Circle: calibrated simulation (within about 3 km/h of TomTom), 3D view, simulate any moment since 8 Oct
   from TomTom junction data, or live.
 - Case workflow in the API: options, runs, submit with a SHA-256 fingerprint, reviewer must re-run before
   recommending, commissioner decides with a reason (checked by `make smoke`).
-- In progress: corridor calibration, planning assistant loop and chat, review screens, Gariahat traffic replay.
+- AI planning assistant (chat on the corridor screen): tests the cheap fix first and writes a decision brief. In a
+  real run on ISB Rd / DLF it tried a signal retime (−0.2 min), then a flyover (−0.9 min), and advised against
+  building (about 7 US cents).
+- Review and decision in the corridor screen (re-test at 80% or 120% traffic, approve with a reason) and a Decisions log.
+- Gariahat backtest (`sim/gariahat/README.md`): delay at Gariahat down 59% (study: 75%).
+- In progress: polish, demo recording and dry runs.
 
 ## Business case
 Full version: [docs/business-case.md](docs/business-case.md).
@@ -123,10 +145,10 @@ Full version: [docs/business-case.md](docs/business-case.md).
 - [x] Corridor fix templates: flyover, underpass, signal retime, widening, one-way side road
 - [x] 3D view of YMCA Circle with calibrated mixed traffic (Predict)
 - [x] Review and sign-off API with logged decisions and evidence fingerprints
-- [ ] Corridor calibrated against TomTom trip times
-- [ ] AI agent testing low-cost fixes first, with a decision brief (Mitigate)
-- [ ] Review and sign-off screens
-- [ ] Gariahat backtest replay
+- [x] Corridor calibrated against TomTom trip times (55.4 vs 56.2 min)
+- [x] AI agent testing low-cost fixes first, with a decision brief (Mitigate)
+- [x] Review and sign-off screens
+- [x] Gariahat backtest (`sim/gariahat/README.md`)
 
 ## Deployment
 
