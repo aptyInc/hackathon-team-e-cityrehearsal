@@ -516,6 +516,14 @@ async def corridor_run(body: CorridorRunIn, request: Request):
         raise HTTPException(e.status, e.message)
 
 
+@router.get("/corridor/calibration")
+def corridor_calibration():
+    """How well the simulation matches TomTom: the calibrated knobs and the last round's fit (sim/corridor/calibration.json)."""
+    if not CALIBRATION.exists():
+        raise HTTPException(404, "The corridor simulation is not calibrated yet (sim/corridor/calibration.json is missing).")
+    return json.loads(CALIBRATION.read_text())
+
+
 @router.get("/corridor/runs/{run_id}")
 def corridor_run_status(run_id: str):
     """Status of a corridor run: queued | running | done (with result) | failed (with a plain-language error)."""

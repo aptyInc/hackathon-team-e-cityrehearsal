@@ -28,6 +28,7 @@ Stages: `exploring → proposed → in_review → decided`. Runs are append-only
 | POST | /corridor/runs?async=1 | same body as POST /corridor/runs | 202 `{run_id, status}`; poll GET /corridor/runs/{run_id} |
 | GET | /corridor/runs/{run_id} | – | `{run_id, status: queued/running/done/failed, elapsed_s, result? (C5), error?, http_status?}` |
 | GET | /corridor/junctions/live | `?window_minutes=60` | `{source, labels, window_minutes, junctions: [{id, name, tomtom_id, time, age_s, approaches: [{approach_id, name, time, delay_s, usual_delay_s, queue_m, volume_per_hour, travel_time_s, free_flow_travel_time_s, closed, stale, last_60min: {samples, from, to, delay_s, usual_delay_s, queue_m, volume_per_hour}}]}]}` (delay measured; queue, volume estimated) |
+| GET | /corridor/calibration | – | sim/corridor/calibration.json: calibrated knobs (cap_kmh, green_share, through_vph, cross_scale), `knobs` (what each means, labelled), `result` (last round: sim vs TomTom per leg), `calibrated_at`; 404 before calibration |
 | GET | /corridor/buildings | – | `data/corridor/buildings/index.json` (404 until present) |
 | GET | /corridor/buildings/{point_id} | – | GeoJSON building footprints around a corridor point (A_lingampally, j01..j11, B_lakdikapul) |
 
