@@ -121,46 +121,56 @@ def _hours(h: str) -> str:   # "6:00-23:00" -> "06-23"
     return f"{int(a.split(':')[0]):02d}-{int(b.split(':')[0]):02d}"
 
 
-def tomtom_periods() -> list[dict]:
-    """TomTom Traffic Stats leg times per period: the July average first, then each day."""
+def _one_hour(hours: str) -> bool:
+    a, b = (int(x.split(":")[0]) for x in hours.split("-"))
+    return b - a == 1
+
+
+def tomtom_periods(hourly: bool = False) -> list[dict]:
+    """TomTom Traffic Stats leg times per period: the July average first, then each day. One-hour periods (the hourly
+    job) only with hourly=True; the all-day periods keep their order, so [0] stays the July 06-23 average."""
     if not LEGS_CSV.exists():
         return []
     periods: dict[str, dict] = {}
     for r in csv.DictReader(LEGS_CSV.open()):
+        if _one_hour(r["period"].split(" ")[1]) != hourly:
+            continue
         p = periods.get(r["period"])
         if p is None:
-            try:
-                dates, hours = r["period"].split(" ", 1)
-                d0, d1 = dates.split("..")
-                h0, h1 = (int(x.split(":")[0]) for x in hours.replace(" ", "").split("-"))
-                if d0 == d1 and (h1 - h0) % 24 == 1:      # one hour of one day (TomTom's hourly breakdown per day)
-                    d = datetime.fromisoformat(d0)
-                    label, kind = f"{DAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {h0:02d}:00-{h1:02d}:00", "day_hour"
-                elif d0 == d1:
-                    d = datetime.fromisoformat(d0)
-                    label, kind = f"{DAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {_hours(hours)}", "day"
-                elif (h1 - h0) % 24 == 1:      # TomTom's hourly breakdown: one hour of a typical day
-                    label, kind = f"Typical {datetime.fromisoformat(d0).strftime('%B')} day, {h0:02d}:00-{h1:02d}:00", "hour"
-                else:
-                    label, kind = f"Typical {datetime.fromisoformat(d0).strftime('%B')} day ({_hours(hours)})", "average"
-            except (ValueError, IndexError):   # a period written some other way: listed as it is
-                d0 = d1 = hours = ""
-                label, kind = r["period"], "other"
+            dates, hours = r["period"].split(" ")
+            d0, d1 = dates.split("..")
+            if d0 == d1:
+                d = datetime.fromisoformat(d0)
+                label, kind = f"{DAYS[d.weekday()]} {d.day} {MONTHS[d.month - 1]}, {_hours(hours)}", "day"
+            else:
+                label, kind = f"Typical {datetime.fromisoformat(d0).strftime('%B')} day ({_hours(hours)})", "average"
             p = periods[r["period"]] = {"period": r["period"], "label": label, "kind": kind, "date_from": d0, "date_to": d1,
-                                        "hours": hours, "job": r["job"], "trip_total_s": float(r.get("trip_total_s") or 0),
-                                        "source": f"TomTom Traffic Stats job {r['job']}", "data_label": "measured", "legs": [],
-                                        "hour": h0 if kind in ("hour", "day_hour") else None}
-        try:
-            p["legs"].append({"from_id": r["from_id"], "to_id": r["to_id"], "from_name": r["from"], "to_name": r["to"],
-                              "distance_m": float(r["distance_m"]), "time_s": float(r["time_s"]), "speed_kmh": float(r["speed_kmh"])})
-        except (KeyError, TypeError, ValueError):
-            pass
-    rank = {"average": 0, "hour": 1, "day": 2, "day_hour": 3}
-    out = sorted(periods.values(), key=lambda p: (rank.get(p["kind"], 3), p["date_from"], p["hour"] or 0))
+                                        "hours": hours, "job": r["job"], "trip_total_s": float(r["trip_total_s"]),
+                                        "source": f"TomTom Traffic Stats job {r['job']}", "data_label": "measured", "legs": []}
+        p["legs"].append({"from_id": r["from_id"], "to_id": r["to_id"], "from_name": r["from"], "to_name": r["to"],
+                          "distance_m": float(r["distance_m"]), "time_s": float(r["time_s"]), "speed_kmh": float(r["speed_kmh"])})
+    out = sorted(periods.values(), key=lambda p: (p["kind"] != "average", p["date_from"], p["hours"].zfill(11)))
     for p in out:
         p["total_s"] = round(sum(l["time_s"] for l in p["legs"]), 1)
         p["distance_m"] = round(sum(l["distance_m"] for l in p["legs"]))
     return out
+
+
+def tomtom_hourly() -> dict | None:
+    """Hour-by-hour TomTom trip and leg times, compact: days (July average + single days) x hours 0-23."""
+    rows = tomtom_periods(hourly=True)
+    if not rows:
+        return None
+    days, table = {}, {}
+    for p in rows:
+        day = "july" if p["kind"] == "average" else p["date_from"]
+        days.setdefault(day, p["label"].rsplit(" (", 1)[0].rsplit(",", 1)[0] if day != "july" else "Typical July day")
+        hour = int(p["hours"].split(":")[0])
+        table.setdefault(day, {})[hour] = {"total_s": p["total_s"], "legs_s": [l["time_s"] for l in p["legs"]]}
+    first = rows[0]
+    return {"source": f"TomTom Traffic Stats job {first['job']} (one-hour slots, every day of the week)", "data_label": "measured",
+            "legs": [{"from_id": l["from_id"], "to_id": l["to_id"], "distance_m": l["distance_m"]} for l in first["legs"]],
+            "days": [{"day": k, "label": v} for k, v in days.items()], "hours": list(range(24)), "by_day": table}
 
 
 _route_lock = threading.Lock()
@@ -244,7 +254,8 @@ def get_corridor():
     """Corridor definition + TomTom measured leg times per period + the simulated route's geometry."""
     c = corridor_def()
     c["tomtom"] = {"source": "TomTom Traffic Stats, Lingampally -> Lakdikapul, July 2026 (data/raw/corridor_legs_tomtom.csv)",
-                   "data_label": "REAL: measured (TomTom probe data)", "periods": tomtom_periods()}
+                   "data_label": "REAL: measured (TomTom probe data)", "periods": tomtom_periods(),
+                   "hourly": tomtom_hourly()}
     c["route"] = route_geometry()
     c["labels"] = {"points": "reference: team junction list + OpenStreetMap coordinates",
                    "tomtom": "REAL: measured by TomTom (probe vehicles); leg times, speeds and distances",

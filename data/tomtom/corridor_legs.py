@@ -1,7 +1,8 @@
 """Split TomTom's corridor travel time at the corridor's junctions (data/corridor/corridor.json).
 
-Reads the Traffic Stats route-analysis results in data/tomtom/corridor/ (job 10051304: all of July 2026, 06:00-23:00;
-jobs 10051327-10051341: one per day 1-15 July, 08:00-20:00), places each junction on the measured route, adds up the
+Reads the Traffic Stats route-analysis results in data/tomtom/corridor/<jobId>.json (job 10051304: all of July 2026,
+06:00-23:00; jobs 10051327-10051341: one per day 1-15 July, 08:00-20:00; job 10053357: July and each day 1-23 July,
+hour by hour), one row set per (date range, time set) in each job, places each junction on the measured route, adds up the
 segment travel times between consecutive junctions, and scales them so the legs sum to TomTom's whole-trip average
 (per-segment averages miss some of the waiting a whole trip sees). Label: measured.
 Writes data/raw/corridor_legs_tomtom.csv: one row per (period, leg).
@@ -19,17 +20,19 @@ def dist(a, b):
 
 
 def legs_for(path):
+    """Leg rows for every (date range, time set) pair in one job's results."""
     d = json.load(open(path)); r = d["routes"][0]
-    rows, cum = [], 0.0
+    ranges = {x.get("@id", i + 1): x for i, x in enumerate(d["dateRanges"])}
+    tsets = {x.get("@id", i + 1): x for i, x in enumerate(d["timeSets"])}
+    segs, cum = [], 0.0
     for s in r["segmentResults"]:
-        tr = s["segmentTimeResults"][0]
-        rows.append({"start": cum, "len": s["distance"], "shape": [(p["latitude"], p["longitude"]) for p in s["shape"]],
-                     "t": tr.get("averageTravelTime") or 0.0})
+        segs.append({"start": cum, "len": s["distance"], "shape": [(p["latitude"], p["longitude"]) for p in s["shape"]],
+                     "t": {(x["dateRange"], x["timeSet"]): x.get("averageTravelTime") for x in s["segmentTimeResults"]}})
         cum += s["distance"]
 
     def locate(lat, lon):
         best = (1e9, 0.0)
-        for r_ in rows:
+        for r_ in segs:
             acc = 0.0
             for a, b in zip(r_["shape"], r_["shape"][1:]):
                 seg = dist(a, b)
@@ -41,22 +44,36 @@ def legs_for(path):
                 acc += seg
         return best
 
-    def time_between(x0, x1):
-        return sum(r_["t"] * max(0.0, min(r_["start"] + r_["len"], x1) - max(r_["start"], x0)) / r_["len"] for r_ in rows if r_["len"])
-
     pos = [(p, *locate(p["lat"], p["lon"])) for p in CORRIDOR["points"]]
-    raw = [(a, b, x1 - x0, time_between(x0, x1)) for (a, _, x0), (b, _, x1) in zip(pos, pos[1:])]
-    trip = r["summaries"][0]["averageTravelTime"]
-    k = trip / sum(t for *_, t in raw)
-    period = f"{d['dateRanges'][0]['from']}..{d['dateRanges'][0]['to']} {d['timeSets'][0]['name']}"
-    return [{"period": period, "job": Path(path).stem, "from_id": a["id"], "to_id": b["id"], "from": a["name"], "to": b["name"],
-             "distance_m": round(L), "time_s": round(t * k, 1), "speed_kmh": round(L / (t * k) * 3.6, 1) if t else None,
-             "trip_total_s": round(trip, 1), "label": "measured"} for a, b, L, t in raw], max(off for _, off, _ in pos)
+    out = []
+    for summ in r["summaries"]:
+        pair, trip = (summ["dateRange"], summ["timeSet"]), summ.get("averageTravelTime")
+        if not trip:
+            continue
+        known = [(x["len"], x["t"].get(pair)) for x in segs if x["t"].get(pair)]
+        if not known:
+            continue
+        speed = sum(L for L, _ in known) / sum(t for _, t in known)   # m/s, fills segments without probe data in this slot
+        times = [x["t"].get(pair) or x["len"] / speed for x in segs]
+
+        def time_between(x0, x1):
+            return sum(t * max(0.0, min(x["start"] + x["len"], x1) - max(x["start"], x0)) / x["len"]
+                       for x, t in zip(segs, times) if x["len"])
+
+        raw = [(a, b, x1 - x0, time_between(x0, x1)) for (a, _, x0), (b, _, x1) in zip(pos, pos[1:])]
+        k = trip / sum(t for *_, t in raw)
+        dr, ts = ranges[pair[0]], tsets[pair[1]]
+        period = f"{dr['from']}..{dr['to']} {ts['name']}"
+        coverage = round(sum(L for L, _ in known) / cum, 3)
+        out += [{"period": period, "job": Path(path).stem, "from_id": a["id"], "to_id": b["id"], "from": a["name"], "to": b["name"],
+                 "distance_m": round(L), "time_s": round(t * k, 1), "speed_kmh": round(L / (t * k) * 3.6, 1) if t else None,
+                 "trip_total_s": round(trip, 1), "coverage": coverage, "label": "measured"} for a, b, L, t in raw]
+    return out, max(off for _, off, _ in pos)
 
 
 if __name__ == "__main__":
     out, worst = [], 0
-    for f in sorted(glob.glob(str(ROOT / "data/tomtom/corridor/*.json"))):
+    for f in sorted(glob.glob(str(ROOT / "data/tomtom/corridor/[0-9]*.json"))):
         rows, off = legs_for(f); out += rows; worst = max(worst, off)
     with open(ROOT / "data/raw/corridor_legs_tomtom.csv", "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(out[0])); w.writeheader(); w.writerows(out)
