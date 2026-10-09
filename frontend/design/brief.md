@@ -1,5 +1,17 @@
 # CityRehearsal UI refresh: design brief
 
+> **Update, Fri 23:30: rebranded to Terascope AI.** The user chose to match the product site https://www.terascope.live/. The live app now uses the
+> Terascope brand on top of the direction A structure (dark map pages, glass panels, the same components and IDs):
+> - **Colours (exact, from the site):** page oklch(0.26 0 0), deep oklch(0.225 0 0), text oklch(0.994 0.004 340), muted oklch(0.835 0 0), lines oklch(0.38 0 0),
+>   CTA red-orange oklch(0.605 0.205 31), orange oklch(0.733 0.163 54), blue oklch(0.714 0.143 255), yellow oklch(0.837 0.164 84), green oklch(0.546 0.145 155).
+> - **Data meaning:** REAL / measured = blue; SIMULATED = orange; with your changes = yellow; better = green; worse = red-orange; live = blue with a pulsing dot.
+>   Tags always carry the word, and the dot shape differs (REAL a circle, SIMULATED a diamond), so meaning never depends on colour alone.
+> - **Contrast:** small text uses lighter tints of the brand green and red (oklch 0.72 / 0.70) and a #929292 subtle grey, so it passes WCAG AA on the charcoal.
+>   White on the red-orange CTA is 4.2:1, which matches the site but is just under AA for 11–12 px labels (it passes for large text and UI components).
+> - **Type and components:** Montserrat 400–800 with tabular figures; pill buttons; orange "01 / SECTION" eyebrows; a 120×4 red bar under page titles;
+>   white cards with red icon badges and red pill tags for the marketing blocks on Home and About the data. Tokens: `frontend/tokens.css`.
+> The direction A/B mockups below are kept for reference.
+
 **Chosen direction: A, "Control room".** Direction B, "Civic clarity", was explored as the alternative and stays in this folder for reference.
 
 | File | What it is |

@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CityRehearsal — Decisions</title>
+<title>Terascope AI · Decisions</title>
 <!-- Owner: Frontend. Read-only decision log for reviewers and commissioners. Decisions are made on the corridor screen (step 4);
      this page only shows the record. Reads: GET /corridor/cases, GET /corridor/cases/{id} (runs, events, fingerprints),
      GET /briefs/{id}. Deep links: decisions.html#case=<case_id>, decisions.html#stage=<proposed|in_review|decided>. -->
 <link href="app.css" rel="stylesheet" />
 <style>
   .pg-h { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding-top: 6px; }
-  .pg-h h1 { font-size: 34px; letter-spacing: -.04em; display: flex; align-items: center; gap: 6px; }
+  .pg-h h1 { font-size: 40px; font-weight: 800; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
   .pg-h p { margin: 8px 0 0; max-width: 720px; color: var(--tx-2); }
   body.detail .pg-h p { display: none; }   /* a case is open: straight to it */
   /* list */
   .filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 20px 0 12px; }
-  .filters button { height: 30px; padding: 0 12px; border-radius: 99px; background: rgba(255,255,255,.04); color: var(--tx-2); border: 1px solid var(--line-2); box-shadow: none; font-weight: 500; }
+  .filters button { text-transform: none; letter-spacing: 0; font: 600 12.5px var(--f); height: 32px; padding: 0 14px; border-radius: 99px; background: rgba(255,255,255,.04); color: var(--tx-2); border: 1px solid var(--line-2); box-shadow: none; font-weight: 500; }
   .filters button:hover { color: var(--tx); filter: none; background: rgba(255,255,255,.08); }
-  .filters button[aria-pressed="true"] { background: var(--sim-bg); color: var(--tx); border-color: var(--sim-line); }
+  .filters button[aria-pressed="true"] { background: var(--tx); color: var(--paper-tx); border-color: var(--tx); }
   .filters .n { font-family: var(--mono); font-weight: 500; opacity: .7; margin-left: 4px; }
   #cases { padding: 4px 0; }
   a.case-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; padding: 14px 20px; color: inherit; text-decoration: none;
@@ -32,16 +32,16 @@
   .back { display: inline-flex; align-items: center; gap: 6px; margin: 4px 0 14px; font-weight: 500; text-decoration: none; color: var(--tx-2); }
   .back:hover { color: var(--tx); }
   .d-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
-  .d-head h2 { font-size: 26px; letter-spacing: -.035em; }
+  .d-head h2 { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
   .d-meta { margin: 6px 0 0; font-size: 13px; color: var(--tx-3); }
   .d-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .stages { display: flex; list-style: none; padding: 0; margin: 18px 0 0; gap: 6px; }
   .stages li { flex: 1; text-align: center; font: 600 12px/1 var(--f); padding: 9px 4px; border-radius: 9px; background: rgba(255,255,255,.04); color: var(--tx-3);
     border: 1px solid var(--line); }
-  .stages li.done { background: var(--good-bg); color: var(--good); border-color: rgba(52,211,153,.3); }
-  .stages li.now { background: var(--chg-bg); color: var(--tx); border-color: var(--chg-line); box-shadow: 0 0 18px -4px rgba(232,121,249,.45); }
-  .verdict { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--good-bg); border: 1px solid rgba(52,211,153,.3); }
-  .verdict.reject { background: var(--bad-bg); border-color: rgba(251,113,133,.35); } .verdict.revise, .verdict.defer { background: var(--warn-bg); border-color: rgba(251,191,36,.35); }
+  .stages li.done { background: var(--good-bg); color: var(--good); border-color: oklch(0.546 0.145 155 / .3); }
+  .stages li.now { background: oklch(1 0 0 / .08); color: var(--tx); border-color: var(--tx); }
+  .verdict { margin: 16px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--good-bg); border: 1px solid oklch(0.546 0.145 155 / .3); }
+  .verdict.reject { background: var(--bad-bg); border-color: oklch(0.605 0.205 31 / .35); } .verdict.revise, .verdict.defer { background: var(--warn-bg); border-color: oklch(0.837 0.164 84 / .35); }
   .verdict b { font-size: 15px; font-weight: 600; }
   .cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; align-items: start; }
   .cols > div { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
@@ -51,10 +51,10 @@
   .tl > li { position: relative; margin: 0 0 18px; }
   .tl > li:last-child { margin-bottom: 4px; }
   .tl > li::before { content: ""; position: absolute; left: -29px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--sim);
-    border: 2px solid var(--bg); box-shadow: 0 0 10px rgba(167,139,250,.6); }
-  .tl > li[data-kind="review"]::before { background: var(--warn); box-shadow: 0 0 10px rgba(251,191,36,.5); }
-  .tl > li[data-kind="decision"]::before { background: var(--good); box-shadow: 0 0 10px rgba(52,211,153,.55); }
-  .tl .k { font: 600 10.5px var(--mono); text-transform: uppercase; letter-spacing: .1em; color: var(--tx-3); }
+    border: 2px solid var(--bg); box-shadow: 0 0 10px oklch(0.733 0.163 54 / .6); }
+  .tl > li[data-kind="review"]::before { background: var(--warn); box-shadow: 0 0 10px oklch(0.837 0.164 84 / .5); }
+  .tl > li[data-kind="decision"]::before { background: var(--good); box-shadow: 0 0 10px oklch(0.546 0.145 155 / .55); }
+  .tl .k { font: 700 10.5px var(--f); text-transform: uppercase; letter-spacing: .05em; color: var(--t-orange); }
   .tl .who { font-weight: 600; } .tl .what { margin: 3px 0; color: var(--tx-2); }
   .tl .res { margin: 4px 0; padding-left: 18px; font-size: 13px; list-style: disc; color: var(--tx-2); } .tl .res li { margin: 2px 0; }
   .tl .chain { font-size: 12px; color: var(--tx-3); }
@@ -87,7 +87,7 @@
 <script src="nav.js" data-page="decisions"></script>
 <main class="wrap">
   <div class="pg-h">
-    <div><h1>Decisions <span class="tag rec">RECORDED</span></h1>
+    <div><p class="eyebrow" style="margin:0 0 12px">Reviewed and recorded</p><h1>Decisions <span class="tag rec">RECORDED</span></h1><div class="tbar" aria-hidden="true"></div>
       <p>Every corridor proposal, its re-tests and the final decision, with who did what and when. This page is read-only:
         proposals, reviews and decisions are made on the <a href="corridor.html">corridor screen</a> (step 4). Records are append-only.</p></div>
   </div>
@@ -252,7 +252,7 @@ function renderDetail(c) {
 async function loadBrief(c) {
   const id = c.brief_id;
   $("brief-print").hidden = true; $("brief-meta").hidden = true;
-  if (!id) { $("brief-body").innerHTML = `<p class="note">No decision brief is attached to this case. Briefs come from the corridor screen's assistant (“Ask CityRehearsal”).</p>`; return; }
+  if (!id) { $("brief-body").innerHTML = `<p class="note">No decision brief is attached to this case. Briefs come from the corridor screen's assistant (“Ask Terascope AI”).</p>`; return; }
   $("brief-body").innerHTML = `<p class="note"><span class="spin"></span>Loading brief ${esc(id)}…</p>`;
   try {
     const b = await get(`/briefs/${encodeURIComponent(id)}`);
@@ -272,13 +272,13 @@ async function openCase(id) {
   $("d-card").innerHTML = `<p class="note"><span class="spin"></span>Loading case ${esc(id)}…</p>`;
   ["timeline", "runs", "evidence", "brief-body"].forEach(k => $(k).innerHTML = "");
   window.scrollTo(0, 0);
-  try { const c = await get(`/corridor/cases/${encodeURIComponent(id)}`); renderDetail(c); document.title = `CityRehearsal — ${c.title || "Decision"}`; }
+  try { const c = await get(`/corridor/cases/${encodeURIComponent(id)}`); renderDetail(c); document.title = `Terascope AI · ${c.title || "Decision"}`; }
   catch (e) { $("d-card").innerHTML = `<p class="note warn">${esc(e.status === 404 ? `Case ${id} is not on this server.` : apiProblem(e, "Decision records"))}</p>`; }
 }
 function route() {
   const { caseId, stage } = readHash();
   if (caseId) { openCase(caseId); return; }
-  current = null; document.title = "CityRehearsal — Decisions"; document.body.classList.remove("detail");
+  current = null; document.title = "Terascope AI · Decisions"; document.body.classList.remove("detail");
   $("detail-view").hidden = true; $("list-view").hidden = false;
   if (stage && STAGES.some(s => s[0] === stage)) filter = stage;
   renderList();

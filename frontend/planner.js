@@ -1,4 +1,4 @@
-// CityRehearsal corridor page: "Ask CityRehearsal" (agent chat) and "4 · Decision" (review and decision records).
+// Terascope AI corridor page: "Ask Terascope AI" (agent chat) and "4 · Decision" (review and decision records).
 // Owner: Frontend. Loaded by corridor.html after its main script; uses its globals (API, get, post, esc, base, changed,
 // interventions, renderJourney, play, ...). Backend endpoints (all optional: a 404 hides the feature with a short note):
 //   POST /agent/chat?async=1 {session_id?, message} -> {session_id, turn_id}   (or the finished turn, if async is not supported)
@@ -64,13 +64,13 @@ window.planner = (() => {
     return r;
   }
 
-  // ---------- Ask CityRehearsal ----------
+  // ---------- Ask Terascope AI ----------
   let session = null, turnBusy = false, chatOff = false, lastBrief = null;
   function openChat(on) {
     document.body.classList.toggle("chat-open", on);
     $("chat").hidden = !on;
     $("ask-open").setAttribute("aria-expanded", String(on));
-    $("ask-open").textContent = on ? "Close assistant" : "Ask CityRehearsal";
+    $("ask-open").textContent = on ? "Close assistant" : "Ask Terascope AI";
     if (on) { if (narrow()) $("chat").scrollIntoView({ behavior: "smooth", block: "start" }); if (!chatOff) $("chat-in").focus({ preventScroll: true }); }
   }
   function toolName(t) {
