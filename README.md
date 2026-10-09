@@ -26,13 +26,44 @@ Apty Hackathon 2026 · Theme: Sustainable Cities and Communities — Smart citie
 - [ ] Gariahat backtest
 
 ## Deployment
+
+### What you need
+- **Python 3.10 or newer** (`python3 --version`) and **git**.
+- macOS or Linux. On Windows, use WSL, or run the commands inside each `make` target by hand.
+- Keys (only for the parts that use them), shared privately, never committed:
+  - `ANTHROPIC_API_KEY` — Claude API key from [platform.claude.com](https://platform.claude.com/settings/keys) (needs API credits; a Claude chat or Claude Code plan does not include API use).
+  - `TOMTOM_API_KEY` — from the TomTom MOVE menu at [move.tomtom.com](https://move.tomtom.com) (30-day trial: Traffic Stats, Junction Analytics, Area Analytics, O/D Analysis, Route Monitoring).
+
+### 1. App in mock mode (everyone, 10 minutes)
+No SUMO needed: the backend serves sample data from `/contracts/samples`.
 ```bash
-cp .env.example .env      # add keys; keep MOCK_SIM=1 to run without SUMO
-make setup
-make dev                  # API at http://localhost:8000
-make smoke                # smoke test
-# frontend: cd frontend && python3 -m http.server 5173  → http://localhost:5173
+git clone git@github.com:aptyInc/hackathon-team-e-cityrehearsal.git
+cd hackathon-team-e-cityrehearsal
+cp .env.example .env      # paste in the keys you were sent; keep MOCK_SIM=1
+make setup                # creates .venv and installs the backend
+make dev                  # API at http://localhost:8000 — /health shows {"status":"ok","mock":true}
+make smoke                # in a second terminal: must print SMOKE TEST PASSED
+cd frontend && python3 -m http.server 5173   # screen at http://localhost:5173
 ```
+
+### 2. Simulation with SUMO (simulation and scenarios laptops, 10 minutes)
+SUMO 1.28 is installed from the official `eclipse-sumo` Python package into `.venv`, so no Homebrew tap, installer or `SUMO_HOME` setup is needed.
+```bash
+make setup-sim            # installs eclipse-sumo, sumolib, traci, pyproj; prints the SUMO version
+make network              # sim/networks/ymca.osm.xml -> sim/networks/ymca.net.xml
+make sim-test             # 10 minutes of random traffic; expect "Inserted: 400", "Running: 0", "Waiting: 0"
+```
+- The road map is an OpenStreetMap extract of the YMCA Circle area (`sim/networks/ymca.osm.xml`, downloaded 9 Oct 2026). To refresh it: `curl -A "cityrehearsal" "https://api.openstreetmap.org/api/0.6/map?bbox=78.4843,17.3902,78.4975,17.4005" -o sim/networks/ymca.osm.xml`
+- `sim/scripts/build_network.sh` sets left-hand traffic, keeps main roads only, and uses `sim/networks/india_urban.typ.xml` for speeds and lane counts where OpenStreetMap has none (labelled `assumed`). It then applies `sim/networks/ymca_widths.edg.xml`, which widens the roundabout and the 8 roads touching it to 3 lanes (9.9 m), matching the widths measured in the 2020 study (`counted`).
+- The visual editors `sumo-gui` and `netedit` also come with the package. On macOS they need [XQuartz](https://www.xquartz.org) (`brew install --cask xquartz`, then log out and back in).
+- To use SUMO's own tools: `export SUMO_HOME=$(python -c "import sumo; print(sumo.SUMO_HOME)")` inside `.venv`.
+
+### 3. Traffic data (data workstream)
+All data and its sources are listed in [data/README.md](data/README.md). The files are already in the repo; these commands only refresh them and need `TOMTOM_API_KEY` in `.env`.
+- **Hourly speeds** (TomTom Traffic Stats): the request files are in `data/tomtom/*.request.json`; `data/tomtom/fetch_traffic_stats.py` shows the submit, status and download steps. The trial only allows dates in July 2026.
+- **YMCA Circle junction live data** (TomTom Junction Analytics, junction `6ac7d6870b461bdaf5cd8158`): delay, queue, volume and turn ratios. One snapshot: `python3 data/tomtom/collect_junction_live.py --once`. Every 5 minutes, keeping the Mac awake: `nohup caffeinate -i python3 data/tomtom/collect_junction_live.py >> data/tomtom/junction/collector.log 2>&1 &` (stop with `pkill -f collect_junction_live`). TomTom also keeps the history: the hourglass button on the junction page exports it.
+- If Python reports `CERTIFICATE_VERIFY_FAILED` on your network, use `curl` for TomTom calls (the collector already does).
+
 Deployed URL: _(add if deployed)_
 
 ## Team

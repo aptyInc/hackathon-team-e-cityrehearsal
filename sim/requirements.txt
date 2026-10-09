@@ -1,0 +1,5 @@
+# Simulation workstream. SUMO itself comes from the official eclipse-sumo package (no Homebrew, no installer).
+eclipse-sumo==1.28.0
+sumolib==1.28.0
+traci==1.28.0
+pyproj>=3.6
