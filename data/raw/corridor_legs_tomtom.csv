@@ -1,193 +1,193 @@
-period,job,from_id,to_id,from,to,distance_m,time_s,speed_kmh,trip_total_s,label
-2026-07-01..2026-07-31 6:00-23:00,10051304,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,1911,402.2,17.1,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5414,829.8,23.5,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,240.5,20.8,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,184.1,30.9,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,151.0,25.7,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.2,33.3,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,282.0,36.1,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j07,j08,Tolichowki,Nanal Nagar jn,1370,243.1,20.3,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j08,j09,Nanal Nagar jn,Rethibowli jn,418,71.6,21.0,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,451.8,17.9,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,148.8,22.5,3492.2,measured
-2026-07-01..2026-07-31 6:00-23:00,10051304,j11,B_lakdikapul,Masab Tank,Lakdikapul,1636,312.3,18.9,3492.2,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,572.0,12.6,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,825.2,23.6,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,256.1,19.5,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,183.8,31.0,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,160.5,24.2,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.8,33.2,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,282.8,36.0,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j07,j08,Tolichowki,Nanal Nagar jn,1370,254.9,19.4,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j08,j09,Nanal Nagar jn,Rethibowli jn,418,77.2,19.5,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,486.3,16.6,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,146.0,22.9,3718.9,measured
-2026-07-01..2026-07-01 8:00-20:00,10051327,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,298.4,20.2,3718.9,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,539.2,13.4,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,797.0,24.4,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,285.5,17.5,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,313.6,18.1,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,195.1,19.9,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,173.0,33.7,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,280.2,36.3,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j07,j08,Tolichowki,Nanal Nagar jn,1370,222.3,22.2,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j08,j09,Nanal Nagar jn,Rethibowli jn,418,72.3,20.8,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,454.0,17.8,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,147.1,22.8,3804.5,measured
-2026-07-02..2026-07-02 8:00-20:00,10051328,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,325.1,18.5,3804.5,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,513.0,14.1,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,780.1,24.9,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,210.5,23.7,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,216.3,26.3,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,164.5,23.6,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,168.9,34.5,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,267.9,38.0,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j07,j08,Tolichowki,Nanal Nagar jn,1370,255.4,19.3,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j08,j09,Nanal Nagar jn,Rethibowli jn,418,90.6,16.6,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,409.8,19.7,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,146.5,22.8,3514.6,measured
-2026-07-03..2026-07-03 8:00-20:00,10051329,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,291.0,20.7,3514.6,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,642.0,11.2,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,745.2,26.1,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,199.2,25.1,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,171.1,33.3,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,120.4,32.2,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,156.5,37.3,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,267.9,38.0,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j07,j08,Tolichowki,Nanal Nagar jn,1370,267.1,18.5,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j08,j09,Nanal Nagar jn,Rethibowli jn,418,92.3,16.3,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,441.7,18.3,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,152.5,21.9,3673.9,measured
-2026-07-04..2026-07-04 8:00-20:00,10051330,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,418.0,14.4,3673.9,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,460.2,15.7,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,672.0,29.0,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,181.3,27.5,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,146.3,38.9,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,104.5,37.2,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,147.3,39.6,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,236.5,43.1,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j07,j08,Tolichowki,Nanal Nagar jn,1370,168.2,29.3,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j08,j09,Nanal Nagar jn,Rethibowli jn,418,61.7,24.4,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,355.0,22.7,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,137.9,24.3,2917.8,measured
-2026-07-05..2026-07-05 8:00-20:00,10051331,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,246.9,24.4,2917.8,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,553.9,13.0,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,931.1,20.9,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,253.7,19.7,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,176.0,32.3,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,143.5,27.0,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.1,33.3,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,282.9,36.0,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j07,j08,Tolichowki,Nanal Nagar jn,1370,250.0,19.7,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j08,j09,Nanal Nagar jn,Rethibowli jn,418,89.9,16.7,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,456.5,17.7,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,149.3,22.4,3825.6,measured
-2026-07-06..2026-07-06 8:00-20:00,10051332,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,363.6,16.5,3825.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,486.4,14.8,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,882.7,22.0,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,267.4,18.7,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,186.9,30.4,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,175.9,22.1,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,176.7,33.0,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,280.2,36.3,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j07,j08,Tolichowki,Nanal Nagar jn,1370,261.2,18.9,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j08,j09,Nanal Nagar jn,Rethibowli jn,418,72.2,20.8,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,448.8,18.0,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,150.6,22.2,3763.6,measured
-2026-07-07..2026-07-07 8:00-20:00,10051333,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,374.7,16.1,3763.6,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,534.3,13.5,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,971.2,20.0,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,308.0,16.2,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,182.1,31.2,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,173.9,22.3,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,179.5,32.5,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,284.3,35.8,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j07,j08,Tolichowki,Nanal Nagar jn,1370,272.6,18.1,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j08,j09,Nanal Nagar jn,Rethibowli jn,418,77.1,19.5,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,473.8,17.0,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,146.1,22.9,3905.0,measured
-2026-07-08..2026-07-08 8:00-20:00,10051334,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,302.1,19.9,3905.0,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,500.0,14.4,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,912.2,21.3,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,268.4,18.6,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,185.1,30.7,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,157.6,24.6,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,176.7,33.0,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,286.0,35.6,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j07,j08,Tolichowki,Nanal Nagar jn,1370,291.6,16.9,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j08,j09,Nanal Nagar jn,Rethibowli jn,418,79.0,19.0,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,517.2,15.6,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,151.0,22.2,3823.2,measured
-2026-07-09..2026-07-09 8:00-20:00,10051335,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,298.6,20.1,3823.2,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,507.1,14.2,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,766.0,25.4,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,229.5,21.7,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,168.5,33.8,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,141.4,27.5,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,167.5,34.8,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,260.2,39.2,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j07,j08,Tolichowki,Nanal Nagar jn,1370,253.7,19.4,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j08,j09,Nanal Nagar jn,Rethibowli jn,418,94.9,15.9,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,397.1,20.3,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,147.5,22.7,3493.5,measured
-2026-07-10..2026-07-10 8:00-20:00,10051336,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,360.4,16.7,3493.5,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,515.9,14.0,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,938.8,20.7,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,189.6,26.3,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,141.3,40.3,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,105.3,36.8,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,153.3,38.1,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,261.9,38.9,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j07,j08,Tolichowki,Nanal Nagar jn,1370,204.6,24.1,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j08,j09,Nanal Nagar jn,Rethibowli jn,418,108.3,13.9,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,429.2,18.8,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,152.7,21.9,3518.1,measured
-2026-07-11..2026-07-11 8:00-20:00,10051337,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,317.1,19.0,3518.1,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,449.9,16.0,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,650.5,29.9,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,174.3,28.6,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,137.8,41.3,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,101.5,38.2,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,143.6,40.6,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,232.2,43.9,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j07,j08,Tolichowki,Nanal Nagar jn,1370,159.2,31.0,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j08,j09,Nanal Nagar jn,Rethibowli jn,418,56.2,26.7,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,339.8,23.7,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,136.5,24.5,2850.8,measured
-2026-07-12..2026-07-12 8:00-20:00,10051338,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,269.2,22.3,2850.8,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,496.9,14.5,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,849.6,22.9,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,255.6,19.5,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,164.8,34.5,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,159.1,24.4,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,174.3,33.5,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,276.0,36.9,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j07,j08,Tolichowki,Nanal Nagar jn,1370,275.8,17.9,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j08,j09,Nanal Nagar jn,Rethibowli jn,418,107.4,14.0,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,483.7,16.7,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,151.6,22.1,3726.3,measured
-2026-07-13..2026-07-13 8:00-20:00,10051339,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,331.3,18.2,3726.3,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,493.8,14.6,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,817.7,23.8,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,255.2,19.6,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,173.3,32.8,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,228.5,17.0,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.1,33.3,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,276.8,36.8,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j07,j08,Tolichowki,Nanal Nagar jn,1370,265.5,18.6,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j08,j09,Nanal Nagar jn,Rethibowli jn,418,72.9,20.6,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,429.3,18.8,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,148.1,22.6,3653.1,measured
-2026-07-14..2026-07-14 8:00-20:00,10051340,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,316.8,19.0,3653.1,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,481.2,15.0,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,846.4,23.0,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,271.4,18.4,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,173.6,32.8,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,189.9,20.4,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.0,33.3,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,286.7,35.5,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j07,j08,Tolichowki,Nanal Nagar jn,1370,307.9,16.0,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j08,j09,Nanal Nagar jn,Rethibowli jn,418,104.9,14.3,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,536.6,15.0,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,149.8,22.3,3864.3,measured
-2026-07-15..2026-07-15 8:00-20:00,10051341,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,341.0,17.6,3864.3,measured
+period,job,from_id,to_id,from,to,distance_m,time_s,speed_kmh,trip_total_s,coverage,label
+2026-07-01..2026-07-31 6:00-23:00,10051304,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,1911,402.2,17.1,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5414,829.8,23.5,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,240.5,20.8,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,184.1,30.9,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,151.0,25.7,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.2,33.3,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,282.0,36.1,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j07,j08,Tolichowki,Nanal Nagar jn,1370,243.1,20.3,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j08,j09,Nanal Nagar jn,Rethibowli jn,418,71.6,21.0,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,451.8,17.9,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,148.8,22.5,3492.2,1.0,measured
+2026-07-01..2026-07-31 6:00-23:00,10051304,j11,B_lakdikapul,Masab Tank,Lakdikapul,1636,312.3,18.9,3492.2,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,572.0,12.6,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,825.2,23.6,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,256.1,19.5,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,183.8,31.0,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,160.5,24.2,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.8,33.2,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,282.8,36.0,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j07,j08,Tolichowki,Nanal Nagar jn,1370,254.9,19.4,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j08,j09,Nanal Nagar jn,Rethibowli jn,418,77.2,19.5,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,486.3,16.6,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,146.0,22.9,3718.9,1.0,measured
+2026-07-01..2026-07-01 8:00-20:00,10051327,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,298.4,20.2,3718.9,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,539.2,13.4,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,797.0,24.4,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,285.5,17.5,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,313.6,18.1,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,195.1,19.9,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,173.0,33.7,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,280.2,36.3,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j07,j08,Tolichowki,Nanal Nagar jn,1370,222.3,22.2,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j08,j09,Nanal Nagar jn,Rethibowli jn,418,72.3,20.8,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,454.0,17.8,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,147.1,22.8,3804.5,1.0,measured
+2026-07-02..2026-07-02 8:00-20:00,10051328,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,325.1,18.5,3804.5,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,513.0,14.1,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,780.1,24.9,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,210.5,23.7,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,216.3,26.3,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,164.5,23.6,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,168.9,34.5,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,267.9,38.0,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j07,j08,Tolichowki,Nanal Nagar jn,1370,255.4,19.3,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j08,j09,Nanal Nagar jn,Rethibowli jn,418,90.6,16.6,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,409.8,19.7,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,146.5,22.8,3514.6,1.0,measured
+2026-07-03..2026-07-03 8:00-20:00,10051329,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,291.0,20.7,3514.6,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,642.0,11.2,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,745.2,26.1,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,199.2,25.1,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,171.1,33.3,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,120.4,32.2,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,156.5,37.3,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,267.9,38.0,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j07,j08,Tolichowki,Nanal Nagar jn,1370,267.1,18.5,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j08,j09,Nanal Nagar jn,Rethibowli jn,418,92.3,16.3,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,441.7,18.3,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,152.5,21.9,3673.9,1.0,measured
+2026-07-04..2026-07-04 8:00-20:00,10051330,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,418.0,14.4,3673.9,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,460.2,15.7,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,672.0,29.0,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,181.3,27.5,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,146.3,38.9,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,104.5,37.2,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,147.3,39.6,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,236.5,43.1,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j07,j08,Tolichowki,Nanal Nagar jn,1370,168.2,29.3,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j08,j09,Nanal Nagar jn,Rethibowli jn,418,61.7,24.4,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,355.0,22.7,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,137.9,24.3,2917.8,1.0,measured
+2026-07-05..2026-07-05 8:00-20:00,10051331,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,246.9,24.4,2917.8,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,553.9,13.0,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,931.1,20.9,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,253.7,19.7,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,176.0,32.3,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,143.5,27.0,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.1,33.3,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,282.9,36.0,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j07,j08,Tolichowki,Nanal Nagar jn,1370,250.0,19.7,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j08,j09,Nanal Nagar jn,Rethibowli jn,418,89.9,16.7,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,456.5,17.7,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,149.3,22.4,3825.6,1.0,measured
+2026-07-06..2026-07-06 8:00-20:00,10051332,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,363.6,16.5,3825.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,486.4,14.8,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,882.7,22.0,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,267.4,18.7,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,186.9,30.4,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,175.9,22.1,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,176.7,33.0,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,280.2,36.3,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j07,j08,Tolichowki,Nanal Nagar jn,1370,261.2,18.9,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j08,j09,Nanal Nagar jn,Rethibowli jn,418,72.2,20.8,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,448.8,18.0,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,150.6,22.2,3763.6,1.0,measured
+2026-07-07..2026-07-07 8:00-20:00,10051333,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,374.7,16.1,3763.6,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,534.3,13.5,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,971.2,20.0,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,308.0,16.2,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,182.1,31.2,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,173.9,22.3,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,179.5,32.5,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,284.3,35.8,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j07,j08,Tolichowki,Nanal Nagar jn,1370,272.6,18.1,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j08,j09,Nanal Nagar jn,Rethibowli jn,418,77.1,19.5,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,473.8,17.0,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,146.1,22.9,3905.0,1.0,measured
+2026-07-08..2026-07-08 8:00-20:00,10051334,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,302.1,19.9,3905.0,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,500.0,14.4,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,912.2,21.3,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,268.4,18.6,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,185.1,30.7,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,157.6,24.6,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,176.7,33.0,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,286.0,35.6,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j07,j08,Tolichowki,Nanal Nagar jn,1370,291.6,16.9,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j08,j09,Nanal Nagar jn,Rethibowli jn,418,79.0,19.0,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,517.2,15.6,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,151.0,22.2,3823.2,1.0,measured
+2026-07-09..2026-07-09 8:00-20:00,10051335,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,298.6,20.1,3823.2,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,507.1,14.2,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,766.0,25.4,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,229.5,21.7,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,168.5,33.8,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,141.4,27.5,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,167.5,34.8,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,260.2,39.2,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j07,j08,Tolichowki,Nanal Nagar jn,1370,253.7,19.4,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j08,j09,Nanal Nagar jn,Rethibowli jn,418,94.9,15.9,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,397.1,20.3,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,147.5,22.7,3493.5,1.0,measured
+2026-07-10..2026-07-10 8:00-20:00,10051336,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,360.4,16.7,3493.5,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,515.9,14.0,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,938.8,20.7,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,189.6,26.3,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,141.3,40.3,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,105.3,36.8,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,153.3,38.1,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,261.9,38.9,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j07,j08,Tolichowki,Nanal Nagar jn,1370,204.6,24.1,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j08,j09,Nanal Nagar jn,Rethibowli jn,418,108.3,13.9,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,429.2,18.8,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,152.7,21.9,3518.1,1.0,measured
+2026-07-11..2026-07-11 8:00-20:00,10051337,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,317.1,19.0,3518.1,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,449.9,16.0,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,650.5,29.9,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,174.3,28.6,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,137.8,41.3,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,101.5,38.2,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,143.6,40.6,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,232.2,43.9,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j07,j08,Tolichowki,Nanal Nagar jn,1370,159.2,31.0,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j08,j09,Nanal Nagar jn,Rethibowli jn,418,56.2,26.7,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,339.8,23.7,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,136.5,24.5,2850.8,1.0,measured
+2026-07-12..2026-07-12 8:00-20:00,10051338,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,269.2,22.3,2850.8,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,496.9,14.5,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,849.6,22.9,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,255.6,19.5,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,164.8,34.5,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,159.1,24.4,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,174.3,33.5,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,276.0,36.9,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j07,j08,Tolichowki,Nanal Nagar jn,1370,275.8,17.9,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j08,j09,Nanal Nagar jn,Rethibowli jn,418,107.4,14.0,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,483.7,16.7,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,151.6,22.1,3726.3,1.0,measured
+2026-07-13..2026-07-13 8:00-20:00,10051339,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,331.3,18.2,3726.3,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,493.8,14.6,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,817.7,23.8,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,255.2,19.6,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,173.3,32.8,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,228.5,17.0,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.1,33.3,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,276.8,36.8,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j07,j08,Tolichowki,Nanal Nagar jn,1370,265.5,18.6,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j08,j09,Nanal Nagar jn,Rethibowli jn,418,72.9,20.6,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,429.3,18.8,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,148.1,22.6,3653.1,1.0,measured
+2026-07-14..2026-07-14 8:00-20:00,10051340,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,316.8,19.0,3653.1,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,A_lingampally,j01,"Lingampally (Old Bombay Rd, route start)",Nallagandla Rd jn,2005,481.2,15.0,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j01,j02,Nallagandla Rd jn,ISB Rd / DLF jn,5405,846.4,23.0,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j02,j03,ISB Rd / DLF jn,Gachibowli Circle,1386,271.4,18.4,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j03,j04,Gachibowli Circle,Biodiversity jn (flyover),1581,173.6,32.8,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j04,j05,Biodiversity jn (flyover),Khajaguda X Roads,1078,189.9,20.4,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j05,j06,Khajaguda X Roads,Narne Rd jn Shaikpet,1621,175.0,33.3,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j06,j07,Narne Rd jn Shaikpet,Tolichowki,2830,286.7,35.5,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j07,j08,Tolichowki,Nanal Nagar jn,1370,307.9,16.0,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j08,j09,Nanal Nagar jn,Rethibowli jn,418,104.9,14.3,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j09,j10,Rethibowli jn,NMDC / Masab Tank Rd,2241,536.6,15.0,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j10,j11,NMDC / Masab Tank Rd,Masab Tank,930,149.8,22.3,3864.3,1.0,measured
+2026-07-15..2026-07-15 8:00-20:00,10051341,j11,B_lakdikapul,Masab Tank,Lakdikapul,1671,341.0,17.6,3864.3,1.0,measured
