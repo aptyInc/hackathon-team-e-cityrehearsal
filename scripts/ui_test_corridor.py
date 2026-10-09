@@ -21,8 +21,15 @@ Cases
   L  Long runs: presets fill the list and simulate; elapsed counter + "usually under 2 minutes" while waiting; the rest of
      the page stays usable; preset bodies (Khajaguda 70% main road, one flyover j08 1200 m)
   M  Errors: HTTP 500 plain text and FastAPI {"detail"} shown as the message (no silent fallback), buttons back
-  N  Narrow screen (390 px): panels stacked under the map, no sideways scroll, live panel from flat snapshot rows
+  O  3D: pitched camera, buildings loaded per junction in view (mocked GET /corridor/buildings/{id}), vehicles culled to the
+     view and raised on the flyover (z), flyover structure drawn with ramps and piers, follow a test car, orbit, night,
+     dots instead of boxes from the whole-corridor view
+  N  Narrow screen (390 px): panels stacked under the map, no sideways scroll, live panel from flat snapshot rows,
+     GET /corridor in the backend's real shape (tomtom.periods, per-leg route features)
   K  No page errors at any point
+
+The first page talks to the real API on :8000 (if running) except POST /corridor/runs, which is answered 404 so the
+sample fallback is tested deterministically; the other pages mock every corridor endpoint in the browser.
 
 Usage (API on :8000 if available; repo root served on :5180):
     python3 -m http.server 5180 &        # from the repo root
@@ -127,6 +134,37 @@ def simulate(pg, button, label):
     return st
 
 
+def frames_3d(n_frames=40):
+    """frames_along(j07, j08) plus: 3 cars on the Tolichowki flyover (z 6 m), a test car (probe_fwd_1) driving from Shaikpet
+    to Nanal Nagar, and 20 vehicles far away at Lingampally (must not be drawn when the camera is at Tolichowki)."""
+    out = frames_along("j07", "j08", n_frames)
+    p6, p7, p8, pa = PTS["j06"], PTS["j07"], PTS["j08"], PTS["A_lingampally"]
+    for t, fr in enumerate(out):
+        for i in range(3):
+            fr["vehicles"].append({"id": f"fly{i}", "type": "car", "lon": p7["lon"] + 0.0004 * (i - 1) + t * 0.00001, "lat": p7["lat"] - 0.0001 * (i - 1), "z": 6.0, "angle": 100.0, "speed": 15.0})
+        f = t / (n_frames - 1)
+        a, z = (p6, p7) if f < 0.5 else (p7, p8)
+        g = f * 2 if f < 0.5 else (f - 0.5) * 2
+        fr["vehicles"].append({"id": "probe_fwd_1", "type": "car", "lon": a["lon"] + (z["lon"] - a["lon"]) * g, "lat": a["lat"] + (z["lat"] - a["lat"]) * g, "z": 0.0, "angle": 120.0, "speed": 9.0})
+        for i in range(20):
+            fr["vehicles"].append({"id": f"far{i}", "type": "two_wheeler", "lon": pa["lon"] + i * 0.00005, "lat": pa["lat"] - i * 0.00005, "z": 0.0, "angle": 160.0, "speed": 5.0})
+    return out
+
+
+def building_fc():
+    sq = lambda dx, dy, s=0.0002: [[[PTS["j07"]["lon"] + dx, PTS["j07"]["lat"] + dy], [PTS["j07"]["lon"] + dx + s, PTS["j07"]["lat"] + dy],
+                                     [PTS["j07"]["lon"] + dx + s, PTS["j07"]["lat"] + dy + s], [PTS["j07"]["lon"] + dx, PTS["j07"]["lat"] + dy + s], [PTS["j07"]["lon"] + dx, PTS["j07"]["lat"] + dy]]]
+    return {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "properties": {"height": 15, "num_floors": 5}, "geometry": {"type": "Polygon", "coordinates": sq(0.0006, 0.0006)}},
+        {"type": "Feature", "properties": {"height": None, "num_floors": 4}, "geometry": {"type": "Polygon", "coordinates": sq(-0.0009, 0.0005)}},
+        {"type": "Feature", "properties": {"height": None, "num_floors": None}, "geometry": {"type": "Polygon", "coordinates": sq(0.0005, -0.0009)}},
+        {"type": "Feature", "properties": {"height": 30}, "geometry": {"type": "MultiPolygon", "coordinates": [sq(-0.0012, -0.0012), sq(-0.0016, -0.0012)]}}]}
+
+
+def layer_props(pg, lid, js):
+    return pg.evaluate(f"() => {{ const l = overlay._deck.props.layers.find(l => l.id === '{lid}'); return l ? ({js})(l) : null; }}")
+
+
 def frames_along(a, b, n_frames=40, n_veh=30):
     """Synthetic C1 frames: vehicles driving from point a to point b (for the playback test only)."""
     pa, pb = PTS[a], PTS[b]
@@ -172,17 +210,17 @@ def live_nested(counts):
     """GET /corridor/junctions/live, nested shape (latest per approach + a 60-minute mean). Once counts["v2"] is set, NH163 changes."""
     v2 = counts.get("v2", False)
     t = "2026-10-09T17:18:58+05:30" if v2 else "2026-10-09T17:17:58+05:30"
-    ap = lambda name, d, u, q, v, m=None: {"approach": name, "delay_s": d, "usual_delay_s": u, "queue_m": q, "volume_per_hour": v, "time": t,
-                                           **({"mean_60min": {"delay_s": m, "queue_m": q}} if m is not None else {})}
-    lab = "measured (volume, queue: estimated)"
-    return {"junctions": [
-        {"junction_id": "j07", "name": "Tolichowki", "time": t, "label": lab, "approaches": [
+    ap = lambda name, d, u, q, v, m=None: {"approach_id": name, "name": name, "delay_s": d, "usual_delay_s": u, "queue_m": q, "volume_per_hour": v, "time": t, "stale": False,
+                                           **({"last_60min": {"samples": 44, "delay_s": m, "queue_m": q}} if m is not None else {})}
+    return {"source": "TomTom Junction Analytics (test)", "window_minutes": 60,
+            "labels": {"delay_s": "measured", "usual_delay_s": "measured", "queue_m": "estimated", "volume_per_hour": "estimated"}, "junctions": [
+        {"id": "j07", "name": "Tolichowki", "time": t, "age_s": 20, "approaches": [
             ap("Mumbai Road East Bound", 19, 15, 0, 3586, 17), ap("Moti Darwaja Road North Bound", 33, 19, 105.67, 70, 25),
             ap("Seven Tombs Road East Bound", 23, 20, 59.11, 900), ap("Hakimpet Road South Bound", 20, 20, 106.46, 1183), ap("North Bound", 0, 0, 0, 0)]},
-        {"junction_id": "j08", "name": "Nanal Nagar jn", "time": t, "label": lab, "approaches": [
+        {"id": "j08", "name": "Nanal Nagar jn", "time": t, "age_s": 20, "approaches": [
             ap("Mehdipatnam Road West Bound", 47, 36, 750.58, 4036, 40), ap("NH163 North Bound", 131 if v2 else 108, 80, 148.96, 1911, 95),
             ap("Mumbai Road East Bound", 73, 17, 131.05, 4933, 60), ap("Inner Ring Road North Bound", 52, 9, 5.11, 1681), ap("North Bound", 0, 0, 0, 0)]},
-        {"junction_id": "j09", "name": "Rethibowli jn", "time": t, "label": lab, "approaches": [
+        {"id": "j09", "name": "Rethibowli jn", "time": t, "age_s": 1500, "approaches": [
             ap("Mehdipatnam Road West Bound", 60, 17, 1100.31, 4921), ap("Mandela Gudem Road North Bound", 178, 131, 297.32, 341),
             ap("Mumbai Road East Bound", 103, 88, 378.92, 4540), ap("Inner Ring Road North Bound", 50, 15, 62.11, 2008)]}]}
 
@@ -216,7 +254,7 @@ STREAM_JS = """(() => {
 })();"""
 
 
-def mock_api(pg, live_body, bodies, mode, counts):
+def mock_api(pg, live_body, bodies, mode, counts, real_shape=False):
     """Corridor endpoints answered in the browser: GET /corridor (route + TomTom legs), live junctions, runs, roads."""
     def corridor_runs(route):
         if route.request.method == "OPTIONS":
@@ -239,11 +277,27 @@ def mock_api(pg, live_body, bodies, mode, counts):
         counts["live"] = counts.get("live", 0) + 1
         route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(live_body(counts)))
 
-    corridor = dict(CORRIDOR, legs=API_LEGS, route=route_geojson())
+    if real_shape:   # as the backend sends it: tomtom.periods[].legs, route with whole-route and per-leg features
+        per = [{"period": pp, "label": pp, "legs": [{k: v for k, v in x.items() if k != "period"} for x in API_LEGS if x["period"] == pp]} for pp in API_PERIODS]
+        rt = route_geojson()["features"][1]["geometry"]["coordinates"]
+        feats = [{"type": "Feature", "properties": {"kind": "route", "direction": "A->B"}, "geometry": {"type": "LineString", "coordinates": rt}}]
+        feats += [{"type": "Feature", "properties": {"kind": "leg", "direction": "A->B", "from_id": a, "to_id": z}, "geometry": {"type": "LineString", "coordinates": rt[k * 12:k * 12 + 13]}}
+                  for k, (a, z) in enumerate(zip(ORDER, ORDER[1:]))]
+        corridor = dict(CORRIDOR, tomtom={"source": "test", "periods": per}, route={"type": "FeatureCollection", "features": feats})
+    else:            # other shapes the page also accepts: legs rows with a period, one bendy line per direction (cut by the page)
+        corridor = dict(CORRIDOR, legs=API_LEGS, route=route_geojson())
     pg.route("http://localhost:8000/corridor/runs", corridor_runs)
     pg.route("http://localhost:8000/corridor/junctions/live", live)
     pg.route("http://localhost:8000/corridor", lambda r: r.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(corridor)))
     pg.route("http://localhost:8000/runs/*/roads", lambda r: r.fulfill(status=404, headers=CORS, body="no roads"))
+
+    def bld(route):
+        pid = route.request.url.rsplit("/", 1)[-1]
+        counts.setdefault("bld", []).append(pid)
+        if pid == "j07":
+            return route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(building_fc()))
+        route.fulfill(status=404, headers=CORS, body="no buildings")
+    pg.route("http://localhost:8000/corridor/buildings/*", bld)
 
 
 def open_page(b, viewport, init_js):
@@ -274,6 +328,7 @@ with sync_playwright() as p:
 
     # ---------------- the page against whatever API is running (corridor endpoints may 404: sample fallback) ----------------
     pg = open_page(b, {"width": 1500, "height": 950}, None)
+    pg.route("http://localhost:8000/corridor/runs", lambda r: r.fulfill(status=404, headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "content-type"}, body="not here"))
     goto(pg, 4000)
 
     case = "A load"; print(case)
@@ -282,7 +337,7 @@ with sync_playwright() as p:
     pins = pg.eval_on_selector_all(".pin.maplibregl-marker", "els => els.map(e => e.textContent)")
     check(pins == ["A"] + [str(i) for i in range(1, 12)] + ["B"], f"13 markers: {pins}")
     whens = pg.eval_on_selector_all("#when option", "els => els.map(e => e.textContent)")
-    if api_status("/corridor") != 200:   # measured legs from the CSV / embedded copy
+    if True:   # measured legs from GET /corridor, else the CSV / embedded copy: the same 16 periods
         check(len(whens) == 16 and whens[0].startswith("Typical July day") and pg.input_value("#when").startswith("2026-07-01..2026-07-31"), f"16 time choices, typical first: {whens[0]}")
     check(any(w.startswith("Sun 5 Jul") for w in whens) and any(w.startswith("Wed 1 Jul") or w.startswith("Wed 8 Jul") for w in whens), f"weekday names: {whens[1:3]}")
     s = strips(pg)
@@ -290,7 +345,7 @@ with sync_playwright() as p:
     check("REAL" in s[0][3] and s[0][2] == "58 min", f"measured strip tagged REAL, 58 min: {s[0][2]}")
     check(pg.evaluate("() => !!document.querySelector('#map canvas')"), "map canvas present")
     check(layer(pg, "route") == 12, f"route drawn as 12 legs: {layer(pg, 'route')}")
-    check("REAL speeds" in pg.inner_text("#route-src"), f"route note: {pg.inner_text('#route-src')}")
+    check("REAL speeds" in pg.inner_text("#route-src") and [round(k, 1) for _, k in route_data(pg)] == TYPICAL_KMH, f"route coloured by TomTom speed: {pg.inner_text('#route-src')}")
     z = pg.evaluate("() => map.getZoom()")
     check(10.5 < z < 13.5, f"map framed on the whole corridor (zoom {z:.1f})")
     pre = pg.eval_on_selector_all("#presets button", "els => els.map(e => e.textContent)")
@@ -298,6 +353,11 @@ with sync_playwright() as p:
           and "One flyover over Nanal Nagar + Rethibowli" in pre[2], f"3 quick demo buttons: {pre}")
     if api_status("/corridor/junctions/live") != 200:
         check(pg.is_hidden("#live-box") and not pg.eval_on_selector_all(".pin.live", "els => els.length"), "no live endpoint: live panel and badges hidden")
+    else:
+        n = pg.eval_on_selector_all("#live .lj", "els => els.length")
+        check(pg.is_visible("#live-box") and n >= 1 and pg.eval_on_selector_all(".pin.live", "els => els.length") == n, f"real API: {n} live junctions shown and marked on the map")
+    if api_status("/corridor") == 200:
+        check("Drawn on the real road" in pg.inner_text("#route-src") and all(n > 2 for n, _ in route_data(pg)), f"real API: route on the road ({[n for n, _ in route_data(pg)]} vertices)")
     pg.screenshot(path=str(OUT / "corridor_A.png"))
 
     case = "B when"; print(case)
@@ -437,7 +497,7 @@ with sync_playwright() as p:
 
     # ---------------- corridor API answering (mocked in the browser): route, live junctions, runs, frames ----------------
     bodies, mode, counts = [], {"fail": None}, {}
-    pg = open_page(b, {"width": 1500, "height": 950}, STREAM_JS % (json.dumps(frames_along("j07", "j08")), 2000))
+    pg = open_page(b, {"width": 1500, "height": 950}, STREAM_JS % (json.dumps(frames_3d()), 2000))
     mock_api(pg, live_nested, bodies, mode, counts)
     goto(pg)
 
@@ -459,6 +519,7 @@ with sync_playwright() as p:
     j8 = live_rows(pg, "j08")
     check([r[0] for r in j8] == ["NH163 N-bound", "Mumbai Rd E-bound", "Inner Ring Rd N-bound"], f"worst first (by delay), short names: {[r[0] for r in j8]}")
     check(j8[0] == ["NH163 N-bound", "108 s", "80 s", "95 s", "149 m"] and "TomTom 17:17" in cards[1][2], f"delay now, usual, last hour, queue, TomTom time: {j8[0]}")
+    check("25 min old" in cards[2][2], f"old TomTom data flagged: {cards[2][2][:40]!r}")
     check(live_rows(pg, "j09")[2][-1] == "1.1 km", f"long queues in km: {live_rows(pg, 'j09')}")
     check(pg.eval_on_selector_all("#live .lj[data-id=j08] th", "els => els.map(e => e.textContent)") == ["Worst approaches", "Delay", "Usual", "Last hr", "Queue"], "column heads")
     check(pg.eval_on_selector("#live .lj[data-id=j08] .ap b", "e => e.classList.contains('bad')"), "much worse than usual: red")
@@ -504,6 +565,48 @@ with sync_playwright() as p:
     pg.click("#watch-base"); pg.wait_for_timeout(3000)
     check(layer(pg, "vehicles") > 0 and "r_test" not in pg.inner_text("#status"), f"watch today's run: {pg.inner_text('#playinfo')}")
 
+    case = "O 3D"; print(case)
+    pg.click("#watch-changed"); pg.wait_for_timeout(1000)
+    pg.locator(".pin", has_text="7").first.click(); pg.wait_for_timeout(2400)
+    check(pg.evaluate("() => map.getZoom()") > 15 and 50 <= pg.evaluate("() => map.getPitch()") <= 62, f"pitched 3D view at the junction (pitch {pg.evaluate('() => map.getPitch()'):.0f})")
+    req = counts.get("bld", [])
+    check("j07" in req and "A_lingampally" not in req and len(req) <= 5, f"buildings fetched only for points in view: {req}")
+    hs = layer_props(pg, "buildings", "l => l.props.data.map(d => d.h)")
+    check(hs == [15, 12.8, 9, 30, 30], f"5 building blocks, heights (null -> floors x 3.2, else 9 m): {hs}")
+    check("5 buildings around 7" in pg.inner_text("#bld-note"), f"note: {pg.inner_text('#bld-note')}")
+    pg.uncheck("#t-buildings"); pg.wait_for_timeout(200); off = layer(pg, "buildings")
+    pg.check("#t-buildings"); pg.wait_for_timeout(200)
+    check(off == -1 and layer(pg, "buildings") == 5, "buildings layer toggles")
+    ids = layer_props(pg, "vehicles", "l => l.props.data.map(v => v.id)")
+    check(ids and not any(i.startswith("far") for i in ids) and "fly0" in ids, f"only vehicles in view drawn as 3D boxes ({len(ids or [])} of 54)")
+    zs = pg.evaluate("() => { const l = overlay._deck.props.layers.find(l => l.id === 'vehicles'); const v = l.props.data.find(v => v.id === 'fly1'); return [v.z, box(v)[0][2], l.props.extruded]; }")
+    check(zs[0] == 6 and zs[1] == 6 and zs[2], f"car on the flyover raised to z 6 m, extruded: {zs}")
+    st = layer_props(pg, "structures", "l => l.props.data.map(d => [d.kind, d.junction_id, d.length_m, Math.max(...d.path.map(q => q[2])), d.path[0][2], d.path[d.path.length - 1][2]])")
+    check(st and st[0][:2] == ["flyover", "j07"] and abs(st[0][2] - 600) < 25 and st[0][3] == 6.5 and st[0][4] == 0 and st[0][5] == 0,
+          f"flyover drawn in 3D at Tolichowki: 600 m, deck 6.5 m, ramps to the ground: {st}")
+    check(layer(pg, "piers") > 5, f"piers under the deck: {layer(pg, 'piers')}")
+    pg.screenshot(path=str(OUT / "corridor_O.png"))
+    pg.select_option("#speed", "1")
+    pg.click("#follow"); pg.wait_for_timeout(1200)
+    pr = pg.evaluate("() => { const v = vehicleAt('probe_fwd_1'), c = map.getCenter(); return [v.lon, v.lat, c.lng, c.lat, map.getPitch()]; }")
+    check(abs(pr[0] - pr[2]) < 2e-4 and abs(pr[1] - pr[3]) < 2e-4 and pr[4] > 55, f"camera follows the test car: {pr}")
+    check("Stop following" in pg.inner_text("#follow") and "Following test car probe_fwd_1" in pg.inner_text("#playinfo"), f"follow state: {pg.inner_text('#playinfo')}")
+    pg.click("#follow"); pg.wait_for_timeout(200)
+    check("Follow a test car" in pg.inner_text("#follow"), "stop following")
+    b0 = pg.evaluate("() => map.getBearing()"); pg.click("#orbit"); pg.wait_for_timeout(1200); b1 = pg.evaluate("() => map.getBearing()")
+    pg.click("#orbit"); pg.wait_for_timeout(300); b2 = pg.evaluate("() => map.getBearing()"); pg.wait_for_timeout(500)
+    check(3 < (b1 - b0) % 360 < 20 and abs(pg.evaluate("() => map.getBearing()") - b2) < 0.5, f"orbit turns the camera slowly and stops: {b0:.1f} → {b1:.1f}")
+    if not pg.is_disabled("#t-night"):
+        pg.check("#t-night"); pg.wait_for_timeout(800)
+        fill = layer_props(pg, "buildings", "l => l.props.getFillColor")
+        check(fill == [70, 82, 100], f"night view: darker buildings {fill}")
+        pg.screenshot(path=str(OUT / "corridor_O_night.png"))
+        pg.uncheck("#t-night"); pg.wait_for_timeout(800)
+    pg.click("#overview"); pg.wait_for_timeout(1500)
+    dots = layer_props(pg, "vehicle-dots", "l => l.props.data.length")
+    check(layer(pg, "vehicles") == -1 and dots == 54, f"whole corridor: every vehicle as a dot ({dots}), no 3D boxes")
+    check(layer(pg, "buildings") == -1, "no buildings drawn from the overview")
+
     case = "L long runs"; print(case)
     pg.evaluate("() => { window.__delayRuns = 3500; }")
     n0 = len(bodies)
@@ -523,6 +626,9 @@ with sync_playwright() as p:
     pg.evaluate("() => { window.__delayRuns = 0; }")
     pg.click("#p-nanal"); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(300)
     check(bodies[-1]["interventions"] == [{"junction_id": "j08", "kind": "flyover", "params": {"lanes": 2, "length_m": 1200}}], f"Nanal Nagar + Rethibowli body: {bodies[-1]}")
+    pg.wait_for_timeout(300)
+    mid = pg.evaluate("() => { const d = structures(changed)[0]; if (!d) return null; const q = d.path[Math.floor(d.path.length / 2)]; return [d.length_m, q[0]]; }")
+    check(mid and abs(mid[0] - 1200) < 30 and PTS["j08"]["lon"] < mid[1] < PTS["j09"]["lon"], f"one 1.2 km flyover drawn centred between Nanal Nagar and Rethibowli: {mid}")
     check("420 m apart" in pg.inner_text("#iv-merge") and has_pins(pg) == ["8", "9"], "one flyover note, markers 8 and 9")
     check("flyover, 2 lanes, 1200 m, over nanal nagar + rethibowli" in pg.inner_text("#deltas").lower(), f"headline names the change: {pg.inner_text('#deltas .headline')[:120]}")
     pg.click("#p-tolichowki"); wait_status(pg, ["simulated", "failed"], 30)
@@ -544,12 +650,14 @@ with sync_playwright() as p:
     case = "N narrow"; print(case)
     bodies, mode, counts = [], {"fail": None}, {}
     pg = open_page(b, {"width": 390, "height": 844}, STREAM_JS % (json.dumps(frames_along("j07", "j08")), 60000))
-    mock_api(pg, lambda c: live_flat(), bodies, mode, counts)
+    mock_api(pg, lambda c: live_flat(), bodies, mode, counts, real_shape=True)
     goto(pg)
     over = pg.evaluate("() => document.documentElement.scrollWidth - window.innerWidth")
     check(over <= 0, f"no sideways scroll ({over} px over)")
     box = pg.evaluate("() => { const m = $('map').getBoundingClientRect(), j = $('journey').getBoundingClientRect(), l = $('left').getBoundingClientRect(); return [m.height, m.bottom, j.top, l.top, l.width]; }")
     check(box[0] > 300 and box[2] >= box[1] and box[3] > box[2] and box[4] > 340, f"map on top, journey then controls below, full width: {box}")
+    check(pg.evaluate("() => Object.keys(legPaths).length === 12 && Object.values(legPaths).every(p => p.length === 13)") and len(pg.eval_on_selector_all("#when option", "e => e")) == 3,
+          "real GET /corridor shape: per-leg route features used as they are, tomtom.periods read")
     j8 = live_rows(pg, "j08")
     check(j8[0] == ["NH163 N-bound", "100 s", "80 s", "75 s", "150 m"] and "TomTom 17:20" in pg.inner_text("#live .lj[data-id=j08]"), f"flat rows: latest shown, hour averaged: {j8}")
     pg.click("#p-tolichowki"); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(2500)

@@ -161,14 +161,18 @@
   <label class="t"><input type="checkbox" id="t-route" checked /> Route coloured by speed</label>
   <label class="t"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
   <label class="t"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
-  <small id="route-src" class="muted"></small>
-  <div class="row" style="margin-top:8px"><button id="overview" class="ghost">Whole corridor</button></div>
+  <label class="t"><input type="checkbox" id="t-buildings" checked /> 3D buildings</label>
+  <label class="t"><input type="checkbox" id="t-night" /> Night view</label>
+  <small id="route-src" class="muted"></small><br>
+  <small id="bld-note" class="muted"></small>
+  <div class="row" style="margin-top:8px"><button id="overview" class="ghost">Whole corridor</button><button id="orbit" class="ghost">Orbit</button></div>
   <h2>Playback <span class="tag sim">simulated</span></h2>
   <div class="row">
     <button id="play" class="ghost" disabled>▶ Play</button>
     <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option></select>
   </div>
   <div class="row" id="watch"></div>
+  <div class="row"><button id="follow" class="ghost" disabled title="Plays a run first">Follow a test car</button></div>
   <input type="range" id="scrub" min="0" max="0" value="0" disabled />
   <small id="clock" class="muted">—</small><br>
   <small id="playinfo"></small>
@@ -198,7 +202,7 @@ window.onunhandledrejection = e => { const s = $("status"); if (s) s.innerHTML =
 if (typeof maplibregl === "undefined" || typeof deck === "undefined") $("status").innerHTML = '<span class="bad">Map libraries failed to load (frontend/vendor). Reload the page.</span>';
 const COLORS = { two_wheeler: [232,116,59], car: [47,111,159], auto: [240,200,40], bus: [40,160,90], truck: [120,120,120] };
 const SIZE = { two_wheeler: [1.9, 0.75, 1.2], car: [4.3, 1.75, 1.5], auto: [2.7, 1.4, 1.7], bus: [11, 2.5, 3.2], truck: [8, 2.4, 3] };
-const STYLE = () => `https://api.tomtom.com/map/1/style/20.4.5-*/basic_main.json?key=${cfg.tomtom_maps_key}`;
+const STYLE = night => `https://api.tomtom.com/map/1/style/20.4.5-*/${night ? "basic_night" : "basic_main"}.json?key=${cfg.tomtom_maps_key}`;
 const TRAFFIC_TILES = () => `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${cfg.tomtom_maps_key}`;
 const KINDS = { flyover: "Flyover", underpass: "Underpass", signal_retime: "Signal timing", widening: "Road widening", one_way: "One-way", u_turn: "U-turn change" };
 // Choices per intervention, matching sim/templates/corridor.py. A value of "" means "leave it to the template" (param not sent).
@@ -240,7 +244,7 @@ let corridor = null, points = [], tomtom = {}, typical = TYPICAL;   // tomtom: {
 let tomtomSrc = "";                                     // where the measured legs came from
 let legPaths = null;                                    // {"from|to": [[lon, lat], ...]} cut from GET /corridor's route; null: straight lines
 let interventions = [], base = null, changed = null, selected = null, running = false;
-let live = null, liveAt = null;                         // live: [{id, name, time, label, approaches: [...]}] from GET /corridor/junctions/live
+let live = null, liveAt = null, liveLabels = {};                         // live: [{id, name, time, label, approaches: [...]}] from GET /corridor/junctions/live
 let roads = null, frames = [], playing = false, pos = 0, lastTick = 0, clockBase = 8 * 60, stream = null, playingRun = null;
 const markers = {};
 
@@ -321,18 +325,20 @@ async function init() {
   try { corridor = await get("/corridor"); if (!Array.isArray(corridor?.points) || corridor.points.length < 2) throw 0; } catch (e) { corridor = CORRIDOR_EMBED; }
   points = corridor.points;
   legPaths = cutRoute(corridor.route);
-  await loadTomTom(corridor.legs);
+  await loadTomTom(corridor.legs || corridor.tomtom?.periods || corridor.tomtom);
   fillWhen(); fillJunctions(); fillParams(); renderIvs(); renderJourney(); renderJunctions();
 
   const hasKey = !!cfg.tomtom_maps_key;
-  map = new maplibregl.Map({ container: "map", style: hasKey ? STYLE() : "https://tiles.openfreemap.org/styles/liberty",
+  map = new maplibregl.Map({ container: "map", style: hasKey ? STYLE(false) : "https://tiles.openfreemap.org/styles/liberty",
                              center: [78.39, 17.43], zoom: 12, antialias: true });
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
   overlay = new deck.MapboxOverlay({ interleaved: true, layers: [] });
   map.addControl(overlay);
   map.on("style.load", addTrafficLayer);
-  let wasNear = false; map.on("zoomend", () => { const near = map.getZoom() > 14; if (near !== wasNear) { wasNear = near; render(); } });
-  if (!hasKey) $("t-traffic").disabled = true;
+  map.on("moveend", () => { buildingsInView(); if (!playing) render(); });   // vehicles and buildings are drawn for what is in view
+  map.on("dragstart", () => { if (following) setFollow(false); });
+  if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; $("t-night").parentElement.title = "Needs the TomTom map key"; }
+  bldNote();
   addMarkers();
   overview(false);
   map.once("load", () => overview(false));
@@ -359,11 +365,13 @@ function tomtomFromApi(legs) {
   };
   if (Array.isArray(legs)) {
     for (const x of legs) {
-      if (x.period) push(x.period, x);
+      if (x.period && Array.isArray(x.legs)) x.legs.forEach(l => push(x.period, l));   // {period, label, legs: [...]} (GET /corridor `tomtom.periods`)
+      else if (x.period) push(x.period, x);
       else if (Array.isArray(x.periods)) x.periods.forEach(v => push(v.period, { ...x, ...v }));
       else if (x.periods && typeof x.periods === "object") Object.entries(x.periods).forEach(([p, v]) => push(p, { ...x, ...v }));
     }
-  } else if (typeof legs === "object") {
+  } else if (Array.isArray(legs.periods)) return tomtomFromApi(legs.periods);
+  else if (typeof legs === "object") {
     for (const [p, arr] of Object.entries(legs)) if (Array.isArray(arr)) arr.forEach(x => push(p, x));
   }
   for (const p of Object.keys(out)) {
@@ -425,8 +433,17 @@ function project(p, a, b) {   // nearest point to p on segment a-b: [point, metr
   const q = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   return [q, metres(p, q)];
 }
+function routeLegFeatures(route) {   // per-leg A -> B lines when the API sends them (properties.kind "leg", from_id, to_id)
+  const idx = id => points.findIndex(p => p.id === id), out = {};
+  for (const f of route?.features || []) {
+    const q = f.properties || {}, c = f.geometry?.coordinates;
+    if (q.kind === "leg" && f.geometry?.type === "LineString" && idx(q.to_id) === idx(q.from_id) + 1 && c.length >= 2) out[`${q.from_id}|${q.to_id}`] = c;
+  }
+  return Object.keys(out).length === points.length - 1 ? out : null;
+}
 function cutRoute(route) {   // {"from|to": path} for each consecutive pair of corridor points, cut from the A -> B line
-  const line = abLine(route); if (!line) return null;
+  const legs = routeLegFeatures(route); if (legs) return legs;
+  const line = abLine(route?.features ? route.features.filter(f => f.properties?.kind !== "leg") : route); if (!line) return null;
   const cuts = []; let seg = 0;
   for (const pt of points) {
     let best = null;
@@ -492,7 +509,7 @@ function normLive(raw) {
     const j = jn(id);
     if (Array.isArray(x.approaches)) {
       x.approaches.forEach(a => j.rows.push(approachOf({ time: x.time, label: x.label, ...a })));
-      j.time = x.time || j.time; j.label = x.label || j.label; j.mean = meanOf(x) || j.mean;
+      j.time = x.time || j.time; j.label = x.label || j.label; j.mean = meanOf(x) || j.mean; j.age_s = num(x.age_s);
     } else j.rows.push(approachOf(x));
   }
   return Object.values(byId).map(j => {
@@ -508,7 +525,7 @@ function normLive(raw) {
       });
     }
     approaches = approaches.filter(a => a.delay_s != null);
-    return { id: j.id, name: j.name, time: last, label: j.label || approaches.find(a => a.label)?.label || "", mean: j.mean, approaches };
+    return { id: j.id, name: j.name, time: last, age_s: j.age_s, label: j.label || approaches.find(a => a.label)?.label || "", mean: j.mean, approaches };
   }).filter(j => j.approaches.length).sort((a, b) => points.findIndex(p => p.id === a.id) - points.findIndex(p => p.id === b.id));
 }
 const worst = j => [...j.approaches].sort((a, b) => (b.delay_s - a.delay_s) || ((b.queue_m || 0) - (a.queue_m || 0))).slice(0, 3);
@@ -516,7 +533,7 @@ const hhmm = t => { const d = new Date(t); return isNaN(d) ? "" : d.toLocaleTime
 const fmtQ = m => m == null ? "–" : m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
 function delayClass(a) { const u = a.usual_delay_s ?? 0; return a.delay_s >= u + 15 ? "bad" : a.delay_s > u + 3 ? "mid" : "ok"; }
 async function loadLive() {
-  try { live = normLive(await get("/corridor/junctions/live")); liveAt = new Date(); }
+  try { const raw = await get("/corridor/junctions/live"); live = normLive(raw); liveLabels = raw?.labels || {}; liveAt = new Date(); }
   catch (e) {
     if (!live || !e.status || [404, 405].includes(e.status)) live = null;   // endpoint not there (yet) or API down: hide the panel
     else { $("live-note").innerHTML = `<span class="mid">Could not refresh (${e.status}); showing the last update.</span>`; return; }
@@ -532,7 +549,7 @@ function renderLive() {
   $("live").innerHTML = live.map(j => {
     const w = worst(j), calm = w.every(a => !a.delay_s && !a.queue_m), hr = w.some(a => a.mean && a.mean.delay_s != null);
     return `<div class="lj" data-id="${j.id}"><div class="hd" title="Fly to this junction"><span>${pointLabel(j.id)} · ${esc(short(j.name))}</span>` +
-      `<small>${j.time ? "TomTom " + hhmm(j.time) : ""}</small></div>` +
+      `<small${j.age_s > 900 ? ' class="mid" title="No fresh data from TomTom for a while"' : ""}>${j.time ? "TomTom " + hhmm(j.time) : ""}${j.age_s > 900 ? `, ${Math.round(j.age_s / 60)} min old` : ""}</small></div>` +
       (calm ? `<div class="calm ok">Flowing freely: no delay on any of ${j.approaches.length} approaches.</div>` :
         `<table><tr><th>Worst approaches</th><th class="n">Delay</th><th class="n">Usual</th>${hr ? '<th class="n">Last hr</th>' : ""}<th class="n">Queue</th></tr>` +
         w.map(a => `<tr class="ap" title="${esc(a.name)}: ${Math.round(a.delay_s)} s delay now${a.usual_delay_s != null ? `, usually ${Math.round(a.usual_delay_s)} s` : ""}">` +
@@ -542,7 +559,7 @@ function renderLive() {
       `${j.mean && j.mean.delay_s != null ? `<div class="calm muted">Last hour, whole junction: ${Math.round(j.mean.delay_s)} s average delay</div>` : ""}</div>`;
   }).join("");
   $("live").querySelectorAll(".lj .hd").forEach(el => el.onclick = () => flyToPoint(el.parentElement.dataset.id));
-  const est = live.some(j => /estimated/i.test(j.label));
+  const est = live.some(j => /estimated/i.test(j.label)) || /estimated/i.test(liveLabels.queue_m || "");
   $("live-note").innerHTML = `<span class="livedot"></span> marks these junctions on the map. Delay per approach now vs usual, from TomTom Junction Analytics${est ? " (queue and volume estimated by TomTom)" : ""}. ` +
     `Updated ${hhmm(liveAt)}, refreshes every ${Math.round(LIVE_MS / 1000)} s.`;
 }
@@ -785,7 +802,7 @@ function flyToPoint(id) {
   const p = point(id); if (!p) return;
   selected = id; updateMarkers();
   if (p.kind === "junction") { $("iv-j").value = id; showNanalButton(); }
-  map.flyTo({ center: [p.lon, p.lat], zoom: 16.2, pitch: 55, bearing: -20, duration: 1600, offset: narrow() ? [0, 0] : VIEW_OFFSET });
+  map.flyTo({ center: [p.lon, p.lat], zoom: 16.2, pitch: 58, bearing: -20, duration: 1800, essential: true, offset: narrow() ? [0, 0] : VIEW_OFFSET });
   const b = base && base.junctions.find(j => j.id === id), c = changed && changed.junctions.find(j => j.id === id);
   const stat = (r, lab) => r ? `<br>${lab}: ${r.avg_delay_s} s delay, ${r.max_queue_m} m queue` : "";
   const lj = (live || []).find(j => j.id === id), w = lj && worst(lj)[0];
@@ -834,48 +851,205 @@ function roadColor(p) {
   const r = p.speed_kmh / Math.max(p.limit_kmh, 1);
   return r >= 0.7 ? [26, 152, 80, 200] : r >= 0.45 ? [253, 174, 97, 220] : [215, 48, 39, 230];
 }
-function currentVehicles() {
-  if (!frames.length) return [];
-  const i = Math.min(Math.floor(pos), frames.length - 1), f = pos - i;
-  const a = frames[i], b = frames[Math.min(i + 1, frames.length - 1)];
-  if (f < 0.02 || a === b) return a.vehicles;
-  const next = new Map(b.vehicles.map(v => [v.id, v]));
-  return a.vehicles.map(v => {
-    const n = next.get(v.id); if (!n) return v;
-    const da = ((n.angle - v.angle + 540) % 360) - 180;
-    return { ...v, lon: v.lon + (n.lon - v.lon) * f, lat: v.lat + (n.lat - v.lat) * f, z: (v.z || 0) + ((n.z || 0) - (v.z || 0)) * f, angle: v.angle + da * f, speed: n.speed };
-  });
+// Vehicles of the current frame, moved smoothly towards the next frame. `keep` filters first (only vehicles in view), so
+// interpolation and drawing cost stay small on real runs (thousands of vehicles over 21 km).
+let nextCache = { i: -1, map: null };
+function lerpVehicle(v, n, f) {
+  if (!n) return v;
+  const da = ((n.angle - v.angle + 540) % 360) - 180;
+  return { ...v, lon: v.lon + (n.lon - v.lon) * f, lat: v.lat + (n.lat - v.lat) * f, z: (v.z || 0) + ((n.z || 0) - (v.z || 0)) * f, angle: v.angle + da * f, speed: n.speed };
 }
+function nextMap(i) {
+  if (nextCache.i !== i) nextCache = { i, map: new Map(frames[Math.min(i + 1, frames.length - 1)].vehicles.map(v => [v.id, v])) };
+  return nextCache.map;
+}
+function currentVehicles(keep) {
+  if (!frames.length) return [];
+  const i = Math.min(Math.floor(pos), frames.length - 1), f = pos - i, a = frames[i];
+  const vs = keep ? a.vehicles.filter(keep) : a.vehicles;
+  if (f < 0.02 || i >= frames.length - 1) return vs;
+  const next = nextMap(i);
+  return vs.map(v => lerpVehicle(v, next.get(v.id), f));
+}
+function vehicleAt(id) {   // one vehicle (the followed test car), interpolated
+  if (!frames.length) return null;
+  const i = Math.min(Math.floor(pos), frames.length - 1), v = frames[i].vehicles.find(x => x.id === id);
+  return v && i < frames.length - 1 ? lerpVehicle(v, nextMap(i).get(id), pos - i) : v;
+}
+function inView() {   // a filter for what the camera can see (with a margin); null when the whole corridor is in view
+  const b = map.getBounds(), w = b.getEast() - b.getWest(), h = b.getNorth() - b.getSouth();
+  const W = b.getWest() - w * 0.25, E = b.getEast() + w * 0.25, S = b.getSouth() - h * 0.25, N = b.getNorth() + h * 0.25;
+  return v => v.lon > W && v.lon < E && v.lat > S && v.lat < N;
+}
+
+// ---------- flyovers and underpasses (drawn in 3D from the result's interventions) ----------
+// From the model roads when they carry it (z in the coordinates or a flyover flag), else along the route line:
+// the structure's length (default 400 m: ramps ~200 m either side), ramps rising to 6.5 m over the first and last 150 m.
+const DECK_Z = 6.5;
+let structCache = { key: null, data: [] };
+function routeLine() {   // the whole A -> B line with cumulative metres, and where each corridor point sits on it
+  const line = [], at = {};
+  points.forEach((p, k) => {
+    at[p.id] = Math.max(0, line.length - 1);   // each point is the first vertex of its leg
+    if (k === points.length - 1) { if (!line.length) line.push([p.lon, p.lat]); return; }
+    const seg = legPaths?.[`${p.id}|${points[k + 1].id}`] || [[p.lon, p.lat], [points[k + 1].lon, points[k + 1].lat]];
+    if (!line.length) line.push(seg[0]);
+    line.push(...seg.slice(1));
+  });
+  const cum = [0]; for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + metres(line[i - 1], line[i]));
+  return { line, cum, at };
+}
+function subLine(R, from, to, step = 15) {   // points every `step` m between two distances along the route, with their distance
+  const out = [], total = R.cum[R.cum.length - 1];
+  from = Math.max(0, from); to = Math.min(total, to);
+  let i = 0;
+  for (let d = from; d <= to + 0.01; d += step) {
+    const dd = Math.min(d, to);
+    while (i < R.cum.length - 2 && R.cum[i + 1] < dd) i++;
+    const seg = R.cum[i + 1] - R.cum[i] || 1, t = Math.max(0, Math.min(1, (dd - R.cum[i]) / seg)), a = R.line[i], b = R.line[i + 1] || a;
+    out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, dd]);
+    if (dd >= to) break;
+  }
+  return out;
+}
+function structures(r) {
+  const ivs = (r?.interventions || []).filter(iv => iv.kind === "flyover" || iv.kind === "underpass");
+  const key = r ? `${r.run_id}|${ivKey(ivs)}|${!!legPaths}|${roads ? roads.length : 0}` : null;
+  if (structCache.key === key) return structCache.data;
+  const data = [];
+  if (ivs.length && !(roads && roads.some(f => f.properties?.flyover || f.geometry?.coordinates?.some(c => Math.abs(c[2] || 0) > 1)))) {
+    const R = routeLine();
+    for (const iv of ivs) {
+      const jd = R.cum[R.at[iv.junction_id]]; if (jd == null) continue;
+      let mid = jd;
+      if (coversBoth(iv)) mid = (jd + R.cum[R.at[NANAL_PAIR[1]]]) / 2;   // one flyover over Nanal Nagar and Rethibowli
+      const len = Math.max(200, Number(iv.params?.length_m) || 400), ramp = Math.min(150, len * 0.3), sign = iv.kind === "underpass" ? -1 : 1;
+      const pts = subLine(R, mid - len / 2, mid + len / 2), s0 = pts[0]?.[2] ?? 0, s1 = pts[pts.length - 1]?.[2] ?? 0;
+      const path = pts.map(([x, y, d]) => [x, y, sign * DECK_Z * Math.max(0, Math.min(1, Math.min(d - s0, s1 - d) / ramp))]);
+      data.push({ kind: iv.kind, junction_id: iv.junction_id, lanes: Number(iv.params?.lanes) || 2, path, length_m: Math.round(s1 - s0) });
+    }
+  }
+  structCache = { key, data };
+  return data;
+}
+
+// ---------- 3D buildings, loaded per corridor point when it comes into view ----------
+const buildings = {};            // point id -> features ([] when there are none), or "loading"
+const BLD_DEFAULT_H = 9;
+const bldHeight = p => num(p?.height) ?? (num(p?.num_floors) ? num(p.num_floors) * 3.2 : BLD_DEFAULT_H);
+function bldPolys(fc) {   // features -> one item per polygon with its height
+  const out = [];
+  for (const f of fc?.features || []) {
+    const g = f.geometry; if (!g) continue;
+    const polys = g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : [];
+    polys.forEach(rings => out.push({ polygon: rings, h: bldHeight(f.properties) }));
+  }
+  return out;
+}
+async function loadBuildings(id) {
+  buildings[id] = "loading";
+  let fc = null;
+  try { fc = await get(`/corridor/buildings/${id}`); }
+  catch (e) { try { const r = await fetch(`../data/corridor/buildings/${id}.geojson`); if (r.ok) fc = await r.json(); } catch (e2) { /* none */ } }
+  buildings[id] = bldPolys(fc); bldCache = null;
+  bldNote(); render();
+}
+function buildingsInView() {
+  if (!map || map.getZoom() < 14 || !$("t-buildings").checked) return;
+  const keep = inView();
+  points.filter(p => !buildings[p.id] && keep({ lon: p.lon, lat: p.lat })).forEach(p => loadBuildings(p.id));
+}
+let bldCache = null;   // same array between loads, so deck.gl does not re-upload the buildings every frame
+function bldData() { return bldCache ||= Object.values(buildings).filter(Array.isArray).flat(); }
+function bldNote() {
+  const done = Object.entries(buildings).filter(([, v]) => Array.isArray(v)), n = done.reduce((s, [, v]) => s + v.length, 0);
+  $("bld-note").textContent = !done.length ? "3D buildings load when you zoom in to a junction." :
+    n ? `${n.toLocaleString("en-IN")} buildings around ${done.filter(([, v]) => v.length).map(([id]) => pointLabel(id)).join(", ")} (OpenStreetMap; ${BLD_DEFAULT_H} m where the height is unknown).` :
+    "No building outlines for this part of the corridor yet.";
+}
+
+// ---------- camera: orbit and follow a test car ----------
+let orbiting = false, lastOrbit = 0, following = null, followBearing = null;
+function setOrbit(on) { orbiting = on; $("orbit").textContent = on ? "Stop orbit" : "Orbit"; if (on) setFollow(false); }
+const probes = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.vehicles.filter(v => String(v.id).startsWith("probe_fwd")) : []; };
+const anyProbe = () => frames.some(f => f.vehicles.some(v => String(v.id).startsWith("probe_fwd")));
+function setFollow(on) {
+  if (on) {
+    const p = probes().sort((a, b) => a.lon - b.lon)[0];   // the test car furthest back (towards Lingampally), so it has the longest drive ahead
+    if (!p) { $("playinfo").textContent = "No test car on the road at this moment: press Play and try again."; on = false; }
+    else { following = p.id; followBearing = map.getBearing(); setOrbit(false); if (!playing) $("play").click(); }
+  }
+  if (!on) following = null;
+  $("follow").textContent = following ? "Stop following" : "Follow a test car";
+}
+function followTick() {
+  if (!following) return;
+  let v = vehicleAt(following);
+  if (!v) {   // that test car finished its trip: pick up the next one
+    const p = probes()[0]; if (!p) return; following = p.id; v = p;
+  }
+  const da = ((v.angle - followBearing + 540) % 360) - 180;
+  followBearing += da * 0.08;
+  map.jumpTo({ center: [v.lon, v.lat], zoom: Math.max(map.getZoom(), 16.5), pitch: 60, bearing: followBearing });
+  $("playinfo").textContent = `Following test car ${v.id} · ${((v.speed || 0) * 3.6).toFixed(0)} km/h${v.z > 1 ? " · on the flyover" : v.z < -1 ? " · in the underpass" : ""}`;
+}
+
 function render() {
   if (!overlay) return;
-  const layers = [];
+  const layers = [], near = map.getZoom() >= 14, night = $("t-night").checked;
+  if (buildings && $("t-buildings").checked && near) layers.push(new deck.PolygonLayer({
+    id: "buildings", data: bldData(), extruded: true, wireframe: false, opacity: 0.6,
+    getPolygon: d => d.polygon, getElevation: d => d.h, getFillColor: night ? [70, 82, 100] : [214, 208, 196], material: { ambient: 0.5, diffuse: 0.6 },
+    updateTriggers: { getFillColor: night },
+  }));
   if ($("t-route").checked) layers.push(new deck.PathLayer({
-    id: "route", data: routeLegs(), widthUnits: "pixels", getWidth: 7, capRounded: true, jointRounded: true, opacity: map.getZoom() > 14 ? (legPaths ? 0.55 : 0.35) : 0.85,   // fainter up close, where the model roads and vehicles show
+    id: "route", data: routeLegs(), widthUnits: "pixels", getWidth: 7, capRounded: true, jointRounded: true, opacity: near ? (legPaths ? 0.55 : 0.35) : 0.85,   // fainter up close, where the model roads and vehicles show
     getPath: d => d.path, getColor: d => [...speedRGB(d.kmh), 220], updateTriggers: { getColor: [base, changed, $("when").value] },
   }));
   if (roads && $("t-roads").checked) layers.push(new deck.PathLayer({
     id: "roads", data: roads, widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
-    getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], f.properties.flyover ? 6.5 : 0.3]),
+    getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], c[2] != null ? c[2] : f.properties.flyover ? DECK_Z : 0.3]),
     getWidth: f => (f.properties.lanes || 2) * 3.2, getColor: f => roadColor(f.properties),
   }));
-  if ($("t-vehicles").checked) layers.push(new deck.PolygonLayer({
-    id: "vehicles", data: currentVehicles(), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
-    getFillColor: v => COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
-    updateTriggers: { getPolygon: pos }, pickable: true,
-    onHover: ({ object }) => { $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h` : ""; },
-  }));
-  overlay.setProps({ layers, effects: [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: 1.1 }),
-    sun: new deck.DirectionalLight({ color: [255, 250, 240], intensity: 1.6, direction: [-1, -2, -3] }) })] });
+  const st = structures(playingRun || changed);
+  if (st.length) {
+    layers.push(new deck.PathLayer({
+      id: "structures", data: st, widthUnits: "meters", widthMinPixels: 3, capRounded: false, jointRounded: true, billboard: false,
+      getPath: d => d.path, getWidth: d => d.lanes * 2 * 3.5 + 1.5, getColor: d => d.kind === "underpass" ? [70, 70, 78, 230] : [168, 166, 160, 240],
+      pickable: true, onHover: ({ object }) => { if (object) $("playinfo").textContent = `${KINDS[object.kind]} at ${short(point(object.junction_id)?.name)}: ${object.length_m} m, ${object.lanes} lanes each way (drawn from the plan)`; },
+    }));
+    if (near) layers.push(new deck.ColumnLayer({   // piers under the deck
+      id: "piers", data: st.filter(d => d.kind === "flyover").flatMap(d => d.path.filter((q, i) => i % 3 === 1 && q[2] > 2)),
+      diskResolution: 8, radius: 1.1, extruded: true, getPosition: q => [q[0], q[1], 0], getElevation: q => q[2] - 0.4, getFillColor: [140, 138, 132],
+    }));
+  }
+  if ($("t-vehicles").checked && frames.length) {
+    if (near) layers.push(new deck.PolygonLayer({
+      id: "vehicles", data: currentVehicles(inView()), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
+      getFillColor: v => COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
+      updateTriggers: { getPolygon: pos }, pickable: true,
+      onHover: ({ object }) => { $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h` : ""; },
+    }));
+    else layers.push(new deck.ScatterplotLayer({   // whole-corridor view: a dot per vehicle, too small for boxes
+      id: "vehicle-dots", data: currentVehicles(), radiusUnits: "pixels", getRadius: 2, getPosition: v => [v.lon, v.lat, v.z || 0],
+      getFillColor: v => [...(COLORS[v.type] || [0, 0, 0]), 220], updateTriggers: { getPosition: pos },
+    }));
+  }
+  overlay.setProps({ layers, effects: [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: night ? 0.7 : 1.1 }),
+    sun: new deck.DirectionalLight({ color: night ? [160, 180, 230] : [255, 250, 240], intensity: night ? 0.9 : 1.6, direction: [-1, -2, -3] }) })] });
 }
+function frameStep() { return frames.length > 1 ? Math.max(0.1, frames[1].t - frames[0].t) : 1; }
 function tick(ts) {
   if (playing && frames.length) {
     const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
-    pos += dt * Number($("speed").value);
+    pos += dt * Number($("speed").value) / frameStep();   // 1× = real time, whatever the frame interval (real runs: ~2 s)
     if (pos >= frames.length - 1) { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; }
     $("scrub").value = Math.floor(pos);
     showClock();
+    followTick();
     render();
   } else lastTick = ts;
+  if (orbiting) { const now = performance.now(); if (lastOrbit) map.setBearing(map.getBearing() + (now - lastOrbit) / 1000 * 6); lastOrbit = now; } else lastOrbit = 0;   // 6 degrees a second
   requestAnimationFrame(tick);
 }
 function showClock() {
@@ -891,7 +1065,7 @@ function renderWatch() {
 async function play(r) {
   playingRun = r;
   const w = r.time && r.time.window; clockBase = w && w.length >= 16 ? Number(w.slice(11, 13)) * 60 + Number(w.slice(14, 16)) : 8 * 60;
-  frames = []; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("scrub").max = 0; $("clock").textContent = "—";
+  frames = []; nextCache = { i: -1, map: null }; setFollow(false); $("follow").disabled = true; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("scrub").max = 0; $("clock").textContent = "—";
   if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
   if (r.sample && !r.frames_path) { render(); $("playinfo").textContent = "No vehicle playback for sample data: it comes with the real corridor simulation."; return; }
   if (r.roads_path !== null) { try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; } }
@@ -903,7 +1077,8 @@ async function play(r) {
     const ws = stream = new WebSocket(API.replace("http", "ws") + `/stream/${r.run_id}`);
     ws.onmessage = e => {
       if (stream !== ws) return;
-      frames.push(JSON.parse(e.data));
+      const fr = JSON.parse(e.data); frames.push(fr);
+      if ($("follow").disabled && fr.vehicles.some(v => String(v.id).startsWith("probe_fwd"))) { $("follow").disabled = false; $("follow").title = "The camera rides along with one of the model's test cars"; }
       if (frames.length === 1) { $("scrub").disabled = false; $("play").disabled = false; }
       $("scrub").max = frames.length - 1;
       if (frames.length % 50 === 0) $("playinfo").textContent = `${frames.length} frames loaded…`;
@@ -916,7 +1091,8 @@ async function play(r) {
     }, 1500);
   });
   if (playingRun !== r) return;
-  $("playinfo").textContent = frames.length ? `${frames.length} frames · ${r.variant_id}` : "No vehicle positions for this run.";
+  if (!following) $("playinfo").textContent = frames.length ? `${frames.length} frames · ${r.variant_id}` : "No vehicle positions for this run.";
+  $("follow").disabled = !anyProbe(); $("follow").title = anyProbe() ? "The camera rides along with one of the model's test cars" : "No test cars in this run";
 }
 function focusJunction(r) {   // first changed junction, else the one with the longest queue
   if (r.interventions && r.interventions.length) return r.interventions[0].junction_id;
@@ -927,8 +1103,12 @@ function focusJunction(r) {   // first changed junction, else the one with the l
 $("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "❚❚ Pause" : "▶ Play"; lastTick = 0; };
 $("scrub").oninput = e => { pos = Number(e.target.value); showClock(); render(); };
 ["t-route", "t-roads", "t-vehicles"].forEach(id => $(id).onchange = render);
+$("t-buildings").onchange = () => { buildingsInView(); render(); };
+$("t-night").onchange = e => { if (cfg.tomtom_maps_key) map.setStyle(STYLE(e.target.checked), { diff: false }); render(); };
+$("orbit").onclick = () => setOrbit(!orbiting);
+$("follow").onclick = () => setFollow(!following);
 $("t-traffic").onchange = e => map.getLayer("tomtom-traffic") && map.setLayoutProperty("tomtom-traffic", "visibility", e.target.checked ? "visible" : "none");
-$("overview").onclick = () => { selected = null; updateMarkers(); if (popup) popup.remove(); overview(true); };
+$("overview").onclick = () => { setFollow(false); setOrbit(false); selected = null; updateMarkers(); if (popup) popup.remove(); overview(true); };
 init();
 </script>
 </body>
