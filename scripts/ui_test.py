@@ -1,4 +1,4 @@
-"""Headless browser test of the 3D view: every user path, clicked the way a user does.
+"""Headless browser test of the YMCA Circle 3D close-up (frontend/ymca.html): every user path, clicked the way a user does.
 
 Cases
   A  Page load: no errors, live panel filled, time choices, map canvas, buildings drawn
@@ -13,7 +13,7 @@ Cases
   J  Camera: recenter and orbit
   K  The panel stays usable during every run; no page errors at any point
 
-Usage (API on :8000 with MOCK_SIM=0, frontend served on :5174):
+Usage (API on :8000 with MOCK_SIM=0, frontend/ served on :5174; the page is ymca.html, index.html is the home page):
     PLAYWRIGHT_BROWSERS_PATH=~/Library/Caches/ms-playwright .venv/bin/python scripts/ui_test.py [url]
 Needs `pip install playwright` and `python -m playwright install chromium-headless-shell`.
 Screenshots: sim/out/ui_test_<case>.png. Exit code 1 if any check fails.
@@ -22,7 +22,7 @@ import sys
 import time
 from playwright.sync_api import sync_playwright
 
-URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5174/"
+URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5174/ymca.html"
 errors, results = [], []
 case = ""
 

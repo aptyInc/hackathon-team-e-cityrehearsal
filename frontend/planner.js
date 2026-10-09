@@ -24,53 +24,8 @@ window.planner = (() => {
   const when = t => { const d = new Date(t); return t && !isNaN(d) ? d.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) : ""; };
   const fp = h => h ? `<code class="fp" title="SHA-256 ${esc(h)}">${esc(String(h).slice(0, 10))}</code>` : "";
 
-  // ---------- tiny, safe markdown: everything is escaped first; headings, bold, italic, code, lists, tables, quotes ----------
-  function inline(s) {   // `code` is kept as it is; **bold** and *italic* elsewhere
-    return String(s ?? "").split(/(`[^`]+`)/).map((part, k) => k % 2 ? `<code>${esc(part.slice(1, -1))}</code>` :
-      esc(part).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/(^|[\s(])\*([^*\s][^*]*?)\*(?=[\s).,;:!?]|$)/g, "$1<i>$2</i>")).join("");
-  }
-  const cells = line => line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
-  function md(src) {
-    const L = String(src ?? "").replace(/\r\n?/g, "\n").split("\n"), out = [];
-    const isList = l => /^\s*([-*+]|\d+[.)])\s+/.test(l), isTableSep = l => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l);
-    for (let i = 0; i < L.length;) {
-      const l = L[i];
-      if (!l.trim()) { i++; continue; }
-      if (/^```/.test(l)) {   // fenced code
-        const buf = []; i++;
-        while (i < L.length && !/^```/.test(L[i])) buf.push(L[i++]);
-        i++; out.push(`<pre>${esc(buf.join("\n"))}</pre>`); continue;
-      }
-      let m = /^(#{1,6})\s+(.*)$/.exec(l);
-      if (m) { out.push(`<div class="md-h md-h${Math.min(m[1].length, 4)}">${inline(m[2].replace(/\s#+\s*$/, ""))}</div>`); i++; continue; }
-      if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(l)) { out.push("<hr>"); i++; continue; }
-      if (l.trim().startsWith("|") && i + 1 < L.length && isTableSep(L[i + 1])) {
-        const head = cells(l); i += 2; const rows = [];
-        while (i < L.length && L[i].trim().startsWith("|")) rows.push(cells(L[i++]));
-        out.push(`<div class="md-tw"><table class="md-t"><tr>${head.map(c => `<th>${inline(c)}</th>`).join("")}</tr>` +
-          rows.map(r => `<tr>${head.map((_, k) => `<td>${inline(r[k] ?? "")}</td>`).join("")}</tr>`).join("") + `</table></div>`);
-        continue;
-      }
-      if (isList(l)) {
-        const ordered = /^\s*\d/.test(l), items = [];
-        while (i < L.length && (isList(L[i]) || (L[i].trim() && /^\s{2,}/.test(L[i]) && items.length))) {
-          if (isList(L[i])) items.push(L[i].replace(/^\s*([-*+]|\d+[.)])\s+/, "")); else items[items.length - 1] += " " + L[i].trim();
-          i++;
-        }
-        out.push(`<${ordered ? "ol" : "ul"}>${items.map(x => `<li>${inline(x)}</li>`).join("")}</${ordered ? "ol" : "ul"}>`);
-        continue;
-      }
-      if (/^\s*>/.test(l)) {
-        const buf = [];
-        while (i < L.length && /^\s*>/.test(L[i])) buf.push(L[i++].replace(/^\s*>\s?/, ""));
-        out.push(`<div class="md-q">${inline(buf.join(" "))}</div>`); continue;
-      }
-      const buf = [];
-      while (i < L.length && L[i].trim() && !/^(#{1,6}\s|```|\s*>)/.test(L[i]) && !isList(L[i]) && !(L[i].trim().startsWith("|") && isTableSep(L[i + 1] || ""))) buf.push(L[i++].trim());
-      out.push(`<p>${buf.map(inline).join("<br>")}</p>`);
-    }
-    return out.join("");
-  }
+  // ---------- safe markdown: shared with decisions.html (md.js, loaded before this file) ----------
+  const { md } = window.crMarkdown;
 
   // ---------- runs: fetch a stored C5 result and show it as the "with changes" (or today's) result ----------
   const runCache = {};
@@ -263,6 +218,15 @@ window.planner = (() => {
                              : "API not running: reviews and decisions need the API (`make dev`).");
     }
     syncCase();
+    if (casesOn) openFromHash();
+  }
+  async function openFromHash() {   // corridor.html#case=<case_id> (the Decisions page's "Open in corridor") opens that case in step 4
+    const m = /(?:^#|&)case=([^&]+)/.exec(location.hash || "");
+    if (!m) return;
+    try {
+      showCase(await get(`/corridor/cases/${encodeURIComponent(decodeURIComponent(m[1]))}`));
+      $("dec").scrollIntoView({ block: "start" });
+    } catch (e) { $("case-msg").innerHTML = `<span class="bad">${unavailable(e) ? "That case is not on this server." : esc(e.message)}</span>`; }
   }
   function listCases(l) {
     const cs = (Array.isArray(l) ? l : l?.cases || l?.items || []).slice().reverse().slice(0, 8);
@@ -430,5 +394,5 @@ window.planner = (() => {
   $("case-by").value = store.get("cr_proposer");
   probeCases();
 
-  return { md, ask, loadRun, openBrief, showCase, timeline, sync: syncCase, get session() { return session; }, get current() { return current; } };
+  return { md, ask, loadRun, openBrief, showCase, timeline, openFromHash, sync: syncCase, get session() { return session; }, get current() { return current; } };
 })();
