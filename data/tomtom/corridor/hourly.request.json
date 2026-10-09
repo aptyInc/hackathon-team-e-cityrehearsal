@@ -1,0 +1,687 @@
+{
+ "jobName": "CityRehearsal Lingampally to Lakdikapul hourly, July 2026",
+ "distanceUnit": "KILOMETERS",
+ "acceptMode": "AUTO",
+ "routes": [
+  {
+   "name": "lin to lak hourly",
+   "start": {
+    "latitude": 17.4878,
+    "longitude": 78.31422
+   },
+   "via": [
+    {
+     "latitude": 17.48014,
+     "longitude": 78.31236
+    },
+    {
+     "latitude": 17.47957,
+     "longitude": 78.3194
+    },
+    {
+     "latitude": 17.47764,
+     "longitude": 78.32412
+    },
+    {
+     "latitude": 17.47243,
+     "longitude": 78.32828
+    },
+    {
+     "latitude": 17.46705,
+     "longitude": 78.33223
+    },
+    {
+     "latitude": 17.46181,
+     "longitude": 78.3358
+    },
+    {
+     "latitude": 17.45679,
+     "longitude": 78.33989
+    },
+    {
+     "latitude": 17.45206,
+     "longitude": 78.34423
+    },
+    {
+     "latitude": 17.44815,
+     "longitude": 78.34959
+    },
+    {
+     "latitude": 17.44381,
+     "longitude": 78.35442
+    },
+    {
+     "latitude": 17.4341,
+     "longitude": 78.36898
+    },
+    {
+     "latitude": 17.4239,
+     "longitude": 78.38051
+    },
+    {
+     "latitude": 17.42012,
+     "longitude": 78.38598
+    },
+    {
+     "latitude": 17.40493,
+     "longitude": 78.40599
+    },
+    {
+     "latitude": 17.40206,
+     "longitude": 78.41193
+    },
+    {
+     "latitude": 17.39728,
+     "longitude": 78.42036
+    },
+    {
+     "latitude": 17.39621,
+     "longitude": 78.42686
+    },
+    {
+     "latitude": 17.39534,
+     "longitude": 78.43496
+    },
+    {
+     "latitude": 17.39869,
+     "longitude": 78.44484
+    },
+    {
+     "latitude": 17.40309,
+     "longitude": 78.45726
+    },
+    {
+     "latitude": 17.4045,
+     "longitude": 78.46129
+    }
+   ],
+   "end": {
+    "latitude": 17.40391,
+    "longitude": 78.4641
+   },
+   "fullTraversal": false,
+   "zoneId": "Asia/Kolkata",
+   "probeSource": "ALL"
+  }
+ ],
+ "dateRanges": [
+  {
+   "name": "July 2026",
+   "from": "2026-07-01",
+   "to": "2026-07-31"
+  },
+  {
+   "name": "2026-07-01",
+   "from": "2026-07-01",
+   "to": "2026-07-01"
+  },
+  {
+   "name": "2026-07-02",
+   "from": "2026-07-02",
+   "to": "2026-07-02"
+  },
+  {
+   "name": "2026-07-03",
+   "from": "2026-07-03",
+   "to": "2026-07-03"
+  },
+  {
+   "name": "2026-07-04",
+   "from": "2026-07-04",
+   "to": "2026-07-04"
+  },
+  {
+   "name": "2026-07-05",
+   "from": "2026-07-05",
+   "to": "2026-07-05"
+  },
+  {
+   "name": "2026-07-06",
+   "from": "2026-07-06",
+   "to": "2026-07-06"
+  },
+  {
+   "name": "2026-07-07",
+   "from": "2026-07-07",
+   "to": "2026-07-07"
+  },
+  {
+   "name": "2026-07-08",
+   "from": "2026-07-08",
+   "to": "2026-07-08"
+  },
+  {
+   "name": "2026-07-09",
+   "from": "2026-07-09",
+   "to": "2026-07-09"
+  },
+  {
+   "name": "2026-07-10",
+   "from": "2026-07-10",
+   "to": "2026-07-10"
+  },
+  {
+   "name": "2026-07-11",
+   "from": "2026-07-11",
+   "to": "2026-07-11"
+  },
+  {
+   "name": "2026-07-12",
+   "from": "2026-07-12",
+   "to": "2026-07-12"
+  },
+  {
+   "name": "2026-07-13",
+   "from": "2026-07-13",
+   "to": "2026-07-13"
+  },
+  {
+   "name": "2026-07-14",
+   "from": "2026-07-14",
+   "to": "2026-07-14"
+  },
+  {
+   "name": "2026-07-15",
+   "from": "2026-07-15",
+   "to": "2026-07-15"
+  },
+  {
+   "name": "2026-07-16",
+   "from": "2026-07-16",
+   "to": "2026-07-16"
+  },
+  {
+   "name": "2026-07-17",
+   "from": "2026-07-17",
+   "to": "2026-07-17"
+  },
+  {
+   "name": "2026-07-18",
+   "from": "2026-07-18",
+   "to": "2026-07-18"
+  },
+  {
+   "name": "2026-07-19",
+   "from": "2026-07-19",
+   "to": "2026-07-19"
+  },
+  {
+   "name": "2026-07-20",
+   "from": "2026-07-20",
+   "to": "2026-07-20"
+  },
+  {
+   "name": "2026-07-21",
+   "from": "2026-07-21",
+   "to": "2026-07-21"
+  },
+  {
+   "name": "2026-07-22",
+   "from": "2026-07-22",
+   "to": "2026-07-22"
+  },
+  {
+   "name": "2026-07-23",
+   "from": "2026-07-23",
+   "to": "2026-07-23"
+  }
+ ],
+ "timeSets": [
+  {
+   "name": "00:00-01:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "00:00-01:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "01:00-02:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "01:00-02:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "02:00-03:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "02:00-03:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "03:00-04:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "03:00-04:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "04:00-05:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "04:00-05:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "05:00-06:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "05:00-06:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "06:00-07:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "06:00-07:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "07:00-08:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "07:00-08:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "08:00-09:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "08:00-09:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "09:00-10:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "09:00-10:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "10:00-11:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "10:00-11:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "11:00-12:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "11:00-12:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "12:00-13:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "12:00-13:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "13:00-14:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "13:00-14:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "14:00-15:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "14:00-15:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "15:00-16:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "15:00-16:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "16:00-17:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "16:00-17:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "17:00-18:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "17:00-18:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "18:00-19:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "18:00-19:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "19:00-20:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "19:00-20:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "20:00-21:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "20:00-21:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "21:00-22:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "21:00-22:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "22:00-23:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "22:00-23:00"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "23:00-24:00",
+   "timeGroups": [
+    {
+     "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+     ],
+     "times": [
+      "23:00-24:00"
+     ]
+    }
+   ]
+  }
+ ]
+}
