@@ -1,0 +1,98 @@
+{
+ "id": "lingampally_lakdikapul",
+ "name": "Lingampally to Lakdikapul",
+ "description": "Commute corridor via Gachibowli, Tolichowki, Mehdipatnam and Masab Tank. Junction list from Chetan, 9 Oct 2026; end points from OpenStreetMap. Start moved to the start of the route TomTom measured (the station stop is 400 m off it).",
+ "points": [
+  {
+   "id": "A_lingampally",
+   "name": "Lingampally (Old Bombay Rd, route start)",
+   "lat": 17.4878,
+   "lon": 78.3142,
+   "kind": "end"
+  },
+  {
+   "id": "j01",
+   "name": "Nallagandla Rd jn",
+   "lat": 17.4795,
+   "lon": 78.31992,
+   "kind": "junction"
+  },
+  {
+   "id": "j02",
+   "name": "ISB Rd / DLF jn",
+   "lat": 17.44527,
+   "lon": 78.35255,
+   "kind": "junction"
+  },
+  {
+   "id": "j03",
+   "name": "Gachibowli Circle",
+   "lat": 17.43887,
+   "lon": 78.36373,
+   "kind": "junction"
+  },
+  {
+   "id": "j04",
+   "name": "Biodiversity jn (flyover)",
+   "lat": 17.42909,
+   "lon": 78.37452,
+   "kind": "junction"
+  },
+  {
+   "id": "j05",
+   "name": "Khajaguda X Roads",
+   "lat": 17.42266,
+   "lon": 78.38211,
+   "kind": "junction"
+  },
+  {
+   "id": "j06",
+   "name": "Narne Rd jn Shaikpet",
+   "lat": 17.41412,
+   "lon": 78.39443,
+   "kind": "junction"
+  },
+  {
+   "id": "j07",
+   "name": "Tolichowki",
+   "lat": 17.39894,
+   "lon": 78.41542,
+   "kind": "junction"
+  },
+  {
+   "id": "j08",
+   "name": "Nanal Nagar jn",
+   "lat": 17.39597,
+   "lon": 78.42776,
+   "kind": "junction"
+  },
+  {
+   "id": "j09",
+   "name": "Rethibowli jn",
+   "lat": 17.39598,
+   "lon": 78.43171,
+   "kind": "junction"
+  },
+  {
+   "id": "j10",
+   "name": "NMDC / Masab Tank Rd",
+   "lat": 17.39948,
+   "lon": 78.45039,
+   "kind": "junction"
+  },
+  {
+   "id": "j11",
+   "name": "Masab Tank",
+   "lat": 17.40352,
+   "lon": 78.45639,
+   "kind": "junction"
+  },
+  {
+   "id": "B_lakdikapul",
+   "name": "Lakdikapul",
+   "lat": 17.40422,
+   "lon": 78.46465,
+   "kind": "end"
+  }
+ ]
+}

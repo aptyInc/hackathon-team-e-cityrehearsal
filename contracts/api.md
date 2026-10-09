@@ -16,3 +16,14 @@ Base URL: `http://localhost:8000`
 | POST | /cases/{case_id}/decide | `{decision: approve/reject/defer, reason}` | case |
 
 Stages: `exploring → proposed → in_review → decided`. Runs are append-only; there is no delete endpoint.
+
+## Corridor (added 9 Oct 2026, C5)
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| GET | /corridor | – | corridor definition (`data/corridor/corridor.json`): points A, j01..j11, B with names and coordinates |
+| POST | /corridor/runs | `{window?, minutes?, volume_scale?, interventions: [{junction_id, kind, params}]}` | C5 corridor result (`corridor_result.schema.json`) |
+| GET | /runs/{run_id} | – | C2 or C5 result |
+| WS | /stream/{run_id} | – | C1 frames of the run |
+| GET | /runs/{run_id}/roads | – | per-road simulated speeds (GeoJSON) |
+
+With `MOCK_SIM=1`, POST /corridor/runs returns `contracts/samples/corridor_results.sample.json` (baseline, or `flyover_j07` when any intervention is given).
