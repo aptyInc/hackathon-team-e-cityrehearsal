@@ -48,6 +48,11 @@ Cases
      what-if is explained with its estimate and 95% range (estimated), sent as `weather` with every run, quick demo and
      re-recorded window, named in the trip rows, clock and result line; changing it re-simulates once; Live now shows the
      weather now (modelled), hidden on 503
+  Z  View (frontend/viewguard.js): ctrl+wheel (trackpad pinch) over a panel is cancelled so the page cannot zoom, over the
+     map it still zooms the map; viewport meta maximum-scale=1; at 1280x700 every panel fits the window with its own scroll;
+     collapse / expand the controls, layers and trip panels; the Reset view pill (and R, not while typing) brings back the
+     whole-corridor camera from above, stops follow and orbit, reopens and scrolls up every panel; Esc stops following;
+     "Whole corridor" still works; a zoomed page shows a toast (dismissable); at 390 px the pill stays on screen
   K  No page errors at any point
 
 The first page talks to the real API on :8000 (if running) except POST /corridor/runs, which is answered 404 so the
@@ -1054,6 +1059,85 @@ with sync_playwright() as p:
     check(pg.is_hidden("#wx-now"), "GET /weather/now 503: the chip is hidden")
     pg.click("#mode-july"); pg.wait_for_timeout(300)
     check(pg.is_hidden("#wx-now"), "weather now only in Live now")
+    pg.close()
+
+    # ---------------- view: no accidental page zoom, Reset view, panels reachable and collapsible ----------------
+    case = "Z view"; print(case)
+    bodies, mode, counts = [], {"fail": None, "hour_ok": True}, {}
+    pg = open_page(b, {"width": 1280, "height": 700}, STREAM_JS % (json.dumps(frames_along("j07", "j08")), 60000))
+    mock_api(pg, lambda c: live_flat(), bodies, mode, counts, real_shape=True)
+    goto(pg)
+    check("maximum-scale=1" in pg.get_attribute("meta[name=viewport]", "content"), "viewport meta: no touch pinch-zoom of the page")
+    wheel = "(id, ctrl) => !document.getElementById(id).dispatchEvent(new WheelEvent('wheel', { ctrlKey: ctrl, deltaY: -120, bubbles: true, cancelable: true }))"
+    check(pg.evaluate(f"() => ({wheel})('left', true)") and pg.evaluate(f"() => ({wheel})('right', true)") and pg.evaluate(f"() => ({wheel})('journey', true)"),
+          "ctrl+wheel (trackpad pinch) over a panel is cancelled: it cannot zoom the page")
+    check(not pg.evaluate(f"() => ({wheel})('left', false)"), "a plain wheel over a panel is not cancelled: the panel still scrolls")
+    z0 = pg.evaluate("() => map.getZoom()")
+    pg.keyboard.down("Control"); pg.mouse.move(200, 400); pg.mouse.wheel(0, -400); pg.wait_for_timeout(200)
+    pg.mouse.move(800, 300); pg.mouse.wheel(0, -400); pg.keyboard.up("Control"); pg.wait_for_timeout(900)
+    vv = pg.evaluate("() => [visualViewport.scale, devicePixelRatio, window.innerWidth]")
+    check(vv == [1, 1, 1280] and pg.evaluate("() => map.getZoom()") > z0 + 0.2, f"real ctrl+wheel: the page keeps its zoom {vv}, over the map it zooms the map ({z0:.2f} -> {pg.evaluate('() => map.getZoom()'):.2f})")
+    # panels inside the window at 1280 x 700, each with its own scroll; the pill between the layers and the trip panels
+    rc = pg.evaluate("() => Object.fromEntries(['left', 'right', 'journey', 'reset-view'].map(id => { const e = document.getElementById(id), r = e.getBoundingClientRect(); return [id, [r.top, r.bottom, r.left, r.right, e.scrollHeight > e.clientHeight, getComputedStyle(e).overflowY]]; }))")
+    check(rc["left"][1] <= 700 and rc["left"][4] and rc["left"][5] == "auto" and rc["right"][1] <= rc["reset-view"][0] and rc["reset-view"][1] <= rc["journey"][0] and rc["journey"][1] <= 700,
+          f"1280x700: left panel scrolls inside the window, layers end above Reset view, Reset view above the trip: {rc}")
+    pg.evaluate("() => { $('left').scrollTop = 400; }")
+    check(pg.evaluate("() => $('left').scrollTop") > 100, "the controls panel scrolls")
+    # collapse / expand
+    pg.click("#left > .pcollapse"); pg.wait_for_timeout(200)
+    st = pg.evaluate("() => { const l = $('left'), c = l.querySelector('.pcollapse'); return [l.classList.contains('collapsed'), l.getBoundingClientRect().height, getComputedStyle(l.querySelector('h1')).display, c.getAttribute('aria-expanded'), c.innerText]; }")
+    check(st[0] and st[1] < 50 and st[2] == "none" and st[3] == "false" and st[4].strip().lower() == "controls", f"collapse the controls panel: the map is clear, a small 'Controls' button stays: {st}")
+    pg.click("#left > .pcollapse"); pg.wait_for_timeout(200)
+    check(not pg.evaluate("() => $('left').classList.contains('collapsed')") and pg.is_visible("#sim-today") and pg.get_attribute("#left > .pcollapse", "aria-expanded") == "true", "expand it again")
+    pg.click("#right > .pcollapse"); pg.click("#journey > .pcollapse"); pg.wait_for_timeout(200)
+    check(pg.evaluate("() => ['right', 'journey'].every(id => $(id).classList.contains('collapsed'))") and pg.is_hidden("#t-route") and pg.is_hidden("#strips"), "layers and trip panels collapse too")
+    # Reset view: camera back to the whole corridor, follow / orbit stopped, panels open and at the top
+    simulate(pg, "#sim-today", "today's roads"); pg.wait_for_timeout(2500)
+    pg.evaluate("() => overview(false)"); pg.wait_for_timeout(300)
+    home = pg.evaluate("() => [map.getZoom(), map.getCenter().lng, map.getCenter().lat, map.getPitch(), map.getBearing()]")
+    pg.evaluate("() => { $('left').scrollTop = 400; startFollow('v3'); }"); pg.wait_for_timeout(600)
+    away = pg.evaluate("() => [following, map.getZoom(), map.getPitch()]")
+    check(away[0] == "v3" and away[1] > home[0] + 1 and away[2] > 30, f"following a car, zoomed in and pitched: {away}")
+    pg.click("#reset-view"); pg.wait_for_timeout(1600)
+    cam = pg.evaluate("() => [map.getZoom(), map.getCenter().lng, map.getCenter().lat, map.getPitch(), map.getBearing(), following, orbiting, !!ride]")
+    check(abs(cam[0] - home[0]) < 0.05 and abs(cam[1] - home[1]) < 1e-3 and abs(cam[2] - home[2]) < 1e-3 and abs(cam[3]) < 0.5 and abs(cam[4]) < 0.5 and cam[5] is None and cam[6] is False and cam[7] is False,
+          f"Reset view: the whole corridor from above, follow and orbit stopped: {[round(x, 3) if isinstance(x, float) else x for x in cam]} (overview {[round(x, 3) for x in home]})")
+    check(pg.evaluate("() => ['left', 'right', 'journey'].every(id => !$(id).classList.contains('collapsed')) && $('left').scrollTop === 0") and pg.is_visible("#strips"),
+          "Reset view reopens every panel and scrolls it to the top")
+    # keys: R resets (not while typing), Esc stops following
+    pg.evaluate("() => startFollow('v3')"); pg.wait_for_timeout(300)
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
+    check(pg.evaluate("() => following") is None, "Esc stops following")
+    pg.click("#case-title"); pg.keyboard.type("Ring road"); pg.wait_for_timeout(300)
+    check(pg.input_value("#case-title") == "Ring road" and pg.evaluate("() => map.getZoom()") > 14.5, "typing an R in a text box does not reset the view")
+    pg.click("#orbit"); pg.wait_for_timeout(300)
+    check(pg.evaluate("() => orbiting"), "orbiting")
+    pg.evaluate("() => document.activeElement.blur()"); pg.keyboard.press("r"); pg.wait_for_timeout(1600)
+    check(abs(pg.evaluate("() => map.getZoom()") - home[0]) < 0.05 and abs(pg.evaluate("() => map.getPitch()")) < 0.5 and pg.evaluate("() => orbiting") is False,
+          "R resets the view and stops the orbit")
+    pg.evaluate("() => map.jumpTo({ center: [78.43, 17.39], zoom: 15 })"); pg.click("#overview"); pg.wait_for_timeout(1600)
+    check(abs(pg.evaluate("() => map.getZoom()") - home[0]) < 0.05, "Whole corridor still works")
+    # the page zoomed anyway (browser zoom): a toast says how to undo it
+    pg.evaluate("() => { Object.defineProperty(window, 'devicePixelRatio', { get: () => 1.5, configurable: true }); window.dispatchEvent(new Event('resize')); }"); pg.wait_for_timeout(300)
+    t = pg.inner_text("#zoom-toast") if pg.is_visible("#zoom-toast") else ""
+    check("The page is zoomed in" in t and ("⌘0" in t and "Ctrl+0" in t) and pg.locator("#zoom-toast .zt-reset").count() == 1, f"zoom toast: {t!r}")
+    pg.screenshot(path=str(OUT / "corridor_Z_view.png"))
+    pg.click("#zoom-toast .zt-x"); pg.wait_for_timeout(200)
+    check(pg.is_hidden("#zoom-toast"), "the toast can be dismissed")
+    pg.evaluate("() => { Object.defineProperty(window, 'devicePixelRatio', { get: () => 1, configurable: true }); window.dispatchEvent(new Event('resize')); }"); pg.wait_for_timeout(200)
+    check(pg.is_hidden("#zoom-toast"), "back at 100%: no toast")
+    pg.close()
+    # a phone: panels stacked under the map, the page scrolls, the pill stays on screen and brings everything back
+    pg = open_page(b, {"width": 390, "height": 844}, STREAM_JS % (json.dumps(frames_along("j07", "j08")), 60000))
+    mock_api(pg, lambda c: live_flat(), bodies, mode, counts, real_shape=True)
+    goto(pg)
+    pg.evaluate("() => window.scrollTo(0, 1500)"); pg.wait_for_timeout(300)
+    r = pg.evaluate("() => { const r = $('reset-view').getBoundingClientRect(); return [r.top, r.bottom, r.left, r.right, window.scrollY, document.documentElement.scrollWidth - innerWidth]; }")
+    check(r[4] > 500 and 0 <= r[0] and r[1] <= 844 and r[2] >= 0 and r[3] <= 390 and r[5] <= 0, f"390 px: page scrolls, Reset view stays on screen, no sideways scroll: {r}")
+    lp = pg.evaluate("() => { const l = $('left').getBoundingClientRect(), c = $('left').querySelector('.pcollapse').getBoundingClientRect(); return [l.left, l.right, c.left >= l.left && c.right <= l.right && c.top >= l.top]; }")
+    check(lp[0] >= 0 and lp[1] <= 390 and lp[2], f"390 px: panels full width, the chevron inside its panel: {lp}")
+    pg.click("#reset-view"); pg.wait_for_timeout(1500)
+    check(pg.evaluate("() => window.scrollY") == 0, "390 px: Reset view scrolls back to the map")
     pg.close()
 
     # ---------------- narrow screen ----------------

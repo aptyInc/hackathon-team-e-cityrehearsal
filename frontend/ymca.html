@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>Terascope AI · YMCA Circle close-up</title>
 <!-- Owner: Frontend and 3D workstream. Talks to the backend over C4 (contracts/api.md); draws C1 frames and C2 results.
      Map: TomTom basic_night style (key from GET /config; CARTO dark-matter without a key) + TomTom live traffic tiles. 3D: deck.gl over MapLibre.
@@ -17,9 +17,11 @@
   #map::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 60%, oklch(0.225 0 0 / .6)); }
   .panel { position: absolute; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid var(--line);
     border-radius: var(--r-lg); padding: 14px 16px; box-shadow: var(--sh), var(--hi); font-size: 13px; z-index: 2; }
-  #left { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 384px; max-height: calc(100vh - var(--nav-h, 0px) - 24px); overflow: auto; }
-  #right { top: calc(var(--nav-h, 0px) + 12px); right: 12px; width: 236px; }
-  #live { right: 56px; bottom: 12px; width: 320px; }
+  #left { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 384px; max-height: calc(100vh - var(--nav-h, 0px) - 54px); overflow: auto; }   /* content box: 24 px margins + 30 px padding and border */
+  /* every panel scrolls inside the window; the layers panel ends above the Reset view pill (viewguard.js: --reset-bottom) */
+  #right { top: calc(var(--nav-h, 0px) + 12px); right: 12px; width: 236px; max-height: calc(100vh - var(--nav-h, 0px) - var(--reset-bottom, 36px) - 90px); overflow: auto; }
+  #live { right: 56px; bottom: 12px; width: 320px; max-height: 42vh; overflow: auto; }
+  #left > h1 { padding-right: 30px; } #live > h2:first-of-type, #right > h2:first-of-type { padding-right: 30px; }
   #legend { left: 408px; bottom: 12px; display: flex; gap: 14px; align-items: center; padding: 8px 12px; font-size: 11.5px; color: var(--tx-2); flex-wrap: wrap; max-width: calc(100vw - 760px); }
   a { color: var(--t-orange); }
   h1 { font-size: 17px; font-weight: 700; letter-spacing: -.01em; margin: 0 0 4px; }
@@ -145,6 +147,7 @@
   <span><span class="chip" style="background:#e23d27"></span>jammed</span>
 </div>
 
+<script src="viewguard.js"></script>
 <script>
 const API = "http://localhost:8000";
 const $ = id => document.getElementById(id);
@@ -452,9 +455,17 @@ $("t-night").onchange = e => {
   if (cfg.tomtom_maps_key) { map.setStyle(STYLE(e.target.checked), { diff: false }); map.once("idle", addTrafficLayer); }
   render();
 };
-$("recenter").onclick = () => map.easeTo({ center: [cfg.junction.lon, cfg.junction.lat], zoom: 17.2, pitch: 58, bearing: -25 });
-$("orbit").onclick = () => { orbiting = !orbiting; $("orbit").textContent = orbiting ? "Stop orbit" : "Orbit"; };
+const HOME_VIEW = () => ({ center: [cfg.junction.lon, cfg.junction.lat], zoom: 17.2, pitch: 58, bearing: -25 });
+function setOrbit(on) { orbiting = on; $("orbit").textContent = orbiting ? "Stop orbit" : "Orbit"; }
+function resetView() {   // the Reset view pill and the R key (viewguard.js): orbit stopped, the junction from the usual angle
+  setOrbit(false);
+  if (map) map.easeTo({ ...HOME_VIEW(), duration: 900 });
+}
+$("recenter").onclick = () => map.easeTo(HOME_VIEW());
+$("orbit").onclick = () => setOrbit(!orbiting);
 init();
+crView.init({ reset: resetView, escape: () => setOrbit(false),
+              panels: [{ id: "left", label: "controls" }, { id: "right", label: "layers" }, { id: "live", label: "live data" }], above: "#live", right: 56 });
 </script>
 </body>
 </html>
