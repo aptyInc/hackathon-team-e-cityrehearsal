@@ -9,6 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +20,7 @@ DB = ROOT / "backend" / "cityrehearsal.db"
 
 app = FastAPI(title="CityRehearsal API", version="0.1")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(GZipMiddleware, minimum_size=2000)  # GeoJSON (routes, roads, buildings) shrinks ~5x
 
 
 def db():
@@ -300,6 +302,9 @@ def create_run(body: RunIn):
     with db() as c:
         c.execute("INSERT INTO runs VALUES(?,?,?,?,?,?)",
                   (result["run_id"], body.case_id, body.variant_id, body.run_by, json.dumps(result), time.time()))
+    if not MOCK:
+        from .corridor import prune_runs
+        prune_runs()  # disk safeguard: keep the newest run folders only
     return result
 
 
@@ -315,14 +320,15 @@ def get_run(run_id: str):
 @app.websocket("/stream/{run_id}")
 async def stream(ws: WebSocket, run_id: str):
     await ws.accept()
-    if MOCK:
+    with db() as c:
+        r = c.execute("SELECT result FROM runs WHERE id=?", (run_id,)).fetchone()
+    stored = json.loads(r["result"]) if r else {}
+    if MOCK and "corridor_id" not in stored:  # YMCA sample frames; corridor runs never get YMCA vehicles
         for f in json.loads((SAMPLES / "vehicle_frames.sample.json").read_text()):
             await ws.send_json(f)
             await asyncio.sleep(0.1)
     else:  # send the run's C1 frames (one per simulated second) as fast as the client takes them; it plays them at its own pace
-        with db() as c:
-            r = c.execute("SELECT result FROM runs WHERE id=?", (run_id,)).fetchone()
-        path = json.loads(r["result"]).get("frames_path") if r else None
+        path = stored.get("frames_path")
         if path and Path(path).exists():
             try:
                 with open(path) as fh:
@@ -368,3 +374,8 @@ def decide(case_id: str, body: DecideIn):
         c.execute("INSERT INTO decisions VALUES(?,?,?,?)", (case_id, body.decision, body.reason, time.time()))
         c.execute("UPDATE cases SET stage='decided' WHERE id=?", (case_id,))
     return get_case(case_id)
+
+
+from .corridor import router as corridor_router  # noqa: E402  (corridor endpoints)
+
+app.include_router(corridor_router)
