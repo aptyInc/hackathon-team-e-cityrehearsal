@@ -25,5 +25,15 @@ Stages: `exploring → proposed → in_review → decided`. Runs are append-only
 | GET | /runs/{run_id} | – | C2 or C5 result |
 | WS | /stream/{run_id} | – | C1 frames of the run |
 | GET | /runs/{run_id}/roads | – | per-road simulated speeds (GeoJSON) |
+| POST | /corridor/runs?async=1 | same body as POST /corridor/runs | 202 `{run_id, status}`; poll GET /corridor/runs/{run_id} |
+| GET | /corridor/runs/{run_id} | – | `{run_id, status: queued/running/done/failed, elapsed_s, result? (C5), error?, http_status?}` |
+| GET | /corridor/junctions/live | `?window_minutes=60` | `{source, labels, window_minutes, junctions: [{id, name, tomtom_id, time, age_s, approaches: [{approach_id, name, time, delay_s, usual_delay_s, queue_m, volume_per_hour, travel_time_s, free_flow_travel_time_s, closed, stale, last_60min: {samples, from, to, delay_s, usual_delay_s, queue_m, volume_per_hour}}]}]}` (delay measured; queue, volume estimated) |
+| GET | /corridor/buildings | – | `data/corridor/buildings/index.json` (404 until present) |
+| GET | /corridor/buildings/{point_id} | – | GeoJSON building footprints around a corridor point (A_lingampally, j01..j11, B_lakdikapul) |
 
 With `MOCK_SIM=1`, POST /corridor/runs returns `contracts/samples/corridor_results.sample.json` (baseline, or `flyover_j07` when any intervention is given).
+
+Added 9 Oct 17:50 (fields added only):
+- GET /corridor also returns `tomtom.periods[]` (measured leg times: July average first, then each day; `label` e.g. "Typical July day (06-23)", "Wed 1 Jul, 08-20"), `route` (GeoJSON: `kind:"route"` per direction A->B / B->A, `kind:"leg"` per leg with from_id/to_id) and `labels`.
+- POST /corridor/runs also accepts `run_by` and `case_id` (optional). Errors: 400 for an unknown junction/kind, a duplicate kind at one junction, volume_scale outside 0.1-3, or params a template rejects; 500 with a plain-language `detail` when the simulation cannot finish (e.g. gridlock).
+- C5 results from the API add `fingerprint` (SHA-256 of the result) and, on a cache hit, `cached: true`; mock results add `sample: true` and `requested`. Identical requests (same sorted interventions, volume_scale, window, minutes, calibration and sim code) return the stored result instantly.
