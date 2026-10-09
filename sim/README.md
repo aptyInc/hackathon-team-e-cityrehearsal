@@ -75,7 +75,7 @@ are absolute); at 09:00 today the model's speeds were within ~4 km/h of TomTom's
 1. Templates for `signal_retime`, `bus_lane`, `junction_redesign`, `widening` in `sim/templates/` (same pattern as
    `flyover.py`: plain-XML edit, rebuild, return the network path and any design warnings), then add them to
    `runner.network_for`.
-2. Gariahat backtest traffic: match the paper's approaches A–E to the network roads (Figure 1 of the paper),
+2. (Done 9 Oct, see `gariahat/README.md`.) Gariahat backtest traffic: match the paper's approaches A–E to the network roads (Figure 1 of the paper),
    build flows from `data/gariahat/volumes.csv` + `turns.csv` the way `build_demand.py` does, run before/after.
 3. Flyover frames: the flyover edges have no height yet, so C1 `z` is 0 on the flyover. Give the flyover edges
    an elevation in `templates/flyover.py` (or lift vehicles on `flyover_*` edges when writing frames).
