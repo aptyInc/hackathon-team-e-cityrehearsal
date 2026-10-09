@@ -113,12 +113,20 @@ def _hours(h: str) -> str:   # "6:00-23:00" -> "06-23"
     return f"{int(a.split(':')[0]):02d}-{int(b.split(':')[0]):02d}"
 
 
-def tomtom_periods() -> list[dict]:
-    """TomTom Traffic Stats leg times per period: the July average first, then each day."""
+def _one_hour(hours: str) -> bool:
+    a, b = (int(x.split(":")[0]) for x in hours.split("-"))
+    return b - a == 1
+
+
+def tomtom_periods(hourly: bool = False) -> list[dict]:
+    """TomTom Traffic Stats leg times per period: the July average first, then each day. One-hour periods (the hourly
+    job) only with hourly=True; the all-day periods keep their order, so [0] stays the July 06-23 average."""
     if not LEGS_CSV.exists():
         return []
     periods: dict[str, dict] = {}
     for r in csv.DictReader(LEGS_CSV.open()):
+        if _one_hour(r["period"].split(" ")[1]) != hourly:
+            continue
         p = periods.get(r["period"])
         if p is None:
             dates, hours = r["period"].split(" ")
@@ -133,11 +141,28 @@ def tomtom_periods() -> list[dict]:
                                         "source": f"TomTom Traffic Stats job {r['job']}", "data_label": "measured", "legs": []}
         p["legs"].append({"from_id": r["from_id"], "to_id": r["to_id"], "from_name": r["from"], "to_name": r["to"],
                           "distance_m": float(r["distance_m"]), "time_s": float(r["time_s"]), "speed_kmh": float(r["speed_kmh"])})
-    out = sorted(periods.values(), key=lambda p: (p["kind"] != "average", p["date_from"]))
+    out = sorted(periods.values(), key=lambda p: (p["kind"] != "average", p["date_from"], p["hours"].zfill(11)))
     for p in out:
         p["total_s"] = round(sum(l["time_s"] for l in p["legs"]), 1)
         p["distance_m"] = round(sum(l["distance_m"] for l in p["legs"]))
     return out
+
+
+def tomtom_hourly() -> dict | None:
+    """Hour-by-hour TomTom trip and leg times, compact: days (July average + single days) x hours 0-23."""
+    rows = tomtom_periods(hourly=True)
+    if not rows:
+        return None
+    days, table = {}, {}
+    for p in rows:
+        day = "july" if p["kind"] == "average" else p["date_from"]
+        days.setdefault(day, p["label"].rsplit(" (", 1)[0].rsplit(",", 1)[0] if day != "july" else "Typical July day")
+        hour = int(p["hours"].split(":")[0])
+        table.setdefault(day, {})[hour] = {"total_s": p["total_s"], "legs_s": [l["time_s"] for l in p["legs"]]}
+    first = rows[0]
+    return {"source": f"TomTom Traffic Stats job {first['job']} (one-hour slots, every day of the week)", "data_label": "measured",
+            "legs": [{"from_id": l["from_id"], "to_id": l["to_id"], "distance_m": l["distance_m"]} for l in first["legs"]],
+            "days": [{"day": k, "label": v} for k, v in days.items()], "hours": list(range(24)), "by_day": table}
 
 
 _route_lock = threading.Lock()
@@ -221,7 +246,8 @@ def get_corridor():
     """Corridor definition + TomTom measured leg times per period + the simulated route's geometry."""
     c = corridor_def()
     c["tomtom"] = {"source": "TomTom Traffic Stats, Lingampally -> Lakdikapul, July 2026 (data/raw/corridor_legs_tomtom.csv)",
-                   "data_label": "REAL: measured (TomTom probe data)", "periods": tomtom_periods()}
+                   "data_label": "REAL: measured (TomTom probe data)", "periods": tomtom_periods(),
+                   "hourly": tomtom_hourly()}
     c["route"] = route_geometry()
     c["labels"] = {"points": "reference: team junction list + OpenStreetMap coordinates",
                    "tomtom": "REAL: measured by TomTom (probe vehicles); leg times, speeds and distances",
