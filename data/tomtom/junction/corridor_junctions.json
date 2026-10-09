@@ -14,6 +14,12 @@
    "key_env": "TOMTOM_JA_KEY_J03"
   },
   {
+   "corridor_id": "j04",
+   "name": "Biodiversity jn (flyover)",
+   "tomtom_id": "6ac8d7722028d7ade19fe9f7",
+   "key_env": "TOMTOM_JA_KEY_J04"
+  },
+  {
    "corridor_id": "j05",
    "name": "Khajaguda X Roads",
    "tomtom_id": "6ac8e6e2f7a7fe27a7f34172",
