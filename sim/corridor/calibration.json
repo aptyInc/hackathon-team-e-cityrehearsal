@@ -1,0 +1,262 @@
+{
+ "target": "TomTom Traffic Stats job 10051304: Lingampally -> Lakdikapul, July 2026 every day 06:00-23:00",
+ "cap_kmh": [
+  24.5,
+  30.4,
+  35.0,
+  40.5,
+  35.9,
+  60,
+  60,
+  60,
+  60,
+  27.4,
+  34.3,
+  25.5
+ ],
+ "green_share": {
+  "j06": 0.75,
+  "j07": 0.8,
+  "j08": 0.75,
+  "j09": 0.7
+ },
+ "through_vph": {
+  "fwd": 1500,
+  "rev": 1500
+ },
+ "cross_scale": 0.6,
+ "knobs": {
+  "cap_kmh": "calibrated: speed cap per leg (A->j01 ... j11->B) standing in for side friction (bus stops, parking, pedestrians, autos), both directions",
+  "green_share": "calibrated: corridor share of the green time at junctions where the leg was still too slow at 60 km/h; elsewhere 0.6 (assumed)",
+  "through_vph": "assumed: end-to-end corridor traffic per direction, set below the evening counts so the all-day average does not overload the modelled 2-lane approaches",
+  "cross_scale": "assumed: share of TomTom Junction Analytics' evening cross-road volumes used for the all-day average"
+ },
+ "result": {
+  "sim_total_s": 3694,
+  "tomtom_total_s": 3321,
+  "legs": [
+   {
+    "leg": "A_lingampally->j01",
+    "sim_s": 448,
+    "tomtom_s": 437,
+    "ratio": 1.025
+   },
+   {
+    "leg": "j01->j02",
+    "sim_s": 799,
+    "tomtom_s": 805,
+    "ratio": 0.993
+   },
+   {
+    "leg": "j02->j03",
+    "sim_s": 218,
+    "tomtom_s": 222,
+    "ratio": 0.982
+   },
+   {
+    "leg": "j03->j04",
+    "sim_s": 198,
+    "tomtom_s": 207,
+    "ratio": 0.957
+   },
+   {
+    "leg": "j04->j05",
+    "sim_s": 89,
+    "tomtom_s": 90,
+    "ratio": 0.989
+   },
+   {
+    "leg": "j05->j06",
+    "sim_s": 200,
+    "tomtom_s": 167,
+    "ratio": 1.198
+   },
+   {
+    "leg": "j06->j07",
+    "sim_s": 534,
+    "tomtom_s": 271,
+    "ratio": 1.97
+   },
+   {
+    "leg": "j07->j08",
+    "sim_s": 336,
+    "tomtom_s": 221,
+    "ratio": 1.52
+   },
+   {
+    "leg": "j08->j09",
+    "sim_s": 53,
+    "tomtom_s": 57,
+    "ratio": 0.93
+   },
+   {
+    "leg": "j09->j10",
+    "sim_s": 418,
+    "tomtom_s": 442,
+    "ratio": 0.946
+   },
+   {
+    "leg": "j10->j11",
+    "sim_s": 138,
+    "tomtom_s": 135,
+    "ratio": 1.022
+   },
+   {
+    "leg": "j11->B_lakdikapul",
+    "sim_s": 263,
+    "tomtom_s": 267,
+    "ratio": 0.985
+   }
+  ],
+  "corridor_volumes": [
+   {
+    "junction_id": "j03",
+    "direction": "A->B",
+    "road": "Gachibowli Road East Bound",
+    "edge": "313359707",
+    "tomtom_vph": 2502,
+    "sim_vph": 1496,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j03",
+    "direction": "B->A",
+    "road": "Gachibowli Road West Bound",
+    "edge": "378333808#0",
+    "tomtom_vph": 3898,
+    "sim_vph": 832,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j07",
+    "direction": "A->B",
+    "road": "Mumbai Road East Bound",
+    "edge": "728941839#4",
+    "tomtom_vph": 3647,
+    "sim_vph": 2684,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j07",
+    "direction": "B->A",
+    "road": "Mumbai Road West Bound",
+    "edge": "728941829#1",
+    "tomtom_vph": 4777,
+    "sim_vph": 2532,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j08",
+    "direction": "A->B",
+    "road": "Mumbai Road East Bound",
+    "edge": "28131038#0",
+    "tomtom_vph": 5126,
+    "sim_vph": 1804,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j08",
+    "direction": "B->A",
+    "road": "Mehdipatnam Road West Bound",
+    "edge": "315417462#5",
+    "tomtom_vph": 3311,
+    "sim_vph": 2568,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j09",
+    "direction": "A->B",
+    "road": "Mumbai Road East Bound",
+    "edge": "562832903#0",
+    "tomtom_vph": 4028,
+    "sim_vph": 1708,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j09",
+    "direction": "B->A",
+    "road": "Mehdipatnam Road West Bound",
+    "edge": "315417462#7",
+    "tomtom_vph": 3775,
+    "sim_vph": 2220,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j10",
+    "direction": "A->B",
+    "road": "Mehdipatnam Road East Bound",
+    "edge": "313512532#2",
+    "tomtom_vph": 3668,
+    "sim_vph": 2048,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j10",
+    "direction": "B->A",
+    "road": " South Bound",
+    "edge": "28197087#1",
+    "tomtom_vph": 40,
+    "sim_vph": 1728,
+    "label": "estimated"
+   }
+  ],
+  "teleports": 56,
+  "vehicles_loaded": 26738,
+  "vehicles_not_inserted": 1631,
+  "probes_arrived": 15,
+  "wall_seconds": 48.4,
+  "inputs": [
+   {
+    "input": "leg travel times (calibration target)",
+    "label": "counted",
+    "source": "TomTom Traffic Stats job 10051304: probe vehicles, July 2026 every day 06:00-23:00"
+   },
+   {
+    "input": "cross-road volumes at j03, j07, j08, j09, j10",
+    "label": "estimated",
+    "source": "TomTom Junction Analytics (model estimates from probe data), mean over 2026-10-09T16:54 .. 2026-10-09T18:18"
+   },
+   {
+    "input": "where cross traffic goes (turn shares)",
+    "label": "estimated",
+    "source": "TomTom Junction Analytics turn ratios where collected; elsewhere a third each way (assumed)"
+   },
+   {
+    "input": "cross-road volumes at the other junctions",
+    "label": "assumed",
+    "source": "450 veh/h per approach"
+   },
+   {
+    "input": "end-to-end corridor volume",
+    "label": "assumed",
+    "source": "set so the corridor approaches at the TomTom junctions carry TomTom's volume (inputs.corridor_volumes)"
+   },
+   {
+    "input": "speed cap per leg (side friction: bus stops, parking, pedestrians, autos)",
+    "label": "assumed",
+    "source": "set so the probe cars' leg times match TomTom's"
+   },
+   {
+    "input": "signal plans",
+    "label": "assumed",
+    "source": "120 s cycle, a corridor stage and a cross-road stage, corridor gets 60% of the green (corridor_net.signal_plans)"
+   },
+   {
+    "input": "corridor green share where calibrated",
+    "label": "assumed",
+    "source": "none"
+   },
+   {
+    "input": "vehicle mix",
+    "label": "assumed",
+    "source": "two_wheeler 45%, car 30%, auto 18%, bus 7%"
+   },
+   {
+    "input": "joining traffic",
+    "label": "assumed",
+    "source": "drives 3 km along the corridor, then turns off"
+   }
+  ]
+ },
+ "calibrated_at": "2026-10-09T18:32:40+0530"
+}
