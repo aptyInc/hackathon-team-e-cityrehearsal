@@ -936,7 +936,7 @@ function structures(r) {
 // ---------- 3D buildings, loaded per corridor point when it comes into view ----------
 const buildings = {};            // point id -> features ([] when there are none), or "loading"
 const BLD_DEFAULT_H = 9;
-const bldHeight = p => num(p?.height) ?? (num(p?.num_floors) ? num(p.num_floors) * 3.2 : BLD_DEFAULT_H);
+const bldHeight = p => num(p?.height) ?? num(p?.render_height_m) ?? (num(p?.num_floors) ? num(p.num_floors) * 3.2 : BLD_DEFAULT_H);
 function bldPolys(fc) {   // features -> one item per polygon with its height
   const out = [];
   for (const f of fc?.features || []) {
@@ -964,7 +964,7 @@ function bldData() { return bldCache ||= Object.values(buildings).filter(Array.i
 function bldNote() {
   const done = Object.entries(buildings).filter(([, v]) => Array.isArray(v)), n = done.reduce((s, [, v]) => s + v.length, 0);
   $("bld-note").textContent = !done.length ? "3D buildings load when you zoom in to a junction." :
-    n ? `${n.toLocaleString("en-IN")} buildings around ${done.filter(([, v]) => v.length).map(([id]) => pointLabel(id)).join(", ")} (OpenStreetMap; ${BLD_DEFAULT_H} m where the height is unknown).` :
+    n ? `${n.toLocaleString("en-IN")} buildings around ${done.filter(([, v]) => v.length).map(([id]) => pointLabel(id)).join(", ")} (footprints: Overture Maps; heights mostly assumed from footprint size).` :
     "No building outlines for this part of the corridor yet.";
 }
 
