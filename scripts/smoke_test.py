@@ -242,6 +242,26 @@ assert t["status"] == "done" and len(_fake.calls[0]["messages"]) > 5, (t, len(_f
 from app.agent.tools import Context as _Ctx, execute as _exec  # noqa: E402
 out, err = _exec(_Ctx(), "write_brief", {"title": "t", "problem": "p", "run_ids": [fly["run_id"]], "recommendation": "r", "reasons": []})
 assert err and "low-cost" in out["error"], out
+# advisor: "flyover here, or what else?" -> ranked option set, verdict, brief; stored and reused; elevated junctions skip
+adv = c.post("/agent/advise/j08")
+assert adv.status_code == 200 and adv.json()["status"] == "done", adv.text
+adv = adv.json()
+A = adv["advice"]
+assert A["verdict_code"] in ("build", "build_underpass", "widen", "cheap_first", "one_way_first", "nothing") and A["brief_id"], A["verdict"]
+assert [o["kind"] for o in sorted(A["options"], key=lambda o: o["cost_rank"])][0] == "signal_retime" and len(A["options"]) == 6, A["options"]
+assert all(k in A["options"][0] for k in ("trip_change_min", "noise_min", "ripple", "rain_change_min", "at_110_change_min", "cost_class", "run_id", "rank"))
+assert A["options"][0]["rain_change_min"] is not None and A["options"][0]["at_110_change_min"] is not None, "top options get the rain and 1.1x checks"
+assert any("MOCK_SIM" in x for x in A["caveats"]) and "assumed" in A["cost_ladder"], A["caveats"]
+assert "## Advisor ranking" in c.get(f"/briefs/{A['brief_id']}").json()["markdown"]
+assert c.post("/agent/advise/j08").json()["advice_id"] == adv["advice_id"], "fresh advice is reused, not recomputed"
+assert c.get("/agent/advice/j08").json()["advice_id"] == adv["advice_id"] and not adv["stale"]
+el = c.post("/agent/advise/j07").json()["advice"]
+assert el["verdict_code"] == "elevated" and el["alternatives"] and not el["run_ids"], el
+assert {j["junction"] for j in c.get("/agent/advice").json()["junctions"]} >= {"j07", "j08"}
+assert c.get("/agent/advice/j99").status_code == 404 and c.post("/agent/advise/j99").status_code == 400
+assert "Nanal Nagar" in c.get("/agent/suggestions").json()["questions"][0]
+out, err = _exec(_Ctx(session_id="s"), "advise_junction", {"junction_id": "j08"})
+assert not err and out["precomputed"] and out["verdict"] == A["verdict"], out
 # no key -> 503 with a plain message
 _agent.set_client_factory(None)
 _key = os.environ.pop("ANTHROPIC_API_KEY", None)
