@@ -253,7 +253,7 @@ with sync_playwright() as p:
     jr = pg.evaluate("() => [document.getElementById('journey').getBoundingClientRect().right, document.getElementById('chat').getBoundingClientRect().left]")
     check(jr[0] <= jr[1], f"trip strip makes room for the chat: {jr}")
     sugg = pg.eval_on_selector_all("#chat-sugg button", "els => els.map(e => e.textContent)")
-    check(len(sugg) == 3 and "Where does the trip lose the most time?" in sugg[0] and "Try a cheaper option first" in sugg[1] and "rain" in sugg[2], f"3 suggested questions: {sugg}")
+    check(len(sugg) == 3 and "Where does the trip lose the most time?" in sugg[0] and sugg[1] == "Should we build a flyover at ISB Rd / DLF? Try a cheaper option first." and "rain" in sugg[2], f"3 suggested questions: {sugg}")
     pg.click("#chat-sugg button >> nth=1")
     check(wait_for(pg, "() => document.querySelector('#chat-log .steps li.run')", 10), "a running step is shown")
     check(wait_for(pg, "() => /Running: flyover, 2 lanes, 600 m at Tolichowki/.test(document.querySelector('#chat-log .msg.bot:last-child').innerText)", 10),
@@ -387,7 +387,7 @@ with sync_playwright() as p:
     case = "N narrow"; print(case)
     be = Backend(off=("corridor_runs",), sync_chat=True)   # POST /corridor/runs 404: the page falls back to its built-in sample
     pg = open_page(b, {"width": 390, "height": 844}, be)
-    pg.click("#p-tolichowki")
+    pg.click("#p-dlf")
     check(wait_for(pg, "() => document.querySelectorAll('#strips .strip[data-strip]').length === 3", 15), "preset works (sample fallback)")
     check(pg.is_disabled("#case-send") and "sample results made in the browser" in pg.inner_text("#case-why"), f"sample results cannot be sent: {pg.inner_text('#case-why')}")
     pg.evaluate("() => window.scrollTo(0, document.body.scrollHeight)"); pg.wait_for_timeout(200)

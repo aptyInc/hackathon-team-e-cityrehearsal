@@ -11,7 +11,7 @@ window.planner = (() => {
   const POLL_MS = window.AGENT_POLL_MS || 1000;
   const TURN_LIMIT_MS = 15 * 60 * 1000;
   const SUGGESTIONS = ["Where does the trip lose the most time?",
-                       "Should we build a flyover at Tolichowki? Try a cheaper option first.",
+                       "Should we build a flyover at ISB Rd / DLF? Try a cheaper option first.",
                        "What would rain do to the trip?"];
   const STAGES = [["proposed", "Proposed"], ["in_review", "In review"], ["decided", "Decided"]];
   const DONE = { approve: "Approved", reject: "Rejected", revise: "Sent back for revision" };

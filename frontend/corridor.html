@@ -54,6 +54,8 @@
   .pin { width: 22px; height: 22px; border-radius: 50%; background: var(--blue); color: #fff; font: 700 11px/22px Inter, system-ui, sans-serif; text-align: center;
          border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); cursor: pointer; }
   .pin.end { background: var(--ink); } .pin.has { background: var(--accent); } .pin.sel { outline: 3px solid rgba(196,86,28,.55); outline-offset: 1px; }
+  .pin.fly { box-shadow: 0 0 0 2px #5b6670, 0 1px 4px rgba(0,0,0,.4); }   /* the main road already crosses here on a flyover */
+  .pin.fly::before { content: ""; position: absolute; left: -7px; right: -7px; bottom: -6px; height: 3px; border-radius: 2px; background: #5b6670; }
   /* interventions and junction table */
   .iv { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 5px 8px; background: #f4f0e8; border-radius: 6px; margin: 4px 0; }
   .iv button { padding: 2px 8px; font-size: 12px; }
@@ -67,6 +69,11 @@
   .note { font-size: 12px; color: var(--muted); margin: 4px 0; line-height: 1.35; }
   .note.info { background: #eef4f9; border-left: 3px solid var(--blue); padding: 5px 8px; border-radius: 4px; color: var(--ink); }
   .linkbtn { background: none; color: var(--blue); padding: 2px 0; text-decoration: underline; font-size: 12px; }
+  .note.exists { background: #fff4e5; border-left: 3px solid #b26a00; padding: 5px 8px; border-radius: 4px; color: var(--ink); }
+  .flytag { font-size: 11px; color: var(--muted); font-weight: 400; }
+  /* result warnings: readable in the trip panel and under the junction table */
+  .warn ul { margin: 3px 0 0; padding-left: 0; list-style: none; } .warn li { margin: 2px 0; line-height: 1.35; }
+  #deltas .warn { font-size: 13px; margin: 6px 0; }
   /* quick demos */
   #presets { display: flex; flex-direction: column; gap: 5px; align-items: stretch; }
   #presets button { text-align: left; background: #f4f0e8; color: var(--ink); border: 1px solid #e0d9cc; }
@@ -175,9 +182,10 @@
 
   <h2>Quick demos</h2>
   <div id="presets">
-    <button id="p-tolichowki" title="Replaces your list of changes, then simulates"><b>▶</b>Flyover at Tolichowki</button>
-    <button id="p-khajaguda" title="Replaces your list of changes, then simulates"><b>▶</b>Retime Khajaguda signal (70% main road)</button>
-    <button id="p-nanal" title="Replaces your list of changes, then simulates"><b>▶</b>One flyover over Nanal Nagar + Rethibowli</button>
+    <button id="p-nallagandla" title="A 600 m, 2-lane flyover lifts the main road over the Nallagandla signal, the first signal of the trip. Replaces your list of changes, then simulates."><b>▶</b>Flyover at Nallagandla</button>
+    <button id="p-dlf" title="A 600 m, 2-lane flyover lifts the main road over the busy ISB Rd / DLF signal. Replaces your list of changes, then simulates."><b>▶</b>Flyover at ISB Rd / DLF</button>
+    <button id="p-nanal" title="Nanal Nagar and Rethibowli are only 420 m apart, so one 1.2 km flyover clears both signals. Replaces your list of changes, then simulates."><b>▶</b>One flyover over Nanal Nagar + Rethibowli</button>
+    <button id="p-dlf-retime" title="The DLF signal gives the side roads 70% of the green and the main road 30%. Watch the main-road queue spread back towards the junctions before it. Replaces your list of changes, then simulates."><b>▶</b>Give DLF's side roads more green (watch the ripple)</button>
   </div>
 
   <h2>1 · When <span class="tag real">TomTom data</span></h2>
@@ -204,6 +212,7 @@
   </div>
   <div class="row" id="iv-params"></div>
   <div id="iv-help" class="note"></div>
+  <div id="iv-exists" class="note exists" hidden></div>
   <div class="row"><button id="iv-add" class="secondary">Add</button>
     <button id="iv-nanal" class="linkbtn" hidden>One flyover over Nanal Nagar + Rethibowli</button></div>
   <div id="iv-merge" class="note info" hidden></div>
@@ -263,7 +272,8 @@
     <span class="chip" style="background:rgb(222,140,30)"></span>15–25
     <span class="chip" style="background:rgb(215,48,39)"></span>&lt; 15<br>
     <span class="chip" style="background:rgb(232,116,59)"></span>two-wheeler <span class="chip" style="background:rgb(47,111,159)"></span>car
-    <span class="chip" style="background:rgb(240,200,40)"></span>auto <span class="chip" style="background:rgb(40,160,90)"></span>bus
+    <span class="chip" style="background:rgb(240,200,40)"></span>auto <span class="chip" style="background:rgb(40,160,90)"></span>bus<br>
+    <span id="fly-key"><span class="chip" style="background:var(--blue);border-radius:50%;box-shadow:0 0 0 2px #5b6670;margin-left:2px"></span>junction with a flyover already built</span>
   </div>
 </div>
 
@@ -327,11 +337,18 @@ const HELP = {
 };
 const NANAL_PAIR = ["j08", "j09"];   // Nanal Nagar and Rethibowli: about 420 m apart
 const NANAL_FLYOVER = () => ({ junction_id: "j08", kind: "flyover", params: { lanes: 2, length_m: 1200 } });
+// Quick demos: the backend has these exact requests cached, so keep the params as they are.
 const PRESETS = {
-  "p-tolichowki": [{ junction_id: "j07", kind: "flyover", params: { lanes: 2, length_m: 600 } }],
-  "p-khajaguda": [{ junction_id: "j05", kind: "signal_retime", params: { cycle_s: 120, corridor_green_share: 0.7 } }],
+  "p-nallagandla": [{ junction_id: "j01", kind: "flyover", params: { lanes: 2, length_m: 600 } }],
+  "p-dlf": [{ junction_id: "j02", kind: "flyover", params: { lanes: 2, length_m: 600 } }],
   "p-nanal": [NANAL_FLYOVER()],
+  "p-dlf-retime": [{ junction_id: "j02", kind: "signal_retime", params: { cycle_s: 120, corridor_green_share: 0.3 } }],
 };
+// Junctions the main road already crosses on a flyover (through traffic meets no signal there). A flyover or underpass
+// asked for at one of these is not built (sim/templates/corridor.py answers with a warning); the page says so up front.
+const EXISTING_FLYOVERS = { j03: "Gachibowli Flyover", j04: "Bio-Diversity Park Level 1 Flyover", j06: "Shaikpet Flyover",
+                            j07: "Tolichowki Flyover", j10: "Masab Tank Flyover", j11: "Masab Tank Flyover" };
+const existingFlyover = id => point(id)?.existing_flyover || EXISTING_FLYOVERS[id] || "";
 const RUN_MSG = "Simulating 21 km of traffic, usually under 2 minutes";
 const LIVE_MS = window.LIVE_REFRESH_MS || 60000;   // live junction refresh (tests shorten it)
 const TYPICAL = "2026-07-01..2026-07-31 6:00-23:00";
@@ -668,9 +685,25 @@ function renderLive() {
 
 // ---------- 2 · change a junction ----------
 function fillJunctions() {
-  $("iv-j").innerHTML = points.filter(p => p.kind === "junction").map(p => `<option value="${p.id}">${pointLabel(p.id)} · ${esc(short(p.name))}</option>`).join("");
-  const j7 = point("j07"); if (j7) $("iv-j").value = "j07";
+  $("iv-j").innerHTML = points.filter(p => p.kind === "junction").map(p =>
+    `<option value="${p.id}"${existingFlyover(p.id) ? ` title="The main road already crosses here on the ${esc(existingFlyover(p.id))}"` : ""}>` +
+    `${pointLabel(p.id)} · ${esc(short(p.name))}${existingFlyover(p.id) ? " (flyover exists)" : ""}</option>`).join("");
+  if (point("j02")) $("iv-j").value = "j02";   // a ground-level signal (the main road crosses j03, j04, j06, j07, j10, j11 on flyovers)
+  syncPicker();
+}
+// A flyover or underpass where the main road is already on one would duplicate it; a signal change there does not touch
+// the main road. Said before simulating (the simulation still runs and its warning shows with the result).
+function existsNote(id, kind) {
+  const fly = existingFlyover(id), nm = short(point(id)?.name);
+  if (!fly) return "";
+  if (kind === "flyover" || kind === "underpass") return `The main road already crosses ${nm} on the ${fly}; this would duplicate it.`;
+  if (kind === "signal_retime") return `The main road passes over ${nm} on the ${fly}, so it meets no signal here; only side and turning traffic would see the change.`;
+  return "";
+}
+function syncPicker() {
   showNanalButton();
+  const note = existsNote($("iv-j").value, $("iv-kind").value);
+  $("iv-exists").hidden = !note; $("iv-exists").textContent = note;
 }
 function shareText(v) { return `<b>${v}%</b> of green to the main road, ${100 - v}% to side roads`; }
 function fillParams() {
@@ -692,8 +725,8 @@ function readParams() {
   return params;
 }
 function showNanalButton() { $("iv-nanal").hidden = !NANAL_PAIR.includes($("iv-j").value); }
-$("iv-kind").onchange = fillParams;
-$("iv-j").onchange = () => { selected = $("iv-j").value; updateMarkers(); showNanalButton(); };
+$("iv-kind").onchange = () => { fillParams(); syncPicker(); };
+$("iv-j").onchange = () => { selected = $("iv-j").value; updateMarkers(); syncPicker(); };
 function sortIvs() { interventions.sort((a, b) => points.findIndex(p => p.id === a.junction_id) - points.findIndex(p => p.id === b.junction_id)); }
 const MERGE_NOTE = "Nanal Nagar and Rethibowli are only about 420 m apart, so one 1.2 km flyover over both replaces two separate flyovers.";
 function addIv(iv) {   // one of each kind per junction; adding again updates it. Returns a note to show, or "".
@@ -733,7 +766,7 @@ Object.keys(PRESETS).forEach(id => $(id).onclick = () => {
   if (running) return;
   interventions = JSON.parse(JSON.stringify(PRESETS[id])); sortIvs();
   setMergeNote(id === "p-nanal" ? MERGE_NOTE : "");
-  const j = interventions[0].junction_id; $("iv-j").value = j; selected = j; showNanalButton();
+  const j = interventions[0].junction_id; $("iv-j").value = j; selected = j; syncPicker();
   ivsChanged();
   simulate(true);
 });
@@ -841,6 +874,7 @@ function renderDeltas() {
   const stale = changed._ivs && changed._ivs !== ivKey(interventions) ? `<div class="mid" style="font-size:12px">Your list of changes was edited after this run: simulate again to update.</div>` : "";
   $("deltas").innerHTML = `<div class="headline">Whole trip: <b>${Math.round(mins(b))} → ${Math.round(mins(c))} min, <span class="${cls}">${signed(dm)} min</span></b>${tagsFor(changed)}` +
     ` <small>· with ${(changed.interventions || []).map(iv => `${ivText(iv).toLowerCase()} at ${short(point(iv.junction_id)?.name)}`).join("; ")}</small></div>` + stale +
+    `<div id="run-warn">${warnBox("Warnings for this run", changed.warnings || [])}</div>` +
     moved.map(x => `<span class="delta ${x.d > 0 ? "up" : "down"}" data-leg="${x.i}" title="${fmtMin(x.l.time_s - x.d)} → ${fmtMin(x.l.time_s)} min">` +
       `${short(x.l.from_name || point(x.l.from_id)?.name)} → ${short(x.l.to_name || point(x.l.to_id)?.name)} <b>${signed(mins(x.d))} min</b>` +
       `${x.d > 0 && x.knock ? ` · knock-on from ${pointLabel(x.knock.id)}` : ""}</span>`).join("") +
@@ -864,12 +898,24 @@ function renderJunctions() {
   const ids = points.filter(p => p.kind === "junction").map(p => p.id);
   $("jt").innerHTML = `<table><tr><th>#</th><th>Junction</th><th>Avg delay${changed && base ? "<br>before → after" : ""}</th><th>Longest queue${changed && base ? "<br>before → after" : ""}</th></tr>` +
     ids.map(id => { const b = one(base, id), c = one(changed, id), iv = ivAt(id);
-      return `<tr class="j${iv ? " has" : ""}" data-id="${id}"><td>${pointLabel(id)}</td><td>${short(point(id)?.name)}${iv ? `<br><small>${ivText(iv)}</small>` : ""}</td>` +
+      return `<tr class="j${iv ? " has" : ""}" data-id="${id}"><td>${pointLabel(id)}</td><td>${short(point(id)?.name)}` +
+             `${existingFlyover(id) ? ` <span class="flytag" title="The main road crosses on the ${esc(existingFlyover(id))}">(flyover exists)</span>` : ""}${iv ? `<br><small>${ivText(iv)}</small>` : ""}</td>` +
              `<td>${cell(b, c, "avg_delay_s", "s")}</td><td>${cell(b, c, "max_queue_m", "m")}</td></tr>`; }).join("") + `</table>`;
   $("jt").querySelectorAll("tr.j").forEach(tr => tr.onclick = () => flyToPoint(tr.dataset.id));
   const ws = [...new Set([...(base?.warnings || []), ...(changed?.warnings || [])])];
-  $("warnings").innerHTML = ws.length ? `<div class="warn"><b>Warnings</b><br>⚠ ${ws.join("<br>⚠ ")}</div>` : "";
+  $("warnings").innerHTML = warnBox("Warnings", ws);
 }
+// A result's warnings in plain words: "j07 flyover: j07 already has a flyover: the corridor crosses ..." becomes
+// "7 · Tolichowki, flyover: already has a flyover. The corridor crosses ...". Escaped (warnings come from the server).
+function warnHtml(w) {
+  const named = s => s.replace(/\b(j\d\d)\b/g, (m, id) => point(id) ? `${pointLabel(id)} · ${short(point(id).name)}` : m);
+  const m = /^(j\d\d) ([a-z_]+): (.*)$/s.exec(String(w));
+  if (!m || !point(m[1])) return "⚠ " + esc(named(String(w)));
+  let rest = m[3].replace(new RegExp(`^${m[1]}\\s+`), "").replace(/^signal \d+: /, "at one of its signals, ").replace(/\bsignal \d{5,}\b/g, "a signal");
+  rest = rest.replace(/^([^:.;(]+): (\w)/, (x, a, c) => `${a}. ${c.toUpperCase()}`);
+  return `⚠ <b>${esc(named(m[1]))}, ${esc((KINDS[m[2]] || m[2]).toLowerCase())}:</b> ${esc(named(rest))}`;
+}
+const warnBox = (title, ws) => ws.length ? `<div class="warn"><b>${title}</b><ul>${ws.map(w => `<li>${warnHtml(w)}</li>`).join("")}</ul></div>` : "";
 
 // ---------- map ----------
 function addTrafficLayer() {
@@ -894,7 +940,9 @@ function updateMarkers() {
     el.classList.toggle("has", interventions.some(iv => iv.junction_id === id || (id === NANAL_PAIR[1] && coversBoth(iv))));
     el.classList.toggle("sel", selected === id);
     el.classList.toggle("live", liveIds.has(id));
-    el.title = point(id)?.name + (liveIds.has(id) ? " · live TomTom junction data" : "");
+    el.classList.toggle("fly", !!existingFlyover(id));
+    el.title = point(id)?.name + (existingFlyover(id) ? ` · flyover exists: the main road crosses on the ${existingFlyover(id)}` : "") +
+      (liveIds.has(id) ? " · live TomTom junction data" : "");
   }
 }
 let popup = null;
@@ -904,7 +952,7 @@ const pad = (desk) => narrow() ? 30 : desk;
 function flyToPoint(id) {
   const p = point(id); if (!p) return;
   selected = id; updateMarkers();
-  if (p.kind === "junction") { $("iv-j").value = id; showNanalButton(); }
+  if (p.kind === "junction") { $("iv-j").value = id; syncPicker(); }
   map.flyTo({ center: [p.lon, p.lat], zoom: 16.2, pitch: 58, bearing: -20, duration: 1800, essential: true, offset: narrow() ? [0, 0] : VIEW_OFFSET });
   const b = base && base.junctions.find(j => j.id === id), c = changed && changed.junctions.find(j => j.id === id);
   const stat = (r, lab) => r ? `<br>${lab}: ${r.avg_delay_s} s delay, ${r.max_queue_m} m queue` : "";
@@ -912,7 +960,8 @@ function flyToPoint(id) {
   const liveLine = w ? `<br>Live now: ${Math.round(w.delay_s)} s delay${w.usual_delay_s != null ? ` (usual ${Math.round(w.usual_delay_s)} s)` : ""}, queue ${fmtQ(w.queue_m)} on ${esc(w.name)} <span class="tag real">REAL</span>` : "";
   if (popup) popup.remove();
   popup = new maplibregl.Popup({ offset: 16, closeButton: true }).setLngLat([p.lon, p.lat])
-    .setHTML(`<b>${pointLabel(id)} · ${esc(p.name)}</b>${liveLine}${stat(b, "Today")}${stat(c, "With changes")}${b || c ? ' <span class="tag sim">SIMULATED</span>' : ""}`).addTo(map);
+    .setHTML(`<b>${pointLabel(id)} · ${esc(p.name)}</b>` +
+      `${existingFlyover(id) ? `<br><span class="flytag">Flyover exists: the main road crosses on the ${esc(existingFlyover(id))}</span>` : ""}${liveLine}${stat(b, "Today")}${stat(c, "With changes")}${b || c ? ' <span class="tag sim">SIMULATED</span>' : ""}`).addTo(map);
 }
 function flyToLeg(i) {
   const legs = (changed || base)?.journey.legs || tomtom[$("when").value] || [], l = legs[i]; if (!l) return;
@@ -1023,6 +1072,7 @@ function densify(path, step = 15) {   // a vertex every ~15 m, so ramps are smoo
   }
   return out;
 }
+const notBuilt = (r, id) => (r?.warnings || []).some(w => new RegExp(`^${id}\\b.*(already has a flyover|nothing built)`).test(String(w)));
 function structures(r) {
   const ivs = (r?.interventions || []).filter(iv => iv.kind === "flyover" || iv.kind === "underpass");
   const key = r ? `${r.run_id}|${ivKey(ivs)}|${!!legPaths}|${roads ? roads.length : 0}` : null;
@@ -1037,6 +1087,7 @@ function structures(r) {
   if (ivs.length && !decks.length && !(roads && roads.some(f => f.properties?.flyover || f.geometry?.coordinates?.some(c => Math.abs(c[2] || 0) > 1)))) {
     const R = routeLine();
     for (const iv of ivs) {
+      if (notBuilt(r, iv.junction_id)) continue;   // a flyover already there: the simulation built nothing, so draw nothing
       const jd = R.cum[R.at[iv.junction_id]]; if (jd == null) continue;
       let mid = jd;
       if (coversBoth(iv)) mid = (jd + R.cum[R.at[NANAL_PAIR[1]]]) / 2;   // one flyover over Nanal Nagar and Rethibowli
