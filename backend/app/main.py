@@ -377,5 +377,9 @@ def decide(case_id: str, body: DecideIn):
 
 
 from .corridor import router as corridor_router  # noqa: E402  (corridor endpoints)
+from .corridor_cases import router as corridor_cases_router  # noqa: E402  (corridor decision workflow)
+from .agent.api import router as agent_router  # noqa: E402  (planning assistant, briefs)
 
 app.include_router(corridor_router)
+app.include_router(corridor_cases_router)
+app.include_router(agent_router)
