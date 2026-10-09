@@ -77,7 +77,7 @@ flyover in 3D; assistant tries signal retime first; reviewer re-test at 120%; co
 
 **On the slide:** Three proof points:
 - YMCA Circle, Hyderabad: model speeds within about 3 km/h of TomTom.
-- Gariahat, Kolkata: reproduces the 2004 study's finding (the jam moves to Phari). [[GARIAHAT_RESULT]]
+- Gariahat, Kolkata: our replay cuts delay at Gariahat by 59% (study: 75%); Phari slows in the same direction, and its approach delay doubles if the flyover draws ~15% more traffic (the study expected the inflow to "increase substantially" but gave no number).
 - Corridor: simulated trip [[SIM_BASE_MIN]] min vs 58.2 min measured.
 Small print: rain adds about 5% while it rains (not statistically certain).
 
