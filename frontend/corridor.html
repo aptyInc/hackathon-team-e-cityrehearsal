@@ -19,8 +19,8 @@
     border-radius: var(--r-lg); padding: 14px 16px; box-shadow: var(--sh), var(--hi); font-size: 13px; box-sizing: border-box; z-index: 2; }
   .panel::-webkit-scrollbar { width: 8px; } .panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 8px; }
   #left { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 380px; max-height: calc(100vh - var(--nav-h, 0px) - 24px); overflow: auto; }
-  /* the layers panel ends above the Reset view pill, which sits above the trip panel (viewguard.js sets --reset-bottom) */
-  #right { top: calc(var(--nav-h, 0px) + 12px); right: 12px; width: 256px; max-height: calc(100vh - var(--nav-h, 0px) - var(--reset-bottom, 36px) - 60px); overflow: auto; }
+  /* the layers panel ends above Ask Terascope AI and the Reset view pill, which sit above the trip panel (viewguard.js sets --reset-bottom) */
+  #right { top: calc(var(--nav-h, 0px) + 12px); right: 12px; width: 256px; max-height: calc(100vh - var(--nav-h, 0px) - var(--reset-bottom, 36px) - 106px); overflow: auto; }
   body.chat-open #reset-view { right: 438px; }
   #journey > .row:first-of-type { padding-right: 30px; }   /* room for the collapse chevron */
   #left > h1 { padding-right: 30px; }
@@ -150,14 +150,45 @@
   .sev { display: inline-block; padding: 0 6px; border-radius: 6px; font: 600 10px/16px var(--mono); }
   .sev { color: #fff; border-radius: 999px; } .sev.ok { background: #008849; } .sev.mid { background: #f58832; color: #1c1c1c; } .sev.bad { background: #e23d27; }
   .qline { display: inline-block; width: 22px; height: 5px; border-radius: 3px; background: var(--slow); box-shadow: 0 0 8px oklch(0.605 0.205 31 / .6); vertical-align: 2px; margin-right: 4px; }
-  /* playback: the recorded window, the hour, and following a car */
-  #win-box label { display: block; } #win-box input { margin: 4px 0; }
-  #win-busy { margin: 6px 0; padding: 6px 9px; background: var(--sim-bg); border: 1px solid var(--sim-line); border-radius: 9px; font-size: 12px; }
-  #follow-card { font-size: 12px; margin: 6px 0; }
-  #follow-card b { font-size: 13px; }
-  #follow-pick { max-width: 100%; flex: 1 1 140px; min-width: 0; }
-  #ride-note { display: block; }
-  #clock { font-family: var(--mono); }
+  /* playback pill: top centre of the map, between the side panels (chat open: between the left panel and the chat) */
+  #pb { --pb-r: 280px; top: calc(var(--nav-h, 0px) + 12px); left: 404px; right: var(--pb-r); margin: 0 auto; width: min(600px, calc(100vw - 416px - var(--pb-r)));
+    padding: 7px 12px 8px; border-radius: 20px; display: flex; flex-direction: column; gap: 3px; z-index: 3; }
+  #pb[hidden] { display: none !important; }
+  body.chat-open #pb { --pb-r: 438px; }
+  .pb-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pb-play { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 13px; flex: none; }
+  #speed { height: 30px; padding: 0 24px 0 9px; background-position: right 8px center; flex: none; }
+  #scrub { flex: 1 1 150px; min-width: 120px; height: 6px; margin: 0; -webkit-appearance: none; appearance: none; border-radius: 3px; cursor: pointer;
+    background: var(--tl-bg, oklch(1 0 0 / .14)); }
+  #scrub:disabled { opacity: .45; cursor: default; }
+  #scrub::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--t-orange); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
+  #scrub::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--t-orange); border: 2px solid #fff; }
+  #scrub::-moz-range-track { background: transparent; }
+  .pb-time { font: 600 11.5px var(--mono); color: var(--tx-2); white-space: nowrap; flex: none; }
+  .pb-btn { height: 30px; padding: 0 12px; font-size: 12px; }
+  .pb-dir span { color: var(--t-orange); margin-left: 4px; }
+  .pb-seg { display: inline-flex; gap: 2px; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
+  .pb-seg[hidden] { display: none; }
+  .pb-seg .lbl { font-size: 11.5px; color: var(--tx-3); padding: 0 6px 0 8px; align-self: center; }
+  .pb-seg button { height: 26px; padding: 0 11px; font-size: 12px; font-weight: 500; background: transparent; color: var(--tx-2); border: 0; border-radius: 999px; }
+  .pb-seg button[aria-selected=true] { background: rgba(255,255,255,.12); color: var(--tx); }
+  .pb-row2 .tag { margin-left: auto; }
+  .pb-clock { font-size: 11.5px; color: var(--tx-2); }
+  #playinfo { font-size: 11.5px; color: var(--tx-3); } #playinfo:empty { display: none; }
+  #tl-busy { font-size: 12px; padding: 5px 9px; background: var(--sim-bg); border: 1px solid var(--sim-line); border-radius: 9px; }
+  #tl-busy[hidden], #follow-card[hidden] { display: none; }
+  /* following a car: an A -> B progress bar with the 11 junctions */
+  #follow-card { font-size: 12px; border-top: 1px solid var(--line); margin-top: 3px; padding-top: 6px; }
+  #follow-card .fc-hd { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+  #follow-card .fc-hd b { font-size: 12.5px; }
+  #follow-card .fc-hd button { height: 24px; padding: 0 10px; font-size: 11.5px; flex: none; }
+  .fbar { position: relative; height: 6px; margin: 9px 6px 4px; border-radius: 3px; background: oklch(1 0 0 / .12); }
+  .fbar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, var(--sim), var(--t-orange)); }
+  .fbar .tick { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; border-radius: 1px; background: oklch(1 0 0 / .4); }
+  .fbar .tick.past { background: var(--t-orange); }
+  .fbar .car { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px oklch(0.733 0.163 54 / .5), 0 0 10px #fff; }
+  .fends { display: flex; justify-content: space-between; font-size: 11px; color: var(--tx-3); }
+  .fnow { margin-top: 3px; line-height: 1.45; color: var(--tx); } .fnow .muted { color: var(--tx-3); }
   #hour-spark { margin: 6px 0 2px; } #hour-spark svg { width: 100%; height: 44px; display: block; }
   #hour-spark rect { fill: oklch(0.714 0.143 255 / .22); } #hour-spark rect.day { fill: oklch(0.714 0.143 255 / .4); }
   #hour-spark rect.on { fill: var(--real); filter: drop-shadow(0 0 6px oklch(0.714 0.143 255 / .8)); }
@@ -194,7 +225,8 @@
   #rain-strip g.pick { cursor: pointer; } #rain-strip g.pick:hover .trk { fill: oklch(0.714 0.143 255 / .15); }
   #rain-strip .cap { font-size: 11px; color: var(--tx-3); }
   /* Ask Terascope AI (planner.js) */
-  #ask-open { position: absolute; top: calc(var(--nav-h, 0px) + 12px); right: 280px; z-index: 4; height: 38px; padding: 0 18px; border-radius: 999px; font-weight: 700;
+  /* bottom-right stack: Ask Terascope AI sits just above the Reset view pill (viewguard.js), same right edge */
+  #ask-open { position: fixed; top: auto; right: var(--reset-right, 12px); bottom: calc(var(--reset-bottom, 36px) + 46px); z-index: 40; height: 36px; padding: 0 16px; border-radius: 999px; font-weight: 700;
     color: #fff; background: var(--cta); border: 0; box-shadow: 0 8px 22px -8px oklch(0 0 0 / .7); }
   #ask-open::before { content: "✦"; color: #fff; margin-right: 8px; }
   body.chat-open #ask-open { right: 438px; }
@@ -284,14 +316,37 @@
     .strip .name { font-size: 11px; } .total { font-size: 14px; letter-spacing: -.02em; }
     #presets { grid-template-columns: 1fr; }
     #chat { order: 1; max-height: 80vh; } body.chat-open #right { display: block; }
-    #ask-open { position: fixed; top: auto; left: auto; right: 12px; bottom: 12px; z-index: 20; }
+    #ask-open { position: fixed; top: auto; left: auto; right: 12px; bottom: 58px; z-index: 40; }
+    #reset-view { left: auto !important; right: 12px !important; }   /* phones: Reset view bottom-right, Ask Terascope AI just above it */
     body.chat-open #ask-open { display: none; }   /* the open chat has its own close button; keep its Ask button uncovered */
+    #pb { position: static; order: 0; width: auto; margin: 10px 10px 0; border-radius: var(--r-lg); }
+    .pb-row2 .tag { margin-left: 0; }
   }
 </style>
 </head>
 <body>
 <script src="nav.js" data-page="corridor"></script>
 <div id="map"></div>
+
+<!-- playback pill: top centre of the map. One timeline over the whole simulated period; outside the recorded minutes it records them (same run). -->
+<div id="pb" class="panel" hidden aria-label="Playback">
+  <div class="pb-row">
+    <button id="play" class="pb-play" disabled title="Play / pause (simulated vehicles)" aria-label="Play">▶</button>
+    <select id="speed" title="Playback speed"><option value="1">1×</option><option value="10" selected>10×</option><option value="30">30×</option><option value="60">60×</option></select>
+    <input type="range" id="scrub" min="0" max="0" step="1" value="0" disabled aria-label="Timeline: minute of the simulated period" />
+    <span id="tl-time" class="pb-time">–</span>
+  </div>
+  <div class="pb-row pb-row2">
+    <div id="watch" class="pb-seg" role="tablist" aria-label="Which run to watch" hidden></div>
+    <button id="follow" class="ghost pb-btn" disabled title="Plays a run first">Follow a car</button>
+    <button id="follow-dir" class="ghost pb-btn pb-dir" title="Which way the followed car drives (click to switch)" aria-label="Direction: Lingampally to Lakdikapul">Lingampally → Lakdikapul <span aria-hidden="true">⇄</span></button>
+    <span class="tag sim">simulated</span>
+  </div>
+  <small id="clock" class="pb-clock">—</small>
+  <div id="tl-busy" hidden></div>
+  <div id="follow-card" hidden><div class="fc-hd"><b id="fc-title"></b><button class="ghost" id="follow-stop" title="Stop following (Esc)">Stop</button></div><div id="fc-body"></div></div>
+  <small id="playinfo"></small>
+</div>
 
 <div id="modebar" class="panel">
   <div class="seg" role="tablist" aria-label="What the page shows">
@@ -419,29 +474,6 @@
   <small id="queue-info" class="live-only" style="display:block"></small>
   <small id="bld-note" class="muted"></small>
   <div class="row" style="margin-top:8px"><button id="overview" class="ghost">Whole corridor</button><button id="orbit" class="ghost">Orbit</button></div>
-  <div class="july-only">
-  <h2>Playback <span class="tag sim">simulated</span></h2>
-  <div class="row">
-    <button id="play" class="ghost" disabled>▶ Play</button>
-    <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option></select>
-  </div>
-  <div class="row" id="watch"></div>
-  <input type="range" id="scrub" min="0" max="0" value="0" disabled />
-  <small id="clock" class="muted">—</small><br>
-  <div id="win-box" hidden>
-    <label class="muted">Watch from minute <b id="win-val">–</b> <input type="range" id="win" min="0" max="0" step="1" value="0" /></label>
-    <small id="win-note" class="muted"></small>
-    <div id="win-busy" hidden></div>
-  </div>
-  <div class="row"><button id="follow" class="ghost" disabled title="Plays a run first">Follow a test car</button></div>
-  <div class="row"><select id="follow-pick" disabled title="Plays a run first"><option value="">Test cars…</option></select></div>
-  <div id="follow-card" class="note info" hidden></div>
-  <div class="row" id="ride-row" hidden><button id="ride" class="secondary" title="Rides one test car from Lingampally to Lakdikapul, its whole simulated trip">Ride the whole trip</button>
-    <select id="ride-speed" title="How fast the ride plays"><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option></select></div>
-  <small id="ride-note" class="muted" hidden></small>
-  <small class="muted" id="click-hint">Click any vehicle on the map to follow it.</small><br>
-  <small id="playinfo"></small>
-  </div>
   <div style="margin-top:8px;font-size:11px" class="muted july-only">
     <span class="chip" style="background:#35c177"></span>≥ 25 km/h
     <span class="chip" style="background:#f58832"></span>15–25
@@ -665,7 +697,7 @@ async function init() {
   map.on("moveend", () => { buildingsInView(); if (!playing) render(); });   // vehicles and buildings are drawn for what is in view
   map.on("dragstart", () => { if (following || ride) { stopRide(); setFollow(false); } });
   map.on("click", e => {   // click any vehicle to follow it: the one drawn nearest the click (the interleaved overlay passes no clicks to layers)
-    if (mode !== "july" || !frames.length || ride || !$("t-vehicles").checked) return;
+    if (!simShown() || !frames.length || !$("t-vehicles").checked) return;
     const vp = overlay._deck?.getViewports?.()[0], at = v => vp ? vp.project([v.lon, v.lat, (v.z || 0) + 0.8]) : [map.project([v.lon, v.lat]).x, map.project([v.lon, v.lat]).y];
     let best = null;
     for (const v of currentVehicles(map.getZoom() >= 14 ? inView() : null)) {
@@ -700,10 +732,11 @@ function setMode(m, write = true) {
   }
   if (mode === "july" && playingRun?._nowcast) {   // the now-cast's vehicles belong to Live now: drop them in July
     if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
-    frames = []; playingRun = null; playing = false; pos = 0; roads = null; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("clock").textContent = "—";
+    stopRide(); following = null; frames = []; playingRun = null; setPlaying(false); pos = 0; roads = null; $("play").disabled = true; $("scrub").disabled = true; $("clock").textContent = "—";
   }
   if (mode === "live") {   // nothing simulated in Live now (unless Simulate now): stop the playback, the follow camera and the assistant
-    playing = false; $("play").textContent = "▶ Play"; stopRide(); setFollow(false); setOrbit(false);
+    if (!nowcastOn()) setPlaying(false);
+    stopRide(); setFollow(false); setOrbit(false);
     if (document.body.classList.contains("chat-open")) $("chat-close").click();
     loadGeometry();
   }
@@ -712,6 +745,7 @@ function setMode(m, write = true) {
   syncModeHeight();
   if (popup) popup.remove();
   updateMarkers(); renderLive(); render();
+  pbSync(); renderWatch();
   ltSchedule();
 }
 let trafficTouched = false;   // the viewer switched the live traffic layer off or on: keep their choice
@@ -1814,44 +1848,76 @@ function bldNote() {
     "No building outlines for this part of the corridor yet.";
 }
 
-// ---------- camera: orbit, follow a car, ride a test car's whole trip ----------
+// ---------- camera: orbit, follow a car (a test car's whole trip, GET /runs/{run_id}/probes) ----------
 let orbiting = false, lastOrbit = 0, following = null, followBearing = null;
-let probeList = null;   // GET /runs/{run_id}/probes: the test cars' whole trips [{id, direction, depart_s, arrive_s, total_s, points}]; null: not on this server
+let probeList = null;   // GET /runs/{run_id}/probes: the test cars' whole trips [{id, direction, depart_s, arrive_s, total_s, segments, points}]; null: not on this server
 const probeCache = {};
-let ride = null;        // {probe, t, inWin}: riding one test car from Lingampally to Lakdikapul
+let ride = null;        // {probe, t, simT, inWin, skip}: following one test car's whole trip (t: its trip clock; simT: its section's simulation time)
 let tOffset = 0;        // seconds to add to a frame's t to get the time since the simulation started
+let followDir = "fwd";  // the direction toggle: fwd Lingampally -> Lakdikapul (default), rev Lakdikapul -> Lingampally
 const FOLLOW_RGB = [255, 252, 254];   // the followed car: brand white, stands out from every vehicle colour
 const isProbe = id => String(id).startsWith("probe_");
-const probeName = id => String(id).replace(/^probe_/, "").replace(/_/g, "-");
-const DIR_NAME = { fwd: "towards Lakdikapul", rev: "towards Lingampally" };
+const probeName = id => String(id).replace(/^probe_/, "").replace(/[_.]/g, "-");
+// the API says "A->B" / "B->A" (older mocks: "fwd" / "rev"); test car ids carry fwd / rev
+const dirOf = p => /B->A|rev/i.test(String(p?.direction || "")) || (!p?.direction && /(^|_)rev/.test(String(p?.id))) ? "rev" : "fwd";
+const dep = p => p.depart_s ?? p.points[0].t;
 const TYPE_NAME = { two_wheeler: "Two-wheeler", car: "Car", auto: "Auto", bus: "Bus", truck: "Truck" };
 const volOf = r => Number(r?.inputs?.volume_scale ?? 1);
+const simShown = () => mode === "july" || nowcastOn();   // simulated vehicles are on the map
 function setOrbit(on) { orbiting = on; $("orbit").textContent = on ? "Stop orbit" : "Orbit"; if (on) { setFollow(false); stopRide(); } }
-const probes = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.vehicles.filter(v => String(v.id).startsWith("probe_fwd")) : []; };
-const anyProbe = () => frames.some(f => f.vehicles.some(v => String(v.id).startsWith("probe_fwd")));
-function setFollow(on) {   // the quick button: the test car furthest back (towards Lingampally), so it has the longest drive ahead
-  if (on) {
-    const p = probes().sort((a, b) => a.lon - b.lon)[0];
-    if (!p) { $("playinfo").textContent = "No test car on the road at this moment: press Play and try again."; on = false; }
-    else return startFollow(p.id);
-  }
-  following = null; followUI(); render();
+function setPlaying(on) {
+  playing = !!on; lastTick = 0;
+  $("play").textContent = playing ? "❚❚" : "▶";
+  $("play").setAttribute("aria-label", playing ? "Pause" : "Play"); $("play").title = playing ? "Pause" : "Play";
 }
+const probes = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)], pre = followDir === "rev" ? "probe_rev" : "probe_fwd"; return f ? f.vehicles.filter(v => String(v.id).startsWith(pre)) : []; };
+const anyProbe = () => frames.some(f => f.vehicles.some(v => isProbe(v.id)));
+const recRange = () => frames.length ? [frames[0].t + tOffset, frames[frames.length - 1].t + tOffset] : [0, 0];   // the frames we have (simulation s)
+const recWin = () => {   // the recorded minutes: the result's frames_window (the frames may still be arriving), else the frames
+  const [a, b] = recRange(), w = fwin(playingRun);
+  return w && frames.length ? [Math.min(a, w.from_s), Math.max(b, w.to_s)] : [a, b];
+};
+// Why "Follow" used to end at Nallagandla: the model runs the corridor as 6 sections side by side, each its own simulation with its
+// own copy of every test car (probe_fwd_0.N drives Lingampally -> Nallagandla only, probe_fwd_1.N Nallagandla -> ISB Rd, ...).
+// The old button followed the westernmost copy on screen, which leaves the frames at Nallagandla, and jumped the camera back west.
+// Now it follows a test car's whole stitched trip (GET /runs/{id}/probes) from its first section, in the chosen direction.
+function followCar() {
+  if (!simShown() || !frames.length) return;
+  const L = (probeList || []).filter(p => dirOf(p) === followDir);
+  if (L.length) {   // the test car leaving Lingampally (or Lakdikapul) first inside the recorded minutes, else the nearest to them
+    const [r0, r1] = recWin();
+    const pr = L.filter(p => dep(p) >= r0 - 30 && dep(p) <= r1).sort((a, b) => dep(a) - dep(b))[0] || [...L].sort((a, b) => Math.abs(dep(a) - r0) - Math.abs(dep(b) - r0))[0];
+    return startRide(pr.id);
+  }
+  // no whole trips on this API: the test car in the recorded frames nearest the start of the trip, in the chosen direction
+  const p = probes().sort((a, b) => followDir === "rev" ? b.lon - a.lon : a.lon - b.lon)[0];
+  if (!p) { $("playinfo").textContent = "No test car on the road at this moment: press Play and try again."; return; }
+  startFollow(p.id);
+}
+function setFollow(on) {   // on: Follow a car; off: stop following an in-frame vehicle
+  if (on) return followCar();
+  following = null; followLast = null; followUI(); render();
+}
+function stopFollowing() { stopRide(); setFollow(false); }
 function startFollow(id) {   // any vehicle in the recorded frames, test car or not
-  if (mode !== "july" || !frames.length) return;
+  if (!simShown() || !frames.length) return;
   stopRide();
   following = id; followBearing = map.getBearing(); setOrbit(false);
-  if (!playing) $("play").click();
+  if (!playing) setPlaying(true);
   followUI(); followTick(); render();
 }
 function followUI() {
   const on = !!(following || ride);
-  $("follow").textContent = following ? "Stop following" : "Follow a test car";
+  $("follow").textContent = on ? "Stop following" : "Follow a car";
+  $("follow").title = on ? "Stop following (Esc)" : `Follows a test car's whole trip, ${followDir === "rev" ? "Lakdikapul → Lingampally" : "Lingampally → Lakdikapul"}`;
   $("follow-card").hidden = !on;
-  if (!on) $("follow-card").innerHTML = "";
-  const want = ride ? ride.probe.id : following || "";
-  $("follow-pick").value = [...$("follow-pick").options].some(o => o.value === want) ? want : "";
-  $("ride").textContent = ride ? "Stop the ride" : "Ride the whole trip";
+  if (!on) { $("fc-title").textContent = ""; $("fc-body").innerHTML = ""; }
+}
+function dirUI() {
+  const f = followDir === "fwd";
+  $("follow-dir").innerHTML = `${f ? "Lingampally → Lakdikapul" : "Lakdikapul → Lingampally"} <span aria-hidden="true">⇄</span>`;
+  $("follow-dir").setAttribute("aria-label", `Direction: ${f ? "Lingampally to Lakdikapul" : "Lakdikapul to Lingampally"} (click to switch)`);
+  followUI();
 }
 function camera(v) {
   const da = ((v.angle - followBearing + 540) % 360) - 180;
@@ -1861,8 +1927,8 @@ function camera(v) {
 let followLast = null;   // the followed vehicle's last position, to hand over when it leaves the recorded frames
 function handOver(last) {   // the model runs the corridor in sections, each with its own vehicles: carry on with the nearest one like it
   const probe = isProbe(last.id), d = q => metres([q.lon, q.lat], [last.lon, last.lat]);
-  const near = currentVehicles().filter(x => x.id !== last.id && (probe ? isProbe(x.id) : x.type === last.type) && d(x) < (probe ? 400 : 80)).sort((a, b) => d(a) - d(b))[0];
-  return near || (probe ? probes()[0] : null);
+  return currentVehicles().filter(x => x.id !== last.id && (probe ? isProbe(x.id) && dirOf({ id: x.id }) === dirOf({ id: last.id }) : x.type === last.type) && d(x) < (probe ? 400 : 80))
+    .sort((a, b) => d(a) - d(b))[0] || null;
 }
 function followTick() {
   if (!following || ride) return;
@@ -1871,7 +1937,7 @@ function followTick() {
   if (!v) { $("playinfo").textContent = "That vehicle left the recorded stretch (or the recorded minutes): pick another one."; following = null; followLast = null; followUI(); return; }
   followLast = v;
   camera(v);
-  $("follow-card").innerHTML = carCard(v, frameNowS());
+  showCard(v, frameNowS());
   $("playinfo").textContent = `Following ${carName(v.id, v.type)}`;
 }
 // where a car is on the corridor: the nearest point of the A -> B line, its leg, how far along, how far off it, which way it drives
@@ -1905,18 +1971,26 @@ function onStructure(v) {   // "on the Shaikpet Flyover", "on the new flyover at
   return iv ? `on the new flyover at ${short(point(iv.junction_id)?.name)}` : "on a flyover";
 }
 const carName = (id, type) => isProbe(id) || (probeList || []).some(p => p.id === id) ? `test car ${probeName(id)}` : `${(TYPE_NAME[type] || "vehicle").toLowerCase()} ${id}`;
-function carCard(v, tNow) {   // Test car fwd-3 · 34 km/h · stretch Tolichowki → Nanal Nagar · 23 min since Lingampally · on the Shaikpet Flyover
+function showCard(v, tNow) {   // the follow card: who, an A -> B progress bar with the 11 junctions, the stretch, minutes, speed, structure
   const pr = ride && ride.probe.id === v.id ? ride.probe : (probeList || []).find(p => p.id === v.id);
-  const loc = locate(v), rev = pr ? pr.direction === "rev" : /(^|_)rev/.test(String(v.id)) || (!isProbe(v.id) && !!loc?.rev);
-  const nm = carName(v.id, v.type), bits = [`<b>${esc(nm[0].toUpperCase() + nm.slice(1))}</b>`, `${Math.round((v.speed || 0) * 3.6)} km/h`];
-  if (loc && loc.off < 80) {
-    const a = short(points[loc.leg].name), b = short(points[loc.leg + 1]?.name);
-    bits.push(`stretch ${esc(rev ? `${b} → ${a}` : `${a} → ${b}`)}`);
-    if (pr && pr.depart_s != null) bits.push(`${Math.max(0, Math.round((tNow - pr.depart_s) / 60))} min since ${rev ? "Lakdikapul" : "Lingampally"}`);
-    else if (!rev) { const m = paceFromA(loc); if (m != null) bits.push(`≈ ${Math.round(m)} min from Lingampally at the simulated pace`); }
-  } else if (loc) bits.push(`on a side road near ${esc(short(nearestJunction(v)[0]?.name))}`);
+  const loc = locate(v), rev = pr ? dirOf(pr) === "rev" : isProbe(v.id) ? dirOf({ id: v.id }) === "rev" : !!loc?.rev;
+  const from = rev ? "Lakdikapul" : "Lingampally", to = rev ? "Lingampally" : "Lakdikapul", nm = carName(v.id, v.type);
+  $("fc-title").textContent = `${nm[0].toUpperCase() + nm.slice(1)} · ${from} → ${to}`;
+  const R = routeR(), total = R.cum[R.cum.length - 1] || 1, onRoute = loc && loc.off < 80;
+  const fr = x => rev ? 1 - x : x, frac = onRoute ? Math.max(0, Math.min(1, fr(loc.along / total))) : null;
+  const bits = [];
+  if (onRoute) { const a = short(points[loc.leg].name), b = short(points[loc.leg + 1]?.name); bits.push(`<b>${esc(rev ? `${b} → ${a}` : `${a} → ${b}`)}</b>`); }
+  else if (loc) bits.push(`on a side road near ${esc(short(nearestJunction(v)[0]?.name))}`);
+  if (pr && pr.depart_s != null) bits.push(`${Math.max(0, Math.round((tNow - pr.depart_s) / 60))} min since ${from}${pr.total_s ? ` <span class="muted">of ~${Math.round(pr.total_s / 60)}</span>` : ""}`);
+  else if (onRoute && !rev) { const m = paceFromA(loc); if (m != null) bits.push(`≈ ${Math.round(m)} min from Lingampally at the simulated pace`); }
+  bits.push(`${Math.round((v.speed || 0) * 3.6)} km/h`);
   const st = onStructure(v); if (st) bits.push(esc(st));
-  return bits.join(" · ") + ' <span class="tag sim">SIMULATED</span>';
+  const bar = frac == null ? "" : `<div class="fbar" role="progressbar" aria-label="${from} to ${to}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(frac * 100)}">` +
+    `<div class="fill" style="width:${(frac * 100).toFixed(1)}%"></div>` +
+    points.filter(p => p.kind === "junction").map(p => { const f = fr((R.cum[R.at[p.id]] || 0) / total); return `<span class="tick${f <= frac ? " past" : ""}" style="left:${(f * 100).toFixed(1)}%" title="${esc(short(p.name))}"></span>`; }).join("") +
+    `<span class="car" style="left:${(frac * 100).toFixed(1)}%"></span></div><div class="fends"><span>${from}</span><span>${to}</span></div>`;
+  const traffic = ride ? `<br><span class="muted">${ride.inWin ? "Other traffic shown: the car is inside the recorded minutes." : "Other traffic is recorded only for some minutes: here the test car drives alone."}</span>` : "";
+  $("fc-body").innerHTML = bar + `<div class="fnow">${bits.join(" · ")} <span class="tag sim">SIMULATED</span>${traffic}</div>`;
 }
 function trailOf(id) {   // the followed car's last ~50 s, from the recorded frames
   const i = Math.min(Math.floor(pos), frames.length - 1), key = `${id}|${i}|${frames.length}`;
@@ -1938,7 +2012,7 @@ function focusCar() {   // the highlighted car: the ride's test car, or the foll
   return { v, trail: [...trailOf(following), [v.lon, v.lat, (v.z || 0) + 0.6]] };
 }
 
-// ---------- ride a test car's whole trip (GET /runs/{run_id}/probes) ----------
+// ---------- a test car's whole trip (GET /runs/{run_id}/probes) ----------
 function heading(P, i) {   // compass bearing from point i to the next point it moved to
   for (let k = i + 1; k < P.length && k < i + 30; k++) {
     const a = P[i], b = P[k];
@@ -1956,138 +2030,133 @@ function probeAt(pr, t) {   // the test car at time t on its track, interpolated
   const a = P[lo], b = P[hi], f = (t - a.t) / Math.max(1e-6, b.t - a.t);
   return at(a, lo, { lon: a.lon + (b.lon - a.lon) * f, lat: a.lat + (b.lat - a.lat) * f, z: (a.z || 0) + ((b.z || 0) - (a.z || 0)) * f, speed: (a.speed || 0) + ((b.speed || 0) - (a.speed || 0)) * f });
 }
+function simTimeOf(pr, t) {   // the trip clock -> the simulation time of the section the car is in (each section is its own simulation)
+  const s = (pr.segments || []).find(g => t >= g.from_t - 0.5 && t <= g.to_t + 0.5);
+  return s && s.sim_from_t != null ? s.sim_from_t + (t - s.from_t) : t;
+}
 async function loadProbes(r) {
   let list = probeCache[r.run_id];
   if (list === undefined) {
     try {
       const raw = await get(`/runs/${encodeURIComponent(r.run_id)}/probes`), arr = Array.isArray(raw) ? raw : raw?.probes || raw?.items || [];
       list = arr.filter(p => p && p.id != null && Array.isArray(p.points) && p.points.length >= 2)
-                .map(p => ({ ...p, direction: p.direction || (/rev/.test(String(p.id)) ? "rev" : "fwd"), points: [...p.points].sort((a, b) => a.t - b.t) }));
+                .map(p => ({ ...p, direction: dirOf(p), points: [...p.points].sort((a, b) => a.t - b.t) }));
       if (!list.length) list = null;
-    } catch (e) { list = null; }   // 404: not on this server yet, the ride is hidden
+    } catch (e) { list = null; }   // 404: not on this server yet; Follow uses the test cars in the recorded frames
     probeCache[r.run_id] = list;
   }
   if (playingRun !== r) return;
   probeList = list;
-  $("ride-row").hidden = !probeList;
-  fillPicker();
-}
-function framesProbes() {   // test cars in the recorded frames: id -> first time seen (s since the start)
-  const m = new Map();
-  for (const f of frames) for (const v of f.vehicles) if (isProbe(v.id) && !m.has(v.id)) m.set(v.id, f.t + tOffset);
-  return m;
-}
-function fillPicker() {
-  const opts = [], seen = new Set();
-  for (const p of probeList || []) {
-    seen.add(p.id);
-    opts.push([p.id, `${probeName(p.id)} · ${DIR_NAME[p.direction] || p.direction} · leaves minute ${Math.round((p.depart_s ?? p.points[0].t) / 60)}`]);
-  }
-  for (const [id, t] of framesProbes()) if (!seen.has(id)) opts.push([id, `${probeName(id)} · ${DIR_NAME[/(^|_)rev/.test(id) ? "rev" : "fwd"]} · on the road at minute ${Math.floor(t / 60)}`]);
-  $("follow-pick").innerHTML = `<option value="">${opts.length ? `Test cars (${opts.length})…` : "No test cars in this run"}</option>` + opts.map(([id, t]) => `<option value="${esc(id)}">${esc(t)}</option>`).join("");
-  $("follow-pick").disabled = !opts.length;
-  $("follow-pick").title = opts.length ? "Follow one of the model's test cars (direction, when it set off)" : "No test cars in this run";
+  if (probeList && frames.length) $("follow").disabled = false;
   followUI();
 }
-$("follow-pick").onchange = () => {
-  const id = $("follow-pick").value;
-  if (!id) { stopRide(); setFollow(false); return; }
-  const k = frames.findIndex(f => f.vehicles.some(v => v.id === id));
-  if (k >= 0) {   // in the recorded minutes: jump to where it first shows if it is not on the road now
-    if (!vehicleAt(id)) { pos = k; $("scrub").value = k; showClock(); }
-    startFollow(id);
-  } else if ((probeList || []).some(p => p.id === id)) startRide(id);   // outside the recorded minutes: ride its whole trip
-};
 function startRide(id) {
-  const L = probeList || [];
-  const pr = L.find(p => p.id === id) || L.find(p => p.id === $("follow-pick").value) || L.find(p => p.id === following) || L.find(p => p.direction !== "rev") || L[0];
-  if (!pr || mode !== "july") return;
-  playing = false; $("play").textContent = "▶ Play"; following = null; setOrbit(false);
-  ride = { probe: pr, t: pr.depart_s ?? pr.points[0].t, inWin: false };
-  followBearing = map.getBearing(); lastTick = 0;
-  const ws = warmS(playingRun), w = frames.length ? [Math.floor((frames[0].t + tOffset - ws) / 60), Math.ceil((frames[frames.length - 1].t + tOffset - ws) / 60)] : null;
-  $("ride-note").hidden = false;
-  $("ride-note").innerHTML = `Riding test car ${[esc(probeName(pr.id)), DIR_NAME[pr.direction]].filter(Boolean).join(" ")}: its whole simulated trip${pr.total_s ? `, ${Math.round(pr.total_s / 60)} min` : ""}. ` +
-    (w ? `Other traffic is shown only while the ride is inside the recorded window (minutes ${w[0]}–${w[1]}); outside it the test car drives alone on the map.` : "No other traffic was recorded for this run.");
+  const pr = (probeList || []).find(p => p.id === id);
+  if (!pr || !simShown()) return;
+  following = null; followLast = null; setOrbit(false);
+  ride = { probe: pr, t: dep(pr), simT: null, inWin: false, skip: new Set([pr.id, ...(pr.segments || []).map(s => s.vehicle_id)]) };
+  followBearing = map.getBearing();
+  if (Number($("speed").value) < 30) $("speed").value = "30";   // a 50-minute trip: 30x by default (change it in the pill)
+  setPlaying(true);
+  $("playinfo").textContent = "";
   followUI(); rideTick(); render();
 }
 function stopRide(arrived) {
   if (!ride) return;
   const pr = ride.probe; ride = null;
-  $("ride-note").hidden = !arrived;
-  if (arrived) $("ride-note").textContent = `Test car ${probeName(pr.id)} arrived at ${pr.direction === "rev" ? "Lingampally" : "Lakdikapul"}${pr.total_s ? ` after ${Math.round(pr.total_s / 60)} min` : ""}.`;
+  if (arrived) $("playinfo").textContent = `Test car ${probeName(pr.id)} arrived at ${dirOf(pr) === "rev" ? "Lingampally" : "Lakdikapul"}${pr.total_s ? ` after ${Math.round(pr.total_s / 60)} min` : ""}.`;
   followUI(); showClock(); render();
 }
 function rideTick() {
   const v = probeAt(ride.probe, ride.t); if (!v) return;
-  if (frames.length) {   // other traffic only inside the recorded minutes
-    const t0 = frames[0].t + tOffset, t1 = frames[frames.length - 1].t + tOffset;
-    ride.inWin = ride.t >= t0 && ride.t <= t1;
-    if (ride.inWin) { pos = Math.min(frames.length - 1, (ride.t - t0) / frameStep()); $("scrub").value = Math.floor(pos); }
+  ride.simT = simTimeOf(ride.probe, ride.t);
+  if (frames.length) {   // other traffic only inside the recorded minutes (of the section the car is in)
+    const [t0, t1] = recWin(), f0 = recRange()[0];
+    ride.inWin = ride.simT >= t0 && ride.simT <= t1;
+    if (ride.inWin) pos = Math.max(0, Math.min(frames.length - 1, (ride.simT - f0) / frameStep()));
   }
   camera(v);
-  $("follow-card").innerHTML = carCard(v, ride.t);
-  $("clock").textContent = `${simDay(playingRun)} · ${simMinTxt(ride.t)} · riding at ${$("ride-speed").value}×` +
-    (ride.inWin ? " · other traffic shown (recorded window)" : " · outside the recorded window: no other traffic");
+  showCard(v, ride.t);
+  showClock();
 }
-$("ride").onclick = () => { if (ride) stopRide(); else startRide(); };
 
-// ---------- the recorded window ("Watch from minute") and the hour ----------
+// ---------- the timeline: the whole simulated period; outside the recorded minutes it records them (the same run) ----------
 const fwin = r => { const w = r?.frames_window; return w && isFinite(w.from_s) && isFinite(w.to_s) ? w : null; };
 // the warm-up before the measured period (from_s counts from the simulation start, from_min from the measured period's start):
-// the clock, the ride note and "Recorded: minutes …" all count minutes of the measured period
+// the clock and the timeline count minutes of the measured period
 const warmS = r => { const w = fwin(r); return w && w.from_min != null ? Math.max(0, w.from_s - w.from_min * 60) : 0; };
 const simMinTxt = s => { const m = Math.floor((s - warmS(playingRun)) / 60); return m < 0 ? "warm-up, before the simulated period" : `minute ${m} of the simulated period`; };
 // minutes of the measured period; the API's from_s/to_s count from the simulation start (warm-up included)
 const winFrom = w => w.from_min != null ? Math.round(w.from_min) : Math.round(w.from_s / 60);
-const winTo = w => w.from_min != null && w.minutes != null ? Math.round(w.from_min + w.minutes) : Math.round(w.to_s / 60);
 const frameNowS = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.t + tOffset : 0; };
+const curAbs = () => frames.length ? frames[0].t + tOffset + pos * frameStep() : null;   // simulation seconds now (interpolated)
 const winCache = {};   // "<run key>|<from minute>" -> the same run, recorded from that minute
 const runKey = r => `${ivKey(r.interventions || [])}|${volOf(r)}|${runDay(r) ?? ""}|${runHour(r) ?? ""}|${runWeather(r) ?? ""}`;
-let winBusy = false, winPick = null;
-function renderWindow() {
+let winBusy = false, winPick = null, tlOut = null;
+function tlRange() {   // p0: the measured period's start (simulation s); total: its length (s)
   const r = playingRun, w = fwin(r);
-  $("win-box").hidden = !w || !(w.sim_minutes_total > 5);
-  if ($("win-box").hidden) return;
-  const max = Math.max(0, Math.floor(w.sim_minutes_total - 5)), from = winFrom(w);
-  winCache[`${runKey(r)}|${from}`] ||= r;
-  $("win").max = max;
-  if (!winBusy) { $("win").value = Math.min(from, max); $("win-val").textContent = $("win").value; }
-  $("win-note").innerHTML = `Recorded: minutes ${from}–${winTo(w)} of the ${Math.round(w.sim_minutes_total)} simulated. Pick another start to record 5 minutes from there: the same run, so the results stay identical.`;
+  if (w && w.sim_minutes_total > 0) return { p0: w.period_from_s ?? warmS(r), total: w.sim_minutes_total * 60, w };
+  const [a, b] = recRange();
+  return { p0: a, total: Math.max(1, b - a), w: null };
 }
-$("win").oninput = () => { $("win-val").textContent = $("win").value; };
-$("win").onchange = () => watchFrom(Number($("win").value));
-async function watchFrom(m) {
+function tlSetup() {   // the timeline's range and the recorded minutes drawn on its track
+  const r = playingRun, { p0, total, w } = tlRange();
+  if (r && w) winCache[`${runKey(r)}|${winFrom(w)}`] ||= r;
+  $("scrub").max = Math.round(total);
+  if (!frames.length) { $("scrub").style.removeProperty("--tl-bg"); return; }
+  const [a, b] = recWin(), pc = x => (Math.max(0, Math.min(1, (x - p0) / total)) * 100).toFixed(2);
+  $("scrub").style.setProperty("--tl-bg", `linear-gradient(90deg, oklch(1 0 0 / .14) ${pc(a)}%, oklch(0.733 0.163 54 / .6) ${pc(a)}% ${pc(b)}%, oklch(1 0 0 / .14) ${pc(b)}%)`);
+  $("scrub").title = w ? `Recorded minutes ${winFrom(w)}–${Math.round(winFrom(w) + (w.minutes || 5))} (highlighted). Move outside them to record those minutes: the same run, so the results stay identical.` : "The recorded minutes";
+}
+function scrubTo(s) {   // the timeline moved to s seconds into the period: play from there, or say releasing records those minutes
+  const { p0, total } = tlRange(), abs = p0 + s;
+  if (ride) stopRide();
+  if (!frames.length) return;
+  const [a, b] = recWin(), f0 = recRange()[0], step = frameStep();
+  if (abs >= a - step && abs <= b + step) { tlOut = null; pos = Math.max(0, Math.min(frames.length - 1, (abs - f0) / step)); showClock(true); followTick(); render(); return; }
+  tlOut = s;
+  $("tl-time").textContent = `${clock(s)} / ${clock(total)}`;
+  $("clock").textContent = `Minute ${clock(s)} · not recorded yet: release to record from there`;
+}
+$("scrub").oninput = () => scrubTo(Number($("scrub").value));
+$("scrub").onchange = () => { if (tlOut == null) return; const s = tlOut; tlOut = null; seekOutside(s); };
+function seekOutside(s) {
+  const r = playingRun, w = fwin(r), { p0 } = tlRange();
+  if (!r || !w) return;
+  const mins = w.minutes || 5, m = Math.max(0, Math.min(Math.floor(w.sim_minutes_total - mins), Math.floor(s / 60)));
+  watchFrom(m, p0 + s);
+}
+async function watchFrom(m, seek = null) {
   const r = playingRun, w = fwin(r); if (!r || !w || winBusy) return;
   winPick = m;
   const key = `${runKey(r)}|${m}`;
-  if (winFrom(w) === m) return;
-  if (winCache[key]) return play(winCache[key]);
+  if (winFrom(w) === m) { if (seek != null && frames.length) scrubTo(seek - tlRange().p0); return; }
+  if (winCache[key]) return play(winCache[key], seek);
   winBusy = true;
-  const t0 = Date.now(), show = () => { $("win-busy").innerHTML = `<span class="spin"></span>Recording minutes ${m}–${m + 5} of this run (usually 30–60 s) · <b id="win-el">${clock((Date.now() - t0) / 1000)}</b>`; };
-  $("win-busy").hidden = false; show();
+  const mins = w.minutes || 5, t0 = Date.now(), show = () => { $("tl-busy").innerHTML = `<span class="spin"></span>Recording minutes ${m}–${m + mins} of this run (usually 30–60 s) · <b id="win-el">${clock((Date.now() - t0) / 1000)}</b>`; };
+  $("tl-busy").hidden = false; show();
   const timer = setInterval(show, 1000);
-  $("win").disabled = true;
+  setPlaying(false); $("scrub").disabled = true;
   let err = "";
   try {
-    const x = await post("/corridor/runs", { interventions: r.interventions || [], volume_scale: volOf(r), frames_from_min: m, frames_minutes: 5, ...runParams(r) });
+    const x = await post("/corridor/runs", { interventions: r.interventions || [], volume_scale: volOf(r), frames_from_min: m, frames_minutes: mins, ...runParams(r) });
     const xw = fwin(x);
     if (!xw || winFrom(xw) !== m) throw new Error("this API does not record another window yet");
-    x._ivs = r._ivs; winCache[key] = x;
-    if (playingRun === r) play(x);
-  } catch (e) { err = `Could not record minutes ${m}–${m + 5}: ${e.status ? `HTTP ${e.status} ` : ""}${e.detail || e.message}`; winPick = null; }
+    x._ivs = r._ivs; if (r._nowcast) x._nowcast = true; winCache[key] = x;
+    if (playingRun === r) play(x, seek);
+  } catch (e) { err = `Could not record minutes ${m}–${m + mins}: ${e.status ? `HTTP ${e.status} ` : ""}${e.detail || e.message}`; winPick = null; }
   finally {
-    winBusy = false; clearInterval(timer); $("win-busy").hidden = true; $("win").disabled = false;
-    renderWindow();
-    if (err) $("win-note").innerHTML = `<span class="bad">${esc(err.slice(0, 220))}</span>`;
+    winBusy = false; clearInterval(timer); $("tl-busy").hidden = true;
+    if (frames.length) $("scrub").disabled = false;
+    if (err) { showClock(); $("playinfo").innerHTML = `<span class="bad">${esc(err.slice(0, 220))}</span>`; }
   }
 }
-function watchRun(r) {   // Watch today / with changes: keep the minute picked with the slider
-  const w = fwin(r);
-  if (winPick == null || !w || Math.round(w.from_s / 60) === winPick) return play(r);
+function watchRun(r) {   // Watch: Today | With changes: the same moment of the other run
+  const w = fwin(r), seek = curAbs();
+  if (winPick == null || !w || winFrom(w) === winPick) return play(r, seek);
   const hit = winCache[`${runKey(r)}|${winPick}`];
-  if (hit) return play(hit);
-  const m = winPick; play(r); watchFrom(m);
+  if (hit) return play(hit, seek);
+  const m = winPick; play(r); watchFrom(m, seek);
 }
 function fillHours() {   // 06:00-07:00 .. 22:00-23:00
   $("hour").innerHTML = `<option value="">All day</option>` + Array.from({ length: 17 }, (_, i) => i + 6).map(h => `<option value="${h}">${hourSpan(h)}</option>`).join("");
@@ -2140,12 +2209,14 @@ function render() {
       const st = structures(playingRun);
       if (st.length) layers.push(new deck.PathLayer({ id: "nc-structures", data: st, widthUnits: "meters", widthMinPixels: 3, jointRounded: true, billboard: false,
         getPath: d => d.path, getWidth: d => d.lanes * (d.oneWay ? 1 : 2) * 3.5 + 1.5, getColor: d => d.kind === "underpass" ? [70, 70, 78, 230] : [168, 166, 160, 240] }));
-      const vs = frames.length ? currentVehicles(near ? inView() : null) : [];
+      const showOthers = !ride || ride.inWin, inv = near ? inView() : null;
+      const vs = frames.length && showOthers ? currentVehicles(ride ? (inv ? v => !ride.skip.has(v.id) && inv(v) : v => !ride.skip.has(v.id)) : inv) : [];
       if (vs.length) layers.push(near ? new deck.PolygonLayer({
         id: "nc-vehicles", data: vs, extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2], getFillColor: v => COLORS[v.type] || [0, 0, 0],
         material: { ambient: 0.45, diffuse: 0.7, shininess: 20 }, updateTriggers: { getPolygon: pos } })
         : new deck.ScatterplotLayer({ id: "nc-vehicle-dots", data: vs, radiusUnits: "pixels", getRadius: 2.5, getPosition: v => [v.lon, v.lat, v.z || 0],
           getFillColor: v => [...(COLORS[v.type] || [0, 0, 0]), 230], updateTriggers: { getPosition: pos } }));
+      focusLayers(layers);
     }
     overlay.setProps({ layers, effects: lighting(night) });
     return;
@@ -2169,7 +2240,7 @@ function render() {
   }
   const fc = focusCar(), hl = ride ? null : following;
   if ($("t-vehicles").checked && frames.length && (!ride || ride.inWin)) {   // a ride outside the recorded minutes: the test car alone
-    const keepRide = ride ? v => v.id !== ride.probe.id : null, inv = near ? inView() : null;
+    const keepRide = ride ? v => !ride.skip.has(v.id) : null, inv = near ? inView() : null;   // the ride's car (and its section copies) drawn once
     const keep = keepRide && inv ? v => keepRide(v) && inv(v) : keepRide || inv;
     if (near) layers.push(new deck.PolygonLayer({
       id: "vehicles", data: currentVehicles(keep), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
@@ -2183,7 +2254,11 @@ function render() {
       pickable: true,
     }));
   }
-  if (fc) {   // the followed car: a short trail, a halo, and (riding) the car itself
+  focusLayers(layers, fc);
+  overlay.setProps({ layers, effects: lighting(night) });
+}
+function focusLayers(layers, fc = focusCar()) {   // the followed car: a short trail, a halo, and (whole trip) the car itself
+  if (fc) {
     layers.push(new deck.PathLayer({ id: "follow-trail", data: [{ path: fc.trail }], widthUnits: "pixels", getWidth: 4, capRounded: true, jointRounded: true,
       getPath: d => d.path, getColor: [...FOLLOW_RGB, 200], updateTriggers: { getPath: [pos, ride && ride.t] } }));
     layers.push(new deck.ScatterplotLayer({ id: "follow-halo", data: [fc.v], radiusUnits: "meters", getRadius: 7, radiusMinPixels: 9, stroked: true, filled: true,
@@ -2192,7 +2267,6 @@ function render() {
     if (ride) layers.push(new deck.PolygonLayer({ id: "ride-car", data: [fc.v], extruded: true, getPolygon: box, getElevation: SIZE.car[2], getFillColor: FOLLOW_RGB,
       material: { ambient: 0.5, diffuse: 0.7 }, updateTriggers: { getPolygon: ride.t } }));
   }
-  overlay.setProps({ layers, effects: lighting(night) });
 }
 function lighting(night) {
   return [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: night ? 0.7 : 1.1 }),
@@ -2200,17 +2274,17 @@ function lighting(night) {
 }
 function frameStep() { return frames.length > 1 ? Math.max(0.1, frames[1].t - frames[0].t) : 1; }
 function tick(ts) {
-  if (ride && mode === "july") {
+  if (ride && simShown()) {   // following a test car's whole trip: its own clock, at the pill's speed
     const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
-    ride.t += Math.min(dt, 0.25) * Number($("ride-speed").value);
+    if (playing) ride.t += Math.min(dt, 0.25) * Number($("speed").value);
     const end = ride.probe.arrive_s ?? ride.probe.points[ride.probe.points.length - 1].t;
     if (ride.t >= end) { ride.t = end; rideTick(); stopRide(true); }
     else { rideTick(); render(); }
   } else if (playing && frames.length && (mode === "july" || nowcastOn())) {
     const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
     pos += dt * Number($("speed").value) / frameStep();   // 1× = real time, whatever the frame interval (real runs: ~2 s)
-    if (pos >= frames.length - 1) { if (nowcastOn()) pos = 0; else { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; } }   // the now-cast loops
-    $("scrub").value = Math.floor(pos);
+    const loading = stream && stream.readyState <= 1;   // frames still arriving: wait at the newest one instead of stopping
+    if (pos >= frames.length - 1) { if (loading) pos = frames.length - 1; else if (nowcastOn()) pos = 0; else { pos = frames.length - 1; setPlaying(false); } }   // the now-cast loops
     showClock(); ncClock();
     followTick();
     render();
@@ -2218,26 +2292,38 @@ function tick(ts) {
   if (orbiting) { const now = performance.now(); if (lastOrbit) map.setBearing(map.getBearing() + (now - lastOrbit) / 1000 * 6); lastOrbit = now; } else lastOrbit = 0;   // 6 degrees a second
   requestAnimationFrame(tick);
 }
-function showClock() {   // minutes since the simulation started (no clock time: the run is a typical July day, not a particular hour)
-  if (ride) return;
-  const f = frames[Math.floor(pos)]; if (!f) return;
-  $("clock").textContent = `${simDay(playingRun)} · ${simMinTxt(f.t + tOffset)} · ${f.vehicles.length} vehicles`;
+function showClock(scrubbing) {   // "Minute 3:20 of 15 · Simulated typical July day": minutes of the simulated (measured) period
+  const r = playingRun; if (!r || (!frames.length && !ride)) return;
+  const { p0, total } = tlRange(), abs = ride && ride.simT != null ? ride.simT : curAbs(); if (abs == null) return;
+  const s = Math.max(0, Math.min(total, abs - p0));
+  if (!scrubbing) $("scrub").value = Math.round(s);
+  $("tl-time").textContent = `${clock(s)} / ${clock(total)}`;
+  $("clock").textContent = `${abs - p0 < -1 ? "Warm-up, before the simulated period" : `Minute ${clock(s)} of ${Math.round(total / 60)}`} · ${r._nowcast ? "Simulated now-cast (Live now)" : simDay(r)}`;
 }
 function ncClock() {
   if (!nowcastOn() || !$("nc-clock")) return;
   const f = frames[Math.floor(pos)]; if (!f) return;
   $("nc-clock").textContent = `Playing ${playingRun === ncChanged ? "with the change" : "the now-cast"} · ${simMinTxt(f.t + tOffset)} · ${f.vehicles.length} vehicles`;
 }
-function renderWatch() {
-  $("watch").innerHTML = (base ? `<button class="ghost" id="watch-base">Watch roads as they are</button>` : "") + (changed ? `<button class="ghost" id="watch-changed">Watch with changes</button>` : "");
-  if (base) $("watch-base").onclick = () => watchRun(base);
-  if (changed) $("watch-changed").onclick = () => watchRun(changed);
+function renderWatch() {   // Watch: Today | With changes (Live now: Now | With the change), when both runs exist
+  const live = mode === "live", A = live ? ncBase : base, B = live ? ncChanged : changed, el = $("watch");
+  el.hidden = !(A && B);
+  if (el.hidden) { el.innerHTML = ""; return; }
+  const on = x => !!playingRun && runKey(playingRun) === runKey(x);
+  el.innerHTML = `<span class="lbl">Watch</span><button role="tab" id="watch-base" aria-selected="${on(A)}">${live ? "Now" : "Today"}</button>` +
+    `<button role="tab" id="watch-changed" aria-selected="${on(B) && !on(A)}">${live ? "With the change" : "With changes"}</button>`;
+  $("watch-base").onclick = () => live ? play(ncBase) : watchRun(base);
+  $("watch-changed").onclick = () => live ? play(ncChanged) : watchRun(changed);
 }
-async function play(r) {
+function pbSync() {   // the playback pill: July with a run to play, Live now with Simulate now playing
+  $("pb").hidden = !(mode === "july" ? !!playingRun && !playingRun._nowcast : nowcastOn());
+}
+async function play(r, seek = null) {   // seek: simulation seconds to start from once the frames reach it (the timeline, Watch)
   playingRun = r;
-  stopRide(); probeList = null; $("ride-row").hidden = true; $("ride-note").hidden = true; tOffset = 0;
-  frames = []; nextCache = { i: -1, map: null }; setFollow(false); $("follow").disabled = true; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("scrub").max = 0; $("clock").textContent = "—";
-  fillPicker(); renderWindow();
+  stopRide(); probeList = null; tOffset = 0; tlOut = null;
+  frames = []; nextCache = { i: -1, map: null }; setFollow(false); $("follow").disabled = true; roads = null; pos = 0; setPlaying(false); $("play").disabled = true;
+  $("scrub").disabled = true; $("scrub").value = 0; $("clock").textContent = "—"; $("tl-time").textContent = "–"; $("playinfo").textContent = "";
+  pbSync(); renderWatch(); tlSetup();
   if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
   if (r.sample && !r.frames_path) { render(); $("playinfo").textContent = "No vehicle playback for sample data: it comes with the real corridor simulation."; if (r._nowcast) $("nc-clock").textContent = "No vehicle playback for sample data."; return; }
   if (r.roads_path !== null) { try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; } }
@@ -2253,23 +2339,29 @@ async function play(r) {
       const fr = JSON.parse(e.data); frames.push(fr);
       if (frames.length === 1) {   // frames count from the simulation start, or (some APIs) from the recorded window's start
         const w = fwin(r); tOffset = w && fr.t < w.from_s - 2 * (w.step_s || 4) ? w.from_s - fr.t : 0;
-        $("scrub").disabled = false; $("play").disabled = false; showClock();
+        $("scrub").disabled = winBusy; $("play").disabled = false; tlSetup(); showClock();
       }
-      if ($("follow").disabled && fr.vehicles.some(v => String(v.id).startsWith("probe_fwd"))) { $("follow").disabled = false; $("follow").title = "The camera rides along with one of the model's test cars"; }
-      $("scrub").max = frames.length - 1;
-      if (frames.length % 50 === 0) $("playinfo").textContent = `${frames.length} frames loaded…`;
+      if (seek != null && fr.t + tOffset >= seek - 0.01) { pos = frames.length - 1; seek = null; showClock(); }   // reached the moment asked for
+      if ($("follow").disabled && (probeList || fr.vehicles.some(v => isProbe(v.id)))) { $("follow").disabled = false; followUI(); }
+      if (frames.length % 25 === 0) { tlSetup(); if (seek == null) showClock(); }
+      if (frames.length % 50 === 0 && !following && !ride) $("playinfo").textContent = `${frames.length} frames loaded…`;
     };
     ws.onclose = resolve; ws.onerror = resolve;
-    setTimeout(() => {
-      if (stream !== ws || !frames.length || (mode !== "july" && !(r._nowcast && mode === "live")) || ride) return;
-      playing = true; $("play").textContent = "❚❚ Pause";
+    const start = () => {   // play on its own once frames are there (a busy server can take longer than 1.5 s to send the first)
+      if (stream !== ws || (mode !== "july" && !(r._nowcast && mode === "live")) || ride) return;
+      if (!frames.length) return setTimeout(start, 500);
+      setPlaying(true); render();
       if (!flown && map.getZoom() < 14 && !following) { flown = true; flyToPoint(focusJunction(r)); }   // vehicles are too small to see from the corridor overview
-    }, 1500);
+    };
+    setTimeout(start, 1500);
   });
   if (playingRun !== r) return;
+  if (seek != null && frames.length) { pos = frames.length - 1; showClock(); }
+  tlSetup();
+  render();
   if (!following && !ride) $("playinfo").textContent = frames.length ? `${frames.length} frames · ${r.variant_id}` : "No vehicle positions for this run.";
-  $("follow").disabled = !anyProbe(); $("follow").title = anyProbe() ? "The camera rides along with one of the model's test cars" : "No test cars in this run";
-  fillPicker();
+  $("follow").disabled = !(frames.length && (probeList || anyProbe()));
+  if ($("follow").disabled) $("follow").title = frames.length ? "No test cars in this run" : "Plays a run first"; else followUI();
 }
 function focusJunction(r) {   // first changed junction, else the one with the longest queue
   if (r.interventions && r.interventions.length) return r.interventions[0].junction_id;
@@ -2277,14 +2369,14 @@ function focusJunction(r) {   // first changed junction, else the one with the l
 }
 
 // ---------- controls ----------
-$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "❚❚ Pause" : "▶ Play"; lastTick = 0; };
-$("scrub").oninput = e => { pos = Number(e.target.value); showClock(); render(); };
+$("play").onclick = () => setPlaying(!playing);
 ["t-route", "t-roads", "t-vehicles"].forEach(id => $(id).onchange = render);
 $("t-buildings").onchange = () => { buildingsInView(); render(); };
 $("t-night").onchange = e => { if (cfg.tomtom_maps_key) map.setStyle(STYLE(e.target.checked), { diff: false }); render(); };
 $("orbit").onclick = () => setOrbit(!orbiting);
-$("follow").onclick = () => setFollow(!following);
-$("ride-speed").onchange = () => { if (ride) rideTick(); };
+$("follow").onclick = () => { if (following || ride) stopFollowing(); else followCar(); };
+$("follow-stop").onclick = stopFollowing;
+$("follow-dir").onclick = () => { followDir = followDir === "fwd" ? "rev" : "fwd"; dirUI(); if (following || ride) followCar(); };
 $("t-traffic").onchange = () => { trafficTouched = true; trafficLayer(); };
 $("t-queues").onchange = render;
 function resetView() {   // "Whole corridor", the Reset view pill and the R key (viewguard.js): nothing moves the camera, the whole corridor

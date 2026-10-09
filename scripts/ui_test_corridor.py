@@ -32,9 +32,11 @@ Cases
      without approach shapes (404: queues stay in the panel); an API that takes `hour` enables the hour picker
   P  Two modes: "July typical day" by default (trip rows, simulation, assistant), "Live now" (TomTom live traffic layer on,
      live panel, nothing simulated on screen), remembered in the URL (#mode=live / #mode=july), also after a reload
-  Q  Watch from minute: the result's frames_window sets the slider (0 .. total - 5); another start asks POST /corridor/runs
+  Q  Playback pill, one timeline: 0 .. sim_minutes_total of the measured period, the recorded minutes drawn on the track;
+     scrubbing inside them plays from there, outside them asks POST /corridor/runs
      for the same run with frames_from_min / frames_minutes 5 (progress while waiting), plays it, keeps it (no second request)
-  R  Follow a car and ride a test car's whole trip (GET /runs/{id}/probes mocked): highlighted car (colour, halo, trail), info
+  R  Follow a car: a test car's whole trip from Lingampally (GET /runs/{id}/probes mocked), A -> B progress bar with 11 junction
+     ticks, direction toggle (Lakdikapul -> Lingampally), Stop; clicking a car follows it; highlighted car (colour, halo, trail), info
      card (speed, stretch, minutes since Lingampally, flyover), test cars listed with direction and departure, click a vehicle
      to follow it; the ride runs Lingampally -> Lakdikapul at 10-60x with other traffic only inside the recorded window
   S  Labels: trip rows "Simulated typical July day, roads as they are / with your changes", footnote with the route lengths
@@ -504,8 +506,13 @@ def badges(pg):
     return pg.eval_on_selector_all(".pin[data-badge]", "els => els.map(e => [e.textContent, e.dataset.badge, e.dataset.sev, getComputedStyle(e, '::after').content, getComputedStyle(e, '::after').backgroundColor])")
 
 
+def set_tl(pg, sec):
+    """Move the one timeline to `sec` seconds into the simulated period and let go."""
+    pg.evaluate(f"() => {{ const s = document.getElementById('scrub'); s.value = {sec}; s.dispatchEvent(new Event('input')); s.dispatchEvent(new Event('change')); }}")
+
+
 def set_win(pg, m):
-    pg.evaluate(f"() => {{ const s = document.getElementById('win'); s.value = {m}; s.dispatchEvent(new Event('input')); s.dispatchEvent(new Event('change')); }}")
+    set_tl(pg, m * 60 + 10)
 
 
 def api_status(path):
@@ -836,42 +843,51 @@ with sync_playwright() as p:
     check(v > 0, f"vehicles drawn from WS frames: {v}")
     check(pg.evaluate("() => map.getZoom()") > 14 and center_near(pg, "j07", 80)[0], "camera flew to the changed junction for playback")
     ck = pg.inner_text("#clock")
-    check(ck.startswith("Simulated typical July day · minute 15 of the simulated period") and "08:" not in ck and "frames" in pg.inner_text("#playinfo"),
+    check(ck.startswith("Minute 15:") and ck.endswith("of 54 · Simulated typical July day") and "frames" in pg.inner_text("#playinfo"),
           f"clock: minute of the simulated period, no clock time: {ck} · {pg.inner_text('#playinfo')}")
+    pb = pg.evaluate("() => Object.fromEntries(['pb', 'modebar', 'right', 'ask-open', 'reset-view'].map(id => { const r = document.getElementById(id).getBoundingClientRect(); return [id, [r.left, r.top, r.right, r.bottom]]; }))")
+    check(pb["pb"][0] >= pb["modebar"][2] and pb["pb"][2] <= pb["right"][0] and pb["pb"][1] < 80 and pg.locator("#right #play, #right #scrub, #win, #follow-pick, #ride").count() == 0,
+          f"playback is a pill at the top of the map, between the mode switch and the layers; no Playback section in the layers panel: {pb['pb']}")
+    check(abs(pb["ask-open"][2] - pb["reset-view"][2]) < 1 and pb["ask-open"][3] <= pb["reset-view"][1] and pb["reset-view"][1] - pb["ask-open"][3] < 20,
+          f"Ask Terascope AI sits just above Reset view, same right edge: {pb['ask-open']} / {pb['reset-view']}")
     pg.screenshot(path=str(OUT / "corridor_H.png"))
-    if "Pause" not in pg.inner_text("#play"):
+    if pg.get_attribute("#play", "aria-label") != "Pause":
         pg.click("#play")
     pg.click("#play"); pg.wait_for_timeout(400)
     c1 = pg.inner_text("#clock"); pg.wait_for_timeout(1200)
-    check("Play" in pg.inner_text("#play") and c1 == pg.inner_text("#clock"), f"pause holds the clock: {c1}")
-    pg.evaluate("() => { const s = document.getElementById('scrub'); s.value = Math.floor(s.max / 2); s.dispatchEvent(new Event('input')); }")
-    pg.wait_for_timeout(300)
-    check(pg.evaluate("() => Math.round(pos)") == pg.evaluate("() => Math.floor(Number(document.getElementById('scrub').max) / 2)"), f"scrub to the middle: {pg.inner_text('#clock')}")
+    check(pg.get_attribute("#play", "aria-label") == "Play" and c1 == pg.inner_text("#clock"), f"pause holds the clock: {c1}")
+    set_tl(pg, 920); pg.wait_for_timeout(300)
+    check(abs(pg.evaluate("() => pos") - 20) < 0.6 and pg.inner_text("#clock").startswith("Minute 15:20 of 54") and pg.inner_text("#tl-time") == "15:20 / 54:00",
+          f"the timeline inside the recorded minutes scrubs: {pg.inner_text('#clock')} / {pg.inner_text('#tl-time')}")
     check(not pg.is_disabled("#sim-today") and not pg.is_disabled("#iv-add"), "panel usable during playback")
 
     case = "Q window"; print(case)
-    check(pg.is_visible("#win-box") and pg.get_attribute("#win", "max") == "49" and pg.input_value("#win") == "15" and "minutes 15–20 of the 54 simulated" in pg.inner_text("#win-note"),
-          f"Watch from minute: 0..49, at 15: {pg.inner_text('#win-note')[:80]!r}")
+    band = pg.evaluate("() => document.getElementById('scrub').style.getPropertyValue('--tl-bg')")
+    check(pg.get_attribute("#scrub", "max") == "3240" and "27.78%" in band and "37.04%" in band and "Recorded minutes 15–20" in pg.get_attribute("#scrub", "title"),
+          f"one timeline 0..54 min, the recorded minutes 15-20 on its track: {band[:120]!r}")
     totals = [x[2] for x in strips(pg)]
     n0 = len(bodies)
     pg.evaluate("() => { window.__delayRuns = 2500; }")
-    set_win(pg, 30); pg.wait_for_timeout(700)
-    check(pg.is_visible("#win-busy") and "Recording minutes 30–35" in pg.inner_text("#win-busy") and pg.is_disabled("#win"), f"progress while recording: {pg.inner_text('#win-busy')!r}")
+    set_tl(pg, 30 * 60 + 30); pg.wait_for_timeout(700)
+    check(pg.is_visible("#tl-busy") and "Recording minutes 30–35" in pg.inner_text("#tl-busy") and pg.is_disabled("#scrub"), f"outside the recorded minutes: records them, progress inline: {pg.inner_text('#tl-busy')!r}")
     pg.wait_for_timeout(3000)
     pg.evaluate("() => { window.__delayRuns = 0; }")
     check(len(bodies) == n0 + 1 and bodies[-1] == {"interventions": FLY_J07, "volume_scale": 1.0, "frames_from_min": 30, "frames_minutes": 5}, f"the same run asked for minutes 30-35: {bodies[n0:]}")
     pg.wait_for_timeout(1500)
-    check("minute 30 of the simulated period" in pg.inner_text("#clock") and pg.input_value("#win") == "30" and pg.is_hidden("#win-busy") and not pg.is_disabled("#win"),
-          f"plays minutes 30-35: {pg.inner_text('#clock')}")
+    ck = pg.inner_text("#clock")
+    check((ck.startswith("Minute 30:3") or ck.startswith("Minute 30:4")) and pg.is_hidden("#tl-busy") and not pg.is_disabled("#scrub"),
+          f"plays on from minute 30:30: {ck}")
     check([x[2] for x in strips(pg)] == totals and layer(pg, "vehicles") > 0, "results unchanged, vehicles of the new window drawn")
     set_win(pg, 15); pg.wait_for_timeout(1800)
-    check(len(bodies) == n0 + 1 and "minute 15 of the simulated period" in pg.inner_text("#clock"), f"back to minute 15: no new request ({pg.inner_text('#clock')})")
+    check(len(bodies) == n0 + 1 and pg.inner_text("#clock").startswith("Minute 15:"), f"back to minute 15: no new request ({pg.inner_text('#clock')})")
     set_win(pg, 30); pg.wait_for_timeout(1800)
-    check(len(bodies) == n0 + 1 and "minute 30" in pg.inner_text("#clock"), "minute 30 again: kept from before, no new request")
+    check(len(bodies) == n0 + 1 and pg.inner_text("#clock").startswith("Minute 30:"), "minute 30 again: kept from before, no new request")
     set_win(pg, 15); pg.wait_for_timeout(1500)
     case = "H api + playback"
+    wt = pg.inner_text("#watch").split()
+    check(pg.is_visible("#watch") and wt == ["Watch", "Today", "With", "changes"] and pg.get_attribute("#watch-changed", "aria-selected") == "true", f"Watch: Today | With changes in the pill: {wt}")
     pg.click("#watch-base"); pg.wait_for_timeout(3000)
-    check(layer(pg, "vehicles") > 0 and "r_test" not in pg.inner_text("#status"), f"watch today's run: {pg.inner_text('#playinfo')}")
+    check(layer(pg, "vehicles") > 0 and "r_test" not in pg.inner_text("#status") and pg.get_attribute("#watch-base", "aria-selected") == "true", f"watch today's run: {pg.inner_text('#playinfo')}")
 
     case = "O 3D"; print(case)
     pg.click("#watch-changed"); pg.wait_for_timeout(1000)
@@ -894,23 +910,50 @@ with sync_playwright() as p:
           f"flyover drawn in 3D at Tolichowki: 600 m, deck 6 m, ramps to the ground: {st}")
     check(layer(pg, "piers") > 5, f"piers under the deck: {layer(pg, 'piers')}")
     pg.screenshot(path=str(OUT / "corridor_O.png"))
+    case = "R follow"; print(case)
+    check(pg.evaluate("() => [dirOf({direction: 'A->B'}), dirOf({direction: 'B->A'}), dirOf({id: 'probe_rev_3.1'}), dirOf({id: 'probe_fwd_0.2'})]") == ["fwd", "rev", "rev", "fwd"],
+          "the API's A->B / B->A directions read (they were read as 'towards Lakdikapul' both ways)")
     pg.select_option("#speed", "1")
     pg.click("#follow"); pg.wait_for_timeout(1200)
-    pr = pg.evaluate("() => { const v = vehicleAt('probe_fwd_1'), c = map.getCenter(); return [v.lon, v.lat, c.lng, c.lat, map.getPitch()]; }")
-    check(abs(pr[0] - pr[2]) < 2e-4 and abs(pr[1] - pr[3]) < 2e-4 and pr[4] > 55, f"camera follows the test car: {pr}")
+    st = pg.evaluate("() => ride && [ride.probe.id, ride.t, ride.inWin]")
+    check(st and st[0] == "probe_fwd_1" and 600 <= st[1] < 700 and st[2] is False and pg.input_value("#speed") == "30",
+          f"Follow a car: test car fwd-1's whole trip from Lingampally, at 30x: {st}")
     card = pg.inner_text("#follow-card")
-    check("Stop following" in pg.inner_text("#follow") and "Following test car fwd-1" in pg.inner_text("#playinfo"), f"follow state: {pg.inner_text('#playinfo')}")
-    check(card.startswith("Test car fwd-1 · 32 km/h · stretch ") and " → " in card and "min since Lingampally" in card and "SIMULATED" in card, f"info card: {card!r}")
+    check(pg.inner_text("#follow") == "Stop following" and pg.inner_text("#fc-title") == "Test car fwd-1 · Lingampally → Lakdikapul" and "Lingampally → Nallagandla Rd jn" in card
+          and "min since Lingampally" in card and "of ~55" in card and "km/h" in card and "SIMULATED" in card and "drives alone" in card, f"follow card: {card!r}")
+    bar = pg.evaluate("() => { const b = document.querySelector('#follow-card .fbar'); return b ? [b.querySelectorAll('.tick').length, Number(b.getAttribute('aria-valuenow')), b.querySelectorAll('.tick.past').length] : null; }")
+    check(bar and bar[0] == 11 and bar[1] <= 3 and bar[2] == 0, f"A -> B progress bar with the 11 junctions, at the start: {bar}")
+    check(layer(pg, "vehicles") == -1 and layer(pg, "vehicle-dots") == -1 and layer(pg, "ride-car") == 1 and layer(pg, "follow-halo") == 1, "outside the recorded minutes: the test car alone, highlighted")
+    cam = pg.evaluate("() => { const v = probeAt(ride.probe, ride.t), c = map.getCenter(); return [v.lon - c.lng, v.lat - c.lat, map.getPitch()]; }")
+    check(abs(cam[0]) < 3e-4 and abs(cam[1]) < 3e-4 and cam[2] > 55, f"camera rides with the car: {cam}")
+    pg.select_option("#speed", "10")
+    pg.evaluate("() => { ride.t = 1000; }"); pg.wait_for_timeout(500)
+    ids = layer_props(pg, "vehicles", "l => l.props.data.map(v => v.id)") or []
+    card = pg.inner_text("#follow-card")
+    check(pg.evaluate("() => ride.inWin") and layer(pg, "vehicles") >= 0 and "probe_fwd_1" not in ids and layer(pg, "ride-car") == 1 and "Other traffic shown" in card,
+          f"inside the recorded minutes: other traffic shown ({len(ids)}), the test car drawn once")
+    check(pg.inner_text("#clock").startswith("Minute 16:") and pg.evaluate("() => playing"), f"the timeline follows the car: {pg.inner_text('#clock')}")
+    pg.click("#follow-dir"); pg.wait_for_timeout(600)
+    bar = pg.evaluate("() => Number(document.querySelector('#follow-card .fbar')?.getAttribute('aria-valuenow'))")
+    check(pg.evaluate("() => ride && ride.probe.id") == "probe_rev_1" and pg.inner_text("#fc-title") == "Test car rev-1 · Lakdikapul → Lingampally" and "Lakdikapul → Lingampally" in pg.inner_text("#follow-dir")
+          and bar <= 3 and "min since Lakdikapul" in pg.inner_text("#follow-card"), f"direction toggle: follows a test car from Lakdikapul ({bar}%)")
+    pg.click("#follow-dir"); pg.wait_for_timeout(300)
+    pg.evaluate("() => { ride.t = ride.probe.arrive_s - 2; }"); pg.wait_for_timeout(800)
+    check(pg.evaluate("() => ride === null") and "arrived at Lakdikapul after 55 min" in pg.inner_text("#playinfo") and pg.inner_text("#follow") == "Follow a car" and pg.is_hidden("#follow-card"),
+          f"arrives: {pg.inner_text('#playinfo')!r}")
+    pg.click("#follow"); pg.wait_for_timeout(400); pg.click("#follow-stop"); pg.wait_for_timeout(200)
+    check(pg.evaluate("() => ride === null && following === null") and pg.is_hidden("#follow-card") and layer(pg, "follow-halo") == -1, "Stop: card and highlight gone")
+    # a test car in the recorded frames (the API without whole trips, or clicked): highlighted, trail, card
+    pg.evaluate("() => startFollow('probe_fwd_1')"); pg.wait_for_timeout(1000)
+    pr = pg.evaluate("() => { const v = vehicleAt('probe_fwd_1'), c = map.getCenter(); return v ? [v.lon, v.lat, c.lng, c.lat, map.getPitch()] : null; }")
+    check(pr and abs(pr[0] - pr[2]) < 2e-4 and abs(pr[1] - pr[3]) < 2e-4 and pr[4] > 55, f"camera follows the test car in the frames: {pr}")
     hl = layer_props(pg, "vehicles", "l => { const v = l.props.data.find(v => v.id === 'probe_fwd_1'); return v ? l.props.getFillColor(v) : null; }")
     trail = pg.evaluate("() => { const l = overlay._deck.props.layers.find(l => l.id === 'follow-trail'); return l ? l.props.data[0].path.length : 0; }")
-    check(hl == [255, 252, 254] and layer(pg, "follow-halo") == 1 and trail >= 2, f"followed car highlighted: colour {hl}, halo, trail of {trail} points")
-    opts = pg.eval_on_selector_all("#follow-pick option", "els => els.map(e => e.textContent)")
-    check("fwd-1 · towards Lakdikapul · leaves minute 10" in opts and "rev-1 · towards Lingampally · leaves minute 11" in opts and pg.input_value("#follow-pick") == "probe_fwd_1",
-          f"test cars listed with direction and departure, the followed one selected: {opts}")
+    check(hl == [255, 252, 254] and layer(pg, "follow-halo") == 1 and trail >= 2 and "Following test car fwd-1" in pg.inner_text("#playinfo"), f"followed car highlighted: colour {hl}, halo, trail of {trail} points")
     pg.click("#follow"); pg.wait_for_timeout(200)
-    check("Follow a test car" in pg.inner_text("#follow") and pg.is_hidden("#follow-card") and layer(pg, "follow-halo") == -1, "stop following: card and highlight gone")
+    check(pg.inner_text("#follow") == "Follow a car" and pg.is_hidden("#follow-card") and layer(pg, "follow-halo") == -1, "stop following: card and highlight gone")
     # click any vehicle on the map to follow it
-    if "Pause" in pg.inner_text("#play"):
+    if pg.get_attribute("#play", "aria-label") == "Pause":
         pg.click("#play")
     pg.wait_for_timeout(300)
     pg.evaluate("() => { flyToPoint('j07'); }"); pg.wait_for_timeout(2200)
@@ -929,27 +972,6 @@ with sync_playwright() as p:
         check(card.startswith("Car " + fol) and "on the Tolichowki Flyover" in card, f"card for an ordinary car on the existing flyover: {card!r}")
     pg.click("#follow"); pg.wait_for_timeout(200)
 
-    case = "R ride"; print(case)
-    check(pg.is_visible("#ride-row") and pg.inner_text("#ride") == "Ride the whole trip", "Ride the whole trip offered (GET /runs/{id}/probes)")
-    pg.select_option("#ride-speed", "60")
-    pg.click("#ride"); pg.wait_for_timeout(1500)
-    st = pg.evaluate("() => ride && [ride.probe.id, ride.t, ride.inWin]")
-    check(st and st[0] == "probe_fwd_1" and 620 < st[1] < 800 and st[2] is False, f"riding test car fwd-1 from Lingampally at 60x: {st}")
-    note = pg.inner_text("#ride-note")
-    check("Other traffic is shown only while the ride is inside the recorded window (minutes 15–16)" in note and "55 min" in note, f"says when other traffic shows: {note!r}")
-    check(layer(pg, "vehicles") == -1 and layer(pg, "vehicle-dots") == -1 and layer(pg, "ride-car") == 1 and layer(pg, "follow-halo") == 1, "outside the recorded window: the test car alone, highlighted")
-    cam = pg.evaluate("() => { const v = probeAt(ride.probe, ride.t), c = map.getCenter(); return [v.lon - c.lng, v.lat - c.lat, map.getPitch()]; }")
-    check(abs(cam[0]) < 3e-4 and abs(cam[1]) < 3e-4 and cam[2] > 55, f"camera rides with the car: {cam}")
-    card = pg.inner_text("#follow-card")
-    check(card.startswith("Test car fwd-1 · 25 km/h · stretch Lingampally → Nallagandla Rd jn · ") and "min since Lingampally" in card, f"ride card: {card!r}")
-    check("riding at 60×" in pg.inner_text("#clock") and "outside the recorded window" in pg.inner_text("#clock"), f"ride clock: {pg.inner_text('#clock')}")
-    pg.select_option("#ride-speed", "10")
-    pg.evaluate("() => { ride.t = 901; }"); pg.wait_for_timeout(500)
-    ids = layer_props(pg, "vehicles", "l => l.props.data.map(v => v.id)") or []
-    check(pg.evaluate("() => ride.inWin") and layer(pg, "vehicles") >= 0 and "probe_fwd_1" not in ids and layer(pg, "ride-car") == 1, f"inside the recorded window: other traffic shown ({len(ids)}), the test car drawn once")
-    pg.evaluate("() => { ride.t = ride.probe.arrive_s - 2; }"); pg.wait_for_timeout(800)
-    check(pg.evaluate("() => ride === null") and "arrived at Lakdikapul after 55 min" in pg.inner_text("#ride-note") and pg.inner_text("#ride") == "Ride the whole trip",
-          f"arrives: {pg.inner_text('#ride-note')!r}")
     case = "O 3D"
     b0 = pg.evaluate("() => map.getBearing()"); pg.click("#orbit"); pg.wait_for_timeout(1200); b1 = pg.evaluate("() => map.getBearing()")
     pg.click("#orbit"); pg.wait_for_timeout(300); b2 = pg.evaluate("() => map.getBearing()"); pg.wait_for_timeout(500)
@@ -1064,7 +1086,7 @@ with sync_playwright() as p:
           f"trip rows say the weather (simulated) and the TomTom row stays as measured: {[x[3][:60] for x in s]}")
     check("Weather what-if: heavy rain" in rn and "+7.9% (95% range −3.9% to +16.1%)" in rn and pg.locator("#run-note .tag.est").count() == 1,
           f"result line: estimate, range, estimated tag: {rn[-120:]!r}")
-    check(pg.inner_text("#clock").startswith("Simulated Wed 8 Jul, 18:00–19:00, heavy rain · minute"), f"clock: {pg.inner_text('#clock')!r}")
+    check(pg.inner_text("#clock").startswith("Minute ") and pg.inner_text("#clock").endswith(" · Simulated Wed 8 Jul, 18:00–19:00, heavy rain"), f"clock: {pg.inner_text('#clock')!r}")
     n0 = len(bodies)
     set_win(pg, 20); pg.wait_for_timeout(2500)
     check(bodies[n0:] == [{"interventions": [], "volume_scale": 1.0, "frames_from_min": 20, "frames_minutes": 5, "day": "2026-07-08", "hour": 18, "weather": "heavy_rain"}],
@@ -1194,9 +1216,9 @@ with sync_playwright() as p:
     vv = pg.evaluate("() => [visualViewport.scale, devicePixelRatio, window.innerWidth]")
     check(vv == [1, 1, 1280] and pg.evaluate("() => map.getZoom()") > z0 + 0.2, f"real ctrl+wheel: the page keeps its zoom {vv}, over the map it zooms the map ({z0:.2f} -> {pg.evaluate('() => map.getZoom()'):.2f})")
     # panels inside the window at 1280 x 700, each with its own scroll; the pill between the layers and the trip panels
-    rc = pg.evaluate("() => Object.fromEntries(['left', 'right', 'journey', 'reset-view'].map(id => { const e = document.getElementById(id), r = e.getBoundingClientRect(); return [id, [r.top, r.bottom, r.left, r.right, e.scrollHeight > e.clientHeight, getComputedStyle(e).overflowY]]; }))")
-    check(rc["left"][1] <= 700 and rc["left"][4] and rc["left"][5] == "auto" and rc["right"][1] <= rc["reset-view"][0] and rc["reset-view"][1] <= rc["journey"][0] and rc["journey"][1] <= 700,
-          f"1280x700: left panel scrolls inside the window, layers end above Reset view, Reset view above the trip: {rc}")
+    rc = pg.evaluate("() => Object.fromEntries(['left', 'right', 'journey', 'reset-view', 'ask-open'].map(id => { const e = document.getElementById(id), r = e.getBoundingClientRect(); return [id, [r.top, r.bottom, r.left, r.right, e.scrollHeight > e.clientHeight, getComputedStyle(e).overflowY]]; }))")
+    check(rc["left"][1] <= 700 and rc["left"][4] and rc["left"][5] == "auto" and rc["right"][1] <= rc["ask-open"][0] and rc["ask-open"][1] <= rc["reset-view"][0] and rc["reset-view"][1] <= rc["journey"][0] and rc["journey"][1] <= 700,
+          f"1280x700: left panel scrolls inside the window, layers end above Ask Terascope AI, then Reset view, then the trip: {rc}")
     pg.evaluate("() => { $('left').scrollTop = 400; }")
     check(pg.evaluate("() => $('left').scrollTop") > 100, "the controls panel scrolls")
     # collapse / expand
@@ -1288,7 +1310,7 @@ with sync_playwright() as p:
     check(bodies[n0:] == [{"interventions": [], "volume_scale": 1.0, "day": "2026-07-08", "hour": 18}], f"the simulation asked for Wed 8 Jul, 18:00: {bodies[n0:]}")
     pg.wait_for_timeout(2500)
     s = strips(pg)
-    check(s[0][3].startswith("Simulated Wed 8 Jul, 18:00–19:00, roads as they are") and pg.inner_text("#clock").startswith("Simulated Wed 8 Jul, 18:00–19:00 · minute 15 of the simulated period"),
+    check(s[0][3].startswith("Simulated Wed 8 Jul, 18:00–19:00, roads as they are") and pg.inner_text("#clock").startswith("Minute 15:") and pg.inner_text("#clock").endswith(" · Simulated Wed 8 Jul, 18:00–19:00"),
           f"labelled with the day and hour: {s[0][3]!r} / {pg.inner_text('#clock')!r}")
     n0 = len(bodies)
     pg.select_option("#when", TYPICAL); pg.select_option("#hour", "8")
@@ -1313,7 +1335,10 @@ with sync_playwright() as p:
     pg.click("#mode-july"); pg.wait_for_timeout(600)
     pg.click("#p-dlf"); wait_status(pg, ["simulated", "failed"], 30); pg.wait_for_timeout(2500)
     check([x[0] for x in strips(pg)] == ["base", "tomtom", "changed"], "presets work on a phone")
-    check(pg.is_hidden("#ride-row"), "no GET /runs/{id}/probes (404): no ride offered")
+    pb = pg.evaluate("() => { const p = $('pb').getBoundingClientRect(), m = $('map').getBoundingClientRect(); return [p.left, p.right, p.top >= m.bottom - 1, document.documentElement.scrollWidth - innerWidth]; }")
+    check(pg.is_visible("#pb") and pb[0] >= 0 and pb[1] <= 390 and pb[2] and pb[3] <= 0, f"390 px: the playback pill wraps under the map, no sideways scroll: {pb}")
+    pg.evaluate("() => { followCar(); }"); pg.wait_for_timeout(400)
+    check(pg.evaluate("() => ride === null"), "no GET /runs/{id}/probes (404): Follow uses the test cars in the recorded frames (no whole trip)")
     pg.evaluate("() => window.scrollTo(0, 0)")
     pg.screenshot(path=str(OUT / "corridor_N.png"), full_page=True)
     b.close()
