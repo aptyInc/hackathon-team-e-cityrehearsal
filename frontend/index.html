@@ -6,9 +6,9 @@
 <title>CityRehearsal — YMCA Circle</title>
 <!-- Owner: Frontend and 3D workstream. Talks to the backend over C4 (contracts/api.md); draws C1 frames and C2 results.
      Map: TomTom vector style (key from GET /config) + TomTom live traffic tiles. 3D: deck.gl over MapLibre. -->
-<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
+<link href="vendor/maplibre-gl.css" rel="stylesheet" />
+<script src="vendor/maplibre-gl.js"></script>
+<script src="vendor/deck.gl.min.js"></script>
 <style>
   :root { --ink: #16202a; --paper: rgba(255,253,248,.96); --accent: #c4561c; --blue: #2f6f9f; --muted: #5b6670; }
   body { margin: 0; font-family: Inter, system-ui, sans-serif; color: var(--ink); }
@@ -102,6 +102,9 @@
 <script>
 const API = "http://localhost:8000";
 const $ = id => document.getElementById(id);
+window.onerror = (msg, src, line) => { const s = $("status"); if (s) s.innerHTML = `<span class="bad">Page error: ${String(msg).slice(0, 160)} (line ${line})</span>`; };
+window.onunhandledrejection = e => { const s = $("status"); if (s) s.innerHTML = `<span class="bad">Error: ${String(e.reason && e.reason.message || e.reason).slice(0, 160)}</span>`; };
+if (typeof maplibregl === "undefined" || typeof deck === "undefined") document.getElementById("status").innerHTML = '<span class="bad">Map libraries failed to load (frontend/vendor). Reload the page.</span>';
 const COLORS = { two_wheeler: [232,116,59], car: [47,111,159], auto: [240,200,40], bus: [40,160,90], truck: [120,120,120] };
 const SIZE = { two_wheeler: [1.9, 0.75, 1.2], car: [4.3, 1.75, 1.5], auto: [2.7, 1.4, 1.7], bus: [11, 2.5, 3.2], truck: [8, 2.4, 3] };
 const STYLE = night => `https://api.tomtom.com/map/1/style/20.4.5-*/${night ? "basic_night" : "basic_main"}.json?key=${cfg.tomtom_maps_key}`;
