@@ -273,7 +273,7 @@ def write_brief(ctx: Context, inp: dict) -> dict:
         return {"error": "No low-cost option among these runs. Test at least one low-cost option (signal_retime or "
                          "one_way) at the same junction before writing a brief that includes construction."}
     md, fps = render_brief(ctx, inp, runs)
-    brief = store.save_brief(ctx.session_id, md, [r["run_id"] for r in runs], fps, inp.get("recommendation", ""))
+    brief = store.save_brief(ctx.session_id, md, list(fps), fps, inp.get("recommendation", ""))
     ctx.brief_id = brief["brief_id"]
     return {"brief_id": brief["brief_id"], "fingerprint": brief["fingerprint"], "runs": len(runs),
             "kinds_tested": sorted(kinds), "note": "stored; GET /briefs/" + brief["brief_id"]}
