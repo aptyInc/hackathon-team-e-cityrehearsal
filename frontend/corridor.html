@@ -86,6 +86,69 @@
   .livedot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #1a7f37; border: 2px solid #fff; box-shadow: 0 0 0 1px #1a7f37; vertical-align: 0; }
   .pin.live::after { content: ""; position: absolute; top: -4px; right: -4px; width: 9px; height: 9px; border-radius: 50%; background: #1a7f37;
                      border: 2px solid #fff; box-shadow: 0 0 0 1px #1a7f37; }
+  /* Ask CityRehearsal (planner.js) */
+  #ask-open { position: absolute; top: 12px; right: 276px; z-index: 4; box-shadow: 0 2px 10px rgba(0,0,0,.25); font-weight: 600; }
+  body.chat-open #ask-open { right: 434px; }
+  #chat { top: 12px; right: 12px; bottom: 12px; width: 410px; display: flex; flex-direction: column; z-index: 5; padding: 12px 14px; }
+  #chat[hidden] { display: none !important; }
+  body.chat-open #right { display: none; } body.chat-open #journey { right: 434px; }
+  #chat .hd { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  #chat .hd b { font-size: 15px; } #chat .hd button { padding: 3px 8px; font-size: 12px; }
+  #chat-log { flex: 1 1 auto; overflow: auto; margin: 8px 0; min-height: 120px; }
+  .msg { margin: 6px 0; padding: 8px 10px; border-radius: 10px; line-height: 1.4; overflow-wrap: anywhere; }
+  .msg.user { background: var(--blue); color: #fff; margin-left: 36px; white-space: pre-wrap; }
+  .msg.bot { background: #f4f0e8; margin-right: 12px; }
+  .steps { margin: 0 0 6px; padding-left: 0; list-style: none; font-size: 12px; color: var(--muted); }
+  .steps li { margin: 2px 0; } .steps li.run { color: #b26a00; } .steps .ck { color: #1a7f37; font-weight: 700; margin-right: 5px; } .steps li.bad .ck { color: #b00020; }
+  .working { font-size: 12px; color: #b26a00; }
+  .runs { margin-top: 8px; border-top: 1px solid #e0d9cc; padding-top: 6px; }
+  .rrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 4px 0; font-size: 12px; }
+  .rrow button { padding: 3px 8px; font-size: 12px; flex: none; } .rrow button.on { background: var(--ink); }
+  #chat-sugg { display: flex; flex-direction: column; gap: 5px; }
+  #chat-sugg[hidden] { display: none; }
+  .sugg { text-align: left; background: #fff; color: var(--ink); border: 1px solid #e0d9cc; }
+  .sugg:hover { border-color: var(--accent); }
+  #chat-form { display: flex; gap: 6px; align-items: flex-end; margin-top: 6px; }
+  #chat-in { flex: 1; font: inherit; font-size: 13px; padding: 7px 8px; border: 1px solid #d6cfc2; border-radius: 7px; resize: vertical; min-height: 36px; max-height: 140px; box-sizing: border-box; }
+  /* markdown from the assistant and the brief (escaped, then a few tags) */
+  .md p { margin: 4px 0; } .md ul, .md ol { margin: 4px 0; padding-left: 20px; } .md li { margin: 1px 0; }
+  .md-h { font-weight: 700; margin: 8px 0 3px; } .md-h1 { font-size: 17px; } .md-h2 { font-size: 15px; } .md-h3, .md-h4 { font-size: 13px; }
+  .md code, .fp { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: rgba(0,0,0,.06); padding: 0 3px; border-radius: 3px; }
+  .md pre { background: rgba(0,0,0,.06); padding: 6px; border-radius: 5px; overflow: auto; font-size: 11px; }
+  .md-q { border-left: 3px solid #d6cfc2; padding-left: 8px; color: var(--muted); margin: 4px 0; }
+  .md-tw { overflow-x: auto; } .md-t { margin: 4px 0; } .md-t th, .md-t td { font-size: 12px; padding: 3px 6px; border-bottom: 1px solid #e0d9cc; }
+  .md hr { border: 0; border-top: 1px solid #e0d9cc; margin: 8px 0; }
+  /* brief */
+  #brief-modal { position: fixed; inset: 0; background: rgba(22,32,42,.55); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 30px 12px; box-sizing: border-box; overflow: auto; }
+  #brief-modal[hidden] { display: none !important; }
+  #brief-sheet { background: #fff; max-width: 760px; width: 100%; border-radius: 10px; padding: 22px 26px; box-shadow: 0 6px 30px rgba(0,0,0,.35); box-sizing: border-box; font-size: 14px; line-height: 1.5; }
+  #brief-sheet .bar2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
+  #brief-meta { margin-top: 14px; font-size: 12px; color: var(--muted); border-top: 1px solid #eee; padding-top: 8px; }
+  @media print {
+    body.brief-open > *:not(#brief-modal) { display: none !important; }
+    body.brief-open { background: #fff; display: block; }
+    #brief-modal { position: static; background: none; padding: 0; display: block; }
+    #brief-sheet { box-shadow: none; max-width: none; padding: 0; }
+    #brief-sheet .noprint { display: none !important; }
+  }
+  /* 4 · decision */
+  .tag.rec { background: var(--ink); color: #fff; }
+  #dec input, #dec textarea { font: inherit; font-size: 13px; padding: 5px 7px; border: 1px solid #d6cfc2; border-radius: 6px; box-sizing: border-box; width: 100%; }
+  #dec .row input { flex: 1; min-width: 0; }
+  #case { margin-top: 6px; } .case-hd { margin: 4px 0; }
+  #case:not([hidden]) + #dec-new { border-top: 1px solid #e0d9cc; margin-top: 10px; padding-top: 4px; }
+  .stages { display: flex; list-style: none; padding: 0; margin: 8px 0; gap: 4px; }
+  .stages li { flex: 1; text-align: center; font-size: 11px; font-weight: 600; padding: 4px 2px; border-radius: 5px; background: #eee; color: var(--muted); }
+  .stages li.done { background: #e7f4ea; color: #1a7f37; } .stages li.now { background: var(--accent); color: #fff; }
+  .sums { margin: 4px 0; padding-left: 18px; font-size: 12px; }
+  .caseruns td, .caseruns th { font-size: 11px; padding: 3px 3px; }
+  .role { background: #f4f0e8; border-radius: 6px; padding: 6px 8px; margin: 8px 0; }
+  .role textarea { margin-top: 4px; resize: vertical; }
+  button.ok-b { background: #1a7f37; } button.bad-b { background: #b00020; }
+  .tl-hd { margin-top: 10px; } .tl { list-style: none; padding: 0 0 0 10px; margin: 6px 0; border-left: 2px solid #d6cfc2; font-size: 12px; }
+  .tl li { margin: 0 0 8px; position: relative; } .tl li::before { content: ""; position: absolute; left: -16px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); border: 1px solid #fff; }
+  .tl .st { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
+  #case-busy { margin: 6px 0; padding: 6px 8px; background: #fff4e5; border-left: 3px solid #b26a00; border-radius: 4px; font-size: 12px; }
   /* narrow screens: map on top, panels stacked below it */
   @media (max-width: 820px) {
     body { display: flex; flex-direction: column; }
@@ -94,6 +157,9 @@
     #journey { order: 1; } #left { order: 2; } #right { order: 3; margin-bottom: 8px; }
     .strip { grid-template-columns: 96px 1fr 58px; gap: 6px; }
     .strip .name { font-size: 11px; }
+    #chat { order: 1; max-height: 80vh; } body.chat-open #right { display: block; }
+    #ask-open { position: fixed; top: auto; left: auto; right: 12px; bottom: 12px; z-index: 20; }
+    body.chat-open #ask-open { display: none; }   /* the open chat has its own close button; keep its Ask button uncovered */
   }
 </style>
 </head>
@@ -153,6 +219,21 @@
   <h2>Junctions <span class="tag sim">simulated</span></h2>
   <div id="jt"><small class="muted">Run a simulation to see delay and queues at each junction. Click a junction to fly there.</small></div>
   <div id="warnings"></div>
+
+  <h2>4 · Decision <span class="tag rec">RECORDED</span></h2>
+  <div id="dec">
+    <div id="dec-off" class="note" hidden></div>
+    <div id="case-busy" hidden></div>
+    <div id="case-msg" class="note"></div>
+    <div id="case" hidden></div>
+    <div id="dec-new">
+      <div class="note">Send today's run and the run with changes to a reviewer. Each step (proposal, re-tests, decision) is recorded with who, when and a SHA-256 fingerprint of the evidence. Records are append-only: nothing can be edited or deleted.</div>
+      <div class="row"><input id="case-title" placeholder="What is proposed (title)" /></div>
+      <div class="row"><input id="case-by" placeholder="Your name (optional)" autocomplete="name" /><button id="case-send">Send for review</button></div>
+      <small id="case-why" class="muted"></small>
+    </div>
+    <details id="case-list-box" hidden><summary class="muted">Earlier cases</summary><div id="case-list"></div></details>
+  </div>
 </div>
 
 <div id="right" class="panel">
@@ -185,6 +266,8 @@
   </div>
 </div>
 
+<button id="ask-open" aria-controls="chat" aria-expanded="false">Ask CityRehearsal</button>
+
 <div id="journey" class="panel">
   <div class="row" style="margin:0 0 4px;justify-content:space-between">
     <b>The trip, leg by leg <small class="muted" style="font-weight:400">· block width = minutes · click a block to fly there</small></b>
@@ -192,6 +275,24 @@
   </div>
   <div id="strips"></div>
   <div id="deltas" class="deltas"></div>
+</div>
+
+<div id="chat" class="panel" hidden aria-label="Ask CityRehearsal">
+  <div class="hd"><b>Ask CityRehearsal</b>
+    <span><button id="chat-new" class="ghost" title="Start a new conversation">New</button> <button id="chat-close" class="ghost" title="Close">✕</button></span></div>
+  <small class="muted">An assistant that runs the corridor simulation for you and explains the results. Its numbers are <span class="tag sim">SIMULATED</span> unless it says TomTom.</small>
+  <div id="chat-log" aria-live="polite"></div>
+  <div id="chat-sugg"></div>
+  <div id="chat-off" class="note info" hidden></div>
+  <form id="chat-form"><textarea id="chat-in" rows="2" placeholder="Ask about the trip, a junction or a change…"></textarea><button id="chat-send" type="submit">Ask</button></form>
+</div>
+
+<div id="brief-modal" hidden role="dialog" aria-modal="true" aria-label="Decision brief">
+  <div id="brief-sheet">
+    <div class="bar2 noprint"><b>Decision brief</b><span><button id="brief-print" class="secondary">Print / save as PDF</button> <button id="brief-close" class="ghost">Close</button></span></div>
+    <div id="brief-body" class="md"></div>
+    <div id="brief-meta"></div>
+  </div>
 </div>
 
 <script>
@@ -716,6 +817,7 @@ function renderJourney() {
   $("strips").querySelectorAll(".ticks span").forEach(el => el.onclick = () => flyToPoint(el.dataset.p));
   $("journey-tags").innerHTML = (base || changed) && [base, changed].some(r => r && r.sample) ? '<span class="tag sample">SAMPLE DATA</span>' : "";
   renderDeltas();
+  if (window.planner) planner.sync();   // 4 · decision: what can be sent for review
 }
 function renderDeltas() {
   if (!base) { $("deltas").innerHTML = `<small class="muted">Press “Simulate today” to compare the model with TomTom, then add changes and “Simulate with changes”.</small>`; return; }
@@ -1111,5 +1213,6 @@ $("t-traffic").onchange = e => map.getLayer("tomtom-traffic") && map.setLayoutPr
 $("overview").onclick = () => { setFollow(false); setOrbit(false); selected = null; updateMarkers(); if (popup) popup.remove(); overview(true); };
 init();
 </script>
+<script src="planner.js"></script>
 </body>
 </html>
