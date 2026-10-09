@@ -1,155 +1,52 @@
 {
  "target": "TomTom Traffic Stats job 10051304: Lingampally -> Lakdikapul, July 2026 every day 06:00-23:00",
  "cap_kmh": [
-  20.8,
-  30.7,
-  29.7,
-  39.0,
-  32.5,
-  44.1,
-  48.2,
-  27.0,
-  48.8,
-  22.1,
-  31.7,
-  24.6
+  21.7,
+  30.9,
+  24.8,
+  35.2,
+  31.1,
+  37.1,
+  40.4,
+  22.7,
+  55.7,
+  21.9,
+  36.6,
+  24.4
  ],
  "green_share": {
-  "j03": 0.7,
-  "j07": 0.8,
-  "j08": 0.8,
-  "j10": 0.35,
-  "j02": 0.4,
-  "j09": 0.5,
-  "j06": 0.65
+  "j02": 0.5,
+  "j08": 0.7,
+  "j09": 0.55
  },
  "through_vph": {
-  "fwd": 1170,
-  "rev": 1170
+  "fwd": 1500,
+  "rev": 1500
  },
- "cross_scale": 0.405,
+ "cross_scale": 0.5,
  "tomtom": {
-  "span": "2026-10-09T16:54 .. 2026-10-09T19:32",
+  "span": "2026-10-09T16:54 .. 2026-10-09T20:30",
   "cross": {
    "472147467": {
     "jid": "j02",
-    "vph": 3346,
+    "vph": 2922,
     "split": {
      "fwd": 0.0,
-     "rev": 0.309,
-     "cross": 0.691
+     "rev": 0.357,
+     "cross": 0.643
     },
     "road": "ISB Road East Bound",
     "split_source": "estimated (TomTom turn ratios)"
    },
-   "1256806363#0": {
-    "jid": "j03",
-    "vph": 1902,
-    "split": {
-     "fwd": 0.0,
-     "rev": 0.717,
-     "cross": 0.283
-    },
-    "road": "Jawaharlal Nehru Outer Ring Road North Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
-   "1190308702": {
-    "jid": "j03",
-    "vph": 2881,
-    "split": {
-     "fwd": 0.0,
-     "rev": 0.006,
-     "cross": 0.994
-    },
-    "road": "Gachibowli Miyapur Road South Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
-   "1214225825#0": {
-    "jid": "j07",
-    "vph": 826,
-    "split": {
-     "fwd": 0.855,
-     "rev": 0.033,
-     "cross": 0.112
-    },
-    "road": "Seven Tombs Road East Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
-   "-281276621": {
-    "jid": "j07",
-    "vph": 175,
-    "split": {
-     "fwd": 0.148,
-     "rev": 0.321,
-     "cross": 0.531
-    },
-    "road": "Moti Darwaja Road North Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
-   "1075131089#0": {
-    "jid": "j07",
-    "vph": 37,
-    "split": {
-     "fwd": 0.087,
-     "rev": 0.386,
-     "cross": 0.527
-    },
-    "road": "Janaki Nagar Colony Road 10E 1 South Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
-   "1208987932#0": {
-    "jid": "j07",
-    "vph": 941,
-    "split": {
-     "fwd": 0.328,
-     "rev": 0.184,
-     "cross": 0.488
-    },
-    "road": "Hakimpet Road South Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
-   "313195147#3": {
-    "jid": "j09",
-    "vph": 2072,
-    "split": {
-     "fwd": 0.731,
-     "rev": 0.202,
-     "cross": 0.067
-    },
-    "road": "Inner Ring Road North Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
-   "1298044479#1": {
-    "jid": "j09",
-    "vph": 42,
-    "split": {
-     "fwd": 0.731,
-     "rev": 0.202,
-     "cross": 0.067
-    },
-    "road": "Inner Ring Road North Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
    "309189799": {
     "jid": "j08",
-    "vph": 1694,
+    "vph": 1671,
     "split": {
-     "fwd": 0.383,
-     "rev": 0.544,
-     "cross": 0.073
+     "fwd": 0.462,
+     "rev": 0.477,
+     "cross": 0.061
     },
     "road": "NH163 North Bound",
-    "split_source": "estimated (TomTom turn ratios)"
-   },
-   "393419597": {
-    "jid": "j10",
-    "vph": 1596,
-    "split": {
-     "fwd": 0.0,
-     "rev": 0.992,
-     "cross": 0.008
-    },
-    "road": "SH4 West Bound",
     "split_source": "estimated (TomTom turn ratios)"
    }
   },
@@ -157,107 +54,93 @@
    "j02": {
     "rev": {
      "edge": "313363619#2",
-     "vph": 4878,
+     "vph": 4761,
      "road": "Gachibowli Road West Bound",
-     "delay_s": 9.4
+     "delay_s": 13.3
     },
     "fwd": {
      "edge": "157046148#1",
-     "vph": 3665,
+     "vph": 3494,
      "road": "Professor C R Rao Road East Bound",
-     "delay_s": 26.0
-    }
-   },
-   "j03": {
-    "rev": {
-     "edge": "378333808#0",
-     "vph": 3090,
-     "road": "Gachibowli Road West Bound",
-     "delay_s": 83.1
-    },
-    "fwd": {
-     "edge": "313359707",
-     "vph": 2343,
-     "road": "Gachibowli Road East Bound",
-     "delay_s": 70.5
+     "delay_s": 23.3
     }
    },
    "j04": {
     "rev": {
      "edge": "313364728#0",
-     "vph": 2642,
+     "vph": 2612,
      "road": "Gachibowli Road North Bound",
-     "delay_s": 3.0
+     "delay_s": 2.9
     },
     "fwd": {
      "edge": "313363624",
-     "vph": 6118,
+     "vph": 5698,
      "road": "Gachibowli Road East Bound",
-     "delay_s": 11.8
+     "delay_s": 11.2
     }
    },
    "j06": {
     "rev": {
-     "edge": "693067124#3",
-     "vph": 880,
-     "road": "Mumbai Road West Bound",
-     "delay_s": 14.7
+     "edge": "1311972348",
+     "vph": 3490,
+     "road": "Mumbai Road North Bound",
+     "delay_s": 4.1
     },
     "fwd": {
-     "edge": "1311233185",
-     "vph": 1928,
+     "edge": "1311233183",
+     "vph": 3232,
      "road": "Mumbai Road East Bound",
-     "delay_s": 39.7
+     "delay_s": 40.9
     }
    },
    "j07": {
-    "fwd": {
-     "edge": "728941839#4",
-     "vph": 3377,
-     "road": "Mumbai Road East Bound",
-     "delay_s": 25.7
-    },
     "rev": {
      "edge": "728941829#1",
-     "vph": 4613,
+     "vph": 4419,
      "road": "Mumbai Road West Bound",
-     "delay_s": 6.2
+     "delay_s": 6.1
     }
    },
    "j08": {
     "rev": {
      "edge": "315417462#5",
-     "vph": 3140,
+     "vph": 3081,
      "road": "Mehdipatnam Road West Bound",
-     "delay_s": 73.5
+     "delay_s": 60.3
     },
     "fwd": {
      "edge": "28131038#0",
-     "vph": 5075,
+     "vph": 5090,
      "road": "Mumbai Road East Bound",
-     "delay_s": 42.9
+     "delay_s": 36.6
     }
    },
    "j09": {
     "rev": {
      "edge": "315417462#7",
-     "vph": 3537,
+     "vph": 3495,
      "road": "Mehdipatnam Road West Bound",
-     "delay_s": 65.0
+     "delay_s": 51.6
     },
     "fwd": {
      "edge": "562832903#0",
-     "vph": 4083,
+     "vph": 4238,
      "road": "Mumbai Road East Bound",
-     "delay_s": 116.5
+     "delay_s": 114.3
     }
    },
    "j10": {
+    "rev": {
+     "edge": "393419597",
+     "vph": 1554,
+     "road": "SH4 West Bound",
+     "delay_s": 96.5
+    },
     "fwd": {
      "edge": "313512532#2",
-     "vph": 3887,
+     "vph": 3989,
      "road": "Mehdipatnam Road East Bound",
-     "delay_s": 35.2
+     "delay_s": 41.8
     }
    }
   },
@@ -270,8 +153,8 @@
   "cross_scale": "calibrated as through_vph: share of TomTom Junction Analytics' evening cross-road volumes used for the all-day average"
  },
  "result": {
-  "sim_total_s": 3292,
-  "tomtom_total_s": 3321,
+  "sim_total_s": 3326,
+  "tomtom_total_s": 3373,
   "legs": [
    {
     "leg": "A_lingampally->j01",
@@ -281,108 +164,96 @@
    },
    {
     "leg": "j01->j02",
-    "sim_s": 810,
-    "tomtom_s": 805,
-    "ratio": 1.006
+    "sim_s": 779,
+    "tomtom_s": 801,
+    "ratio": 0.973
    },
    {
     "leg": "j02->j03",
-    "sim_s": 226,
-    "tomtom_s": 222,
-    "ratio": 1.018
+    "sim_s": 236,
+    "tomtom_s": 232,
+    "ratio": 1.017
    },
    {
     "leg": "j03->j04",
-    "sim_s": 202,
-    "tomtom_s": 207,
-    "ratio": 0.976
+    "sim_s": 181,
+    "tomtom_s": 175,
+    "ratio": 1.034
    },
    {
     "leg": "j04->j05",
-    "sim_s": 88,
-    "tomtom_s": 90,
-    "ratio": 0.978
+    "sim_s": 133,
+    "tomtom_s": 138,
+    "ratio": 0.964
    },
    {
     "leg": "j05->j06",
-    "sim_s": 174,
-    "tomtom_s": 167,
-    "ratio": 1.042
+    "sim_s": 163,
+    "tomtom_s": 172,
+    "ratio": 0.948
    },
    {
     "leg": "j06->j07",
-    "sim_s": 259,
-    "tomtom_s": 271,
-    "ratio": 0.956
+    "sim_s": 272,
+    "tomtom_s": 280,
+    "ratio": 0.971
    },
    {
     "leg": "j07->j08",
-    "sim_s": 217,
-    "tomtom_s": 221,
-    "ratio": 0.982
+    "sim_s": 224,
+    "tomtom_s": 232,
+    "ratio": 0.966
    },
    {
     "leg": "j08->j09",
-    "sim_s": 63,
-    "tomtom_s": 57,
-    "ratio": 1.105
+    "sim_s": 56,
+    "tomtom_s": 58,
+    "ratio": 0.966
    },
    {
     "leg": "j09->j10",
-    "sim_s": 424,
-    "tomtom_s": 442,
-    "ratio": 0.959
+    "sim_s": 453,
+    "tomtom_s": 441,
+    "ratio": 1.027
    },
    {
     "leg": "j10->j11",
-    "sim_s": 131,
-    "tomtom_s": 135,
-    "ratio": 0.97
+    "sim_s": 134,
+    "tomtom_s": 140,
+    "ratio": 0.957
    },
    {
     "leg": "j11->B_lakdikapul",
-    "sim_s": 261,
+    "sim_s": 258,
     "tomtom_s": 267,
-    "ratio": 0.978
+    "ratio": 0.966
    }
   ],
   "junction_delays": {
    "j02": {
     "sim_s": 18.0,
-    "target_s": 17.7
-   },
-   "j03": {
-    "sim_s": 42.1,
-    "target_s": 76.8
-   },
-   "j07": {
-    "sim_s": 34.5,
-    "target_s": 6.2
+    "target_s": 18.3
    },
    "j08": {
-    "sim_s": 132.3,
-    "target_s": 58.2
+    "sim_s": 45.7,
+    "target_s": 48.5
    },
    "j09": {
-    "sim_s": 27.0,
+    "sim_s": 20.4,
     "target_s": 41.5
-   },
-   "j10": {
-    "sim_s": 9.3,
-    "target_s": 35.2
    }
   },
-  "total_s_se": 69.2,
+  "total_s_se": 78.0,
   "corridor_volumes": [
    {
     "junction_id": "j02",
     "direction": "A->B",
     "road": "Professor C R Rao Road East Bound",
     "edge": "157046148#1",
-    "tomtom_vph": 3665,
-    "sim_vph": 1248,
-    "tomtom_delay_s": 26.0,
-    "sim_delay_s": 1.9,
+    "tomtom_vph": 3494,
+    "sim_vph": 1520,
+    "tomtom_delay_s": 23.3,
+    "sim_delay_s": 4.1,
     "label": "estimated"
    },
    {
@@ -390,32 +261,10 @@
     "direction": "B->A",
     "road": "Gachibowli Road West Bound",
     "edge": "313363619#2",
-    "tomtom_vph": 4878,
-    "sim_vph": 1060,
-    "tomtom_delay_s": 9.4,
-    "sim_delay_s": 34.1,
-    "label": "estimated"
-   },
-   {
-    "junction_id": "j03",
-    "direction": "A->B",
-    "road": "Gachibowli Road East Bound",
-    "edge": "313359707",
-    "tomtom_vph": 2343,
-    "sim_vph": 1280,
-    "tomtom_delay_s": 70.5,
-    "sim_delay_s": 21.7,
-    "label": "estimated"
-   },
-   {
-    "junction_id": "j03",
-    "direction": "B->A",
-    "road": "Gachibowli Road West Bound",
-    "edge": "378333808#0",
-    "tomtom_vph": 3090,
-    "sim_vph": 724,
-    "tomtom_delay_s": 83.1,
-    "sim_delay_s": 62.5,
+    "tomtom_vph": 4761,
+    "sim_vph": 2020,
+    "tomtom_delay_s": 13.3,
+    "sim_delay_s": 31.9,
     "label": "estimated"
    },
    {
@@ -423,9 +272,9 @@
     "direction": "A->B",
     "road": "Gachibowli Road East Bound",
     "edge": "313363624",
-    "tomtom_vph": 6118,
-    "sim_vph": 1176,
-    "tomtom_delay_s": 11.8,
+    "tomtom_vph": 5698,
+    "sim_vph": 1472,
+    "tomtom_delay_s": 11.2,
     "sim_delay_s": null,
     "label": "estimated"
    },
@@ -434,9 +283,9 @@
     "direction": "B->A",
     "road": "Gachibowli Road North Bound",
     "edge": "313364728#0",
-    "tomtom_vph": 2642,
-    "sim_vph": 1316,
-    "tomtom_delay_s": 3.0,
+    "tomtom_vph": 2612,
+    "sim_vph": 1440,
+    "tomtom_delay_s": 2.9,
     "sim_delay_s": null,
     "label": "estimated"
    },
@@ -444,32 +293,21 @@
     "junction_id": "j06",
     "direction": "A->B",
     "road": "Mumbai Road East Bound",
-    "edge": "1311233185",
-    "tomtom_vph": 1928,
-    "sim_vph": 1688,
-    "tomtom_delay_s": 39.7,
+    "edge": "1311233183",
+    "tomtom_vph": 3232,
+    "sim_vph": 1528,
+    "tomtom_delay_s": 40.9,
     "sim_delay_s": null,
     "label": "estimated"
    },
    {
     "junction_id": "j06",
     "direction": "B->A",
-    "road": "Mumbai Road West Bound",
-    "edge": "693067124#3",
-    "tomtom_vph": 880,
-    "sim_vph": 1744,
-    "tomtom_delay_s": 14.7,
-    "sim_delay_s": null,
-    "label": "estimated"
-   },
-   {
-    "junction_id": "j07",
-    "direction": "A->B",
-    "road": "Mumbai Road East Bound",
-    "edge": "728941839#4",
-    "tomtom_vph": 3377,
-    "sim_vph": 2000,
-    "tomtom_delay_s": 25.7,
+    "road": "Mumbai Road North Bound",
+    "edge": "1311972348",
+    "tomtom_vph": 3490,
+    "sim_vph": 2244,
+    "tomtom_delay_s": 4.1,
     "sim_delay_s": null,
     "label": "estimated"
    },
@@ -478,10 +316,10 @@
     "direction": "B->A",
     "road": "Mumbai Road West Bound",
     "edge": "728941829#1",
-    "tomtom_vph": 4613,
-    "sim_vph": 2012,
-    "tomtom_delay_s": 6.2,
-    "sim_delay_s": 34.5,
+    "tomtom_vph": 4419,
+    "sim_vph": 2216,
+    "tomtom_delay_s": 6.1,
+    "sim_delay_s": null,
     "label": "estimated"
    },
    {
@@ -489,10 +327,10 @@
     "direction": "A->B",
     "road": "Mumbai Road East Bound",
     "edge": "28131038#0",
-    "tomtom_vph": 5075,
-    "sim_vph": 1888,
-    "tomtom_delay_s": 42.9,
-    "sim_delay_s": 16.6,
+    "tomtom_vph": 5090,
+    "sim_vph": 1672,
+    "tomtom_delay_s": 36.6,
+    "sim_delay_s": 24.6,
     "label": "estimated"
    },
    {
@@ -500,10 +338,10 @@
     "direction": "B->A",
     "road": "Mehdipatnam Road West Bound",
     "edge": "315417462#5",
-    "tomtom_vph": 3140,
-    "sim_vph": 1988,
-    "tomtom_delay_s": 73.5,
-    "sim_delay_s": 248.1,
+    "tomtom_vph": 3081,
+    "sim_vph": 1580,
+    "tomtom_delay_s": 60.3,
+    "sim_delay_s": 66.7,
     "label": "estimated"
    },
    {
@@ -511,10 +349,10 @@
     "direction": "A->B",
     "road": "Mumbai Road East Bound",
     "edge": "562832903#0",
-    "tomtom_vph": 4083,
-    "sim_vph": 1804,
-    "tomtom_delay_s": 116.5,
-    "sim_delay_s": 29.8,
+    "tomtom_vph": 4238,
+    "sim_vph": 2236,
+    "tomtom_delay_s": 114.3,
+    "sim_delay_s": 24.2,
     "label": "estimated"
    },
    {
@@ -522,10 +360,10 @@
     "direction": "B->A",
     "road": "Mehdipatnam Road West Bound",
     "edge": "315417462#7",
-    "tomtom_vph": 3537,
-    "sim_vph": 1680,
-    "tomtom_delay_s": 65.0,
-    "sim_delay_s": 24.1,
+    "tomtom_vph": 3495,
+    "sim_vph": 1296,
+    "tomtom_delay_s": 51.6,
+    "sim_delay_s": 16.6,
     "label": "estimated"
    },
    {
@@ -533,18 +371,29 @@
     "direction": "A->B",
     "road": "Mehdipatnam Road East Bound",
     "edge": "313512532#2",
-    "tomtom_vph": 3887,
-    "sim_vph": 2140,
-    "tomtom_delay_s": 35.2,
-    "sim_delay_s": 9.3,
+    "tomtom_vph": 3989,
+    "sim_vph": 1980,
+    "tomtom_delay_s": 41.8,
+    "sim_delay_s": null,
+    "label": "estimated"
+   },
+   {
+    "junction_id": "j10",
+    "direction": "B->A",
+    "road": "SH4 West Bound",
+    "edge": "393419597",
+    "tomtom_vph": 1554,
+    "sim_vph": 1592,
+    "tomtom_delay_s": 96.5,
+    "sim_delay_s": null,
     "label": "estimated"
    }
   ],
-  "teleports": 14,
-  "vehicles_loaded": 19605,
+  "teleports": 0,
+  "vehicles_loaded": 16756,
   "vehicles_not_inserted": 0,
   "probes_arrived": 30,
-  "wall_seconds": 62.1,
+  "wall_seconds": 56.1,
   "inputs": [
    {
     "input": "leg travel times (calibration target)",
@@ -552,9 +401,9 @@
     "source": "TomTom Traffic Stats job 10051304: probe vehicles, July 2026 every day 06:00-23:00"
    },
    {
-    "input": "cross-road volumes at j03, j07, j08, j09, j10",
+    "input": "cross-road volumes at j08",
     "label": "estimated",
-    "source": "TomTom Junction Analytics (model estimates from probe data), mean over 2026-10-09T16:54 .. 2026-10-09T19:32"
+    "source": "TomTom Junction Analytics (model estimates from probe data), mean over 2026-10-09T16:54 .. 2026-10-09T20:30"
    },
    {
     "input": "where cross traffic goes (turn shares)",
@@ -584,7 +433,7 @@
    {
     "input": "corridor green share where calibrated",
     "label": "calibrated",
-    "source": "j02 45%, j03 70%, j06 65%, j07 80%, j08 75%, j09 45%, j10 35%"
+    "source": "j02 40%, j03 70%, j06 65%, j07 80%, j08 80%, j09 50%, j10 35%"
    },
    {
     "input": "vehicle mix",
@@ -599,7 +448,7 @@
    {
     "input": "junction delay on the corridor's approaches (calibration target)",
     "label": "estimated",
-    "source": "TomTom Junction Analytics, mean over 2026-10-09T16:54 .. 2026-10-09T19:32 (evening); capped at each leg's all-day time above 50 km/h free flow (inputs.corridor_volumes: tomtom_delay_s vs sim_delay_s)"
+    "source": "TomTom Junction Analytics, mean over 2026-10-09T16:54 .. 2026-10-09T20:30 (evening); capped at each leg's all-day time above 50 km/h free flow (inputs.corridor_volumes: tomtom_delay_s vs sim_delay_s)"
    },
    {
     "input": "traffic at Lakdikapul (B)",
@@ -608,12 +457,12 @@
    }
   ]
  },
- "run_to_run_sd_s": 75.5,
+ "run_to_run_sd_s": 22.8,
  "seed_totals_s": [
-  3292,
-  3426,
-  3467,
-  3373
+  3326,
+  3334,
+  3377,
+  3354
  ],
- "calibrated_at": "2026-10-09T20:07:44+0530"
+ "calibrated_at": "2026-10-09T20:36:27+0530"
 }
