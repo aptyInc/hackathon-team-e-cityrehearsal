@@ -64,3 +64,16 @@ Added 9 Oct 20:20 (fields added only):
 | Method | Path | Body | Returns |
 |---|---|---|---|
 | GET | /corridor/cases/{case_id}/verify | – | `{case_id, ok, events: [{seq, kind, fingerprint, recomputed, matches, prev_ok}], evidence: [{id (run_id or "brief:<id>"), recorded, recomputed, matches}], method}` (SHA-256 recomputed server-side) |
+
+## Playback, hours, days and weather (added 9-10 Oct 2026, fields added only)
+- POST /corridor/runs body also accepts: `frames_from_min?` (minutes after warm-up), `frames_minutes?` (1..10, default 5), `hour?` (6..23 = hh:00-hh+1:00, needs sim/corridor/calibration_hourly.json; else 422), `day?` ("july" or any `2026-07-DD` with TomTom hourly rows; needs `hour`; else 400/422), `weather?` ("dry" | "light_rain" | "heavy_rain"; omit = as calibrated).
+- C5 results add: `frames_window {from_s, to_s, step_s, from_min, minutes, warmup_s, sim_minutes_total, period_from_s, period_to_s, max_minutes, note}`, `frames_replayed_from?`, `probe_tracks_path`, `probe_tracks {trips, incomplete, points, bytes}`, `time.hour`, `time.day`, `time.weather`, `inputs.hour`, `inputs.day`, `inputs.hour_volume_scale`, `inputs.hour_cap_scale`, `inputs.volume_scale_effective`, `inputs.day_fit {...}`, `inputs.weather {...}` (label "estimated").
+- GET /corridor also returns `tomtom.hourly` {source, data_label, legs, days: [{day, label}], hours: [0..23], by_day: {day: {"H": {total_s, legs_s}}}} and `sim` {hours, days, frames_window, probes, weather, weather_label}.
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| GET | /runs/{run_id}/probes | `?direction=A->B|B->A&number=n` | `[{id, direction, number, depart_s, arrive_s, total_s, legs_s, segments: [{section, vehicle_id, from_id, to_id, from_t, to_t, sim_from_t, sim_to_t}], points: [{t, lon, lat, z, speed, leg}]}]` |
+| GET | /corridor/junctions/geometry | – | `{source, data_label, order, match, junctions: [{id, name, tomtom_id, lon, lat, area, approaches: [{approach_id, name, road_name, direction, frc, length_m, excluded, coordinates}]}]}` |
+| GET | /weather | `?day=july|2026-07-DD&hour=H` (omit hour: all 24 hours) | that hour's weather (Open-Meteo reanalysis, label measured) and the estimated rain effect |
+| GET | /weather/now | – | current conditions at the corridor midpoint (modelled, Open-Meteo forecast), cached 10 min; 503 if unavailable |
+| GET | /weather/factors | – | rain effect estimates (label estimated): headline, by class, what-if settings, per leg |
