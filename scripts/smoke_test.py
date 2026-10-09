@@ -259,6 +259,15 @@ assert wd["rain_class"] in ("dry", "light", "moderate", "heavy") and wd["what_if
 assert len(c.get("/weather", params={"day": "2026-07-21"}).json()["hours"]) == 24
 for bad in ({"day": "2026-08-01", "hour": 3}, {"hour": 24}, {"day": "yesterday"}):
     assert c.get("/weather", params=bad).status_code == 400, bad
+assert c.get("/corridor").json()["sim"]["weather"] == ["dry", "light_rain", "heavy_rain"]
+assert c.post("/corridor/runs", json={"interventions": [], "weather": "snow"}).status_code == 400
+from app.corridor import CorridorRunIn as _WIn, cache_key as _wkey  # noqa: E402
+assert _wkey([], _WIn()) == _wkey([], _WIn(weather="")) != _wkey([], _WIn(weather="heavy_rain")) != _wkey([], _WIn(weather="dry")), \
+    "weather in the cache key (none keeps the old key)"
+assert _wkey([], _WIn(hour=8, weather="heavy_rain")) != _wkey([], _WIn(weather="heavy_rain")), "weather combines with hour"
+wr = c.post("/corridor/runs", json={"interventions": [], "weather": "heavy_rain"}).json()
+assert wr["time"]["weather"] == "heavy_rain" and wr["inputs"]["weather"]["label"].startswith("estimated"), wr["time"]
+assert any("MOCK_SIM" in w for w in wr["warnings"]), "mock must say the weather was not simulated"
 wf = c.get("/weather/factors").json()
 assert wf["label"] == "estimated" and set(wf["what_if"]) == {"dry", "light_rain", "heavy_rain"} and len(wf["per_leg"]) == 12, wf.keys()
 _real_fetch = _wx._fetch_now

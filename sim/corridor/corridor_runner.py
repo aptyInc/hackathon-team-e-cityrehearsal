@@ -978,6 +978,65 @@ def frames_info(window):
             "note": "frames t is simulation seconds; the window can start anywhere from 0 to sim_minutes_total - minutes after warm-up"}
 
 
+# ---------- rain what-if ----------
+RAIN_FACTORS = ROOT / "data/rain/rain_factors.json"
+WEATHER = ("dry", "light_rain", "heavy_rain")
+WEATHER_LABEL = "estimated (rain factors from TomTom hourly x Open-Meteo, July 2026)"
+
+
+def weather_factors(weather, hour=None, day=None):
+    """(speed factor per leg in corridor order, info) for run(weather=...): data/rain/rain_factors.json what_if.
+    The calibration targets (July all-day, a typical July hour, or one day's hour) already contain some rain, so the
+    factor is relative to that: reference time factor of the target / the setting's time factor. Only speed caps
+    change (demand and signals do not). ValueError for an unknown setting or a factors file that does not fit."""
+    if weather not in WEATHER:
+        raise ValueError(f"weather must be one of {', '.join(WEATHER)}, got {weather!r}")
+    f = json.loads(RAIN_FACTORS.read_text())
+    wi = f["what_if"]
+    ids = [p["id"] for p in cn.CORRIDOR["points"]]
+    want = [f"{a}-{b}" for a, b in zip(ids, ids[1:])]
+    if wi["legs"] != want:
+        raise ValueError(f"rain_factors.json legs {wi['legs']} do not match the corridor's legs {want}")
+    s = wi["settings"][weather]
+    refs = wi["reference_time_factors"]
+    if hour is None:
+        ref, basis = refs["all_day"], "July 2026 all-day (06-23) rain mix"
+    elif is_july(day):
+        ref, basis = refs["hour"][str(hour)], f"rain mix of July 2026 at {hour:02d}:00-{hour + 1:02d}:00"
+    else:
+        ref, basis = refs["day_hour"].get(f"{day} {hour:02d}", [1.0] * len(want)), f"the rain on {day} {hour:02d}:00-{hour + 1:02d}:00"
+    factors = [round(r / t, 4) for r, t in zip(ref, s["per_leg_time_factor"])]
+    return factors, {"weather": weather, "meaning": s["meaning"], "rain_class": s["class"], "label": WEATHER_LABEL,
+                     "speed_factor_by_leg": dict(zip(want, factors)), "relative_to": basis,
+                     "expected_trip_time_factor_vs_dry": s["trip_travel_time_factor"],
+                     "expected_trip_time_factor_vs_dry_ci95": s["trip_travel_time_factor_ci95"],
+                     "confidence": f.get("confidence"), "source": "data/rain/rain_factors.json (data/weather/analyse_weather_hourly.py)"}
+
+
+def rain_on_structures(net_path, interventions, factors):
+    """Flyover/underpass decks get the rain factor too (mean of the legs into and out of their junction): the template
+    sets their speed itself, not from the speed caps, and a deck is not dry while the road under it is wet."""
+    ids = [p["id"] for p in cn.CORRIDOR["points"]]
+    prefixes = {}
+    for iv in interventions:
+        if iv["kind"] in ("flyover", "underpass") and iv["junction_id"] in ids[1:-1]:
+            k = ids.index(iv["junction_id"])
+            prefixes[f"{iv['kind']}_{iv['junction_id']}_"] = (factors[k - 1] + factors[k]) / 2
+    if not prefixes:
+        return []
+    tree = ET.parse(net_path)
+    done = []
+    for edge in tree.getroot().iter("edge"):
+        eid = edge.get("id") or ""
+        f = next((v for p, v in prefixes.items() if eid.startswith(p) or eid.startswith(":" + p)), None)
+        if f is not None:
+            for lane in edge.iter("lane"):
+                lane.set("speed", f"{float(lane.get('speed')) * f:.2f}")
+            done.append(eid)
+    tree.write(net_path)
+    return done
+
+
 # ---------- hour of the day ----------
 class HourlyUnavailable(LookupError):
     """run(hour=...) without calibration_hourly.json, or without that hour in it."""
@@ -1131,19 +1190,21 @@ def fit_day_hour(day, hour, cfg, final=None, tol=0.03):
 
 
 def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None, label="July 2026 average, 6 am-11 pm", through=None,
-        cross_scale=None, shares=None, seed=SEED, tomtom=None, frames_window=None, hour=None, day=None, hour_cfg=None):
+        cross_scale=None, shares=None, seed=SEED, tomtom=None, frames_window=None, hour=None, day=None, hour_cfg=None, weather=None):
     """Simulate the corridor with `interventions` (C5 shape); return the C5 corridor result. `caps` (km/h per leg),
     `through` ({"fwd", "rev"} veh/h), `cross_scale` and `shares` ({junction id: corridor green share}) override the
     calibrated values (calibrate() uses them). `frames_window`: (from_s, to_s) of the C1 frames (default FRAMES; see
     frames_window()); it changes nothing else. `hour` (HOURS): that hour's scales on top of the all-day calibration;
     `day`: "july" (default, calibration_hourly.json) or a date like "2026-07-08" (fitted on demand from the July hour,
-    fit_day_hour(), then reused). HourlyUnavailable without the data. `hour_cfg`: explicit scales (fit_day_hour)."""
+    fit_day_hour(), then reused). HourlyUnavailable without the data. `hour_cfg`: explicit scales (fit_day_hour).
+    `weather` ("dry", "light_rain", "heavy_rain"; None = as calibrated): rain what-if, the estimated per-leg speed
+    factors (weather_factors) on the speed caps after the hour's scales; nothing else changes."""
     window = tuple(frames_window) if frames_window else FRAMES[:2]
     run_id = run_id or "rc_" + uuid.uuid4().hex[:8]
     if hour is not None and hour_cfg is None:
         hour_cfg = hour_settings(hour, day)
         if hour_cfg.get("needs_fit"):
-            plain = not interventions and volume_scale == 1.0 and all(x is None for x in (caps, through, cross_scale, shares, tomtom)) and seed == SEED
+            plain = not interventions and volume_scale == 1.0 and all(x is None for x in (caps, through, cross_scale, shares, tomtom, weather)) and seed == SEED
             fit, res = fit_day_hour(day, hour, hour_cfg, {"run_id": run_id, "frames": frames, "frames_window": frames_window} if plain else None)
             if res is not None:
                 return res
@@ -1157,6 +1218,11 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
         volume_scale = volume_scale * float(hour_cfg.get("volume_scale", 1.0))
         caps = [min(HOUR_MAX_KMH, round(c * float(hour_cfg.get("cap_scale", 1.0)), 1)) for c in (caps if caps is not None else cal["cap_kmh"])]
         label = hour_cfg.get("label") or f"{hour_label(hour)} (TomTom hourly calibration)"
+    rain = None
+    if weather:      # after the hour's scales: the factor is relative to that hour's (or day-hour's) own rain
+        rain_f, rain = weather_factors(weather, hour if hour_cfg else None, day)
+        caps = [round(c * f, 2) for c, f in zip(caps if caps is not None else cal["cap_kmh"], rain_f)]
+        label = f"{label} · {weather.replace('_', ' ')} (what-if)"
     through = through or cal["through_vph"]
     base = sumolib.net.readNet(str(NET))
     base_groups = {j: [n.getID() for n in g] for j, g in cn.junction_groups(base).items() if g}
@@ -1167,6 +1233,8 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
     if interventions:
         import corridor as templates   # sim/templates/corridor.py (interventions)
         warnings += templates.apply(net_path, variant, list(interventions))
+        if rain:
+            rain["structures_slowed"] = rain_on_structures(variant, list(interventions), rain_f)
     else:   # the baseline goes through the same netconvert rebuild as every variant, so they differ only by the change
         cn.rebuild(net_path, variant, lambda prefix: None)
     net_path = variant
@@ -1229,6 +1297,7 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
         "run_id": run_id, "variant_id": "baseline" if not interventions else "+".join(f"{i['kind']}_{i['junction_id']}" for i in interventions),
         "corridor_id": CORRIDOR_ID,
         "time": {"window": (hour_cfg.get("window") or hour_label(hour)) if hour_cfg else "2026-07", "minutes": PROBE_SPAN // 60, "label": label}
+                | ({"weather": weather} if weather else {})
                 | ({"hour": hour, "day": "july" if is_july(day) else day,
                     "data_label": ("calibrated to TomTom's hourly leg times (" if is_july(day) else "July hour adjusted to TomTom's trip time for ")
                     + str(hour_cfg.get("period", "July 2026")) + (")" if is_july(day) else "")} if hour_cfg else {}),
@@ -1254,7 +1323,11 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                    "through_vph_by_direction": {"A->B": round(through["fwd"] * volume_scale), "B->A": round(through["rev"] * volume_scale)},
                    "cross_vph_per_approach": round(CROSS_VPH * volume_scale),
                    "corridor_volumes": corridor_volumes(outdir, secs, info["corridor"], approaches),
-                   "sources": sources_note(cal, info) + ([{"input": f"time of day {hour_cfg.get('window') or hour_label(hour)}", "label": "calibrated",
+                   **({"weather": rain} if rain else {}),
+                   "sources": sources_note(cal, info) + ([{"input": f"weather what-if: {weather}", "label": "estimated",
+                                                           "source": f"{WEATHER_LABEL}: speed caps x per-leg factor relative to "
+                                                                     f"{rain['relative_to']}; demand and signals unchanged"}] if rain else [])
+                   + ([{"input": f"time of day {hour_cfg.get('window') or hour_label(hour)}", "label": "calibrated",
                                                            "source": f"traffic x{hour_cfg.get('volume_scale', 1.0)}, speed caps x{hour_cfg.get('cap_scale', 1.0)} on the all-day "
                                                                      f"calibration, fitted to TomTom {hour_cfg.get('period', 'hourly leg times')} "
                                                                      + ("(calibration_hourly.json)" if is_july(day) else
