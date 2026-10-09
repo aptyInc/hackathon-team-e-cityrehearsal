@@ -227,7 +227,8 @@ def signal_plans(net_path: Path, share=CORRIDOR_GREEN_SHARE, yellow=YELLOW_S):
     elsewhere). Links that start inside a junction (the median gap of a
     divided road, the circulating lanes of Gachibowli Circle) never get a red: in their own stage they have priority,
     in the other stage they give way (SUMO's 'g') to traffic with a green, so vehicles already in the junction can always
-    clear it. Turns across oncoming traffic also give way.
+    clear it. Turns across oncoming traffic also give way, and so do links merging into a lane another green link
+    feeds (the corridor's own, else the straight-on one, keeps priority).
     netconvert's own plans for these clusters (up to 10 stages at j03, 6 at j07, 8 s ambers) left the corridor about a
     third of the cycle and stopped vehicles inside the junction, which gridlocked the corridor. Returns {tls id: jid}."""
     net = sumolib.net.readNet(str(net_path), withPrograms=True)
@@ -235,7 +236,8 @@ def signal_plans(net_path: Path, share=CORRIDOR_GREEN_SHARE, yellow=YELLOW_S):
     on_path = {e.getID() for e in fwd + rev}
     owner = {c.getTLSID(): jid for jid, nodes in junction_groups(net).items() for n in nodes
              for e in n.getIncoming() for lane in e.getLanes() for c in lane.getOutgoing() if c.getTLSID()}
-    links = {}                  # tls id -> {link index: (kind, gives way)}
+    links = {}                  # tls id -> {link index: (stage, inside the junction, gives way)}
+    merges = {}                 # tls id -> {link index: (target lane, rank)}: rank 0 keeps 'G' where links merge
     for tls_id in owner:
         conns = net.getTLS(tls_id).getConnections()
         ids = {i.getEdge().getToNode().getID() for i, _, _ in conns}     # the nodes this signal controls
@@ -248,6 +250,8 @@ def signal_plans(net_path: Path, share=CORRIDOR_GREEN_SHARE, yellow=YELLOW_S):
             # route never does (where the road bends right at a junction, SUMO calls it a turn too)
             across = c is not None and c.getDirection() in ("r", "t") and not (e.getID() in on_path and out_lane.getEdge().getID() in on_path)
             links.setdefault(tls_id, {})[idx] = (stage, inner, across)
+            on = e.getID() in on_path and out_lane.getEdge().getID() in on_path
+            merges.setdefault(tls_id, {})[idx] = (out_lane.getID(), 0 if on else 1 if c is not None and c.getDirection() == "s" else 2)
     green = (SIGNAL_CYCLE_S - 2 * yellow)
     text = Path(net_path).read_text()
 
@@ -267,8 +271,15 @@ def signal_plans(net_path: Path, share=CORRIDOR_GREEN_SHARE, yellow=YELLOW_S):
         def amber(s, i):
             stage, inner, _ = k.get(i, ("", True, True))
             return "y" if stage == s and (not inner or INNER_WAIT == "r") else go(s, i)
+        def merged(state):     # two 'G' links into one lane: the corridor (else straight-on) link keeps it, the rest give way
+            state, mk, best = list(state), merges.get(tl.get("id"), {}), {}
+            for i in sorted((i for i in range(n) if state[i] == "G" and i in mk), key=lambda i: mk[i][1]):
+                if mk[i][0] in best:
+                    state[i] = "g"
+                best.setdefault(mk[i][0], i)
+            return "".join(state)
         states = [f(stage) for stage in ("corridor", "cross") for f in
-                  (lambda s: "".join(go(s, i) for i in range(n)), lambda s: "".join(amber(s, i) for i in range(n)))]
+                  (lambda s: merged("".join(go(s, i) for i in range(n))), lambda s: merged("".join(amber(s, i) for i in range(n))))]
         phases = "".join(f'        <phase duration="{d}" state="{s}"/>\n' for s, d in zip(states, durations))
         return (f'<tlLogic id="{tl.get("id")}" type="static" programID="{tl.get("programID")}" offset="0">\n'
                 f'{phases}    </tlLogic>')
