@@ -2,6 +2,12 @@
  "note": "TomTom Junction Analytics junctions on the Lingampally -> Lakdikapul corridor. One trial account per junction; each account's key lives in .env under key_env (never in the repo). Add a junction by adding a line here and its key to .env.",
  "junctions": [
   {
+   "corridor_id": "j03",
+   "name": "Gachibowli Circle",
+   "tomtom_id": "6ac8e1ad596e57ce4e75cd62",
+   "key_env": "TOMTOM_JA_KEY_J03"
+  },
+  {
    "corridor_id": "j07",
    "name": "Tolichowki",
    "tomtom_id": "6ac8c577b7250f79f2ffd2ad",
