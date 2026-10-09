@@ -89,6 +89,15 @@ else:
         assert hd.json()["time"]["day"] == "2026-07-08" and hd.json()["time"]["window"].startswith("2026-07-08 08:00"), hd.json()["time"]
     else:
         assert "not available yet" in hd.json()["detail"], hd.text[:200]
+    import app.corridor as _cor  # noqa: E402   without the hourly calibration: a clear 422
+    _cor.CALIBRATION_HOURLY = Path(tempfile.mkdtemp()) / "missing.json"
+    try:
+        r = c.post("/corridor/runs", json={"interventions": [], "hour": 8})
+        assert r.status_code == 422 and "hourly data not available yet" in r.json()["detail"], r.text[:200]
+    finally:
+        _cor.CALIBRATION_HOURLY = _HOURLY
+    r = c.post("/corridor/runs", json={"interventions": [], "hour": 8, "day": "2026-06-30"})
+    assert r.status_code == 422 and "not available yet" in r.json()["detail"], r.text[:200]
 assert c.get("/runs/rc_nothere/probes").status_code == 404
 pr = c.get(f"/runs/{base['run_id']}/probes")
 assert pr.status_code in (200, 404), pr.text[:200]
