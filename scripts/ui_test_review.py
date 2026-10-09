@@ -317,7 +317,7 @@ with sync_playwright() as p:
     pg.fill("#case-by", "Planner K.")
     pg.click("#case-send")
     check(wait_for(pg, "() => !document.getElementById('case').hidden", 5), "case shown")
-    check(be.posts("/corridor/cases") == [{"title": "Flyover, 2 lanes, 600 m at Tolichowki", "run_ids": ["r_agent_base", "r_agent_fly"], "brief_id": "b_1", "raised_by": "Planner K."}],
+    check(be.posts("/corridor/cases") == [{"title": "Flyover, 2 lanes, 600 m at Tolichowki", "run_ids": ["r_agent_base", "r_agent_fly"], "brief_id": "b_1", "created_by": "Planner K."}],
           f"POST /corridor/cases {be.posts('/corridor/cases')}")
     check(pg.inner_text("#case .stages li.now") == "Proposed" and pg.is_hidden("#dec-new"), "stage Proposed")
     fps = pg.eval_on_selector_all("#case .caseruns .fp", "els => els.map(e => [e.textContent, e.title])")

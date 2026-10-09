@@ -320,16 +320,22 @@ window.planner = (() => {
       const id = o.run_id || r.run_id, cached = runCache[id] || (base?.run_id === id ? base : changed?.run_id === id ? changed : null);
       const ivs = o.interventions || r.interventions || cached?.interventions;
       return { run_id: id, volume_scale: Number(o.volume_scale ?? r.inputs?.volume_scale ?? cached?.inputs?.volume_scale ?? 1),
-               total_s: o.total_s ?? r.journey?.total_s ?? cached?.journey?.total_s, ivs, changes: ivs ? ivs.length > 0 : /base|today/i.test(o.role || o.variant_id || r.variant_id || "") ? false : null,
+               total_s: o.total_s ?? (o.total_min != null ? o.total_min * 60 : null) ?? r.journey?.total_s ?? cached?.journey?.total_s, ivs, changes: ivs ? ivs.length > 0 : /base|today/i.test(o.role || o.variant_id || r.variant_id || "") ? false : null,
                fingerprint: o.fingerprint || r.fingerprint || fpOf(id, k), by: o.run_by || o.reviewer, at: o.created_at };
     });
   }
   function timeline(c) {
     const ev = c.events || c.history || c.timeline || c.log;
-    if (Array.isArray(ev) && ev.length) return ev.map(e => ({ stage: e.stage || e.type || e.action, who: e.by || e.actor || e.reviewer || e.decider || e.user || e.who,
-      at: e.at || e.created_at || e.time, decision: e.decision,
-      what: e.what || e.summary || [e.decision && decisionText(e.decision), e.volume_scale && `Re-tested at ${pct(e.volume_scale)} traffic`, e.reason || e.note].filter(Boolean).join(": "),
-      fp: e.fingerprint || e.sha256 }));
+    const KIND = { proposed: "proposed", review: "in_review", decision: "decided" };   // the backend's event kinds
+    if (Array.isArray(ev) && ev.length) return ev.map(e => {
+      const b = e.body && typeof e.body === "object" ? e.body : {}, t = e.at || e.created_at || e.time || e.created;
+      const decision = e.decision || b.decision, vol = e.volume_scale ?? b.volume_scale;
+      return { stage: e.stage || e.type || e.action || KIND[e.kind] || e.kind, who: e.by || e.actor || e.reviewer || e.decider || e.user || e.who,
+        at: typeof t === "number" && t < 1e12 ? t * 1000 : t, decision,   // epoch seconds -> ms
+        what: e.what || e.summary || [b.title && `Sent for review: ${b.title}`, decision && decisionText(decision), vol != null && `Re-tested at ${pct(vol)} traffic`,
+                                      e.reason || b.reason || e.note || b.note].filter(Boolean).join(": "),
+        fp: e.fingerprint || e.sha256 };
+    });
     const local = localLog[c.case_id] || [], out = [];
     const made = local.find(x => x.stage === "proposed");
     out.push({ stage: "proposed", who: c.created_by || c.raised_by || made?.who, at: c.created_at || made?.at,
@@ -404,7 +410,7 @@ window.planner = (() => {
     const title = $("case-title").value.trim() || defaultTitle() || "Corridor change";
     const who = $("case-by").value.trim();
     if (who) store.set("cr_proposer", who);
-    const body = { title, run_ids: [base.run_id, changed.run_id], ...(lastBrief ? { brief_id: lastBrief } : {}), ...(who ? { raised_by: who } : {}) };
+    const body = { title, run_ids: [base.run_id, changed.run_id], ...(lastBrief ? { brief_id: lastBrief } : {}), ...(who ? { created_by: who } : {}) };
     caseCall("/corridor/cases", body, "Recording the proposal", { stage: "proposed", who });
   }
 
