@@ -247,7 +247,7 @@ with sync_playwright() as p:
         check([l[0] for l in links] == [x[1] for x in PAGES] and [l[1] for l in links] == ["Home", "Corridor", "YMCA close-up", "Decisions", "About the data"],
               f"{pid}: 5 links in order: {[l[1] for l in links]}")
         check([l[0] for l in links if l[2] == "page"] == [page], f"{pid}: current page marked: {[l[0] for l in links if l[2] == 'page']}")
-        check(pg.inner_text("#cr-nav .crn-brand").strip() == "CityRehearsal" and pg.get_attribute("#cr-nav .crn-brand", "href") == "index.html", f"{pid}: wordmark links home")
+        check(pg.inner_text("#cr-nav .crn-brand").strip() == "Terascope AI" and pg.get_attribute("#cr-nav .crn-brand", "href") == "index.html", f"{pid}: wordmark links home")
         pill = pg.eval_on_selector("#cr-nav .crn-pill", "e => [e.dataset.state, e.innerText, e.title]")
         check(pill[0] == "real" and pill[1] == "Real simulation", f"{pid}: pill {pill[:2]}")
         nav = rect(pg, "#cr-nav")

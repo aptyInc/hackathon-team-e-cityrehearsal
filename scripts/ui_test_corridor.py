@@ -511,7 +511,7 @@ with sync_playwright() as p:
     s = strips(pg)
     check(s[0][2] == "49 min" and "Sun 5 Jul" in s[0][3], f"Sunday 5 Jul: {s[0][2]}, {s[0][3]}")
     check("Sundays (5 and 12 Jul)" in pg.inner_text("#when-note"), f"note: {pg.inner_text('#when-note')[:110]}")
-    check("Changes the measured (TomTom) row only; the simulation is the typical July day." in pg.inner_text("#when-note"), "date note: only the measured row changes")
+    check("The day and hour set both the measured (TomTom) row and the simulation." in pg.inner_text("#when-note"), "date note: the day sets the measured row and the simulation (this API takes day + hour)")
     pg.select_option("#when", "2026-07-08..2026-07-08 8:00-20:00"); pg.wait_for_timeout(300)
     check(strips(pg)[0][2] == "65 min", f"Wed 8 Jul weekday: {strips(pg)[0][2]}")
 
@@ -698,7 +698,7 @@ with sync_playwright() as p:
     check("estimated by TomTom" in pg.inner_text("#live-note") and "every 2 s" in pg.inner_text("#live-note"), f"note: {pg.inner_text('#live-note')}")
     bs = badges(pg)
     check([b[:3] for b in bs] == [["7", "33 s", "mid"], ["8", "108 s", "bad"], ["9", "178 s", "bad"]], f"pins 7, 8, 9 carry their worst delay now, coloured vs usual: {[b[:3] for b in bs]}")
-    check(bs[0][3] == '"33 s"' and bs[0][4] == "rgb(178, 106, 0)" and bs[1][4] == "rgb(176, 0, 32)", f"badge drawn on the pin: {bs[0][3:]} / {bs[1][3:]}")
+    check(bs[0][3] == '"33 s"' and bs[0][4] == "rgb(245, 136, 50)" and bs[1][4] == "rgb(226, 61, 39)", f"badge drawn on the pin: {bs[0][3:]} / {bs[1][3:]}")
     check("Mehdipatnam Road West Bound" not in pg.get_attribute(".pin[data-id=j08]", "title") and "worst delay 108 s on NH163 North Bound (usually 80 s)" in pg.get_attribute(".pin[data-id=j08]", "title"),
           f"pin tooltip: {pg.get_attribute('.pin[data-id=j08]', 'title')}")
     q = pg.evaluate("() => { const l = overlay._deck.props.layers.find(l => l.id === 'live-queues'); return l ? l.props.data.map(d => [d.jid, d.name, Math.round(d.path.slice(1).reduce((s, p, i) => s + metres(d.path[i], p), 0)), d.path[d.path.length - 1]]) : null; }")
@@ -812,7 +812,7 @@ with sync_playwright() as p:
     check(card.startswith("Test car fwd-1 · 32 km/h · stretch ") and " → " in card and "min since Lingampally" in card and "SIMULATED" in card, f"info card: {card!r}")
     hl = layer_props(pg, "vehicles", "l => { const v = l.props.data.find(v => v.id === 'probe_fwd_1'); return v ? l.props.getFillColor(v) : null; }")
     trail = pg.evaluate("() => { const l = overlay._deck.props.layers.find(l => l.id === 'follow-trail'); return l ? l.props.data[0].path.length : 0; }")
-    check(hl == [255, 196, 0] and layer(pg, "follow-halo") == 1 and trail >= 2, f"followed car highlighted: colour {hl}, halo, trail of {trail} points")
+    check(hl == [255, 252, 254] and layer(pg, "follow-halo") == 1 and trail >= 2, f"followed car highlighted: colour {hl}, halo, trail of {trail} points")
     opts = pg.eval_on_selector_all("#follow-pick option", "els => els.map(e => e.textContent)")
     check("fwd-1 · towards Lakdikapul · leaves minute 10" in opts and "rev-1 · towards Lingampally · leaves minute 11" in opts and pg.input_value("#follow-pick") == "probe_fwd_1",
           f"test cars listed with direction and departure, the followed one selected: {opts}")
@@ -866,7 +866,7 @@ with sync_playwright() as p:
     if not pg.is_disabled("#t-night"):
         pg.check("#t-night"); pg.wait_for_timeout(800)
         fill = layer_props(pg, "buildings", "l => l.props.getFillColor")
-        check(fill == [70, 82, 100], f"night view: darker buildings {fill}")
+        check(fill == [74, 74, 74], f"night view: darker buildings {fill}")
         pg.screenshot(path=str(OUT / "corridor_O_night.png"))
         pg.uncheck("#t-night"); pg.wait_for_timeout(800)
     pg.click("#overview"); pg.wait_for_timeout(1500)

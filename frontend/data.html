@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CityRehearsal — About the data</title>
+<title>Terascope AI · About the data</title>
 <!-- Owner: Frontend. What is REAL vs SIMULATED, in plain language, and how well the simulation matches TomTom.
      Reads (optional; the page keeps its written sections when the API is offline): GET /corridor (TomTom periods),
      GET /corridor/junctions/live (junctions reporting), GET /corridor/calibration (sim vs TomTom per stretch, knobs, inputs).
@@ -11,7 +11,8 @@
 <link href="app.css" rel="stylesheet" />
 <style>
   .pg-h { padding-top: 6px; }
-  .pg-h h1 { font-size: 34px; letter-spacing: -.04em; }
+  .pg-h h1 { font-size: 40px; font-weight: 800; letter-spacing: -.01em; }
+  .src-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .pg-h p { margin: 8px 0 0; max-width: 760px; color: var(--tx-2); font-size: 15px; }
   .toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 0; font-size: 13px; }
   .toc a { color: var(--tx-2); text-decoration: none; height: 28px; padding: 0 11px; display: inline-flex; align-items: center; border-radius: 99px;
@@ -22,15 +23,16 @@
   .legend dt { white-space: nowrap; } .legend dd { margin: 0; }
   .legend .tag { margin-left: 0; }
   .sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-  .src h3 { font-size: 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
+  .src h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .01em; color: var(--paper-tx); display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
   .src h3 .tag { margin-left: 0; }
-  .src p { margin: 8px 0 0; font-size: 13.5px; color: var(--tx-2); }
+  .src p { margin: 10px 0 0; font-size: 13px; line-height: 1.7; }
+  .src.light { padding: 24px 26px; }
   .src .labs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; font-size: 12px; align-items: center; }
   .src .key { font: 600 30px/1.1 var(--f); letter-spacing: -.04em; margin-top: 12px; font-variant-numeric: tabular-nums; }
   .src .key small { font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--tx-3); }
   .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
   .chips span { font-size: 12px; background: var(--real-bg); color: var(--real); padding: 2px 9px; border-radius: 99px; box-shadow: inset 0 0 0 1px var(--real-line); }
-  .chips span.old { background: var(--warn-bg); color: var(--warn); box-shadow: inset 0 0 0 1px rgba(251,191,36,.35); }
+  .chips span.old { background: var(--warn-bg); color: var(--warn); box-shadow: inset 0 0 0 1px oklch(0.837 0.164 84 / .35); }
   a.term { color: inherit; text-decoration: underline dotted var(--tx-3); text-underline-offset: 3px; }
   a.term:hover { color: var(--real); }
   .fit { display: flex; flex-wrap: wrap; gap: 8px 32px; align-items: baseline; }
@@ -59,7 +61,8 @@
 <script src="nav.js" data-page="data"></script>
 <main class="wrap">
   <div class="pg-h">
-    <h1>About the data</h1>
+    <p class="eyebrow" style="margin:0 0 12px">Measured, estimated or assumed</p>
+    <h1>About the data</h1><div class="tbar" aria-hidden="true"></div>
     <p>Every number on these screens is either <b>measured</b> in the real world or <b>produced by our simulation</b>. This page says which is which,
       where each one comes from, and how far to trust it.</p>
     <div class="toc"><a href="#tags">How to read the tags</a><a href="#real">What is real</a><a href="#sim">How well the simulation matches</a><a href="#assumed">What is assumed</a><a href="#glossary">Words used here</a></div>
@@ -82,16 +85,16 @@
 
   <h2 class="sec-h" id="real">What is real: the sources</h2>
   <div class="sources">
-    <div class="card src" id="src-traffic-stats">
-      <h3>TomTom Traffic Stats <span class="tag real">REAL</span></h3>
+    <div class="card src light" id="src-traffic-stats">
+      <div class="src-h"><h3>TomTom Traffic Stats <span class="tag real">REAL</span></h3><span class="badge-ic"><i data-lucide="timer"></i></span></div>
       <div class="key" id="ts-key">58 min <small>Lingampally → Lakdikapul by car, a typical July day</small></div>
       <p>Historic travel times and speeds on our route, from TomTom's <a class="term" href="#g-probe">probe vehicles</a>: July 2026, every day 06:00–23:00,
         split into the 12 <a class="term" href="#g-leg">stretches</a> between junctions. This is what the simulation is calibrated against.</p>
       <p id="ts-range" class="muted"></p>
       <div class="labs"><span class="lab measured">measured</span><span class="muted">used on: corridor trip strip (the REAL bar), calibration below</span></div>
     </div>
-    <div class="card src" id="src-junctions">
-      <h3>TomTom Junction Analytics <span class="tag real">REAL</span></h3>
+    <div class="card src light" id="src-junctions">
+      <div class="src-h"><h3>TomTom Junction Analytics <span class="tag real">REAL</span></h3><span class="badge-ic"><i data-lucide="radio-tower"></i></span></div>
       <div class="key" id="ja-key">– <small>junctions reporting live</small></div>
       <p>Minute-by-minute data for single junctions: the <b>delay</b> on each <a class="term" href="#g-approach">approach</a> (measured from GPS trips),
         and the <b>queue length</b> and <b>vehicles per hour</b>, which are TomTom's model <b>estimates</b>, not counts. Also which way traffic turns.</p>
@@ -99,21 +102,21 @@
       <p id="ja-note" class="muted">Loading live data…</p>
       <div class="labs"><span class="lab measured">delay: measured</span><span class="lab estimated">queue, volume: estimated</span></div>
     </div>
-    <div class="card src" id="src-osm">
-      <h3>OpenStreetMap roads <span class="tag mix">MAP</span></h3>
+    <div class="card src light" id="src-osm">
+      <div class="src-h"><h3>OpenStreetMap roads <span class="tag mix">MAP</span></h3><span class="badge-ic"><i data-lucide="map"></i></span></div>
       <p>The road network the simulation drives on: lanes, speed limits, one-way streets and junction shapes, from the free, volunteer-made
         OpenStreetMap. It is a reference map, not a measurement: where it is wrong (a missing lane, an odd junction shape), the simulation is too.</p>
       <div class="labs"><span class="lab other">reference</span><span class="muted">used on: every simulation, the route line on the corridor map</span></div>
     </div>
-    <div class="card src" id="src-buildings">
-      <h3>Overture building footprints <span class="tag mix">MAP</span></h3>
+    <div class="card src light" id="src-buildings">
+      <div class="src-h"><h3>Overture building footprints <span class="tag mix">MAP</span></h3><span class="badge-ic"><i data-lucide="building-2"></i></span></div>
       <p>About 16,400 building outlines along the corridor (Overture Maps, release 2026-09-23.1) and 3,370 around YMCA Circle. They are only used to
         draw the 3D city. Most buildings have no recorded height, so heights are <b>assumed</b> from the footprint size (floors × 3.2 m).
         The simulation does not use them.</p>
       <div class="labs"><span class="lab counted">footprints: mapped</span><span class="lab assumed">heights: mostly assumed</span></div>
     </div>
-    <div class="card src" id="src-rain">
-      <h3>Open-Meteo rain <span class="tag real">REAL</span></h3>
+    <div class="card src light" id="src-rain">
+      <div class="src-h"><h3>Open-Meteo rain <span class="tag real">REAL</span></h3><span class="badge-ic"><i data-lucide="cloud-rain"></i></span></div>
       <div class="key">≈ +5% <small>trip time while it is raining (uncertain)</small></div>
       <p>Hourly rainfall for July 2026 at three points on the route (a weather <a class="term" href="#g-reanalysis">reanalysis</a>, not a rain gauge), compared with
         TomTom's daily trip times for 1–15 July. Rainy weekdays were <b>not measurably slower</b> as a whole (61.0 vs 62.0 min). Our best estimate is about
@@ -121,8 +124,8 @@
         One stretch, Gachibowli Circle → Biodiversity junction, was slower on every rainy day compared.</p>
       <div class="labs"><span class="lab measured">rain: measured (modelled)</span><span class="lab estimated">effect on traffic: estimated</span></div>
     </div>
-    <div class="card src" id="src-study">
-      <h3>YMCA Circle traffic count, 2020 study <span class="tag real">REAL</span></h3>
+    <div class="card src light" id="src-study">
+      <div class="src-h"><h3>YMCA Circle traffic count, 2020 study <span class="tag real">REAL</span></h3><span class="badge-ic"><i data-lucide="clipboard-list"></i></span></div>
       <p>Vehicles per hour by type on each road into YMCA Circle, from a published study (IJRAR, June 2020). Used for the YMCA close-up's traffic mix.
         Traffic has grown since: the 2.0× growth to 2026 is <b>estimated</b> by matching TomTom's speeds.</p>
       <div class="labs"><span class="lab counted">counts: counted</span><span class="lab estimated">growth to 2026: estimated</span></div>
@@ -161,6 +164,7 @@
   </div>
 </main>
 
+<script src="vendor/lucide.min.js"></script>
 <script src="app.js"></script>
 <script>
 const { $, esc, get, when, hhmm, pointName, POINTS, lab, apiProblem } = CR;
@@ -174,7 +178,7 @@ const fitClass = d => Math.abs(d) <= 10 ? "good" : Math.abs(d) <= 20 ? "fair" : 
 const signed = (x, d = 0) => `${x > 0 ? "+" : x < 0 ? "−" : "±"}${Math.abs(x).toFixed(d)}`;
 const mins = s => (s / 60).toFixed(1);
 function diffBar(d) {   // a small bar from the middle: right = simulation slower, left = faster; full width = ±40%
-  const w = Math.min(50, Math.abs(d) / 40 * 50), col = { good: "#34d399", fair: "#fbbf24", poor: "#fb7185" }[fitClass(d)];
+  const w = Math.min(50, Math.abs(d) / 40 * 50), col = { good: "#35c177", fair: "#fcbf26", poor: "#fa6b54" }[fitClass(d)];
   return `<div class="bar" aria-hidden="true"><span class="mid0"></span><i style="${d >= 0 ? "left:50%" : `left:${50 - w}%`};width:${w}%;background:${col}"></i></div>`;
 }
 
@@ -288,6 +292,7 @@ loadCorridor().then(loadCalibration);   // plain junction names first
 loadLive();
 if (window.crNav) { let was = null; crNav.onChange(s => { if (was === "offline" && s !== "offline") { loadCorridor().then(loadCalibration); loadLive(); } was = s; }); }
 if (location.hash) setTimeout(() => { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }, 600);
+if (window.lucide) lucide.createIcons();
 </script>
 </body>
 </html>

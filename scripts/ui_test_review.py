@@ -1,11 +1,11 @@
-"""Headless browser test of "Ask CityRehearsal" and "4 · Decision" on the corridor page (frontend/corridor.html + planner.js).
+"""Headless browser test of "Ask Terascope AI" and "4 · Decision" on the corridor page (frontend/corridor.html + planner.js).
 
 Every backend endpoint is mocked in the browser (shapes agreed with the agent workstream, 9 Oct):
   POST /agent/chat?async=1 -> {session_id, turn_id}; GET /agent/turns/{id} -> {status, steps, reply?, run_ids?, brief_id?, error?}
   GET /briefs/{id}; GET /runs/{id} (C5); POST /corridor/cases, /corridor/cases/{id}/review, /corridor/cases/{id}/decide; GET /corridor/cases
 
 Cases
-  A  Load: chat closed, "Ask CityRehearsal" button, step 4 waiting for runs, earlier-cases list hidden while empty
+  A  Load: chat closed, "Ask Terascope AI" button, step 4 waiting for runs, earlier-cases list hidden while empty
   B  Chat (async): suggestions, steps shown live ("Running: …" with a ticking clock), reply markdown rendered safely
      (headings, bold, lists, table; HTML escaped), a Show-on-map button per run, session kept for the next question,
      a failed turn shown with its steps
@@ -246,7 +246,7 @@ with sync_playwright() as p:
     pg = open_page(b, {"width": 1500, "height": 950}, be)
 
     case = "A load"; print(case)
-    check(pg.is_hidden("#chat") and pg.is_visible("#ask-open") and pg.inner_text("#ask-open") == "Ask CityRehearsal", "chat closed, Ask CityRehearsal button shown")
+    check(pg.is_hidden("#chat") and pg.is_visible("#ask-open") and pg.inner_text("#ask-open") == "Ask Terascope AI", "chat closed, Ask Terascope AI button shown")
     check(pg.is_visible("#dec-new") and pg.is_disabled("#case-send") and "Simulate today and with changes first" in pg.inner_text("#case-why"), f"step 4 waits for runs: {pg.inner_text('#case-why')}")
     check("append-only" in pg.inner_text("#dec-new") and "RECORDED" in pg.inner_text("#left"), "step 4 says decisions are recorded and append-only")
     check(pg.is_hidden("#case-list-box"), "no earlier cases: list hidden")

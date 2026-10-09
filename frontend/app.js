@@ -1,4 +1,4 @@
-// CityRehearsal: small helpers shared by the content pages (index.html, decisions.html, data.html). Owner: Frontend.
+// Terascope AI: small helpers shared by the content pages (index.html, decisions.html, data.html). Owner: Frontend.
 // window.CR = {API, $, esc, get, when, hhmm, pct, POINTS, pointName, ivText, STAGES, stageName, decisionText, fp, lab, apiProblem}
 window.CR = (() => {
   const API = window.CR_API || "http://localhost:8000";

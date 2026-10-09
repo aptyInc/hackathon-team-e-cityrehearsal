@@ -3,78 +3,94 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CityRehearsal</title>
-<!-- Owner: Frontend. Home page: what CityRehearsal is, the corridor and YMCA screens, the decision log and a live TomTom strip.
+<title>Terascope AI · Test it in a twin</title>
+<!-- Owner: Frontend. Home page: what Terascope AI is, the corridor and YMCA screens, the decision log and a live TomTom strip.
      Reads (all optional, the page degrades to saved numbers when the API is offline): GET /corridor (tomtom.periods, points),
      GET /corridor/junctions/live, GET /corridor/cases. -->
 <link href="app.css" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400..800&display=swap" rel="stylesheet" />
 <style>
-  .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: center; padding: 22px 0 26px; }
-  .hero.has-viz { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
-  .hero > div:first-child { max-width: 760px; }
-  .eyebrow { margin: 0; font: 600 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--brand); display: flex; align-items: center; gap: 10px; }
-  .hero h1 { font-size: 50px; line-height: 1.03; letter-spacing: -.045em; margin: 14px 0 16px; font-weight: 600;
-    background: linear-gradient(180deg, #fff 35%, #9aa6b8); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .lede { font-size: 16px; line-height: 1.6; margin: 0 0 24px; color: var(--tx-2); max-width: 540px; }
-  .lede b { color: var(--tx); font-weight: 500; }
-  .cta { display: flex; gap: 10px; flex-wrap: wrap; }
-  .cta .btn { height: 42px; padding: 0 18px; font-size: 14px; border-radius: 12px; }
-  .viz { position: relative; height: 360px; padding: 0; overflow: hidden; }
-  .viz svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .viz .ov { position: absolute; left: 16px; right: 16px; top: 14px; display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  body { background: linear-gradient(oklch(0.26 0 0 / .45), oklch(0.26 0 0 / .8) 620px, oklch(0.26 0 0 / .97) 1100px),
+    url("vendor/img/road-network.jpg") center top / 1700px auto no-repeat, var(--bg); }
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; align-items: center; padding: 48px 0 40px; }
+  .hero.has-viz { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  .hero > div:first-child { max-width: 680px; }
+  .kicker-line { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 11px/1.3 var(--f); letter-spacing: .03em; text-transform: uppercase; color: var(--tx); }
+  .kicker-line .ob { width: 6px; height: 6px; border-radius: 50%; background: var(--t-orange); flex: none; }
+  .hero h1 { margin: 26px 0 0; font-weight: 800; letter-spacing: -.01em; }
+  .hero h1 .l1 { display: block; font-size: 34px; line-height: 1.15; font-weight: 700; }
+  .hero h1 .l2 { display: block; font-size: 68px; line-height: 1.04; margin-top: 12px; }
+  .hero .tbar { margin-top: 30px; }
+  .lede { font-size: 17px; line-height: 1.75; margin: 26px 0 0; color: var(--tx-2); max-width: 600px; }
+  .lede b { color: var(--tx); font-weight: 600; }
+  .where { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; font-size: 12.5px; color: var(--tx-2); }
+  .where svg.lucide { color: var(--t-orange); width: 15px; height: 15px; }
+  .cta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 34px; }
+  .cta .btn { height: 52px; padding: 0 28px; font-size: 12px; }
+  .viz { position: relative; height: 400px; padding: 0; overflow: hidden; background: oklch(0.225 0 0 / .72); }
+  .viz svg#route-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .viz .ov { position: absolute; left: 18px; right: 18px; top: 16px; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
   .viz .ov .tag { margin-left: auto; }
-  .viz .kpi { position: absolute; right: 18px; top: 50px; text-align: right; }
-  .viz .kpi b { display: block; font: 600 46px/1 var(--mono); letter-spacing: -.05em; }
-  .viz .kpi b small { font-size: 15px; color: var(--tx-3); letter-spacing: 0; }
-  .viz .kpi span { color: var(--tx-3); font-size: 12px; }
-  .viz .lg { position: absolute; left: 16px; bottom: 14px; display: flex; gap: 12px; font-size: 11px; color: var(--tx-3); }
-  .viz .lg i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; margin-right: 5px; vertical-align: 3px; }
+  .viz .kpi { position: absolute; right: 20px; top: 52px; text-align: right; }
+  .viz .kpi b { display: block; font: 800 52px/1 var(--f); letter-spacing: -.03em; }
+  .viz .kpi b small { font-size: 16px; font-weight: 600; color: var(--tx-2); letter-spacing: 0; }
+  .viz .kpi span { color: var(--tx-2); font-size: 12px; }
+  .viz .lg { position: absolute; left: 18px; bottom: 16px; display: flex; gap: 14px; font-size: 11px; color: var(--tx-2); }
+  .viz .lg i { display: inline-block; width: 14px; height: 4px; margin-right: 6px; vertical-align: 2px; }
   /* live strip */
-  #live { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 11px 16px; font-size: 13px; color: var(--tx-2); border-radius: 14px; }
-  #live .lv-h { display: flex; align-items: center; gap: 9px; font-weight: 500; color: var(--tx); }
+  #live { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 13px 18px; font-size: 13px; color: var(--tx-2); border-radius: var(--r); }
+  #live .lv-h { display: flex; align-items: center; gap: 9px; font-weight: 600; color: var(--tx); }
   #live .lv-h .tag { margin-left: 0; }
-  #live #live-map { margin-left: auto; font-weight: 500; white-space: nowrap; color: var(--real); text-decoration: none; }
+  #live #live-map { margin-left: auto; font: 700 11px/1 var(--f); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; color: var(--real); text-decoration: none; }
   #live #live-map:hover { text-decoration: underline; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--real); box-shadow: 0 0 0 3px rgba(34,211,238,.18), 0 0 10px var(--real); flex: none; animation: pulse 2s ease-in-out infinite; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--real); box-shadow: 0 0 0 3px oklch(0.714 0.143 255 / .2); flex: none; animation: pulse 2s ease-in-out infinite; }
   .dot.off { background: var(--tx-3); box-shadow: none; animation: none; }
-  @keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(34,211,238,0), 0 0 14px var(--real); } }
-  #live .lv-item b { font-family: var(--mono); font-weight: 600; color: var(--tx); }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 6px oklch(0.714 0.143 255 / 0); } }
+  #live .lv-item b { font-weight: 700; color: var(--tx); }
   #live .lv-item b.bad { color: var(--bad); } #live .lv-item b.mid { color: var(--warn); }
   /* cards */
-  .grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
-  .side { display: grid; gap: 14px; align-content: start; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+  .side { display: grid; gap: 16px; align-content: start; }
   a.card { display: flex; flex-direction: column; color: inherit; text-decoration: none; transition: border-color .15s, transform .15s; }
   a.card:hover { border-color: var(--line-2); transform: translateY(-1px); }
-  .card h2 { font-size: 20px; letter-spacing: -.025em; } .side .card h2 { font-size: 17px; }
-  .kicker { font: 600 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tx-3); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .card h2 { font-size: 22px; } .side .card h2 { font-size: 18px; }
+  .kicker { font: 600 11px/1.2 var(--f); letter-spacing: .03em; text-transform: uppercase; color: var(--t-orange); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .kicker .tag { margin-left: 2px; }
-  .primary { padding: 22px 24px; }
-  .big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 16px 0 4px; color: var(--tx-2); }
-  .big .num { font: 600 54px/1 var(--f); letter-spacing: -.045em; color: var(--tx); font-variant-numeric: tabular-nums; }
-  .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin: 16px 0; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 12px; color: var(--tx-3); }
-  .facts > span { background: rgba(8, 11, 16, .6); padding: 10px 12px; }
-  .facts b { font: 600 20px/1.2 var(--mono); letter-spacing: -.03em; display: block; color: var(--tx); }
-  .legs { display: flex; gap: 2px; height: 12px; margin: 14px 0 6px; }
-  .legs span { height: 100%; border-radius: 3px; flex: 0 1 auto; min-width: 2px; }
-  .legs-key { font-size: 11px; color: var(--tx-3); display: flex; justify-content: space-between; gap: 8px; }
-  .chip { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin: 0 4px 0 10px; vertical-align: 3px; }
-  .card .go { margin-top: 16px; align-self: flex-start; }
-  .desc { margin: 8px 0 0; color: var(--tx-2); }
-  .dec-line { margin: 10px 0 0; font-size: 13px; color: var(--tx-2); }
-  .dec-line b { color: var(--tx); font-weight: 500; }
-  .dec-line .count { font: 600 34px/1.1 var(--mono); letter-spacing: -.04em; display: block; color: var(--tx); }
-  /* how it works */
-  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; list-style: none; padding: 0; margin: 0; }
-  .steps .k { font: 600 11px var(--mono); color: var(--sim); letter-spacing: .1em; display: block; }
-  .steps .k::before { content: "0"; }
-  .steps h3 { font-size: 16px; margin: 8px 0 6px; } .steps p { margin: 0; font-size: 13px; color: var(--tx-2); }
-  footer { margin-top: 28px; font-size: 13px; color: var(--tx-3); }
-  @media (max-width: 960px) { .hero, .hero.has-viz { grid-template-columns: minmax(0, 1fr); gap: 22px; } }
+  .primary { padding: 24px 26px; }
+  .big { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 18px 0 6px; color: var(--tx-2); }
+  .big .num { font: 800 58px/1 var(--f); letter-spacing: -.035em; color: var(--tx); }
+  .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin: 18px 0; background: var(--line); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: hidden; font-size: 12px; color: var(--tx-2); }
+  .facts > span { background: oklch(0.225 0 0 / .85); padding: 11px 13px; }
+  .facts b { font: 700 20px/1.25 var(--f); display: block; color: var(--tx); }
+  .legs { display: flex; gap: 2px; height: 12px; margin: 16px 0 6px; }
+  .legs span { height: 100%; flex: 0 1 auto; min-width: 2px; }
+  .legs-key { font-size: 11px; color: var(--tx-2); display: flex; justify-content: space-between; gap: 8px; }
+  .chip { display: inline-block; width: 12px; height: 4px; margin: 0 5px 0 12px; vertical-align: 2px; }
+  .card .go { margin-top: 18px; align-self: flex-start; }
+  .desc { margin: 10px 0 0; color: var(--tx-2); }
+  .dec-line { margin: 12px 0 0; font-size: 13px; color: var(--tx-2); }
+  .dec-line b { color: var(--tx); font-weight: 600; }
+  .dec-line .count { font: 800 38px/1.1 var(--f); display: block; color: var(--tx); }
+  /* how it works: one white card in three columns with red icon badges and pill tags, as on the site */
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; list-style: none; margin: 0; padding: 30px 0; }
+  .steps li { padding: 0 30px; border-left: 1px solid oklch(0.85 0 0); display: flex; flex-direction: column; gap: 14px; }
+  .steps li:first-child { border-left: 0; }
+  .steps .sh { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .steps .k { display: none; }
+  .steps h3 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .01em; margin: 0; color: var(--paper-tx); }
+  .steps p { margin: 0; font-size: 13px; line-height: 1.7; }
+  .steps .pt { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+  footer { margin-top: 32px; font-size: 13px; color: var(--tx-2); }
+  @media (max-width: 960px) { .hero, .hero.has-viz { grid-template-columns: minmax(0, 1fr); gap: 26px; } }
   @media (max-width: 820px) {
-    .hero { padding: 6px 0 18px; } .hero h1 { font-size: 34px; } .lede { font-size: 15px; }
-    .viz { height: 260px; } .viz .kpi b { font-size: 34px; }
-    .grid, .steps { grid-template-columns: minmax(0, 1fr); }
-    .big .num { font-size: 42px; } .facts b { font-size: 16px; }
+    .hero { padding: 18px 0 22px; } .hero h1 .l1 { font-size: 24px; } .hero h1 .l2 { font-size: 44px; } .lede { font-size: 15px; }
+    .cta .btn { height: 46px; padding: 0 20px; }
+    .viz { height: 280px; } .viz .kpi b { font-size: 38px; }
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    .steps { grid-template-columns: minmax(0, 1fr); padding: 6px 0; }
+    .steps li { border-left: 0; border-top: 1px solid oklch(0.85 0 0); padding: 22px 22px; }
+    .steps li:first-child { border-top: 0; }
+    .big .num { font-size: 46px; } .facts b { font-size: 16px; }
   }
 </style>
 </head>
@@ -83,14 +99,16 @@
 <main class="wrap">
   <section class="hero" id="hero">
     <div>
-      <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Hyderabad · roads and traffic</p>
-      <h1>Rehearse a road decision on a simulated city before you build it.</h1>
-      <p class="lede" id="pitch"><b>Predict</b> where jams form, <b>mitigate</b> them with low-cost fixes first, <b>build</b> only designs that have been tested,
+      <p class="kicker-line"><span class="ob" aria-hidden="true"></span>Urban decisions. Tested before they’re built.</p>
+      <h1><span class="l1">Test it in a twin.</span><span class="l2">Build it<br>in the city.</span></h1>
+      <div class="tbar" aria-hidden="true"></div>
+      <p class="lede" id="pitch"><b>Predict</b> where jams form on a simulated copy of the real roads, <b>mitigate</b> them with low-cost fixes first, <b>build</b> only designs that have been tested,
         and keep every decision <b>reviewed and recorded</b>.</p>
-      <div class="cta"><a class="btn" href="corridor.html"><i data-lucide="route"></i>Open the corridor</a><a class="btn ghost" href="ymca.html"><i data-lucide="box"></i>YMCA Circle in 3D</a></div>
+      <p class="where"><i data-lucide="map-pin"></i>Now demonstrating on the Lingampally → Lakdikapul corridor and at YMCA Circle, Hyderabad.</p>
+      <div class="cta"><a class="btn" href="corridor.html">Open the corridor <i data-lucide="arrow-up-right"></i></a><a class="btn ghost" href="ymca.html">YMCA Circle in 3D <i data-lucide="arrow-right"></i></a></div>
     </div>
     <div class="viz card" id="viz" hidden aria-label="The corridor route, coloured by TomTom’s measured speed">
-      <svg id="route-svg" viewBox="0 0 620 360" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+      <svg id="route-svg" viewBox="0 0 620 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
       <div class="ov">Lingampally → Lakdikapul<span class="tag real">REAL</span></div>
       <div class="kpi"><b id="v-min">58<small> min</small></b><span>typical July trip, TomTom</span></div>
       <div class="lg"><span><i style="background:var(--fast)"></i>≥ 25 km/h</span><span><i style="background:var(--mid-speed)"></i>15–25</span><span><i style="background:var(--slow)"></i>&lt; 15</span></div>
@@ -118,7 +136,7 @@
       </div>
       <p class="desc">Simulate the whole commute, try a flyover, a signal retime or a wider road at any junction, see the knock-on at the next one,
         ask the AI assistant, and send the result for review.</p>
-      <span class="btn go">Open the corridor <i data-lucide="arrow-right"></i></span>
+      <span class="btn go">Open the corridor <i data-lucide="arrow-up-right"></i></span>
     </a>
     <div class="side">
       <a class="card" id="card-ymca" href="ymca.html">
@@ -139,16 +157,16 @@
   </section>
 
   <h2 class="sec-h">How it works</h2>
-  <ol class="steps">
-    <li class="card"><span class="k">1</span><h3>Predict</h3>
+  <ol class="steps card light">
+    <li><div class="sh"><span class="k">1</span><h3>Predict</h3><span class="badge-ic"><i data-lucide="search"></i></span></div>
       <p>A computer copy of the real roads (OpenStreetMap, simulated in SUMO) is tuned until its trip times match TomTom's measurements.
-        Then it shows where queues build up and why.</p></li>
-    <li class="card"><span class="k">2</span><h3>Mitigate first</h3>
+        Then it shows where queues build up and why.</p><div class="pt"><span class="pilltag">Simulate</span><span class="pilltag">Identify</span></div></li>
+    <li><div class="sh"><span class="k">2</span><h3>Mitigate first</h3><span class="badge-ic"><i data-lucide="split"></i></span></div>
       <p>Try the cheap fixes before the expensive ones: signal timing, a one-way side road, a wider approach. Only then a flyover,
-        and always check what it does to the next junction.</p></li>
-    <li class="card"><span class="k">3</span><h3>Build what was tested, on the record</h3>
+        and always check what it does to the next junction.</p><div class="pt"><span class="pilltag">Simulate</span><span class="pilltag">Predict</span></div></li>
+    <li><div class="sh"><span class="k">3</span><h3>Build what was tested, on the record</h3><span class="badge-ic"><i data-lucide="scale"></i></span></div>
       <p>A reviewer re-tests the options with more or less traffic, a decider approves with a written reason, and each step is
-        fingerprinted so the record cannot be changed quietly.</p></li>
+        fingerprinted so the record cannot be changed quietly.</p><div class="pt"><span class="pilltag">Compare</span><span class="pilltag">Decide</span></div></li>
   </ol>
 
   <footer>Every number on these screens is tagged <span class="tag real">REAL</span> (measured, mostly by TomTom) or
@@ -162,7 +180,7 @@ const { $, esc, get, hhmm, when, stageName, apiProblem } = CR;
 // Saved copy of TomTom's typical July day (data/raw/corridor_legs_tomtom.csv): [metres, seconds, km/h] per leg, A -> B.
 const SAVED_LEGS = [[1911, 402.2, 17.1], [5414, 829.8, 23.5], [1386, 240.5, 20.8], [1581, 184.1, 30.9], [1078, 151, 25.7], [1621, 175.2, 33.3],
                     [2830, 282, 36.1], [1370, 243.1, 20.3], [418, 71.6, 21], [2241, 451.8, 17.9], [930, 148.8, 22.5], [1636, 312.3, 18.9]];
-const speedRGB = k => k >= 25 ? "45,212,167" : k >= 15 ? "251,191,36" : "244,63,94";
+const speedRGB = k => k >= 25 ? "0,136,73" : k >= 15 ? "245,136,50" : "226,61,39";   // brand green / orange / red-orange
 
 function drawLegs(legs) {   // [{distance_m, time_s, speed_kmh}]
   const tot = legs.reduce((s, l) => s + l.time_s, 0) || 1;
@@ -173,7 +191,7 @@ function drawRoute(c, legs) {
   const line = (c.route?.features || []).find(f => f.geometry?.type === "LineString");
   const pts = c.points || [];
   if (!line || pts.length < 2 || pts.length !== legs.length + 1) return;
-  const xy = line.geometry.coordinates, W = 620, H = 360, pad = 56;
+  const xy = line.geometry.coordinates, W = 620, H = 400, pad = 60;
   const xs = xy.map(q => q[0]), ys = xy.map(q => q[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
   const k = Math.min((W - 2 * pad) / (x1 - x0), (H - 2 * pad) / ((y1 - y0) * 1.05));
@@ -192,9 +210,9 @@ function drawRoute(c, legs) {
     paths += `<path d="${d}" stroke="${col}" stroke-width="4"/>`;
   });
   const dots = pts.map((p, i) => { const [x, y] = P([p.lon, p.lat]);
-    return p.kind === "end" ? `<circle cx="${x}" cy="${y}" r="9" fill="#fff"/><text x="${x}" y="${y + 3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#07090d">${i ? "B" : "A"}</text>`
-      : `<circle cx="${x}" cy="${y}" r="3.5" fill="#0b0f17" stroke="rgba(255,255,255,.75)" stroke-width="1.5"/>`; }).join("");
-  const label = (i, name, dx, dy, anchor) => { const [x, y] = P([pts[i].lon, pts[i].lat]); return `<text x="${x + dx}" y="${y + dy}" text-anchor="${anchor}" font-size="11" fill="#a3adbd">${esc(name)}</text>`; };
+    return p.kind === "end" ? `<circle cx="${x}" cy="${y}" r="9" fill="#fff"/><text x="${x}" y="${y + 3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#1c1c1c">${i ? "B" : "A"}</text>`
+      : `<circle cx="${x}" cy="${y}" r="3.5" fill="#1c1c1c" stroke="rgba(255,252,254,.8)" stroke-width="1.5"/>`; }).join("");
+  const label = (i, name, dx, dy, anchor) => { const [x, y] = P([pts[i].lon, pts[i].lat]); return `<text x="${x + dx}" y="${y + dy}" text-anchor="${anchor}" font-size="11" font-weight="600" fill="#c9c9c9">${esc(name)}</text>`; };
   $("route-svg").innerHTML = `<defs><filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter></defs>` +
     `<g fill="none" stroke-linecap="round" stroke-linejoin="round">${glow}${paths}</g>${dots}` +
     label(0, "Lingampally", -14, 4, "end") + label(pts.length - 1, "Lakdikapul", 0, 24, "middle");

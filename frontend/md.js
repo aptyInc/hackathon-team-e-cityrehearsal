@@ -1,4 +1,4 @@
-// CityRehearsal: tiny, safe markdown for the assistant's replies and decision briefs (corridor.html via planner.js,
+// Terascope AI: tiny, safe markdown for the assistant's replies and decision briefs (corridor.html via planner.js,
 // decisions.html). Everything is HTML-escaped first; then headings, bold, italic, code, lists, tables, quotes, rules.
 // window.crMarkdown = {md, inline, esc}. Owner: Frontend.
 window.crMarkdown = (() => {
