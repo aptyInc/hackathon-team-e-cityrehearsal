@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 WEATHER_CSV = ROOT / "data/raw/weather_july_hourly.csv"
 FACTORS = ROOT / "data/rain/rain_factors.json"
 RESULTS = ROOT / "data/weather/results.json"
+WATERLOGGING = ROOT / "data/weather/waterlogging_points.json"
 LABEL = "measured (Open-Meteo reanalysis)"
 SOURCE = "Open-Meteo historical weather archive (ERA5-based reanalysis, ~9 km grid), mean of 3 points on the corridor"
 POINTS = {"A_lingampally": "Lingampally", "M_gachibowli": "Khajaguda (Gachibowli)", "B_lakdikapul": "Lakdikapul"}
@@ -72,6 +73,47 @@ def factors() -> dict:
     return json.loads(FACTORS.read_text())
 
 
+def waterlogging() -> dict | None:
+    """data/weather/waterlogging_points.json: reported water-logging hotspots per corridor junction (public sources,
+    not measured by us), the extra speed factors the simulation applies there, and which severities flood in each
+    rain class. None without the file."""
+    return json.loads(WATERLOGGING.read_text()) if WATERLOGGING.exists() else None
+
+
+def _join(names: list[str]) -> str:
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def expected_waterlogging(cls: str) -> dict:
+    """The junctions likely to flood in this rain class (dry / light / moderate / heavy), with the extra speed factor
+    the simulation applies there, and one plain sentence for the screen."""
+    wl = waterlogging()
+    what_if = WHAT_IF.get(cls, "dry")
+    label = "reported (public sources), not measured by us"
+    if not wl:
+        return {"rain_class": cls, "what_if": what_if, "junctions": [], "names": [], "label": label,
+                "text": "water-logging points not available (data/weather/waterlogging_points.json missing)"}
+    sev = wl.get("expected_at", {}).get(cls, [])
+    table = wl.get("extra_speed_factor", {}).get(what_if, {})
+    js = [{"junction_id": p["junction_id"], "name": p["name"], "short": p.get("short", p["name"]), "severity": p.get("severity"),
+           "extra_speed_factor": table.get(p.get("severity"), 1.0), "what_reported": p.get("what_reported"),
+           "label": wl["extra_speed_factor"].get("label", "assumed, scaled by reported severity")}
+          for p in wl.get("points", []) if p.get("severity") in sev]
+    names = [j["short"] for j in js]
+    kind = {"dry": "Dry", "light": "Light rain", "moderate": "Moderate rain", "heavy": "Heavy rain"}[cls]
+    main = [j["short"] for j in js if j["severity"] in ("high", "medium")]
+    minor = len(js) - len(main)
+    if not js:
+        text = f"{kind}: no water-logging expected at the reported points" if cls != "dry" else "Dry: no water-logging expected"
+    else:
+        tail = f", and {minor} minor one{'s' if minor > 1 else ''}" if main and minor else ""
+        text = (f"{kind}: expect longer queues at {_join(main or names)} (reported water-logging point{'s' if len(js) > 1 else ''}"
+                f"{'; chronic ones only' if cls == 'light' else ''}{tail})")
+    return {"rain_class": cls, "what_if": what_if, "junctions": js, "names": names, "text": text, "label": label,
+            "sim": f"POST /corridor/runs {{weather: '{what_if}'}} caps the lanes within {wl.get('radius_m', 300)} m of these junctions "
+                   f"by extra_speed_factor on top of the stretch rain factor" if js else None}
+
+
 def _effect(cls: str, f: dict | None) -> dict | None:
     """The estimated trip-time effect of an hour of this rain class (from rain_factors.json), in plain numbers."""
     if not f:
@@ -94,7 +136,7 @@ def one_slot(r: dict, f: dict | None) -> dict:
             "weather_code": _num(r["weather_code_mean"]), "text": r["weather_text"],
             "by_point": {p: {"name": n, "rain_mm": _num(r[f"precipitation_{p}"]), "temperature_c": _num(r[f"temperature_2m_{p}"]),
                              "weather_code": _num(r[f"weather_code_{p}"])} for p, n in POINTS.items()},
-            "rain_effect": _effect(cls, f)}
+            "rain_effect": _effect(cls, f), "expected_waterlogging": expected_waterlogging(cls)}
 
 
 def july_slot(data: dict, hour: int, f: dict | None) -> dict:
@@ -113,7 +155,9 @@ def july_slot(data: dict, hour: int, f: dict | None) -> dict:
             "wind_kmh": mean("wind_speed_10m_mean"), "cloud_cover_pct": mean("cloud_cover_mean"),
             "text": f"Typical July {hour:02d}:00: rain on {round(100 * sum(x >= 0.1 for x in mm) / len(mm))}% of days "
                     f"({round(100 * sum(x >= 1 for x in mm) / len(mm))}% with 1 mm or more); most often {common.lower()}",
-            "most_common_text": common}
+            "most_common_text": common,
+            # the wettest class seen on 10%+ of July days at this hour: the water-logging to plan for at this hour
+            "expected_waterlogging": expected_waterlogging(next((c for c in ("heavy", "moderate", "light") if classes[c] >= 0.1), "dry"))}
 
 
 @router.get("/weather")
@@ -176,7 +220,7 @@ def now_payload(raw: dict) -> dict:
             "wind_kmh": cur.get("wind_speed_10m"), "cloud_cover_pct": cur.get("cloud_cover"), "is_day": bool(cur.get("is_day")),
             "weather_code": code, "text": WMO.get(code, "Unknown"),
             "location": MID | {"grid": [raw.get("latitude"), raw.get("longitude")]},
-            "rain_effect": _effect(cls, f),
+            "rain_effect": _effect(cls, f), "expected_waterlogging": expected_waterlogging(cls),
             "source": "Open-Meteo forecast API, current conditions (weather model, 15-minute data)",
             "label": "modelled (Open-Meteo forecast), not a rain gauge"}
 
@@ -232,4 +276,19 @@ def weather_factors():
         "sim": {"post_corridor_runs_field": "weather", "values": list(wi.get("settings", {}).keys()), "how": wi.get("how"),
                 "input_label": "estimated (rain factors from TomTom hourly x Open-Meteo, July 2026)"},
         "source_files": f.get("source_files"),
+        "waterlogging": _waterlogging_factors(),
     }
+
+
+def _waterlogging_factors() -> dict:
+    """The reported water-logging points with their sources, the extra speed factors per rain setting, and which
+    junctions flood in each what-if (for /weather/factors)."""
+    wl = waterlogging()
+    if not wl:
+        return {"label": "reported (public sources), not measured by us", "points": [], "note": "data/weather/waterlogging_points.json missing"}
+    return {"label": wl.get("label"), "what_this_is": wl.get("what_this_is"), "radius_m": wl.get("radius_m"),
+            "extra_speed_factor": wl.get("extra_speed_factor"), "expected_at": wl.get("expected_at"),
+            "severity_meaning": wl.get("severity_meaning"), "how": wl.get("how_the_simulation_uses_it"),
+            "points": wl.get("points", []), "not_found": wl.get("not_found", []), "sources_checked": wl.get("sources_checked", []),
+            "by_what_if": {w: expected_waterlogging(c)["names"] for c, w in (("light", "light_rain"), ("heavy", "heavy_rain"))},
+            "updated": wl.get("updated")}

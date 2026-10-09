@@ -603,8 +603,13 @@ def _mock_extras(res: dict, body: CorridorRunIn) -> dict:
     if weather_of(body):
         res["time"] = {**res.get("time", {}), "weather": weather_of(body)}
         res["time"]["label"] = f"{res['time'].get('label', '')} · {weather_of(body).replace('_', ' ')} (what-if, MOCK: sample numbers)"
+        from .weather import expected_waterlogging   # reported water-logging points: the same echo as a real run
+        ew = expected_waterlogging({"light_rain": "light", "heavy_rain": "heavy"}.get(weather_of(body), "dry"))
         res.setdefault("inputs", {})["weather"] = {"weather": weather_of(body), "label": WEATHER_LABEL,
-                                                    "note": "MOCK_SIM=1: not applied; the numbers are the sample's"}
+                                                    "note": "MOCK_SIM=1: not applied; the numbers are the sample's",
+                                                    "waterlogging": [{k: j.get(k) for k in ("junction_id", "name", "severity", "extra_speed_factor", "label")}
+                                                                     for j in ew["junctions"]],
+                                                    "affected_junctions": ew["names"], "waterlogging_note": ew["text"]}
     return res
 
 
