@@ -113,6 +113,63 @@ def health():
     return {"status": "ok", "mock": MOCK}
 
 
+@app.get("/config")
+def config():
+    """Keys the browser may hold (TomTom map keys are made for browser use); the MOVE key never leaves the server."""
+    return {"tomtom_maps_key": os.getenv("TOMTOM_MAPS_KEY", ""), "mock": MOCK,
+            "junction": {"id": "ymca_circle", "name": "YMCA Circle, Narayanguda", "lon": 78.4903, "lat": 17.3954}}
+
+
+@app.get("/live/ymca")
+def live_ymca():
+    """TomTom Junction Analytics right now: delay, queue, volume and turns per road into YMCA Circle."""
+    import urllib.request
+    key = os.getenv("TOMTOM_API_KEY")
+    if not key:
+        raise HTTPException(503, "TOMTOM_API_KEY not set")
+    names = {}
+    definition = ROOT / "data/tomtom/junction/ymca_definition.json"
+    if definition.exists():
+        m = json.loads(definition.read_text())["junctionModel"]
+        names = {x["id"]: x["name"] for x in m["approaches"] + m["exits"]}
+    url = f"https://api.tomtom.com/junction-analytics/junctions/1/6ac7d6870b461bdaf5cd8158/live-data?key={key}"
+    try:
+        with urllib.request.urlopen(url, timeout=15) as r:
+            d = json.load(r)
+    except Exception as e:  # certificate problems on some laptops: fall back to curl
+        import subprocess
+        out = subprocess.run(["curl", "-s", "--compressed", url], capture_output=True, text=True, timeout=20)
+        if not out.stdout.startswith("{"):
+            raise HTTPException(502, f"TomTom live data unavailable: {e}")
+        d = json.loads(out.stdout)
+    return {"time": time.time(), "source": "TomTom Junction Analytics (measured; volume and queue estimated)",
+            "approaches": [{"name": names.get(a["id"], str(a["id"])), "delay_s": a["delaySec"],
+                            "usual_delay_s": a["usualDelaySec"], "travel_time_s": a["travelTimeSec"],
+                            "queue_m": a["queueLengthMeters"], "volume_per_hour": a["volumePerHour"],
+                            "turns": [{"exit": names.get(t["exitId"], str(t["exitId"])), "percent": t["ratioPercent"],
+                                       "probes": t["probesCount"]} for t in a.get("turnRatios", [])]}
+                           for a in d["approachesLiveData"]]}
+
+
+@app.get("/runs/{run_id}/roads")
+def run_roads(run_id: str):
+    """Per-road simulated speeds for the run as GeoJSON (for congestion colours on the map)."""
+    with db() as c:
+        r = c.execute("SELECT result FROM runs WHERE id=?", (run_id,)).fetchone()
+    path = json.loads(r["result"]).get("roads_path") if r else None
+    if not path or not Path(path).exists():
+        raise HTTPException(404, "no road data for this run (mock mode, or run not found)")
+    return json.loads(Path(path).read_text())
+
+
+@app.get("/buildings")
+def buildings():
+    path = ROOT / "data/raw/ymca_buildings.geojson"
+    if not path.exists():
+        raise HTTPException(404, "data/raw/ymca_buildings.geojson missing")
+    return json.loads(path.read_text())
+
+
 @app.post("/cases")
 def create_case(body: CaseIn):
     cid = "c_" + uuid.uuid4().hex[:8]

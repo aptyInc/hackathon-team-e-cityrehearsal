@@ -3,77 +3,264 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CityRehearsal — Team E</title>
-<!-- Starter shell. Owner: Frontend and 3D workstream. Replace freely, keep the C1/C2/C4 contracts. -->
+<title>CityRehearsal — YMCA Circle</title>
+<!-- Owner: Frontend and 3D workstream. Talks to the backend over C4 (contracts/api.md); draws C1 frames and C2 results.
+     Map: TomTom vector style (key from GET /config) + TomTom live traffic tiles. 3D: deck.gl over MapLibre. -->
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/deck.gl@9.0.38/dist.min.js"></script>
 <style>
-  body { margin: 0; font-family: system-ui, sans-serif; }
+  :root { --ink: #16202a; --paper: rgba(255,253,248,.96); --accent: #c4561c; --blue: #2f6f9f; --muted: #5b6670; }
+  body { margin: 0; font-family: Inter, system-ui, sans-serif; color: var(--ink); }
   #map { position: absolute; inset: 0; }
-  #panel { position: absolute; top: 12px; left: 12px; width: 340px; background: #fff; border-radius: 10px;
-           padding: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.15); font-size: 14px; }
-  button { padding: 8px 12px; border: 0; border-radius: 6px; background: #c4561c; color: #fff; cursor: pointer; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  td, th { text-align: left; padding: 4px; border-bottom: 1px solid #eee; }
-  .warn { color: #b00020; font-size: 12px; }
+  .panel { position: absolute; background: var(--paper); border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 14px rgba(0,0,0,.18); font-size: 13px; }
+  #left { top: 12px; left: 12px; width: 380px; max-height: calc(100vh - 24px); overflow: auto; }
+  #right { top: 12px; right: 12px; width: 230px; }
+  #live { right: 12px; bottom: 12px; width: 300px; }
+  #legend { left: 12px; bottom: 12px; display: flex; gap: 14px; align-items: center; padding: 8px 12px; }
+  h1 { font-size: 17px; margin: 0 0 2px; } h2 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  button { padding: 7px 11px; border: 0; border-radius: 7px; background: var(--accent); color: #fff; cursor: pointer; font-size: 13px; }
+  button.secondary { background: var(--blue); } button.ghost { background: #e8e4dc; color: var(--ink); } button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; } td, th { text-align: left; padding: 4px 4px; border-bottom: 1px solid #eee; font-size: 12px; } th { color: var(--muted); font-weight: 600; }
+  .warn { background: #fdecea; border-left: 3px solid #b00020; padding: 6px 8px; margin: 6px 0; font-size: 12px; border-radius: 4px; }
+  .ok { color: #1a7f37; } .bad { color: #b00020; } .mid { color: #b26a00; }
+  .muted { color: var(--muted); } small { color: var(--muted); }
+  label.t { display: flex; align-items: center; gap: 8px; margin: 6px 0; cursor: pointer; }
+  input[type=range] { width: 100%; }
+  .chip { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+  .road { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; }
+  .road b { font-weight: 600; }
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="panel">
-  <b>CityRehearsal · YMCA Circle</b><br/>
-  <small id="status">API: checking…</small><br/><br/>
-  <button id="go">Run demo case</button>
+
+<div id="left" class="panel">
+  <h1>CityRehearsal · YMCA Circle, Narayanguda</h1>
+  <small id="status">API: checking…</small>
+  <h2>Predict and test</h2>
+  <div class="row">
+    <button id="run-base">Run today's traffic</button>
+    <button id="run-fly" class="secondary">Test a 3-lane flyover</button>
+    <button id="run-base80" class="ghost" title="Reviewer's sensitivity test">Today, 20% less traffic</button>
+  </div>
   <div id="results"></div>
+  <h2>Playback</h2>
+  <div class="row">
+    <button id="play" class="ghost" disabled>▶ Play</button>
+    <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option></select>
+    <span id="clock" class="muted">—</span>
+  </div>
+  <input type="range" id="scrub" min="0" max="0" value="0" disabled />
+  <small id="playinfo"></small>
 </div>
+
+<div id="right" class="panel">
+  <h2 style="margin-top:0">Layers</h2>
+  <label class="t"><input type="checkbox" id="t-traffic" /> TomTom live traffic (now)</label>
+  <label class="t"><input type="checkbox" id="t-roads" checked /> Simulated congestion</label>
+  <label class="t"><input type="checkbox" id="t-buildings" checked /> 3D buildings</label>
+  <label class="t"><input type="checkbox" id="t-vehicles" checked /> Vehicles</label>
+  <label class="t"><input type="checkbox" id="t-night" /> Night view</label>
+  <div class="row" style="margin-top:10px"><button id="recenter" class="ghost">Recenter</button><button id="orbit" class="ghost">Orbit</button></div>
+</div>
+
+<div id="live" class="panel">
+  <h2 style="margin-top:0">YMCA Circle right now <span id="live-time" class="muted" style="text-transform:none;letter-spacing:0"></span></h2>
+  <div id="live-body"><small>Loading TomTom live data…</small></div>
+  <small>TomTom Junction Analytics: delay measured from GPS trips; vehicles/hour and queue estimated.</small>
+</div>
+
+<div id="legend" class="panel">
+  <span><span class="chip" style="background:rgb(232,116,59)"></span>two-wheeler</span>
+  <span><span class="chip" style="background:rgb(47,111,159)"></span>car</span>
+  <span><span class="chip" style="background:rgb(240,200,40)"></span>auto</span>
+  <span><span class="chip" style="background:rgb(40,160,90)"></span>bus</span>
+  <span class="muted">· roads:</span>
+  <span><span class="chip" style="background:rgb(26,152,80)"></span>flowing</span>
+  <span><span class="chip" style="background:rgb(253,174,97)"></span>slow</span>
+  <span><span class="chip" style="background:rgb(215,48,39)"></span>jammed</span>
+</div>
+
 <script>
 const API = "http://localhost:8000";
+const $ = id => document.getElementById(id);
 const COLORS = { two_wheeler: [232,116,59], car: [47,111,159], auto: [240,200,40], bus: [40,160,90], truck: [120,120,120] };
+const SIZE = { two_wheeler: [1.9, 0.75, 1.2], car: [4.3, 1.75, 1.5], auto: [2.7, 1.4, 1.7], bus: [11, 2.5, 3.2], truck: [8, 2.4, 3] };
+const STYLE = night => `https://api.tomtom.com/map/1/style/20.4.5-*/${night ? "basic_night" : "basic_main"}.json?key=${cfg.tomtom_maps_key}`;
+const TRAFFIC_TILES = () => `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${cfg.tomtom_maps_key}`;
 
-const map = new maplibregl.Map({
-  container: "map",
-  style: "https://tiles.openfreemap.org/styles/liberty", // free style with 3D buildings
-  center: [78.4877, 17.3946], zoom: 16.5, pitch: 60, bearing: -20
-});
-const overlay = new deck.MapboxOverlay({ interleaved: true, layers: [] });
-map.addControl(overlay);
+let cfg = { tomtom_maps_key: "", junction: { lon: 78.4903, lat: 17.3954 } };
+let map, overlay, buildings = null, roads = null, frames = [], runs = [], caseId = null;
+let playing = false, pos = 0, lastTick = 0, orbiting = false;
 
-function drawFrame(frame) {
-  overlay.setProps({ layers: [ new deck.ScatterplotLayer({
-    id: "vehicles", data: frame.vehicles,
-    getPosition: v => [v.lon, v.lat, v.z], getFillColor: v => COLORS[v.type] || [0,0,0],
-    getRadius: v => v.type === "bus" ? 4 : 2.5, radiusUnits: "meters"
-  }) ] });
+async function get(path) { const r = await fetch(API + path); if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`); return r.json(); }
+async function post(path, body) { const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`); return r.json(); }
+
+// ---------- map ----------
+async function init() {
+  try { cfg = await get("/config"); $("status").textContent = `API: ok${cfg.mock ? " (sample data: set MOCK_SIM=0 for real runs)" : " (real SUMO runs)"}`; }
+  catch (e) { $("status").textContent = "API not running: run `make dev`"; }
+  const hasKey = !!cfg.tomtom_maps_key;
+  map = new maplibregl.Map({
+    container: "map",
+    style: hasKey ? STYLE(false) : "https://tiles.openfreemap.org/styles/liberty",
+    center: [cfg.junction.lon, cfg.junction.lat], zoom: 16.6, pitch: 58, bearing: -25, antialias: true,
+  });
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
+  overlay = new deck.MapboxOverlay({ interleaved: true, layers: [] });
+  map.addControl(overlay);
+  map.on("style.load", addTrafficLayer);
+  if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; }
+  try { buildings = (await get("/buildings")).features; } catch (e) { buildings = null; }
+  render();
+  refreshLive(); setInterval(refreshLive, 60000);
+  requestAnimationFrame(tick);
 }
 
-async function post(path, body) {
-  const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  return r.json();
+function addTrafficLayer() {
+  if (!cfg.tomtom_maps_key || map.getSource("tomtom-traffic")) return;
+  map.addSource("tomtom-traffic", { type: "raster", tiles: [TRAFFIC_TILES()], tileSize: 256, attribution: "© TomTom" });
+  map.addLayer({ id: "tomtom-traffic", type: "raster", source: "tomtom-traffic", paint: { "raster-opacity": 0.9 },
+                 layout: { visibility: $("t-traffic").checked ? "visible" : "none" } });
 }
 
-fetch(API + "/health").then(r => r.json())
-  .then(h => document.getElementById("status").textContent = `API: ok (mock=${h.mock})`)
-  .catch(() => document.getElementById("status").textContent = "API: not running — run `make dev`");
+// ---------- geometry helpers ----------
+function box(v) {  // vehicle footprint as a lon/lat rectangle, heading from SUMO's angle (0 = north, clockwise)
+  const [L, W] = SIZE[v.type] || SIZE.car, a = v.angle * Math.PI / 180;
+  const fx = Math.sin(a), fy = Math.cos(a), rx = Math.cos(a), ry = -Math.sin(a);      // forward and right, in metres (east, north)
+  const mLat = 1 / 111320, mLon = 1 / (111320 * Math.cos(v.lat * Math.PI / 180));
+  const z = v.z || 0;
+  return [[+1, +1], [+1, -1], [-1, -1], [-1, +1]].map(([s, t]) => {
+    const dx = s * fx * L / 2 + t * rx * W / 2, dy = s * fy * L / 2 + t * ry * W / 2;
+    return [v.lon + dx * mLon, v.lat + dy * mLat, z];
+  });
+}
+function roadColor(p) {
+  if (p.speed_kmh == null || !p.vehicles) return [160, 160, 160, 90];
+  const r = p.speed_kmh / Math.max(p.limit_kmh, 1);
+  return r >= 0.7 ? [26, 152, 80, 200] : r >= 0.45 ? [253, 174, 97, 220] : [215, 48, 39, 230];
+}
 
-document.getElementById("go").onclick = async () => {
-  const kase = await post("/cases", { junction_id: "ymca_circle", title: "Peak-hour jam" });
-  const variants = [["baseline","baseline",{}], ["signal_retime_90s","signal_retime",{cycle_s:90}],
-                    ["flyover_3lane_400m","flyover",{lanes:3,length_m:400,landing_edge:"e45"}]];
-  let rows = "";
-  for (const [id, tpl, params] of variants) {
-    await post("/variants", { case_id: kase.id, variant_id: id, template: tpl, params });
-    const r = await post("/runs", { case_id: kase.id, variant_id: id });
-    const j = r.junctions;
-    rows += `<tr><td>${id}</td><td>${j[0].avg_delay_s}s</td><td>${j[1] ? j[1].avg_delay_s + "s" : "-"}</td></tr>`
-          + (r.warnings.length ? `<tr><td colspan=3 class=warn>⚠ ${r.warnings.join(", ")}</td></tr>` : "");
-  }
-  document.getElementById("results").innerHTML =
-    `<table><tr><th>Option</th><th>YMCA delay</th><th>Next junction</th></tr>${rows}</table>
-     <small>Sample data (mock mode) — illustrative, not results.</small>`;
-  const ws = new WebSocket(API.replace("http", "ws") + "/stream/demo");
-  ws.onmessage = e => drawFrame(JSON.parse(e.data));
-};
+// ---------- rendering ----------
+function currentVehicles() {
+  if (!frames.length) return [];
+  const i = Math.min(Math.floor(pos), frames.length - 1), f = pos - i;
+  const a = frames[i], b = frames[Math.min(i + 1, frames.length - 1)];
+  if (f < 0.02 || a === b) return a.vehicles;
+  const next = new Map(b.vehicles.map(v => [v.id, v]));
+  return a.vehicles.map(v => {        // smooth motion between two one-second frames
+    const n = next.get(v.id); if (!n) return v;
+    let da = ((n.angle - v.angle + 540) % 360) - 180;
+    return { ...v, lon: v.lon + (n.lon - v.lon) * f, lat: v.lat + (n.lat - v.lat) * f, z: v.z + (n.z - v.z) * f, angle: v.angle + da * f, speed: n.speed };
+  });
+}
+function render() {
+  const night = $("t-night").checked;
+  const layers = [];
+  if (buildings && $("t-buildings").checked) layers.push(new deck.PolygonLayer({
+    id: "buildings", data: buildings, extruded: true, wireframe: false, opacity: 0.55,
+    getPolygon: f => f.geometry.type === "Polygon" ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0],
+    getElevation: f => f.properties.render_height_m || 6, getFillColor: night ? [70, 82, 100] : [214, 208, 196], material: { ambient: 0.5, diffuse: 0.6 },
+  }));
+  if (roads && $("t-roads").checked) layers.push(new deck.PathLayer({
+    id: "roads", data: roads, widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
+    getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], f.properties.flyover ? 6.5 : 0.3]),
+    getWidth: f => f.properties.lanes * 3.2, getColor: f => roadColor(f.properties),
+  }));
+  if ($("t-vehicles").checked) layers.push(new deck.PolygonLayer({
+    id: "vehicles", data: currentVehicles(), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
+    getFillColor: v => COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
+    updateTriggers: { getPolygon: pos }, pickable: true,
+    onHover: ({ object }) => { $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h` : ""; },
+  }));
+  overlay.setProps({ layers, effects: [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: night ? 0.7 : 1.1 }),
+    sun: new deck.DirectionalLight({ color: night ? [160, 180, 230] : [255, 250, 240], intensity: night ? 0.9 : 1.6, direction: [-1, -2, -3] }) })] });
+}
+function tick(ts) {
+  if (playing && frames.length) {
+    const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
+    pos += dt * Number($("speed").value);
+    if (pos >= frames.length - 1) { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; }
+    $("scrub").value = Math.floor(pos);
+    const t = frames[Math.floor(pos)].t; $("clock").textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")} into the morning peak · ${frames[Math.floor(pos)].vehicles.length} vehicles`;
+    render();
+  } else lastTick = ts;
+  if (orbiting) map.setBearing(map.getBearing() + 0.08);
+  requestAnimationFrame(tick);
+}
+
+// ---------- runs ----------
+async function ensureCase() {
+  if (!caseId) caseId = (await post("/cases", { junction_id: "ymca_circle", title: "Should we build a flyover at YMCA Circle?", raised_by: "engineer" })).id;
+  return caseId;
+}
+async function runVariant(vid, template, params, scale, label) {
+  const btns = ["run-base", "run-fly", "run-base80"]; btns.forEach(b => $(b).disabled = true);
+  $("status").textContent = `Simulating ${label}… (a few seconds)`;
+  try {
+    await ensureCase();
+    await post("/variants", { case_id: caseId, variant_id: vid, template, params });
+    const r = await post("/runs", { case_id: caseId, variant_id: vid, volume_scale: scale, run_by: scale < 1 ? "reviewer" : "engineer" });
+    r.label = label; runs.push(r); showResults();
+    await play(r);
+    $("status").textContent = `${label}: done in ${r.wall_seconds ?? "?"} s`;
+  } catch (e) { $("status").innerHTML = `<span class="bad">${e.message.slice(0, 200)}</span>`; }
+  btns.forEach(b => $(b).disabled = false);
+}
+function showResults() {
+  const j = (r, id) => r.junctions.find(x => x.id === id) || {};
+  const rows = runs.map((r, i) => {
+    const c = j(r, "ymca_circle");
+    const ripple = r.junctions.filter(x => x.id !== "ymca_circle" && (x.avg_delay_s > 15 || x.max_queue_m > 100)).map(x => `${x.id.replace("next_", "")}: ${x.avg_delay_s} s`).join(", ");
+    return `<tr><td><b>${r.label}</b><br><small>${r.inputs.volume_scale < 1 ? "reviewer, " : ""}${r.inputs.label}</small></td>
+      <td>${c.avg_delay_s ?? "–"} s</td><td>${c.max_queue_m ?? "–"} m</td><td>${r.corridor_travel_time_s} s</td>
+      <td>${ripple || "<span class=ok>none</span>"}</td><td><button class="ghost" onclick="play(runs[${i}])">Play</button></td></tr>`
+      + (r.warnings.length ? `<tr><td colspan=6><div class=warn>⚠ ${r.warnings.join("<br>⚠ ")}</div></td></tr>` : "");
+  }).join("");
+  const last = runs[runs.length - 1];
+  const cal = last.approach_speed_kmh ? `<small>Speeds on the roads into the circle, simulated vs TomTom 09:00: ` +
+    Object.keys(last.approach_speed_kmh).map(d => `${d.toUpperCase()} ${last.approach_speed_kmh[d]} / ${last.tomtom_speed_kmh[d]}`).join(" · ") + ` km/h</small>` : "";
+  $("results").innerHTML = `<table><tr><th>Option</th><th>Delay at circle</th><th>Longest queue</th><th>Trip time</th><th>Knock-on at next junctions</th><th></th></tr>${rows}</table>${cal}`;
+}
+async function play(r) {
+  frames = []; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true;
+  try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; }
+  render();
+  $("playinfo").textContent = "Loading vehicle positions…";
+  await new Promise(resolve => {
+    const ws = new WebSocket(API.replace("http", "ws") + `/stream/${r.run_id}`);
+    ws.onmessage = e => { frames.push(JSON.parse(e.data)); if (frames.length === 1) { $("scrub").disabled = false; $("play").disabled = false; } $("scrub").max = frames.length - 1; if (frames.length % 50 === 0) $("playinfo").textContent = `${frames.length} frames loaded…`; };
+    ws.onclose = resolve; ws.onerror = resolve;
+    setTimeout(() => { if (frames.length) { playing = true; $("play").textContent = "❚❚ Pause"; } }, 1500);  // start while the rest streams in
+  });
+  $("playinfo").textContent = `${frames.length} frames · ${r.label}`;
+}
+
+// ---------- live panel ----------
+async function refreshLive() {
+  try {
+    const d = await get("/live/ymca");
+    const cls = s => s <= 5 ? "ok" : s <= 15 ? "mid" : "bad";
+    $("live-body").innerHTML = d.approaches.map(a => `<div class="road"><span>${a.name.replace(" Bound", "").replace("Raja Bahadur Venkata Rama Reddy Marg", "RBVRR Marg")}</span>
+      <span><b class="${cls(a.delay_s)}">${a.delay_s} s</b> delay · ${Math.round(a.queue_m)} m queue · ${a.volume_per_hour}/h</span></div>`).join("");
+    $("live-time").textContent = "· " + new Date(d.time * 1000).toLocaleTimeString();
+  } catch (e) { $("live-body").innerHTML = `<small class="muted">Live data not available (${e.message.slice(0, 60)})</small>`; }
+}
+
+// ---------- controls ----------
+$("run-base").onclick = () => runVariant("baseline", "baseline", {}, 1.0, "Today's traffic");
+$("run-fly").onclick = () => runVariant("flyover_3lane_400m", "flyover", { lanes: 3, length_m: 400 }, 1.0, "3-lane flyover, 400 m");
+$("run-base80").onclick = () => runVariant("baseline", "baseline", {}, 0.8, "Today, 20% less traffic");
+$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "❚❚ Pause" : "▶ Play"; lastTick = 0; };
+$("scrub").oninput = e => { pos = Number(e.target.value); render(); };
+["t-roads", "t-buildings", "t-vehicles"].forEach(id => $(id).onchange = render);
+$("t-traffic").onchange = e => map.getLayer("tomtom-traffic") && map.setLayoutProperty("tomtom-traffic", "visibility", e.target.checked ? "visible" : "none");
+$("t-night").onchange = e => { if (cfg.tomtom_maps_key) map.setStyle(STYLE(e.target.checked)); render(); };
+$("recenter").onclick = () => map.easeTo({ center: [cfg.junction.lon, cfg.junction.lat], zoom: 16.6, pitch: 58, bearing: -25 });
+$("orbit").onclick = () => { orbiting = !orbiting; $("orbit").textContent = orbiting ? "Stop orbit" : "Orbit"; };
+init();
 </script>
 </body>
 </html>

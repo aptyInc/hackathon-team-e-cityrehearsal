@@ -196,6 +196,24 @@ def write_frames(fcd: Path, out: Path) -> int:
     return n
 
 
+def write_roads(net, edgedata: Path, out: Path):
+    """GeoJSON of every road with its simulated mean speed, speed limit and vehicles, for map colouring."""
+    ed = {e.get("id"): e for e in ET.parse(edgedata).getroot().iter("edge")}
+    feats = []
+    for e in net.getEdges():
+        if e.getID().startswith(":"):
+            continue
+        d = ed.get(e.getID())
+        speed = float(d.get("speed")) * 3.6 if d is not None and d.get("speed") else None
+        coords = [list(net.convertXY2LonLat(x, y)) for x, y in e.getShape()]
+        feats.append({"type": "Feature", "geometry": {"type": "LineString", "coordinates": [[round(a, 6), round(b, 6)] for a, b in coords]},
+                      "properties": {"id": e.getID(), "name": e.getName() or "", "lanes": e.getLaneNumber(),
+                                     "limit_kmh": round(e.getSpeed() * 3.6), "speed_kmh": round(speed, 1) if speed is not None else None,
+                                     "vehicles": int(float(d.get("entered") or 0)) if d is not None else 0,
+                                     "flyover": e.getID().startswith("flyover_")}})
+    out.write_text(json.dumps({"type": "FeatureCollection", "features": feats}))
+
+
 def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, seed: int = SEED,
         upstream_m: float = UPSTREAM_M, frames: bool = True) -> dict:
     """`frames=False` skips the vehicle-position output (about 150 MB of temporary files per run)."""
@@ -219,6 +237,7 @@ def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, see
     z, approaches = zones(net)
     junctions, travel, trips, speeds, refs, delays, ref_delays = measure(run_dir, z, approaches)
     n_frames = write_frames(run_dir / "fcd.xml", run_dir / "frames.jsonl") if frames else 0
+    write_roads(net, run_dir / "edgedata.xml", run_dir / "roads.geojson")
     (run_dir / "queue.xml").unlink(missing_ok=True)  # measured; 1-2 MB per run otherwise
     result = {"run_id": run_id, "variant_id": variant["variant_id"], "junctions": junctions,
               "corridor_travel_time_s": travel, "warnings": warnings,
@@ -229,6 +248,7 @@ def run(variant: dict, volume_scale: float = 1.0, run_id: str | None = None, see
               "approach_speed_kmh": speeds, "tomtom_speed_kmh": refs,
               "approach_delay_s": delays, "tomtom_delay_s": ref_delays,
               "frames_path": str(run_dir / "frames.jsonl") if frames else None, "frames": n_frames, "trips": trips,
+              "roads_path": str(run_dir / "roads.geojson"),
               "network": str(net_path), "sim_seconds": SIM_END, "wall_seconds": round(time.time() - t0, 1)}
     (run_dir / "result.json").write_text(json.dumps(result, indent=1))
     return result
