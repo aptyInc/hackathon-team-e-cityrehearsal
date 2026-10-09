@@ -298,6 +298,8 @@ def mock_api(pg, live_body, bodies, mode, counts, real_shape=False):
             return route.fulfill(status=200, content_type="application/json", headers=CORS, body=json.dumps(building_fc()))
         route.fulfill(status=404, headers=CORS, body="no buildings")
     pg.route("http://localhost:8000/corridor/buildings/*", bld)
+    # the page falls back to the static files in data/corridor/buildings/; keep the mock the only source
+    pg.route("**/data/corridor/buildings/*.geojson", lambda r: r.fulfill(status=404, headers=CORS, body="no buildings"))
 
 
 def open_page(b, viewport, init_js):
