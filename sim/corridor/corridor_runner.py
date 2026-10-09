@@ -1565,7 +1565,7 @@ def rain_at_hotspots(net_path, weather, base):
     pts = {p["id"]: p for p in cn.CORRIDOR["points"]}
     centres = {}
     for p, f in hot:
-        c = pts[p["junction_id"]]
+        c = p if p.get("lat") and p.get("lon") else pts[p["junction_id"]]   # a team-supplied spot, else the junction centre
         centres[p["junction_id"]] = (base.convertLonLat2XY(c["lon"], c["lat"]), f)
 
     def samples(shape):

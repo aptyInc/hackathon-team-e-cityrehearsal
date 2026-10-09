@@ -3,7 +3,7 @@
  "corridor_id": "lingampally_lakdikapul",
  "what_this_is": "Water-logging (water-clogging) hotspots on or next to the Lingampally -> Lakdikapul corridor, taken from public reports (GHMC / HYDRAA hotspot lists, traffic police rain advisories, newspapers). Each point is tied to the nearest corridor junction (data/corridor/corridor.json). We have not measured any of this ourselves.",
  "radius_m": 300,
- "how_the_simulation_uses_it": "In a rain what-if (POST /corridor/runs {weather}), every road lane within radius_m of a reported junction (the corridor approaching and leaving it, and its cross arms; not a flyover deck above it) gets an extra speed cap: cap x extra_speed_factor[weather][severity]. This comes ON TOP of the per-stretch rain factors in data/rain/rain_factors.json. No double counting: the stretch factor is the measured average rain effect over a whole leg (TomTom hourly x Open-Meteo, July 2026); the junction factor is the extra, local slowdown where water collects, which the leg average hides. Both are relative to the run's own calibration.",
+ "how_the_simulation_uses_it": "In a rain what-if (POST /corridor/runs {weather}), every road lane within radius_m of a reported junction (the corridor approaching and leaving it, and its cross arms; not a flyover deck above it) gets an extra speed cap: cap x extra_speed_factor[weather][severity]. This comes ON TOP of the per-stretch rain factors in data/rain/rain_factors.json. No double counting: the stretch factor is the measured average rain effect over a whole leg (TomTom hourly x Open-Meteo, July 2026); the junction factor is the extra, local slowdown where water collects, which the leg average hides. Both are relative to the run's own calibration. Where a point carries lat/lon (team-supplied spots), the slowed lanes are those within radius_m of that spot, not of the junction centre.",
  "extra_speed_factor": {
   "heavy_rain": {
    "high": 0.75,
@@ -68,6 +68,62 @@
      "date": "2025-03-22"
     }
    ]
+  },
+  {
+   "junction_id": "B_lakdikapul",
+   "name": "Lakdikapul junction (under the railway bridge)",
+   "severity": "high",
+   "what_reported": "Chronic low-lying point: on GHMC's list of 30 stagnation points with drain renovation under the railway bridge (Oct 2024); HYDRAA found ageing pipes causing 'ongoing flooding' (Oct 2024); a 180 m drain built with month-long diversions 'to resolve longstanding waterlogging' (Jun 2025); still inundated with traffic diverted (Jul 2025) and at a crawl (Aug 2025)",
+   "year": "2017-2026",
+   "label": "reported (public sources) + team-supplied location, not measured by us",
+   "short": "Lakdikapul",
+   "sources": [
+    {
+     "url": "https://deccanchronicle.com/southern-states/telangana/ghmc-to-solve-waterlogging-on-roads-1831553",
+     "publisher": "Deccan Chronicle (GHMC 30-point list)",
+     "title": "GHMC to solve waterlogging on roads",
+     "date": "2024-10-19"
+    },
+    {
+     "url": "https://www.siasat.com/hyderabad-damaged-pipelines-to-be-replaced-at-lakdikapul-says-hydra-3120525/",
+     "publisher": "Siasat (HYDRAA)",
+     "title": "Damaged pipelines to be replaced at Lakdikapul, says HYDRAA",
+     "date": "2024-10-26"
+    },
+    {
+     "url": "https://www.siasat.com/month-long-traffic-diversions-issuedat-lakdikapul-for-drain-works-3231810/",
+     "publisher": "Siasat",
+     "title": "Month-long traffic diversions issued at Lakdikapul for drain works",
+     "date": "2025-06-11"
+    },
+    {
+     "url": "https://www.siasat.com/hyderabad-witnesses-heavy-rains-many-roads-waterlogged-3247404/",
+     "publisher": "Siasat",
+     "title": "Hyderabad witnesses heavy rains, many roads waterlogged",
+     "date": "2025-07-18"
+    },
+    {
+     "url": "https://www.theweek.in/wire-updates/national/2025/08/07/mes28-tl-rain.html",
+     "publisher": "The Week (PTI)",
+     "title": "Heavy rain triggers waterlogging, traffic snarls in Hyderabad",
+     "date": "2025-08-07"
+    },
+    {
+     "url": "https://www.thehansindia.com/news/cities/hyderabad/heavy-rains-trigger-traffic-snarls-across-hyderabad-1124724",
+     "publisher": "The Hans India",
+     "title": "Heavy rains trigger traffic snarls across Hyderabad",
+     "date": "2026-09-23"
+    },
+    {
+     "publisher": "Terascope team (local knowledge)",
+     "title": "Water-logging points supplied by the team, 10 Oct 2026",
+     "date": "2026-10-10",
+     "url": ""
+    }
+   ],
+   "lat": 17.40414,
+   "lon": 78.4645,
+   "spot": "Lakdikapul"
   },
   {
    "junction_id": "j01",
@@ -181,7 +237,7 @@
    "severity": "high",
    "what_reported": "Waist-deep water, cars submerged, two-wheelers washed away, police broke the divider to drain the road (2020); 'worst hit' with cars submerged at Shaikpet nala and police telling commuters to avoid the Shaikpet flyover (Aug 2024); Chief Secretary ordered the water cleared (Aug 2025); HYDRAA flash-flood risk area",
    "year": "2020-2025",
-   "label": "reported (public sources), not measured by us",
+   "label": "reported (public sources) + team-supplied location, not measured by us",
    "short": "Shaikpet",
    "sources": [
     {
@@ -213,8 +269,17 @@
      "publisher": "Siasat",
      "title": "HYDRAA chief visits low-lying neighbourhoods in Hyderabad (Tolichowki, Shaikpet)",
      "date": "2024-09-01"
+    },
+    {
+     "publisher": "Terascope team (local knowledge)",
+     "title": "Water-logging points supplied by the team, 10 Oct 2026",
+     "date": "2026-10-10",
+     "url": ""
     }
-   ]
+   ],
+   "lat": 17.40672,
+   "lon": 78.40284,
+   "spot": "Shaikpet Nala"
   },
   {
    "junction_id": "j07",
@@ -222,7 +287,7 @@
    "severity": "high",
    "what_reported": "Chronic: waist-deep water on the Tolichowki-Shaikpet main road with vehicles submerged (2020); cars submerged, DRF pumping water (Aug 2024); HYDRAA flash-flood visit (2024); Masab Tank-Tolichowki-Shaikpet road 'worst affected' (Sep 2026); on GHMC's 2019 list of 123 points",
    "year": "2019-2026",
-   "label": "reported (public sources), not measured by us",
+   "label": "reported (public sources) + team-supplied location, not measured by us",
    "short": "Tolichowki",
    "sources": [
     {
@@ -260,8 +325,17 @@
      "publisher": "The News Minute (GHMC list)",
      "title": "123 areas in Hyderabad prone to waterlogging: the full list by GHMC",
      "date": "2019-06-25"
+    },
+    {
+     "publisher": "Terascope team (local knowledge)",
+     "title": "Water-logging points supplied by the team, 10 Oct 2026",
+     "date": "2026-10-10",
+     "url": ""
     }
-   ]
+   ],
+   "lat": 17.40277,
+   "lon": 78.41074,
+   "spot": "Near Galaxy Theatre, Tolichowki"
   },
   {
    "junction_id": "j08",
@@ -289,6 +363,46 @@
      "publisher": "The News Minute",
      "title": "Roads waterlogged, traffic disrupted in many areas of Hyderabad after heavy rains",
      "date": "2020-10-10"
+    }
+   ]
+  },
+  {
+   "junction_id": "j09",
+   "name": "Rethibowli Junction",
+   "short": "Rethibowli",
+   "severity": "medium",
+   "spot": "Rethibowli Junction",
+   "lat": 17.39553,
+   "lon": 78.43108,
+   "what_reported": "Water-logging point known to the team (local knowledge); no news report found",
+   "year": "2026",
+   "label": "team-supplied (local knowledge), not measured by us",
+   "sources": [
+    {
+     "publisher": "Terascope team (local knowledge)",
+     "title": "Water-logging points supplied by the team, 10 Oct 2026",
+     "date": "2026-10-10",
+     "url": ""
+    }
+   ]
+  },
+  {
+   "junction_id": "j10",
+   "name": "Opp. Medivision Eye Hospital, NMDC",
+   "short": "NMDC",
+   "severity": "medium",
+   "spot": "Opp. Medivision Eye Hospital, NMDC",
+   "lat": 17.39906,
+   "lon": 78.44795,
+   "what_reported": "Water-logging point known to the team (local knowledge); no news report found",
+   "year": "2026",
+   "label": "team-supplied (local knowledge), not measured by us",
+   "sources": [
+    {
+     "publisher": "Terascope team (local knowledge)",
+     "title": "Water-logging points supplied by the team, 10 Oct 2026",
+     "date": "2026-10-10",
+     "url": ""
     }
    ]
   },
@@ -321,53 +435,6 @@
      "date": "2024-08-20"
     }
    ]
-  },
-  {
-   "junction_id": "B_lakdikapul",
-   "name": "Lakdikapul junction (under the railway bridge)",
-   "severity": "high",
-   "what_reported": "Chronic low-lying point: on GHMC's list of 30 stagnation points with drain renovation under the railway bridge (Oct 2024); HYDRAA found ageing pipes causing 'ongoing flooding' (Oct 2024); a 180 m drain built with month-long diversions 'to resolve longstanding waterlogging' (Jun 2025); still inundated with traffic diverted (Jul 2025) and at a crawl (Aug 2025)",
-   "year": "2017-2026",
-   "label": "reported (public sources), not measured by us",
-   "short": "Lakdikapul",
-   "sources": [
-    {
-     "url": "https://deccanchronicle.com/southern-states/telangana/ghmc-to-solve-waterlogging-on-roads-1831553",
-     "publisher": "Deccan Chronicle (GHMC 30-point list)",
-     "title": "GHMC to solve waterlogging on roads",
-     "date": "2024-10-19"
-    },
-    {
-     "url": "https://www.siasat.com/hyderabad-damaged-pipelines-to-be-replaced-at-lakdikapul-says-hydra-3120525/",
-     "publisher": "Siasat (HYDRAA)",
-     "title": "Damaged pipelines to be replaced at Lakdikapul, says HYDRAA",
-     "date": "2024-10-26"
-    },
-    {
-     "url": "https://www.siasat.com/month-long-traffic-diversions-issuedat-lakdikapul-for-drain-works-3231810/",
-     "publisher": "Siasat",
-     "title": "Month-long traffic diversions issued at Lakdikapul for drain works",
-     "date": "2025-06-11"
-    },
-    {
-     "url": "https://www.siasat.com/hyderabad-witnesses-heavy-rains-many-roads-waterlogged-3247404/",
-     "publisher": "Siasat",
-     "title": "Hyderabad witnesses heavy rains, many roads waterlogged",
-     "date": "2025-07-18"
-    },
-    {
-     "url": "https://www.theweek.in/wire-updates/national/2025/08/07/mes28-tl-rain.html",
-     "publisher": "The Week (PTI)",
-     "title": "Heavy rain triggers waterlogging, traffic snarls in Hyderabad",
-     "date": "2025-08-07"
-    },
-    {
-     "url": "https://www.thehansindia.com/news/cities/hyderabad/heavy-rains-trigger-traffic-snarls-across-hyderabad-1124724",
-     "publisher": "The Hans India",
-     "title": "Heavy rains trigger traffic snarls across Hyderabad",
-     "date": "2026-09-23"
-    }
-   ]
   }
  ],
  "not_found": [
@@ -375,16 +442,6 @@
    "junction_id": "j02",
    "name": "ISB Rd / DLF jn",
    "note": "no report names water-logging at the DLF / ISB road junction; the nearest reported points (IIIT junction, Gachibowli sub-station, 2019) are listed under j03"
-  },
-  {
-   "junction_id": "j09",
-   "name": "Rethibowli jn",
-   "note": "no water-logging report names Rethibowli; a 18 Sep 2025 rain-day advisory lists it as slow 'due to peak hours' (https://www.siasat.com/hyderabad-rains-intense-thunderstorms-to-continue-for-three-hours-3272820/), not as flooded"
-  },
-  {
-   "junction_id": "j10",
-   "name": "NMDC / Masab Tank Rd",
-   "note": "same 18 Sep 2025 advisory names NMDC as slow on a rain day; the only explicit flooding on this stretch is 'water-logging at Ayodhya' (13 Aug 2025), counted under j11"
   }
  ],
  "sources_checked": [
