@@ -91,6 +91,13 @@ def junction_nodes(net, path, radius=60.0):
     return nodes
 
 
+def junction_groups(net):
+    """Each junction's nodes on both carriageways: {junction_id: [nodes]} ([] where the corridor passes over)."""
+    fwd, rev = junction_nodes(net, route(net)), junction_nodes(net, route(net, reverse=True))
+    # where the forward trip passes over the junction (Biodiversity flyovers), so does the return trip
+    return {j: list({n.getID(): n for n in fwd[j] + rev.get(j, [])}.values()) if fwd[j] else [] for j in fwd}
+
+
 def rebuild(net_path: Path, out: Path, edit):
     """Export the network as plain XML, let `edit(prefix)` change the files, rebuild into `out`."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -110,7 +117,7 @@ def rebuild(net_path: Path, out: Path, edit):
 def add_signals(net_path: Path):
     """Signals at every corridor junction the corridor crosses at ground level (OSM tags only 5). Label: assumed."""
     net = sumolib.net.readNet(str(net_path))
-    nodes = {jid: g for jid, g in junction_nodes(net, route(net)).items() if g}
+    nodes = {jid: g for jid, g in junction_groups(net).items() if g}
     ids = {n.getID() for g in nodes.values() for n in g}
 
     def edit(p):
