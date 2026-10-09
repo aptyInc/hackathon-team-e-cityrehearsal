@@ -2,6 +2,7 @@
 
 Used by build_network.sh (signals) and by the corridor runner and intervention templates (route, junction nodes).
 """
+import heapq
 import json
 import math
 import re
@@ -19,6 +20,8 @@ ROUTE_POINTS = json.loads((Path(__file__).parent / "route_points.json").read_tex
 SIGNAL_CYCLE_S = 120   # assumed default cycle at the corridor's signalised junctions
 CORRIDOR_GREEN_SHARE = 0.6   # assumed share of the green time for the corridor's stage (signal_plans)
 YELLOW_S = 4           # amber after each stage (assumed)
+FLYOVER_COST = 0.7     # route(): a metre on an existing flyover counts as 0.7 m: through traffic takes them (assumed;
+                       # TomTom's fastest legs are exactly the flyover stretches)
 INNER_WAIT = "g"       # links inside a junction outside their own stage: "g" give way, "r" wait for their stage
 
 
@@ -44,14 +47,44 @@ def edge_along(net, i):
 
 
 def route(net, reverse=False):
-    """Edges of the corridor trip (Lingampally -> Lakdikapul, or back): the shortest path through the network, then
-    straightened (see _straighten)."""
+    """Edges of the corridor trip (Lingampally -> Lakdikapul, or back): the shortest path through the network counting
+    the distance across every junction it passes, then straightened (see _straighten). Counting the junctions puts
+    the trip on the flyovers through traffic really uses (Gachibowli, Biodiversity, Shaikpet, Tolichowki, Masab
+    Tank): by road length alone the ground roads under them look a few metres shorter."""
     if not reverse:
         a, b = edge_along(net, 1), edge_along(net, len(ROUTE_POINTS) - 3)
     else:   # the opposite carriageway: an edge near each end heading the other way
         a, b = _reverse_edge(net, len(ROUTE_POINTS) - 3), _reverse_edge(net, 1)
-    path, _ = net.getShortestPath(a, b, vClass="passenger")
-    return _straighten(path or [])
+    if a is None or b is None:
+        return []
+    best, prev, heap, n = {a.getID(): a.getLength()}, {}, [(a.getLength(), 0, a)], 0
+    while heap:
+        d, _, e = heapq.heappop(heap)
+        if e == b:
+            path = [e]
+            while path[-1].getID() in prev:
+                path.append(prev[path[-1].getID()])
+            return _straighten(path[::-1])
+        if d > best.get(e.getID(), math.inf):
+            continue
+        end = e.getShape()[-1]
+        for f in e.getAllowedOutgoing("passenger"):
+            nd = d + f.getLength() * (FLYOVER_COST if flyover(f) else 1.0) + math.dist(end[:2], f.getShape()[0][:2])   # + across the junction
+            if nd < best.get(f.getID(), math.inf):
+                best[f.getID()], prev[f.getID()] = nd, e
+                n += 1
+                heapq.heappush(heap, (nd, n, f))
+    return []
+
+
+def flyover(e):
+    """An existing flyover piece: OSM names it a flyover, or it runs at least 5 m up."""
+    return "flyover" in (e.getName() or "").lower() or any(abs(pt[2]) >= 5 for pt in e.getShape3D())
+
+
+def elevated(e):
+    """True for a flyover (or underpass) piece: part of its shape is more than 1 m off the ground."""
+    return any(abs(pt[2]) > 1 for pt in e.getShape3D())
 
 
 def _straighten(path, slack=25.0, reach=6):
@@ -62,6 +95,8 @@ def _straighten(path, slack=25.0, reach=6):
     out, i = list(path), 0
     while i < len(out) - 2:
         for j in range(min(len(out) - 1, i + reach), i + 1, -1):
+            if any(elevated(e) for e in out[i + 1:j]):
+                continue                     # never swap a flyover for the road under it
             have = sum(e.getLength() for e in out[i + 1:j])
             alt = _fewer_pieces(out[i], out[j], j - i - 2, have + slack)
             if alt is not None:
@@ -121,8 +156,7 @@ def junction_nodes(net, path, radius=60.0):
         group = []
         for k in range(max(0, i - 4), min(len(path), i + 5)):
             n = path[k].getToNode()
-            elevated = any(len(pt) > 2 and pt[2] > 1 for e in path[k:k + 1] for pt in e.getShape(True))
-            if not elevated and math.dist(n.getCoord()[:2], (x, y)) <= radius and (len(n.getIncoming()) >= 2 or len(n.getOutgoing()) >= 2):
+            if n.getCoord3D()[2] <= 1 and math.dist(n.getCoord()[:2], (x, y)) <= radius and (len(n.getIncoming()) >= 2 or len(n.getOutgoing()) >= 2):
                 group.append(n)
         nodes[p["id"]] = list({n.getID(): n for n in group}.values())
     return nodes
@@ -182,7 +216,7 @@ def corridor_lanes(net_path: Path):
     lanes = lambda e: widen.get(e.getID(), e.getLaneNumber())  # noqa: E731
     relink = {}         # (from, to) -> lane links replacing the existing ones
     for p in paths:
-        for a, b in zip(p[2:-3], p[3:-2]):
+        for a, b in zip(p[1:-3], p[2:-2]):
             na, nb = lanes(a), lanes(b)
             linked = {(c.getFromLane().getIndex(), c.getToLane().getIndex()) for c in a.getConnections(b)}
             want = {(i, round(i * (nb - 1) / (na - 1)) if na > 1 else 0) for i in range(na)}   # lane by lane

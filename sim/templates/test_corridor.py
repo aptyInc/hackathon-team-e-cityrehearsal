@@ -5,11 +5,13 @@ Traffic (test only, assumed): 300 veh/h each way along the whole corridor for 15
 side road at the junction under test; the run lasts until 75 minutes. Two times are reported per direction:
   A->B / B->A   the whole trip (also shows congestion elsewhere on the corridor, so it is noisy: +-70 s)
   local         from ~600 m before the junction to ~600 m after it: the PASS/FAIL check uses this one
-Through trips are kept on the corridor with `via` edges (SUMO's own fastest A-B route leaves it at j03, j06, j07
-and j10), except at a new flyover/underpass, where SUMO chooses between the structure and the ground road.
+Through trips are kept on the corridor with `via` edges (SUMO's own fastest A-B route may leave it), except at a new
+flyover/underpass, where SUMO chooses between the structure and the ground road. Cases are at the junctions the
+corridor crosses at ground level; where it already crosses on a flyover (j03, j04, j06, j07, j10, j11) a flyover
+must only warn ("already has a flyover").
 
 Usage (repo root, inside .venv):  python sim/templates/test_corridor.py          (about 2 minutes)
-                                  python sim/templates/test_corridor.py j07       (only cases whose name has j07)
+                                  python sim/templates/test_corridor.py j08       (only cases whose name has j08)
 """
 import statistics
 import subprocess
@@ -32,24 +34,20 @@ CROSS_VPH = 150     # per side road at the junction under test
 WINDOW_M = 600      # local window either side of the junction
 
 # (name, interventions, expectation for the local through time: "faster" / "slower" / "runs")
-CASES = [
-    ("flyover j07", [{"junction_id": "j07", "kind": "flyover", "params": {}}], "faster"),
+CASES = [   # junctions the corridor crosses at ground level (it flies over j03, j04, j06, j07, j10, j11 already)
     ("flyover j08", [{"junction_id": "j08", "kind": "flyover", "params": {"lanes": 2, "length_m": 500}}], "faster"),
-    ("flyover j03", [{"junction_id": "j03", "kind": "flyover", "params": {"lanes": 3}}], "faster"),
-    ("underpass j07", [{"junction_id": "j07", "kind": "underpass", "params": {}}], "faster"),
-    ("underpass j10", [{"junction_id": "j10", "kind": "underpass", "params": {}}], "faster"),
-    ("retime j07 share 0.3", [{"junction_id": "j07", "kind": "signal_retime", "params": {"cycle_s": 120, "corridor_green_share": 0.3}}], "slower"),
-    ("retime j07 share 0.6", [{"junction_id": "j07", "kind": "signal_retime", "params": {"cycle_s": 120, "corridor_green_share": 0.6}}], "runs"),
+    ("flyover j05", [{"junction_id": "j05", "kind": "flyover", "params": {}}], "faster"),
+    ("flyover j02", [{"junction_id": "j02", "kind": "flyover", "params": {}}], "faster"),
+    ("underpass j09", [{"junction_id": "j09", "kind": "underpass", "params": {}}], "faster"),
     ("retime j08 share 0.3", [{"junction_id": "j08", "kind": "signal_retime", "params": {"cycle_s": 150, "corridor_green_share": 0.3}}], "slower"),
+    ("retime j08 share 0.6", [{"junction_id": "j08", "kind": "signal_retime", "params": {"cycle_s": 120, "corridor_green_share": 0.6}}], "runs"),
     ("retime j05 share 0.3", [{"junction_id": "j05", "kind": "signal_retime", "params": {"cycle_s": 120, "main_share": 0.3}}], "slower"),
     ("retime j05 share 0.7", [{"junction_id": "j05", "kind": "signal_retime", "params": {"cycle_s": 90, "corridor_green_share": 0.7}}], "faster"),
-    # j03: the corridor crosses the signalled roundabout in two stages, so only the cycle can change (warns)
-    ("retime j03 share 0.3", [{"junction_id": "j03", "kind": "signal_retime", "params": {"cycle_s": 90, "corridor_green_share": 0.3}}], "runs"),
+    ("retime j02 share 0.3", [{"junction_id": "j02", "kind": "signal_retime", "params": {"cycle_s": 120, "corridor_green_share": 0.3}}], "slower"),
     ("widening j05", [{"junction_id": "j05", "kind": "widening", "params": {"add_lanes": 1}}], "runs"),
-    ("widening j07", [{"junction_id": "j07", "kind": "widening", "params": {}}], "runs"),
-    ("one_way j06", [{"junction_id": "j06", "kind": "one_way", "params": {}}], "runs"),
+    ("widening j08", [{"junction_id": "j08", "kind": "widening", "params": {}}], "runs"),
     ("one_way j09 out", [{"junction_id": "j09", "kind": "one_way", "params": {"direction": "out"}}], "runs"),
-    ("flyover j07+retime j09", [{"junction_id": "j07", "kind": "flyover", "params": {}},
+    ("flyover j08+retime j09", [{"junction_id": "j08", "kind": "flyover", "params": {}},
                                 {"junction_id": "j09", "kind": "signal_retime", "params": {"corridor_green_share": 0.7}}], "faster"),
 ]
 
@@ -187,8 +185,9 @@ def check_errors():
                 rows.append((name, "FAIL", "no ValueError"))
             except ValueError as e:
                 rows.append((name, "PASS", f"ValueError: {e}"[:90]))
-        w = corridor.apply(BASE, Path(tmp) / "x.net.xml", [{"junction_id": "j04", "kind": "flyover"}])
-        rows.append(("flyover at j04", "PASS" if any("already has a flyover" in x for x in w) else "FAIL", (w or ["no warning"])[0][:90]))
+        for jid in ("j03", "j04", "j06", "j07", "j10", "j11"):    # the corridor already crosses these on a flyover
+            w = corridor.apply(BASE, Path(tmp) / "x.net.xml", [{"junction_id": jid, "kind": "flyover"}])
+            rows.append((f"flyover at {jid}", "PASS" if any("already has a flyover" in x for x in w) else "FAIL", (w or ["no warning"])[0][:90]))
     return rows
 
 

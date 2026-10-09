@@ -1,5 +1,10 @@
 """Corridor simulation, Lingampally -> Lakdikapul: interventions in, C5 corridor result out.
 
+Route: corridor_net.route(), over the flyovers through traffic really uses (Nallagandla, Gachibowli, Biodiversity
+Level 1, Shaikpet, Tolichowki, Masab Tank), so the corridor meets signals only at j01, j02, j05, j08 and j09; the
+junctions under the flyovers (j03, j04, j06, j07, j10, j11) carry no corridor through traffic. Leg times are split at
+each corridor point projected onto the route (a flyover piece can run past a junction).
+
 Traffic
   - Through traffic both ways along the corridor on fixed routes (end-to-end volume per direction: calibrated). At
     Lakdikapul (B) it disperses before the last ~130 m, a 5-into-2-lane give-way merge; only probe cars drive on.
@@ -30,11 +35,10 @@ the junctions it watches (Junction Analytics, `estimated`). We run the baseline,
     vehicles, pedestrians, autos pulling in and out, "side friction").
   - leg too slow -> raise its speed; if it is already at 60 km/h the time is lost at the junction ending the leg, so
     the corridor gets more of that junction's green (up to 80%).
-  - junction delay below TomTom's -> the corridor gets less green there (down to 35%; Gachibowli Circle no lower than
-    70%, below which its roundabout locks up in some runs), so more of the trip is spent waiting at junctions, as
-    TomTom measures, and less as slow road. The target is TomTom's delay but at most the leg's time above free flow
-    (50 km/h), since the delays are evening means and the leg times all-day means. j04 (the corridor passes over it
-    on the Biodiversity flyover) is left out of the delay targets; its volumes are still compared.
+  - junction delay below TomTom's -> the corridor gets less green there (down to 35%), so more of the trip is spent
+    waiting at junctions, as TomTom measures, and less as slow road. The target is TomTom's delay but at most the
+    leg's time above free flow (50 km/h), since the delays are evening means and the leg times all-day means.
+    Junctions the corridor flies over are left out of the delay targets; their volumes are still compared.
   - the network does not cope (vehicles stuck or unable to enter), or a leg is too slow even with 80% green -> all
     traffic is lowered 10% (to no less than 70% of the starting volumes).
 The baseline then reproduces the measured trip, and interventions change it through what SUMO does model: junction
@@ -54,6 +58,7 @@ sys.path.insert(0, str(ROOT / "sim/scripts"))
 sys.path.insert(0, str(ROOT / "sim/templates"))
 import corridor_net as cn  # noqa: E402
 import sumolib  # noqa: E402
+from sumolib import geomhelper  # noqa: E402
 from build_demand import VTYPES  # noqa: E402
 
 NET = HERE / "corridor.net.xml"
@@ -102,11 +107,37 @@ def tomtom_legs():
     return [(r["from_id"], r["to_id"], float(r["distance_m"]), float(r["time_s"]), float(r["speed_kmh"])) for r in rows]
 
 
-def leg_edges(net, path):
-    """Edges of `path` in each leg (between consecutive corridor points), in leg order."""
-    pos = cn.junction_positions(net, path)
-    idx = [pos[p["id"]][0] for p in cn.CORRIDOR["points"]]
-    return [path[a + 1:b + 1] for a, b in zip(idx, idx[1:])]
+def locate(net, path, reverse=False):
+    """{corridor point id: (index of the path edge it lies on, metres into that edge, metres from the path's start)}.
+    Points are projected onto the path (a flyover edge can run past a junction, so "nearest edge end" is not enough)."""
+    pts = cn.CORRIDOR["points"][::-1] if reverse else cn.CORRIDOR["points"]
+    cum = [0.0]
+    for e in path:
+        cum.append(cum[-1] + e.getLength())
+    out, start = {pts[0]["id"]: (0, 0.0, 0.0)}, 0
+    for p in pts[1:-1]:
+        xy = net.convertLonLat2XY(p["lon"], p["lat"])
+        dist = lambda k: geomhelper.distancePointToPolygon(xy, [q[:2] for q in path[k].getShape()], perpendicular=False)  # noqa: E731
+        k = min(range(start, len(path)), key=dist)
+        shape = [q[:2] for q in path[k].getShape()]
+        frac = geomhelper.polygonOffsetWithMinimumDistanceToPoint(xy, shape, perpendicular=False) / max(1e-6, geomhelper.polyLength(shape))
+        off = min(1.0, max(0.0, frac)) * path[k].getLength()
+        out[p["id"]], start = (k, off, cum[k] + off), k
+    out[pts[-1]["id"]] = (len(path) - 1, path[-1].getLength(), cum[-1])
+    return out
+
+
+def leg_of_edges(path, loc, reverse=False):
+    """{edge id: leg index (A->B order)} by where each edge's middle lies between the corridor points."""
+    pts = [p["id"] for p in (cn.CORRIDOR["points"][::-1] if reverse else cn.CORRIDOR["points"])]
+    marks = [loc[p][2] for p in pts]
+    n, out, done = len(pts) - 1, {}, 0.0
+    for e in path:
+        mid = done + e.getLength() / 2
+        j = max(0, min(n - 1, sum(1 for m in marks[1:-1] if m <= mid)))
+        out[e.getID()] = n - 1 - j if reverse else j
+        done += e.getLength()
+    return out
 
 
 def calibrated_net(out: Path, caps=None, shares=None):
@@ -117,12 +148,9 @@ def calibrated_net(out: Path, caps=None, shares=None):
     net = sumolib.net.readNet(str(NET))
     fwd, rev = cn.route(net), cn.route(net, reverse=True)
     speed = {}
-    for k, edges in enumerate(leg_edges(net, fwd)):
-        for e in edges:
-            speed[e.getID()] = caps[k] / 3.6
-    for k, edges in enumerate(reversed(leg_edges_rev(net, rev))):
-        for e in edges:
-            speed[e.getID()] = caps[k] / 3.6
+    for path, reverse in ((fwd, False), (rev, True)):
+        for e, k in leg_of_edges(path, locate(net, path, reverse), reverse).items():
+            speed[e] = caps[k] / 3.6
     tree = ET.parse(NET)
     for edge in tree.getroot().iter("edge"):
         v = speed.get(edge.get("id"))
@@ -133,18 +161,6 @@ def calibrated_net(out: Path, caps=None, shares=None):
     if shares and any(abs(v - cn.CORRIDOR_GREEN_SHARE) > 1e-6 for v in shares.values()):
         cn.signal_plans(out, shares)
     return out
-
-
-def leg_edges_rev(net, rev):
-    """Legs of the reverse path, in the reverse path's order (B -> A)."""
-    pts = list(reversed(cn.CORRIDOR["points"]))
-    pos = {}
-    for p in pts:
-        x, y = net.convertLonLat2XY(p["lon"], p["lat"])
-        pos[p["id"]] = min(range(len(rev)), key=lambda i: math.dist(rev[i].getToNode().getCoord()[:2], (x, y)))
-    pos[pts[0]["id"]], pos[pts[-1]["id"]] = -1, len(rev) - 1
-    idx = [pos[p["id"]] for p in pts]
-    return [rev[a + 1:b + 1] for a, b in zip(idx, idx[1:])]
 
 
 # ---------- traffic ----------
@@ -269,7 +285,7 @@ def junction_counts(net, groups, fwd, rev):
                        and x.getFromNode().getID() not in node_jid and x.allows("passenger")]
                 e = min(ins, key=lambda x: abs(math.remainder(cn._angle(x) - cn._angle(e), 2 * math.pi))) if ins else None
             at, entry = _leads_to(e, node_jid, fwd_ids | rev_ids) if e else (None, None)
-            if at is None or entry.getID() in fwd_ids | rev_ids:
+            if at != jid or entry.getID() in fwd_ids | rev_ids:     # only roads into this junction (areas overlap)
                 continue
             probes = {}
             for name, w in turns.get((jid, a["name"]), {}).items():
@@ -297,17 +313,6 @@ def _after(path, i, metres):
     return k
 
 
-def point_index(net, path, reverse=False):
-    """{corridor point id: index of the path edge whose end is nearest it}; the trip's start point gets -1."""
-    pts = cn.CORRIDOR["points"][::-1] if reverse else cn.CORRIDOR["points"]
-    out = {}
-    for p in pts:
-        x, y = net.convertLonLat2XY(p["lon"], p["lat"])
-        out[p["id"]] = min(range(len(path)), key=lambda i: math.dist(path[i].getToNode().getCoord()[:2], (x, y)))
-    out[pts[0]["id"]], out[pts[-1]["id"]] = -1, len(path) - 1
-    return out
-
-
 def demand(net, base_groups, volume_scale=1.0, through=None, cross_scale=CROSS_SCALE, tomtom=None):
     """All traffic as flows [{"id", "route": [edge ids], "vph", "kind"}]: through traffic both ways along the corridor
     (fixed routes), and cross traffic at every junction (TomTom volumes where measured, else CROSS_VPH per approach)
@@ -331,7 +336,7 @@ def demand(net, base_groups, volume_scale=1.0, through=None, cross_scale=CROSS_S
     clip = lambda r, tag: r[:r.index(cut[tag]) + 1] if cut[tag] in r else r  # noqa: E731
     flows = [{"id": f"t{tag[0]}", "route": clip([e.getID() for e in p], tag), "vph": through[tag] * volume_scale, "kind": "through", "dir": tag}
              for tag, p in paths.items()]
-    pos = {"fwd": point_index(net, fwd), "rev": point_index(net, rev, reverse=True)}
+    pos = {"fwd": locate(net, fwd), "rev": locate(net, rev, reverse=True)}
     approaches = {}
     for e_id, m in measured.items():
         approaches.setdefault(m["jid"], []).append((net.getEdge(e_id), m["vph"] * cross_scale, m["split"], "estimated", m["split_source"], m["road"]))
@@ -348,7 +353,7 @@ def demand(net, base_groups, volume_scale=1.0, through=None, cross_scale=CROSS_S
                 and e.allows("passenger")]
         joins = {}
         for tag, path in paths.items():
-            i = pos[tag][jid]
+            i = pos[tag][jid][0]
             a, b = _after(path, i, 150), _after(path, i, JOIN_M)
             joins[tag] = (path[a], clip([x.getID() for x in path[a + 1:b + 1]], tag))
         rows = []
@@ -401,11 +406,11 @@ def sections(net, info):
             cum = [0.0]
             for e in path:
                 cum.append(cum[-1] + e.getLength())          # cum[i + 1]: distance to the end of path[i]
-            da, db = cum[pos[a] + 1], cum[pos[b] + 1]
-            start = 0 if pos[a] < 0 else next(i for i in range(len(path)) if cum[i + 1] > da - LEAD_IN_M)
+            da, db = pos[a][2], pos[b][2]
+            start = 0 if da == 0 else next(i for i in range(len(path)) if cum[i + 1] > da - LEAD_IN_M)
             while start > 0 and path[start].getLength() < 50:   # vehicles enter the section on a piece with room
                 start -= 1
-            end = len(path) - 1 if pos[b] == len(path) - 1 else next((i for i in range(len(path)) if cum[i + 1] >= db + TAIL_M), len(path) - 1)
+            end = len(path) - 1 if db >= cum[-1] - 1e-6 else next((i for i in range(len(path)) if cum[i + 1] >= db + TAIL_M), len(path) - 1)
             sec[tag] = (start, end)
         sec["junctions"] = [p for p in pts[i1:i2 + 1] if p.startswith("j")]
         sec["owned"] = [p for p in pts[i1 + 1:i2 + 1] if p.startswith("j")]       # A->B approach fully inside
@@ -558,7 +563,14 @@ def probe_legs(sec, info, outdir: Path):
         if not v.get("id").startswith("probe_fwd") or v.get("arrival") is None:
             continue
         exits = [float(t) for t in v.find("route").get("exitTimes").split()]
-        t = [float(v.get("depart")) if pos[p] < 0 else exits[pos[p] - a] for p in sec["points"]]
+        t = []
+        for p in sec["points"]:          # time at the point: into the edge it lies on, plus its share of that edge
+            k, off, cum = pos[p]
+            if cum == 0:
+                t.append(float(v.get("depart")))
+                continue
+            t_in = float(v.get("depart")) if k == a else exits[k - 1 - a]
+            t.append(t_in + off / max(1e-6, path[k].getLength()) * (exits[k - a] - t_in))
         per_probe.append([y - x for x, y in zip(t, t[1:])])
         per_probe[-1].append(v.get("id").rsplit(".", 1)[1])     # probe number: same departure time in every section
     if not per_probe:
@@ -566,7 +578,7 @@ def probe_legs(sec, info, outdir: Path):
     out = {}
     for n, leg in enumerate(sec["legs"]):
         p1, p2 = sec["points"][n], sec["points"][n + 1]
-        dist = sum(e.getLength() for e in path[pos[p1] + 1:pos[p2] + 1])
+        dist = pos[p2][2] - pos[p1][2]
         times = [p[n] for p in per_probe]
         out[leg] = (dist, sum(times) / len(times), statistics.pstdev(times))
     return out, len(per_probe), {p[-1]: sum(p[:-1]) for p in per_probe}
