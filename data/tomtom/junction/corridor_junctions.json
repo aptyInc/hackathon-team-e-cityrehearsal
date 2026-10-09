@@ -1,8 +1,29 @@
 {
  "note": "TomTom Junction Analytics junctions on the Lingampally -> Lakdikapul corridor. One trial account per junction; each account's key lives in .env under key_env (never in the repo). Add a junction by adding a line here and its key to .env.",
  "junctions": [
-  {"corridor_id": "j07", "name": "Tolichowki", "tomtom_id": "6ac8c577b7250f79f2ffd2ad", "key_env": "TOMTOM_JA_KEY_J07"},
-  {"corridor_id": "j08", "name": "Nanal Nagar jn", "tomtom_id": "6ac8cbcef7a7fe27a7f33716", "key_env": "TOMTOM_JA_KEY_J08"},
-  {"corridor_id": "j09", "name": "Rethibowli jn", "tomtom_id": "6ac8b8f3b7250f79f2ffce32", "key_env": "TOMTOM_JA_KEY_J09"}
+  {
+   "corridor_id": "j07",
+   "name": "Tolichowki",
+   "tomtom_id": "6ac8c577b7250f79f2ffd2ad",
+   "key_env": "TOMTOM_JA_KEY_J07"
+  },
+  {
+   "corridor_id": "j08",
+   "name": "Nanal Nagar jn",
+   "tomtom_id": "6ac8cbcef7a7fe27a7f33716",
+   "key_env": "TOMTOM_JA_KEY_J08"
+  },
+  {
+   "corridor_id": "j09",
+   "name": "Rethibowli jn",
+   "tomtom_id": "6ac8b8f3b7250f79f2ffce32",
+   "key_env": "TOMTOM_JA_KEY_J09"
+  },
+  {
+   "corridor_id": "j10",
+   "name": "NMDC / Masab Tank Rd",
+   "tomtom_id": "6ac8d32465f0eaf0559c9c23",
+   "key_env": "TOMTOM_JA_KEY_J10"
+  }
  ]
 }
