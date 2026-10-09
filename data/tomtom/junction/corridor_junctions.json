@@ -26,6 +26,12 @@
    "key_env": "TOMTOM_JA_KEY_J05"
   },
   {
+   "corridor_id": "j06",
+   "name": "Narne Rd jn Shaikpet",
+   "tomtom_id": "6ac8eb54596e57ce4e75d164",
+   "key_env": "TOMTOM_JA_KEY_J06"
+  },
+  {
    "corridor_id": "j07",
    "name": "Tolichowki",
    "tomtom_id": "6ac8c577b7250f79f2ffd2ad",
