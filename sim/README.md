@@ -9,7 +9,7 @@ Produces C1 vehicle frames and C2 run results (see /contracts). Install and run 
 | Baseline traffic | `demand/ymca_baseline.rou.xml` (`python sim/scripts/build_demand.py --scale 0.9`) | Volumes per road and class from the 2020 study (`counted`); turns from TomTom Junction Analytics (`measured`); car/auto split 70/30 and leg-to-road matching (`assumed`/`estimated`) |
 | Vehicle types | inside the demand file | two_wheeler, auto, car, bus; sublane model (run SUMO with `--lateral-resolution 0.3`) |
 | Calibration check | `scripts/calibrate.py` | Prints simulated vs TomTom 09:00 speeds per road |
-| Gariahat backtest networks | `networks/gariahat_after.net.xml`, `networks/gariahat_before.net.xml` (`bash sim/scripts/build_gariahat.sh`) | With and without the Gariahat Flyover; Gariahat crossing and Ballygunge Phari both present. No traffic yet: needs the 2004 study's volumes (paper not accessible online; request on ResearchGate) |
+| Gariahat backtest networks | `networks/gariahat_after.net.xml`, `networks/gariahat_before.net.xml` (`bash sim/scripts/build_gariahat.sh`) | With and without the Gariahat Flyover; Gariahat crossing and Ballygunge Phari both present. No traffic yet; the study's volumes and turns are now in `data/gariahat/` (match approaches A-E to the network roads, then build flows like `build_demand.py`) |
 
 ## Calibration so far (scale = share of the 2020 study volumes)
 | Scale | NE Narayanguda Rd | E Raja Bahadur V. R. Reddy Marg | S Narayanguda Rd | W Narayanguda Main Rd | Mean error | Teleports |
