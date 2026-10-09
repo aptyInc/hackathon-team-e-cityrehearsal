@@ -78,6 +78,7 @@ td.n, th.n { text-align: right; white-space: nowrap; }
 .md-h { font-weight: 600; margin: 14px 0 6px; letter-spacing: -.01em; } .md-h1 { font-size: 20px; } .md-h2 { font-size: 16px; } .md-h3, .md-h4 { font-size: 14px; }
 .md pre { background: rgba(0, 0, 0, .35); border: 1px solid var(--line); padding: 10px; border-radius: 8px; overflow: auto; font: 12px var(--mono); }
 .md-q { border-left: 2px solid var(--sim); padding-left: 12px; color: var(--tx-2); margin: 8px 0; }
+.md-t th { text-transform: none; letter-spacing: 0; font: 600 12px var(--f); color: var(--tx-2); }
 .md-tw { overflow-x: auto; } .md-t { margin: 6px 0; } .md hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 @media (max-width: 820px) { .wrap { padding: 18px 14px 32px; } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
