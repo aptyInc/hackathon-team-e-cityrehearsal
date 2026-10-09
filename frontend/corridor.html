@@ -1672,7 +1672,7 @@ function updateMarkers() {
   }
 }
 let popup = null;
-const VIEW_OFFSET = [44, -40];   // put the junction in the middle of the map area the panels leave free (left 400 px, right 320, playback pill on top, trip at the bottom)
+const VIEW_OFFSET = [44, 30];   // put the junction in the middle of the map area the panels leave free (left 400 px, right 320, playback pill on top, trip at the bottom)
 const narrow = () => window.innerWidth <= 820;   // narrow screens: the panels sit below the map, nothing to keep clear of
 const pad = (desk) => narrow() ? 30 : desk;
 function flyToPoint(id) {
