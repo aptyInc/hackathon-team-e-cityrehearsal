@@ -1,0 +1,5 @@
+approach,direction,heavy_vehicle,light_motor_vehicle,motorcycle,total_vehicles,pcu_per_hour,source,label
+Barkathpura road,S,14,280,466,760,534,IJRAR 2020 Table 2,counted
+Kacheguda signal,W,22,320,601,943,654,IJRAR 2020 Table 2,counted
+King Koti road,N,24,250,491,765,541,IJRAR 2020 Table 2,counted
+Narayanaguda road,E,22,310,589,921,638,IJRAR 2020 Table 2,counted

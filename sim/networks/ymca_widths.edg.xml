@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- YMCA Circle road widths, applied on top of the OpenStreetMap network by build_network.sh.
+     Source: Sohail, Faheem, Aquil, IJRAR 2020, Table 1 (data/raw/ymca_geometry.csv): entry widths 9.5-12 m,
+     circulating width 11-11.6 m. OSM + defaults gave 2 lanes = 6.4 m. Here: 3 lanes x 3.3 m = 9.9 m. Label: counted (study).
+     Roads further from the circle keep their OSM/default widths (no measurement). -->
+<edges>
+    <edge id="28110314#0" numLanes="3" width="3.3"/>  <!-- roundabout ring -->
+    <edge id="28110314#1" numLanes="3" width="3.3"/>  <!-- roundabout ring -->
+    <edge id="28110314#2" numLanes="3" width="3.3"/>  <!-- roundabout ring -->
+    <edge id="28110314#3" numLanes="3" width="3.3"/>  <!-- roundabout ring -->
+    <edge id="28110314#4" numLanes="3" width="3.3"/>  <!-- roundabout ring -->
+    <edge id="28110314#5" numLanes="3" width="3.3"/>  <!-- roundabout ring -->
+    <edge id="28110314#6" numLanes="3" width="3.3"/>  <!-- roundabout ring -->
+    <edge id="28110314#7" numLanes="3" width="3.3"/>  <!-- roundabout ring -->
+    <edge id="747373024#0" numLanes="3" width="3.3"/>  <!-- entry: unnamed -->
+    <edge id="28110320" numLanes="3" width="3.3"/>  <!-- entry: Narayanguda Main Road -->
+    <edge id="747373025" numLanes="3" width="3.3"/>  <!-- entry: unnamed -->
+    <edge id="28110316" numLanes="3" width="3.3"/>  <!-- entry: Narayanaguda Road -->
+    <edge id="28110321" numLanes="3" width="3.3"/>  <!-- exit: unnamed -->
+    <edge id="747373026" numLanes="3" width="3.3"/>  <!-- exit: Narayanguda Main Road -->
+    <edge id="1057079071#0" numLanes="3" width="3.3"/>  <!-- exit: Narayanaguda Road -->
+    <edge id="28110318#0" numLanes="3" width="3.3"/>  <!-- exit: unnamed -->
+</edges>

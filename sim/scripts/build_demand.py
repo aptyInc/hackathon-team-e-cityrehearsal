@@ -1,0 +1,157 @@
+"""Build the YMCA Circle baseline traffic (SUMO flows) from real inputs.
+
+Inputs (all in /data, labels as in data/README.md):
+  - data/raw/ymca_counts.csv            vehicles/hour per approach and class, 2020 study      (counted)
+  - data/raw/tomtom_ymca_turn_ratios.csv where each approach's vehicles exit, TomTom live     (measured)
+  - data/tomtom/junction/ymca_definition.json  TomTom approach/exit geometry, to find network edges
+Assumptions (labelled `assumed` in the output file header):
+  - study "light motor vehicles" split 70% car / 30% auto-rickshaw; heavy vehicles modelled as buses
+  - study legs matched to approaches by place name (see LEG_TO_APPROACH)
+Output: sim/demand/ymca_baseline.rou.xml (vehicle types + one flow per approach, exit and class)
+
+Usage: python sim/scripts/build_demand.py [--scale 1.0] [--since HH:MM] [--until HH:MM]
+"""
+import argparse, csv, json, math
+from collections import defaultdict
+from pathlib import Path
+import sumolib
+
+ROOT = Path(__file__).resolve().parents[2]
+NET = ROOT / "sim/networks/ymca.net.xml"
+OUT = ROOT / "sim/demand/ymca_baseline.rou.xml"
+UPSTREAM_M = 250  # vehicles enter this far before the circle, so queues have room to form
+
+# Study leg -> TomTom approach. King Koti and Ramkoti lie west/south-west, Kachiguda east,
+# Barkatpura north-east; the remaining leg is Narayanguda Road from the south. (estimated)
+LEG_TO_APPROACH = {
+    "King Koti road": "YMCA to Ramkoti Road East Bound",
+    "Kacheguda signal": "Raja Bahadur Venkata Rama Reddy Marg West Bound",
+    "Barkathpura road": "Narayanguda Road South Bound",
+    "Narayanaguda road": "Narayanguda Road North Bound",
+}
+CAR_SHARE_OF_LMV = 0.70  # assumed
+
+VTYPES = """    <!-- Sublane model: run SUMO with lateral-resolution 0.3 so two-wheelers and autos filter between cars. -->
+    <vType id="two_wheeler" vClass="motorcycle" length="1.9" width="0.75" minGap="1.0" maxSpeed="16.7" accel="3.0" decel="5.0"
+           speedFactor="normc(0.85,0.1,0.5,1.2)" latAlignment="arbitrary" minGapLat="0.3" lcSublane="2.0" lcPushy="0.6" color="1,0.6,0"/>
+    <vType id="auto" vClass="passenger" length="2.7" width="1.4" minGap="1.2" maxSpeed="12.5" accel="1.8" decel="4.0"
+           speedFactor="normc(0.85,0.1,0.5,1.1)" latAlignment="arbitrary" minGapLat="0.4" lcSublane="1.5" lcPushy="0.4" color="0.2,0.7,0.2"/>
+    <vType id="car" vClass="passenger" length="4.3" width="1.75" minGap="1.5" maxSpeed="16.7" accel="2.6" decel="4.5"
+           speedFactor="normc(0.85,0.1,0.5,1.2)" latAlignment="center" minGapLat="0.5" color="0.3,0.5,0.9"/>
+    <vType id="bus" vClass="bus" length="11" width="2.5" minGap="2.0" maxSpeed="13.9" accel="1.2" decel="4.0"
+           speedFactor="normc(0.8,0.1,0.5,1.0)" latAlignment="center" minGapLat="0.6" color="0.8,0.1,0.1"/>
+"""
+
+
+def approach_edges(net, definition):
+    """Match each TomTom approach/exit to the network edge that touches the roundabout along the same road."""
+    jm = definition["junctionModel"]
+    centre = net.convertLonLat2XY(*definition["rawJunction"]["geometry"]["coordinates"])
+    rb = min(net.getRoundabouts(), key=lambda r: math.hypot(*(a - b for a, b in zip(net.getNode(r.getNodes()[0]).getCoord(), centre))))
+    nodes = set(rb.getNodes())
+    ins = [e for n in nodes for e in net.getNode(n).getIncoming() if e.getFromNode().getID() not in nodes]
+    outs = [e for n in nodes for e in net.getNode(n).getOutgoing() if e.getToNode().getID() not in nodes]
+
+    def far_point(feature_coords):
+        pts = [net.convertLonLat2XY(lon, lat) for lon, lat in feature_coords]
+        return max(pts, key=lambda p: math.hypot(p[0] - centre[0], p[1] - centre[1]))
+
+    def bearing(p):
+        return math.atan2(p[1] - centre[1], p[0] - centre[0])
+
+    def match(items, edges, end):
+        out = {}
+        for it in items:
+            coords = it["segmentedGeometry"]["coordinates"]
+            flat = [c for seg in coords for c in seg] if isinstance(coords[0][0], list) else coords
+            b = bearing(far_point(flat))
+            def edge_bearing(e):
+                shape = e.getShape()
+                p = shape[0] if end == "in" else shape[-1]
+                return bearing(p)
+            out[it["name"]] = min(edges, key=lambda e: abs(math.remainder(edge_bearing(e) - b, 2 * math.pi)))
+        return out
+    return match(jm["approaches"], ins, "in"), match(jm["exits"], outs, "out")
+
+
+def walk(edge, metres, backwards):
+    """Follow the road away from the circle until `metres` are covered; return the edge reached."""
+    total, e, seen = edge.getLength(), edge, {edge.getID()}
+    while total < metres:
+        nxt = [x for x in (e.getIncoming() if backwards else e.getOutgoing())
+               if x.getID() not in seen and not x.getID().startswith(":")
+               and (x.getFromNode() != e.getToNode() if backwards else x.getToNode() != e.getFromNode())]  # no U-turn back
+        # follow the road through bends: take the continuation with the smallest change of direction (under 80 degrees)
+        turn = lambda x: abs(math.remainder(angle(x) - angle(e), 2 * math.pi))
+        nxt = [x for x in nxt if turn(x) < math.radians(80)]
+        if not nxt:
+            break
+        e = min(nxt, key=turn); seen.add(e.getID()); total += e.getLength()
+    return e
+
+
+def angle(e):
+    s = e.getShape()
+    return math.atan2(s[-1][1] - s[0][1], s[-1][0] - s[0][0])
+
+
+def turn_shares(since, until):
+    agg, tot = defaultdict(lambda: defaultdict(float)), defaultdict(float)
+    for r in csv.DictReader(open(ROOT / "data/raw/tomtom_ymca_turn_ratios.csv")):
+        hhmm = r["time"][11:16]
+        if since and hhmm < since or until and hhmm >= until:
+            continue
+        p = float(r["probes"]); agg[r["approach"]][r["exit"]] += p; tot[r["approach"]] += p
+    return {a: {x: p / tot[a] for x, p in ex.items()} for a, ex in agg.items()}
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--scale", type=float, default=1.0, help="traffic volume multiplier (C2 volume_scale)")
+    ap.add_argument("--since", help="use TomTom turn ratios from this time of day (HH:MM)")
+    ap.add_argument("--until", help="... up to this time of day (HH:MM)")
+    ap.add_argument("--begin", type=int, default=0); ap.add_argument("--end", type=int, default=4200)
+    args = ap.parse_args()
+
+    net = sumolib.net.readNet(str(NET))
+    definition = json.loads((ROOT / "data/tomtom/junction/ymca_definition.json").read_text())
+    ins, outs = approach_edges(net, definition)
+    shares = turn_shares(args.since, args.until)
+    counts = {r["approach"]: r for r in csv.DictReader(open(ROOT / "data/raw/ymca_counts.csv"))}
+
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             f'<!-- YMCA Circle baseline traffic, built by sim/scripts/build_demand.py (scale {args.scale}).',
+             '     Volumes: 2020 study counts per approach and class (counted). Turns: TomTom Junction Analytics,'
+             f' probe-weighted{" " + (args.since or "") + "-" + (args.until or "") if args.since or args.until else ""} (measured).',
+             f'     Assumed: car/auto split {int(CAR_SHARE_OF_LMV*100)}/{int(100-CAR_SHARE_OF_LMV*100)} of light vehicles; heavy = bus;'
+             ' study legs matched to approaches by place name. -->',
+             '<routes>', VTYPES]
+    for leg, approach in LEG_TO_APPROACH.items():
+        c = counts[leg]
+        per_class = {"two_wheeler": float(c["motorcycle"]), "car": float(c["light_motor_vehicle"]) * CAR_SHARE_OF_LMV,
+                     "auto": float(c["light_motor_vehicle"]) * (1 - CAR_SHARE_OF_LMV), "bus": float(c["heavy_vehicle"])}
+        origin = walk(ins[approach], UPSTREAM_M, backwards=True)
+        lines.append(f'    <!-- {leg} -> {approach}: enters on {origin.getID()} -->')
+        for exit_name, share in sorted(shares[approach].items(), key=lambda kv: -kv[1]):
+            if share < 0.01:
+                continue
+            dest = walk(outs[exit_name], UPSTREAM_M, backwards=False)
+            for vtype, vph in per_class.items():
+                rate = vph * share * args.scale
+                if rate < 0.5:
+                    continue
+                fid = f"{leg.split()[0].lower()}_{exit_name.split()[0].lower()}_{exit_name.split()[-2].lower()}_{vtype}"
+                lines.append(f'    <flow id="{fid}" type="{vtype}" from="{origin.getID()}" to="{dest.getID()}" begin="{args.begin}" end="{args.end}"'
+                             f' vehsPerHour="{rate:.1f}" departLane="best" departSpeed="max" departPosLat="random"/>')
+    lines.append('</routes>')
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    OUT.write_text("\n".join(lines) + "\n")
+    print(f"wrote {OUT.relative_to(ROOT)}: {sum(1 for l in lines if '<flow' in l)} flows")
+    for a, e in ins.items():
+        print(f"  approach {a:50} -> entry edge {e.getID()} ({e.getName() or 'unnamed'})")
+    for a, e in outs.items():
+        print(f"  exit     {a:50} -> exit edge  {e.getID()} ({e.getName() or 'unnamed'})")
+
+
+if __name__ == "__main__":
+    main()

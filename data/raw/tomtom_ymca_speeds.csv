@@ -1,0 +1,193 @@
+route,hour,distance_m,covered_distance_m,avg_speed_kmh,avg_travel_time_s,median_travel_time_s,travel_time_ratio,planning_time_index,streets,period,source,label,path_check
+NE Narayanaguda Road - in,0,240,240,28.02,30.79,27.1,1.0,1.52,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,1,240,240,29.05,29.69,26.06,0.96,1.45,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,2,240,240,30.22,28.54,25.24,0.93,1.4,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,3,240,240,21.74,39.68,23.25,1.29,1.4,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,4,240,240,33.76,25.55,22.2,0.83,1.19,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,5,240,240,31.95,27.0,23.06,0.88,1.25,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,6,240,240,28.82,29.93,24.07,0.97,1.44,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,7,240,240,28.95,29.8,24.45,0.97,1.34,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,8,240,240,26.43,32.63,28.09,1.06,1.51,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,9,240,240,23.04,37.44,29.04,1.22,1.68,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,10,240,240,25.08,34.4,29.34,1.12,1.57,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,11,240,240,22.75,37.91,30.06,1.23,1.78,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,12,240,240,24.26,35.56,30.83,1.16,1.72,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,13,240,240,24.81,34.76,30.83,1.13,1.67,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,14,240,240,25.46,33.88,29.76,1.1,1.59,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,15,240,240,24.36,35.41,31.15,1.15,1.73,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,16,240,240,24.52,35.18,31.51,1.14,1.8,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,17,240,240,22.61,38.15,33.14,1.24,2.1,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,18,240,240,21.97,39.25,32.5,1.27,2.14,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,19,240,240,21.98,39.25,33.81,1.27,2.1,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,20,240,240,21.04,41.0,34.02,1.33,2.06,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,21,240,240,22.21,38.84,32.91,1.26,1.99,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,22,240,240,23.38,36.89,31.33,1.2,1.8,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - in,23,240,240,25.08,34.4,28.92,1.12,1.64,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048193 (re-run after detour),measured,ok
+NE Narayanaguda Road - out,0,569,569,22.34,91.62,64.66,1.0,2.03,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,1,569,569,26.86,76.2,59.78,0.83,1.38,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,2,569,569,31.39,65.21,54.96,0.71,1.18,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,3,569,569,28.37,72.15,55.43,0.79,1.24,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,4,569,569,29.22,70.04,54.55,0.76,1.27,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,5,569,569,22.9,89.36,58.75,0.98,1.63,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,6,569,569,17.5,116.96,61.74,1.28,2.45,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,7,569,569,18.28,112.0,67.09,1.22,2.78,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,8,569,569,16.94,120.81,81.05,1.32,3.04,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,9,569,569,14.9,137.41,88.76,1.5,3.6,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,10,569,569,14.58,140.35,89.95,1.53,3.58,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,11,569,569,14.42,141.94,93.1,1.55,3.66,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,12,569,569,14.3,143.12,96.73,1.56,3.78,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,13,569,569,15.09,135.66,96.36,1.48,3.46,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,14,569,569,15.58,131.39,89.57,1.43,3.35,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,15,569,569,15.76,129.84,90.49,1.42,3.39,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,16,569,569,13.45,152.23,107.38,1.66,4.06,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,17,569,569,11.19,182.85,133.76,2.0,4.88,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,18,569,569,12.41,164.94,113.29,1.8,4.48,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,19,569,569,13.56,150.92,107.17,1.65,3.83,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,20,569,569,14.64,139.83,98.41,1.53,3.51,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,21,569,569,15.48,132.27,87.98,1.44,3.16,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,22,569,569,17.77,115.21,78.79,1.26,2.82,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+NE Narayanaguda Road - out,23,569,569,20.02,102.26,70.73,1.12,2.25,Chikkadpally Main Road; Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,0,358,358,23.15,55.73,44.5,1.0,1.55,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,1,358,358,21.62,59.68,41.89,1.07,1.66,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,2,358,358,22.56,57.2,39.46,1.03,1.56,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,3,358,358,22.61,57.08,39.55,1.02,1.5,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,4,358,358,23.21,55.59,38.38,1.0,1.4,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,5,358,358,23.06,55.97,41.08,1.0,1.59,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,6,358,358,20.3,63.56,42.87,1.14,1.95,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,7,358,358,21.05,61.3,42.37,1.1,1.58,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,8,358,358,21.62,59.67,45.89,1.07,1.61,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,9,358,358,19.23,67.1,48.47,1.2,1.78,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,10,358,358,16.37,78.82,50.89,1.41,2.39,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,11,358,358,16.97,76.04,51.92,1.36,2.26,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,12,358,358,18.37,70.25,51.47,1.26,2.02,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,13,358,358,19.66,65.63,50.05,1.18,1.86,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,14,358,358,20.22,63.82,49.2,1.15,1.75,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,15,358,358,21.21,60.85,49.81,1.09,1.7,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,16,358,358,20.71,62.29,50.69,1.12,1.71,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,17,358,358,19.96,64.63,51.94,1.16,1.89,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,18,358,358,17.46,73.89,53.62,1.33,2.23,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,19,358,358,18.52,69.67,52.73,1.25,1.93,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,20,358,358,19.5,66.16,51.44,1.19,1.85,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,21,358,358,19.11,67.52,50.89,1.21,1.7,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,22,358,358,19.8,65.17,48.21,1.17,1.73,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - in,23,358,358,23.36,55.23,45.69,0.99,1.49,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,0,518,518,21.88,85.21,61.36,1.0,1.65,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,1,518,518,23.77,78.42,57.73,0.92,1.48,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,2,518,518,20.86,89.37,60.56,1.05,2.53,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,3,518,518,24.57,75.9,52.21,0.89,1.31,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,4,518,518,25.82,72.2,49.93,0.85,1.3,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,5,518,518,22.75,81.95,52.61,0.96,1.45,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,6,518,518,24.23,76.95,53.34,0.9,1.53,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,7,518,518,22.1,84.35,54.92,0.99,1.8,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,8,518,518,19.52,95.52,63.43,1.12,2.19,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,9,518,518,17.79,104.78,66.23,1.23,2.38,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,10,518,518,18.19,102.5,66.76,1.2,2.36,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,11,518,518,18.92,98.54,67.0,1.16,2.28,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,12,518,518,19.77,94.29,67.18,1.11,2.22,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,13,518,518,20.33,91.72,66.46,1.08,2.04,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,14,518,518,21.37,87.23,64.44,1.02,1.97,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,15,518,518,20.89,89.25,67.12,1.05,2.0,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,16,518,518,21.3,87.51,68.24,1.03,2.03,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,17,518,518,21.52,86.62,68.76,1.02,1.96,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,18,518,518,19.66,94.83,70.99,1.11,2.15,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,19,518,518,19.16,97.31,73.26,1.14,2.24,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,20,518,518,18.99,98.16,72.87,1.15,2.23,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,21,518,518,17.66,105.55,72.97,1.24,2.69,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,22,518,518,18.44,101.09,71.09,1.19,2.52,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+S road - out,23,518,518,20.85,89.44,64.75,1.05,2.03,Narayanguda Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,0,634,634,23.38,97.69,76.7,1.0,1.46,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,1,634,634,27.74,82.33,69.47,0.84,1.3,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,2,634,634,28.1,81.29,66.27,0.83,1.3,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,3,634,634,30.78,74.2,63.66,0.76,1.11,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,4,634,634,29.8,76.65,65.53,0.78,1.22,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,5,634,634,27.13,84.2,68.99,0.86,1.23,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,6,634,634,25.56,89.37,71.46,0.91,1.37,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,7,634,634,25.15,90.81,77.55,0.93,1.35,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,8,634,634,21.81,104.74,89.59,1.07,1.66,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,9,634,634,18.87,121.02,98.93,1.24,1.96,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,10,634,634,18.73,121.96,100.94,1.25,2.02,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,11,634,634,17.87,127.84,102.44,1.31,2.17,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,12,634,634,18.11,126.11,105.71,1.29,2.15,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,13,634,634,18.57,123.01,102.8,1.26,2.09,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,14,634,634,18.01,126.86,101.44,1.3,2.36,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,15,634,634,18.09,126.28,104.22,1.29,2.26,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,16,634,634,17.75,128.72,107.08,1.32,2.28,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,17,634,634,16.56,137.9,111.59,1.41,2.52,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,18,634,634,15.59,146.5,116.49,1.5,2.7,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,19,634,634,15.99,142.89,116.61,1.46,2.55,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,20,634,634,16.36,139.59,113.37,1.43,2.43,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,21,634,634,18.62,122.67,102.09,1.26,2.02,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,22,634,634,19.92,114.65,93.2,1.17,1.94,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - in,23,634,634,22.88,99.84,84.24,1.02,1.57,Lingampally Street No 4; Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,0,530,530,28.27,67.54,59.05,1.0,1.46,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,1,530,530,30.06,63.52,56.99,0.94,1.45,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,2,530,530,28.49,67.01,55.17,0.99,1.54,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,3,530,530,30.91,61.78,52.31,0.91,1.37,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,4,530,530,36.34,52.54,49.01,0.78,1.05,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,5,530,530,34.36,55.56,51.25,0.82,1.13,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,6,530,530,30.81,61.97,54.71,0.92,1.39,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,7,530,530,28.24,67.61,58.87,1.0,1.46,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,8,530,530,22.3,85.62,72.01,1.27,2.09,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,9,530,530,18.79,101.62,81.29,1.5,2.44,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,10,530,530,18.94,100.79,79.77,1.49,2.43,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,11,530,530,18.51,103.17,82.08,1.53,2.46,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,12,530,530,18.55,102.93,84.37,1.52,2.46,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,13,530,530,19.83,96.28,82.86,1.43,2.27,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,14,530,530,20.56,92.86,78.12,1.37,2.24,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,15,530,530,20.34,93.87,79.72,1.39,2.33,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,16,530,530,17.56,108.74,84.86,1.61,3.48,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,17,530,530,15.86,120.39,91.8,1.78,3.77,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,18,530,530,15.2,125.63,95.22,1.86,3.91,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,19,530,530,15.41,123.92,97.49,1.83,3.69,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,20,530,530,16.1,118.6,92.4,1.76,3.61,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,21,530,530,20.18,94.63,77.88,1.4,2.82,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,22,530,530,23.65,80.74,70.53,1.2,2.05,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+SE Basant Talkies side - out,23,530,530,25.24,75.64,65.48,1.12,1.95,Narayanguda Road; Raja Bahadur Venkata Rama Reddy Marg,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,0,448,448,26.63,60.51,50.64,1.0,1.48,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,1,448,448,29.39,54.82,48.86,0.91,1.41,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,2,448,448,28.57,56.39,45.75,0.93,1.37,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,3,448,448,31.1,51.8,44.44,0.86,1.33,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,4,448,448,35.79,45.02,42.35,0.74,1.03,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,5,448,448,32.64,49.36,44.56,0.82,1.12,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,6,448,448,25.84,62.34,46.8,1.03,1.56,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,7,448,448,25.01,64.43,50.68,1.06,1.62,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,8,448,448,19.53,82.51,65.05,1.36,1.97,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,9,448,448,17.59,91.58,69.3,1.51,2.28,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,10,448,448,16.28,98.96,72.53,1.64,2.52,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,11,448,448,17.32,93.02,73.03,1.54,2.39,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,12,448,448,17.91,89.94,72.79,1.49,2.34,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,13,448,448,19.7,81.78,69.88,1.35,2.03,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,14,448,448,20.89,77.11,67.45,1.27,1.88,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,15,448,448,20.6,78.2,68.73,1.29,1.92,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,16,448,448,19.8,81.39,73.12,1.35,2.08,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,17,448,448,16.99,94.82,79.68,1.57,2.75,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,18,448,448,16.93,95.19,79.9,1.57,2.54,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,19,448,448,17.29,93.17,83.12,1.54,2.48,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,20,448,448,18.39,87.61,78.1,1.45,2.23,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,21,448,448,20.37,79.09,71.2,1.31,1.95,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,22,448,448,22.09,72.92,63.99,1.21,1.8,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - in,23,448,448,24.11,66.81,57.39,1.1,1.67,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,0,448,448,26.85,60.12,51.46,1.0,1.36,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,1,448,448,28.9,55.85,47.97,0.93,1.37,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,2,448,448,31.01,52.05,45.55,0.87,1.27,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,3,448,448,32.31,49.95,44.48,0.83,1.29,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,4,448,448,31.93,50.55,44.81,0.84,1.29,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,5,448,448,30.14,53.54,47.13,0.89,1.28,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,6,448,448,27.67,58.33,48.26,0.97,1.32,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,7,448,448,26.82,60.17,51.94,1.0,1.33,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,8,448,448,24.21,66.66,60.9,1.11,1.57,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,9,448,448,20.81,77.55,66.82,1.29,1.87,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,10,448,448,20.3,79.53,70.22,1.32,1.96,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,11,448,448,19.22,83.95,72.78,1.4,2.1,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,12,448,448,18.83,85.73,73.56,1.43,2.15,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,13,448,448,19.38,83.27,72.49,1.39,2.11,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,14,448,448,19.84,81.34,71.45,1.35,2.08,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,15,448,448,19.39,83.24,72.2,1.38,2.14,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,16,448,448,18.78,85.93,74.88,1.43,2.14,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,17,448,448,17.36,92.96,81.3,1.55,2.52,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,18,448,448,16.82,95.94,82.42,1.6,2.59,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,19,448,448,16.71,96.6,83.01,1.61,2.42,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,20,448,448,17.8,90.69,78.34,1.51,2.32,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,21,448,448,19.6,82.34,70.62,1.37,2.04,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,22,448,448,20.88,77.29,66.29,1.29,2.01,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok
+W Narayanguda Main Road - out,23,448,448,25.15,64.18,57.19,1.07,1.51,Narayanguda Road; Y M C A To Ramkoti Road,weekdays 2026-07-01..07-31,TomTom Traffic Stats job 10048164,measured,ok

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Speed and lane defaults for Hyderabad city roads, applied when OpenStreetMap has no maxspeed or lanes tag.
+     Speeds (m/s): 13.89 = 50 km/h, 11.11 = 40 km/h, 8.33 = 30 km/h. Label: assumed.
+     TomTom measured ~27-32 km/h free flow around YMCA Circle at 03:00 (data/raw/tomtom_ymca_speeds.csv).
+     Tertiary roads get 2 lanes: the 2020 YMCA study measured entry widths of 9.5-12 m (data/raw/ymca_geometry.csv). -->
+<types>
+    <type id="highway.trunk"          priority="13" numLanes="2" speed="13.89" oneway="false"/>
+    <type id="highway.trunk_link"     priority="8"  numLanes="1" speed="11.11" oneway="true"/>
+    <type id="highway.primary"        priority="12" numLanes="2" speed="13.89" oneway="false"/>
+    <type id="highway.primary_link"   priority="7"  numLanes="1" speed="11.11" oneway="true"/>
+    <type id="highway.secondary"      priority="11" numLanes="2" speed="11.11" oneway="false"/>
+    <type id="highway.secondary_link" priority="6"  numLanes="1" speed="11.11" oneway="true"/>
+    <type id="highway.tertiary"       priority="10" numLanes="2" speed="11.11" oneway="false"/>
+    <type id="highway.tertiary_link"  priority="5"  numLanes="1" speed="8.33"  oneway="true"/>
+    <type id="highway.unclassified"   priority="5"  numLanes="1" speed="8.33"  oneway="false"/>
+</types>

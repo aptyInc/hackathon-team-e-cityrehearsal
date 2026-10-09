@@ -1,0 +1,10 @@
+measure,intersection,before_flyover,after_flyover,unit,source,label
+average delay per vehicle,Gariahat,35.3,8.9,s,Maitra et al. 2004 (sections 3.1-3.2),study model
+average delay per vehicle,Phari,46.0,70.4,s,Maitra et al. 2004 (sections 3.1-3.2),study model
+average delay per vehicle,Phari approach C (from Gariahat),42.4,110.3,s,Maitra et al. 2004 (section 3.2),study model
+total delay at peak hour,Gariahat,38.1,9.7,vehicle-hours,Maitra et al. 2004 (sections 3.1-3.2),study model
+total delay at peak hour,Phari,74.4,132.6,vehicle-hours,Maitra et al. 2004 (sections 3.1-3.2),study model
+total delay at peak hour,both together,112.5,142.3,vehicle-hours,Maitra et al. 2004 (net +29.8),study model
+peak-hour volume,Gariahat,3886,,vehicles,Maitra et al. 2004,counted
+peak-hour volume,Phari,5824,,vehicles,Maitra et al. 2004,counted
+vehicles using the flyover,Gariahat,,2031,vehicles/hour,Maitra et al. 2004 (Table 7),study model

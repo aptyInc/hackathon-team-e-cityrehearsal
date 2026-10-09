@@ -1,0 +1,10 @@
+intersection,approach,width_m,car,two_wheeler,bus,minibus,auto,total,source,label
+Gariahat,A,9.35,791,128,85,64,0,1068,Maitra et al. 2004 Table 3 (peak hour),counted
+Gariahat,B,11.45,323,78,77,17,189,684,Maitra et al. 2004 Table 3 (peak hour),counted
+Gariahat,C,12.25,886,155,128,115,0,1284,Maitra et al. 2004 Table 3 (peak hour),counted
+Gariahat,D,11.45,382,62,153,19,234,850,Maitra et al. 2004 Table 3 (peak hour),counted
+Phari,A,6.70,868,243,34,50,105,1300,Maitra et al. 2004 Table 3 (peak hour),counted
+Phari,B,6.90,1307,194,81,97,21,1700,Maitra et al. 2004 Table 3 (peak hour),counted
+Phari,C,10.30,1148,232,51,82,14,1527,Maitra et al. 2004 Table 3 (peak hour),counted
+Phari,D,8.45,465,92,7,22,0,586,Maitra et al. 2004 Table 3 (peak hour),counted
+Phari,E,10.60,363,93,23,26,206,711,Maitra et al. 2004 Table 3 (peak hour),counted
