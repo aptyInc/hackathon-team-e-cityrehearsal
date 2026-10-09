@@ -3,7 +3,7 @@
     GET  /corridor                  points (data/corridor/corridor.json), TomTom leg times per period (REAL, measured),
                                     and the route through the simulated network as GeoJSON (A->B and B->A, per leg)
     POST /corridor/runs             {window?, minutes?, volume_scale?, interventions, run_by?, case_id?, frames_from_min?,
-                                    frames_minutes?, hour?} -> C5 result (frames_window, probe_tracks_path)
+                                    frames_minutes?, hour?, day?, weather?} -> C5 result (frames_window, probe_tracks_path)
     POST /corridor/runs?async=1     same body -> 202 {run_id, status}; poll GET /corridor/runs/{run_id}
     GET  /corridor/runs/{run_id}    {run_id, status: queued|running|done|failed, result?, error?, elapsed_s}
     GET  /runs/{run_id}/probes      every test car's whole trip (?direction=A->B|B->A, ?number=n)
@@ -14,6 +14,11 @@ Frames window: frames_from_min (minutes after warm-up, default 5) and frames_min
 part of the 15 measured minutes the C1 frames cover; the numbers do not change with it (deterministic runs), but it is
 part of the cache key. hour (6..22): that hour of a typical July day, from sim/corridor/calibration_hourly.json; 422
 "hourly data not available yet" until that file exists.
+weather ("dry" | "light_rain" | "heavy_rain", default none = as calibrated): rain what-if. The run's speed caps get the
+estimated per-leg factors of data/rain/rain_factors.json (relative to the rain already inside the calibration target:
+the July all-day mix, that July hour's mix, or that day-hour's own rain); demand and signals stay. Part of the cache
+key; the result echoes time.weather and inputs.weather (label "estimated (rain factors from TomTom hourly x Open-Meteo,
+July 2026)").
 
 MOCK_SIM=1: POST returns the contract sample (baseline, or flyover_j07 when any intervention is given), with a
 warning when the request asked for something else. MOCK_SIM=0: sim/corridor/corridor_runner.run in a worker thread
@@ -256,7 +261,8 @@ def sim_capabilities() -> dict:
     except (ValueError, KeyError, TypeError):
         hours = []
     return {"hours": hours, "days": "any July day with TomTom hourly data, fitted on demand (first run 1-2 min, then cached)",
-            "frames_window": True, "probes": True}
+            "frames_window": True, "probes": True,
+            "weather": list(WEATHER) if RAIN_FACTORS.exists() else [], "weather_label": WEATHER_LABEL}
 
 
 @router.get("/corridor")
@@ -294,6 +300,7 @@ class CorridorRunIn(BaseModel):
     frames_minutes: float | None = None    # ... and its length (default 5, 1..10)
     hour: int | None = None                # 6..23: hh:00-hh+1:00 (needs calibration_hourly.json)
     day: str | None = None                 # with hour: "july" (typical July day, default) or a date like "2026-07-08"
+    weather: str | None = None             # rain what-if: "dry" | "light_rain" | "heavy_rain"; none = as calibrated
 
 
 # mirror of sim/corridor/corridor_runner.py (WARMUP, PROBE_SPAN, FRAMES, FRAMES_MAX_S, HOURS): the API checks a request
@@ -328,6 +335,17 @@ def frames_info(window: tuple[int, int]) -> dict:
             "minutes": round((hi - lo) / 60, 2), "warmup_s": SIM_WARMUP_S, "sim_minutes_total": SIM_MEASURED_S // 60,
             "period_from_s": SIM_WARMUP_S, "period_to_s": SIM_WARMUP_S + SIM_MEASURED_S, "max_minutes": FRAMES_MAX_MIN,
             "note": "frames t is simulation seconds; the window can start anywhere from 0 to sim_minutes_total - minutes after warm-up"}
+
+
+WEATHER = ("dry", "light_rain", "heavy_rain")      # mirror of corridor_runner.WEATHER
+RAIN_FACTORS = ROOT / "data/rain/rain_factors.json"
+WEATHER_LABEL = "estimated (rain factors from TomTom hourly x Open-Meteo, July 2026)"
+
+
+def weather_of(body: CorridorRunIn) -> str | None:
+    """The request's rain what-if: None (as calibrated) for no value, "", "none" or "as_calibrated"."""
+    w = (body.weather or "").strip().lower()
+    return None if w in ("", "none", "as_calibrated") else w
 
 
 def day_of(body: CorridorRunIn) -> str | None:
@@ -383,6 +401,10 @@ def validate(body: CorridorRunIn) -> list[dict]:
     if body.minutes is not None and not 1 <= body.minutes <= 24 * 60:
         raise HTTPException(400, f"minutes must be between 1 and 1440, got {body.minutes}")
     frames_window(body)
+    if weather_of(body) is not None and weather_of(body) not in WEATHER:
+        raise HTTPException(400, f"weather must be one of {', '.join(WEATHER)} (or left out: as calibrated), got {body.weather!r}")
+    if weather_of(body) is not None and not RAIN_FACTORS.exists():
+        raise HTTPException(422, "rain factors not available (data/rain/rain_factors.json missing)")
     if body.hour is not None:
         hourly_entry(body.hour, day_of(body))
     elif day_of(body) is not None:
@@ -403,6 +425,8 @@ def cache_key(ivs: list[dict], body: CorridorRunIn) -> str:
         blob["calibration_hourly"] = CALIBRATION_HOURLY.read_text() if CALIBRATION_HOURLY.exists() else None
         if day_of(body):     # a single day: fitted from the July hour to that day-hour's TomTom rows
             blob["day"], blob["day_rows"] = day_of(body), day_rows(day_of(body), body.hour)
+    if weather_of(body):     # no weather keeps the key it always had
+        blob["weather"], blob["rain_factors"] = weather_of(body), _file_hash(RAIN_FACTORS)
     return hashlib.sha256(json.dumps(blob, sort_keys=True).encode()).hexdigest()
 
 
@@ -503,6 +527,11 @@ def _mock_extras(res: dict, body: CorridorRunIn) -> dict:
         window = f"{day} {h:02d}:00-{h + 1:02d}:00" if day else f"July typical {h:02d}:00-{h + 1:02d}:00"
         res["time"] = {**res.get("time", {}), "window": window, "label": f"{window} (MOCK: sample numbers)", "hour": h,
                        "day": day or "july"}
+    if weather_of(body):
+        res["time"] = {**res.get("time", {}), "weather": weather_of(body)}
+        res["time"]["label"] = f"{res['time'].get('label', '')} · {weather_of(body).replace('_', ' ')} (what-if, MOCK: sample numbers)"
+        res.setdefault("inputs", {})["weather"] = {"weather": weather_of(body), "label": WEATHER_LABEL,
+                                                    "note": "MOCK_SIM=1: not applied; the numbers are the sample's"}
     return res
 
 
@@ -515,9 +544,12 @@ def mock_result(ivs: list[dict], body: CorridorRunIn) -> dict:
         asked["day"] = day_of(body) or "july"
     if body.frames_from_min is not None or body.frames_minutes is not None:
         asked["frames"] = {"from_min": body.frames_from_min, "minutes": body.frames_minutes}
+    if weather_of(body):
+        asked["weather"] = weather_of(body)
     sample = {"interventions": res["interventions"], "volume_scale": res["inputs"]["volume_scale"], "window": None, "minutes": None}
     if [(i["junction_id"], i["kind"]) for i in ivs] != [(i["junction_id"], i["kind"]) for i in sample["interventions"]] \
-            or asked["volume_scale"] != sample["volume_scale"] or body.window or body.minutes or body.hour is not None:
+            or asked["volume_scale"] != sample["volume_scale"] or body.window or body.minutes or body.hour is not None \
+            or weather_of(body):
         if MOCK_SYNTH:
             res = synth_mock(ivs, body)
             res["run_id"] = "rc_" + uuid.uuid4().hex[:8]
@@ -581,6 +613,10 @@ def _simulate(run_id: str, key: str, ivs: list[dict], body: CorridorRunIn) -> di
             kwargs["hour"] = body.hour
             if day_of(body):
                 kwargs["day"] = day_of(body)
+        if weather_of(body):
+            if "weather" not in params:
+                raise SimError(422, "the corridor simulation does not take a weather what-if yet (corridor_runner.run has no weather)")
+            kwargs["weather"] = weather_of(body)
         # the same numbers already simulated (only the frames window differs): record just the other window
         res, prev = None, cache_lookup(numbers_key(ivs, body))
         if prev and hasattr(corridor_runner, "replay_frames") and "frames_window" in params:

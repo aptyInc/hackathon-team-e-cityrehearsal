@@ -1,0 +1,799 @@
+{
+ "question": "Does rain in an hour slow the Lingampally -> Lakdikapul trip in that hour, by how much, and where?",
+ "data": {
+  "traffic": "TomTom Traffic Stats jobs 10053357 + 10053399: every day 1-31 July 2026, one-hour slots, 12 legs (measured)",
+  "weather": "Open-Meteo historical weather archive (ERA5-based reanalysis, ~9 km grid), 3 points (grid cells 17.47,78.27, 17.40,78.37, 17.40,78.46); corridor value = mean of the 3 points",
+  "slots": 558,
+  "days": 31,
+  "hours": "06:00-24:00",
+  "slots_by_rain_class": {
+   "dry": 323,
+   "light": 201,
+   "moderate": 34,
+   "heavy": 0
+  },
+  "typical_mm_per_hour": {
+   "light": 0.34,
+   "moderate": 1.69
+  },
+  "class_limits_mm_per_hour": {
+   "dry": [0.0, 0.1],
+   "light": [0.1, 1.0],
+   "moderate": [1.0, 5.0],
+   "heavy": [5.0, null]
+  },
+  "max_hourly_rain_mm": 4.53,
+  "wettest_slots": [
+   {
+    "date": "2026-07-26",
+    "slot": "23:00-24:00",
+    "rain_mm": 4.53,
+    "trip_min": 46.1
+   },
+   {
+    "date": "2026-07-17",
+    "slot": "15:00-16:00",
+    "rain_mm": 2.9,
+    "trip_min": 58.4
+   },
+   {
+    "date": "2026-07-30",
+    "slot": "08:00-09:00",
+    "rain_mm": 2.8,
+    "trip_min": 59.9
+   },
+   {
+    "date": "2026-07-20",
+    "slot": "22:00-23:00",
+    "rain_mm": 2.53,
+    "trip_min": 52.6
+   },
+   {
+    "date": "2026-07-21",
+    "slot": "19:00-20:00",
+    "rain_mm": 2.5,
+    "trip_min": 75.7
+   },
+   {
+    "date": "2026-07-17",
+    "slot": "12:00-13:00",
+    "rain_mm": 2.17,
+    "trip_min": 52.6
+   },
+   {
+    "date": "2026-07-17",
+    "slot": "16:00-17:00",
+    "rain_mm": 2.0,
+    "trip_min": 68.9
+   },
+   {
+    "date": "2026-07-18",
+    "slot": "16:00-17:00",
+    "rain_mm": 2.0,
+    "trip_min": 63.6
+   }
+  ],
+  "mean_trip_min_06_23": 56.9,
+  "alignment": "TomTom slot hh:00-hh+1:00 <- Open-Meteo row stamped hh+1:00 (precipitation = total over the preceding hour)"
+ },
+ "model": "log(trip time) = hour-of-day + day-of-week + rain class in the hour + previous hour's rain (mm); SEs clustered by day; 95% ranges from a day-block bootstrap (2000 resamples of whole days); p from a permutation test (2000 times, each day gets another day's whole rain pattern). Effects are on the log scale: pct = exp(effect) - 1",
+ "models": {
+  "classes": {
+   "effects": {
+    "light": {
+     "log_effect": 0.02739503702253887,
+     "se_cluster": 0.012303685549586232,
+     "ci95_cluster": [0.003279813345349856, 0.05151026069972789],
+     "ci95_bootstrap": [-0.00043975584804867936, 0.05067471633488972],
+     "p_permutation": 0.07546226886556721
+    },
+    "moderate": {
+     "log_effect": 0.018106858509101542,
+     "se_cluster": 0.028779550530799593,
+     "ci95_cluster": [-0.03830106053126566, 0.07451477754946875],
+     "ci95_bootstrap": [-0.04703834564327407, 0.06405412744433907],
+     "p_permutation": 0.42978510744627685
+    },
+    "rain_prev_mm": {
+     "log_effect": 0.034138590369452326,
+     "se_cluster": 0.017334650402968797,
+     "ci95_cluster": [0.00016267557963348112, 0.06811450515927117],
+     "ci95_bootstrap": [-0.005489726075791049, 0.0654614772184257],
+     "p_permutation": 0.022988505747126436
+    }
+   },
+   "residual_sd_log": 0.1029,
+   "n_obs": 558,
+   "n_params": 27
+  },
+  "linear": {
+   "effects": {
+    "rain_now_mm": {
+     "log_effect": 0.020208494031250024,
+     "se_cluster": 0.012588785338128081,
+     "ci95_cluster": [-0.004465525231481013, 0.04488251329398106],
+     "ci95_bootstrap": [-0.014663217348084397, 0.040942621875503044],
+     "p_permutation": 0.10778443113772455
+    },
+    "rain_prev_mm": {
+     "log_effect": 0.03445713175002918,
+     "se_cluster": 0.016760937418766764,
+     "ci95_cluster": [0.0016056944092463221, 0.06730856909081204],
+     "ci95_bootstrap": [-0.005083175027233419, 0.0656475210324095],
+     "p_permutation": 0.021956087824351298
+    }
+   },
+   "residual_sd_log": 0.1033,
+   "n_obs": 558,
+   "n_params": 26
+  },
+  "dayfe": {
+   "effects": {
+    "light": {
+     "log_effect": 0.0005478898286551126,
+     "se_cluster": 0.008220091960714668,
+     "ci95_cluster": [-0.015563490414345637, 0.016659270071655862],
+     "ci95_bootstrap": [-0.016056639099975928, 0.01626788943088126],
+     "p_permutation": 0.9540918163672655
+    },
+    "moderate": {
+     "log_effect": -0.020590496858645613,
+     "se_cluster": 0.02840162688970179,
+     "ci95_cluster": [-0.07625768556246112, 0.03507669184516989],
+     "ci95_bootstrap": [-0.07089830205273143, 0.03614804767776803],
+     "p_permutation": 0.249500998003992
+    },
+    "rain_prev_mm": {
+     "log_effect": 0.007749041479172325,
+     "se_cluster": 0.007881898152161252,
+     "ci95_cluster": [-0.007699478899063729, 0.02319756185740838],
+     "ci95_bootstrap": [-0.006948384962130579, 0.02681632948077701],
+     "p_permutation": 0.499001996007984
+    }
+   },
+   "residual_sd_log": 0.0691,
+   "n_obs": 558,
+   "n_params": 68
+  },
+  "any_rain": {
+   "effects": {
+    "any_rain": {
+     "log_effect": 0.026953046330735808,
+     "se_cluster": 0.011739614803850192,
+     "ci95_cluster": [0.003943401315189433, 0.04996269134628219],
+     "ci95_bootstrap": [0.0014475951908152623, 0.04849635176305536],
+     "p_permutation": 0.07946026986506746
+    },
+    "rain_prev_mm": {
+     "log_effect": 0.031973157864508384,
+     "se_cluster": 0.019565660744342017,
+     "ci95_cluster": [-0.006375537194401967, 0.07032185292341873],
+     "ci95_bootstrap": [-0.01348245510144593, 0.06723983174113346],
+     "p_permutation": 0.06446776611694154
+    }
+   }
+  }
+ },
+ "headline": {
+  "any_rain": {
+   "pct": 2.7,
+   "ci95_pct": [0.1, 5.0],
+   "p": 0.079,
+   "minutes_on_mean_trip": 1.6
+  },
+  "by_class": {
+   "light": {
+    "pct": 2.8,
+    "ci95_pct": [0.0, 5.2],
+    "p": 0.075,
+    "slots": 201,
+    "minutes_on_mean_trip": 1.6
+   },
+   "moderate": {
+    "pct": 1.8,
+    "ci95_pct": [-4.6, 6.6],
+    "p": 0.43,
+    "slots": 34,
+    "minutes_on_mean_trip": 1.0
+   }
+  },
+  "previous_hour_per_mm": {
+   "pct": 3.5,
+   "ci95_pct": [-0.5, 6.8],
+   "p": 0.023
+  },
+  "sustained": {
+   "light": {
+    "pct": 4.0,
+    "ci95_pct": [0.5, 6.9],
+    "typical_mm": 0.34,
+    "minutes_on_mean_trip": 2.3
+   },
+   "moderate": {
+    "pct": 7.9,
+    "ci95_pct": [-3.9, 16.1],
+    "typical_mm": 1.69,
+    "minutes_on_mean_trip": 4.5
+   }
+  },
+  "within_day_check": {
+   "light": {
+    "pct": 0.1,
+    "ci95_pct": [-1.6, 1.6],
+    "p": 0.954
+   },
+   "moderate": {
+    "pct": -2.0,
+    "ci95_pct": [-6.8, 3.7],
+    "p": 0.25
+   },
+   "rain_prev_mm": {
+    "pct": 0.8,
+    "ci95_pct": [-0.7, 2.7],
+    "p": 0.499
+   }
+  },
+  "linear_per_mm": {
+   "pct": 2.0,
+   "ci95_pct": [-1.5, 4.2],
+   "p": 0.108
+  }
+ },
+ "per_leg": [
+  {
+   "leg": "A_lingampally-j01",
+   "from": "Lingampally (Old Bombay Rd, route start)",
+   "to": "Nallagandla Rd jn",
+   "distance_m": 1911.0,
+   "mean_min": 6.65,
+   "light": {
+    "pct": 4.2,
+    "ci95_pct": [-1.8, 9.5],
+    "pct_shrunk": 2.9,
+    "weight_own_estimate": 0.073
+   },
+   "moderate": {
+    "pct": -1.1,
+    "ci95_pct": [-12.1, 8.4],
+    "pct_shrunk": 0.9,
+    "weight_own_estimate": 0.313
+   },
+   "previous_hour_per_mm": {
+    "pct": 8.2,
+    "ci95_pct": [1.1, 15.7],
+    "pct_shrunk": 3.5
+   },
+   "sustained": {
+    "light": {
+     "pct": 7.0,
+     "ci95_pct": [-0.3, 13.1],
+     "pct_shrunk": 4.1
+    },
+    "moderate": {
+     "pct": 13.0,
+     "ci95_pct": [-4.2, 24.1],
+     "pct_shrunk": 6.9
+    }
+   }
+  },
+  {
+   "leg": "j01-j02",
+   "from": "Nallagandla Rd jn",
+   "to": "ISB Rd / DLF jn",
+   "distance_m": 5414.0,
+   "mean_min": 13.47,
+   "light": {
+    "pct": 5.0,
+    "ci95_pct": [1.0, 9.1],
+    "pct_shrunk": 3.1,
+    "weight_own_estimate": 0.125
+   },
+   "moderate": {
+    "pct": 7.4,
+    "ci95_pct": [-4.0, 19.7],
+    "pct_shrunk": 3.3,
+    "weight_own_estimate": 0.271
+   },
+   "previous_hour_per_mm": {
+    "pct": 3.5,
+    "ci95_pct": [-4.0, 9.7],
+    "pct_shrunk": 3.5
+   },
+   "sustained": {
+    "light": {
+     "pct": 6.3,
+     "ci95_pct": [0.9, 11.1],
+     "pct_shrunk": 4.3
+    },
+    "moderate": {
+     "pct": 13.9,
+     "ci95_pct": [-6.7, 33.8],
+     "pct_shrunk": 9.5
+    }
+   }
+  },
+  {
+   "leg": "j02-j03",
+   "from": "ISB Rd / DLF jn",
+   "to": "Gachibowli Circle",
+   "distance_m": 1386.0,
+   "mean_min": 3.78,
+   "light": {
+    "pct": 0.6,
+    "ci95_pct": [-2.7, 3.9],
+    "pct_shrunk": 2.4,
+    "weight_own_estimate": 0.179
+   },
+   "moderate": {
+    "pct": 3.6,
+    "ci95_pct": [-6.4, 10.0],
+    "pct_shrunk": 2.6,
+    "weight_own_estimate": 0.441
+   },
+   "previous_hour_per_mm": {
+    "pct": 3.3,
+    "ci95_pct": [-1.9, 8.2],
+    "pct_shrunk": 3.5
+   },
+   "sustained": {
+    "light": {
+     "pct": 1.7,
+     "ci95_pct": [-1.8, 4.7],
+     "pct_shrunk": 3.6
+    },
+    "moderate": {
+     "pct": 9.3,
+     "ci95_pct": [-7.6, 21.7],
+     "pct_shrunk": 8.7
+    }
+   }
+  },
+  {
+   "leg": "j03-j04",
+   "from": "Gachibowli Circle",
+   "to": "Biodiversity jn (flyover)",
+   "distance_m": 1581.0,
+   "mean_min": 3.04,
+   "light": {
+    "pct": 4.5,
+    "ci95_pct": [-0.3, 7.3],
+    "pct_shrunk": 3.0,
+    "weight_own_estimate": 0.141
+   },
+   "moderate": {
+    "pct": -1.2,
+    "ci95_pct": [-7.3, 3.5],
+    "pct_shrunk": -0.2,
+    "weight_own_estimate": 0.672
+   },
+   "previous_hour_per_mm": {
+    "pct": 6.3,
+    "ci95_pct": [0.3, 13.4],
+    "pct_shrunk": 3.5
+   },
+   "sustained": {
+    "light": {
+     "pct": 6.7,
+     "ci95_pct": [0.8, 10.1],
+     "pct_shrunk": 4.2
+    },
+    "moderate": {
+     "pct": 9.6,
+     "ci95_pct": [-4.7, 23.1],
+     "pct_shrunk": 5.8
+    }
+   }
+  },
+  {
+   "leg": "j04-j05",
+   "from": "Biodiversity jn (flyover)",
+   "to": "Khajaguda X Roads",
+   "distance_m": 1078.0,
+   "mean_min": 2.38,
+   "light": {
+    "pct": 1.2,
+    "ci95_pct": [-2.8, 4.7],
+    "pct_shrunk": 2.5,
+    "weight_own_estimate": 0.143
+   },
+   "moderate": {
+    "pct": 5.8,
+    "ci95_pct": [-1.4, 12.1],
+    "pct_shrunk": 4.0,
+    "weight_own_estimate": 0.549
+   },
+   "previous_hour_per_mm": {
+    "pct": -1.0,
+    "ci95_pct": [-5.4, 4.0],
+    "pct_shrunk": 3.4
+   },
+   "sustained": {
+    "light": {
+     "pct": 0.8,
+     "ci95_pct": [-3.2, 4.1],
+     "pct_shrunk": 3.7
+    },
+    "moderate": {
+     "pct": 3.9,
+     "ci95_pct": [-7.6, 16.9],
+     "pct_shrunk": 10.0
+    }
+   }
+  },
+  {
+   "leg": "j05-j06",
+   "from": "Khajaguda X Roads",
+   "to": "Narne Rd jn Shaikpet",
+   "distance_m": 1621.0,
+   "mean_min": 2.84,
+   "light": {
+    "pct": 3.9,
+    "ci95_pct": [1.1, 5.8],
+    "pct_shrunk": 3.2,
+    "weight_own_estimate": 0.333
+   },
+   "moderate": {
+    "pct": 6.9,
+    "ci95_pct": [0.4, 12.0],
+    "pct_shrunk": 4.9,
+    "weight_own_estimate": 0.624
+   },
+   "previous_hour_per_mm": {
+    "pct": 1.0,
+    "ci95_pct": [-2.1, 4.1],
+    "pct_shrunk": 3.4
+   },
+   "sustained": {
+    "light": {
+     "pct": 4.3,
+     "ci95_pct": [1.1, 6.2],
+     "pct_shrunk": 4.3
+    },
+    "moderate": {
+     "pct": 8.8,
+     "ci95_pct": [-0.9, 16.8],
+     "pct_shrunk": 11.0
+    }
+   }
+  },
+  {
+   "leg": "j06-j07",
+   "from": "Narne Rd jn Shaikpet",
+   "to": "Tolichowki",
+   "distance_m": 2830.0,
+   "mean_min": 4.61,
+   "light": {
+    "pct": 0.9,
+    "ci95_pct": [-0.9, 2.4],
+    "pct_shrunk": 1.9,
+    "weight_own_estimate": 0.482
+   },
+   "moderate": {
+    "pct": -0.9,
+    "ci95_pct": [-4.1, 1.7],
+    "pct_shrunk": -0.5,
+    "weight_own_estimate": 0.854
+   },
+   "previous_hour_per_mm": {
+    "pct": 2.0,
+    "ci95_pct": [-0.4, 5.2],
+    "pct_shrunk": 3.4
+   },
+   "sustained": {
+    "light": {
+     "pct": 1.6,
+     "ci95_pct": [-0.5, 3.5],
+     "pct_shrunk": 3.0
+    },
+    "moderate": {
+     "pct": 2.5,
+     "ci95_pct": [-3.1, 8.3],
+     "pct_shrunk": 5.3
+    }
+   }
+  },
+  {
+   "leg": "j07-j08",
+   "from": "Tolichowki",
+   "to": "Nanal Nagar jn",
+   "distance_m": 1370.0,
+   "mean_min": 3.96,
+   "light": {
+    "pct": -0.5,
+    "ci95_pct": [-5.7, 3.8],
+    "pct_shrunk": 2.5,
+    "weight_own_estimate": 0.09
+   },
+   "moderate": {
+    "pct": -8.6,
+    "ci95_pct": [-15.5, -2.9],
+    "pct_shrunk": -3.9,
+    "weight_own_estimate": 0.534
+   },
+   "previous_hour_per_mm": {
+    "pct": -0.6,
+    "ci95_pct": [-4.7, 3.9],
+    "pct_shrunk": 3.4
+   },
+   "sustained": {
+    "light": {
+     "pct": -0.7,
+     "ci95_pct": [-5.8, 3.6],
+     "pct_shrunk": 3.7
+    },
+    "moderate": {
+     "pct": -9.6,
+     "ci95_pct": [-18.5, -0.8],
+     "pct_shrunk": 1.7
+    }
+   }
+  },
+  {
+   "leg": "j08-j09",
+   "from": "Nanal Nagar jn",
+   "to": "Rethibowli jn",
+   "distance_m": 418.0,
+   "mean_min": 1.17,
+   "light": {
+    "pct": -1.9,
+    "ci95_pct": [-8.5, 6.8],
+    "pct_shrunk": 2.6,
+    "weight_own_estimate": 0.039
+   },
+   "moderate": {
+    "pct": -7.2,
+    "ci95_pct": [-17.6, 7.3],
+    "pct_shrunk": -0.3,
+    "weight_own_estimate": 0.231
+   },
+   "previous_hour_per_mm": {
+    "pct": 5.3,
+    "ci95_pct": [-6.9, 16.0],
+    "pct_shrunk": 3.5
+   },
+   "sustained": {
+    "light": {
+     "pct": -0.2,
+     "ci95_pct": [-7.2, 9.2],
+     "pct_shrunk": 3.8
+    },
+    "moderate": {
+     "pct": 1.2,
+     "ci95_pct": [-18.0, 22.4],
+     "pct_shrunk": 5.6
+    }
+   }
+  },
+  {
+   "leg": "j09-j10",
+   "from": "Rethibowli jn",
+   "to": "NMDC / Masab Tank Rd",
+   "distance_m": 2241.0,
+   "mean_min": 7.37,
+   "light": {
+    "pct": 1.1,
+    "ci95_pct": [-3.2, 5.1],
+    "pct_shrunk": 2.6,
+    "weight_own_estimate": 0.108
+   },
+   "moderate": {
+    "pct": 2.1,
+    "ci95_pct": [-6.0, 8.3],
+    "pct_shrunk": 2.0,
+    "weight_own_estimate": 0.506
+   },
+   "previous_hour_per_mm": {
+    "pct": 3.6,
+    "ci95_pct": [0.1, 7.2],
+    "pct_shrunk": 3.5
+   },
+   "sustained": {
+    "light": {
+     "pct": 2.4,
+     "ci95_pct": [-2.5, 6.5],
+     "pct_shrunk": 3.8
+    },
+    "moderate": {
+     "pct": 8.4,
+     "ci95_pct": [-3.7, 18.6],
+     "pct_shrunk": 8.0
+    }
+   }
+  },
+  {
+   "leg": "j10-j11",
+   "from": "NMDC / Masab Tank Rd",
+   "to": "Masab Tank",
+   "distance_m": 930.0,
+   "mean_min": 2.47,
+   "light": {
+    "pct": 0.2,
+    "ci95_pct": [-2.3, 2.6],
+    "pct_shrunk": 2.0,
+    "weight_own_estimate": 0.294
+   },
+   "moderate": {
+    "pct": -0.6,
+    "ci95_pct": [-3.7, 1.9],
+    "pct_shrunk": -0.3,
+    "weight_own_estimate": 0.904
+   },
+   "previous_hour_per_mm": {
+    "pct": 1.0,
+    "ci95_pct": [-2.0, 3.8],
+    "pct_shrunk": 3.4
+   },
+   "sustained": {
+    "light": {
+     "pct": 0.5,
+     "ci95_pct": [-2.4, 3.2],
+     "pct_shrunk": 3.2
+    },
+    "moderate": {
+     "pct": 1.2,
+     "ci95_pct": [-4.9, 6.5],
+     "pct_shrunk": 5.4
+    }
+   }
+  },
+  {
+   "leg": "j11-B_lakdikapul",
+   "from": "Masab Tank",
+   "to": "Lakdikapul",
+   "distance_m": 1636.0,
+   "mean_min": 5.16,
+   "light": {
+    "pct": 3.2,
+    "ci95_pct": [-1.2, 7.0],
+    "pct_shrunk": 2.8,
+    "weight_own_estimate": 0.128
+   },
+   "moderate": {
+    "pct": 3.2,
+    "ci95_pct": [-3.3, 9.1],
+    "pct_shrunk": 2.6,
+    "weight_own_estimate": 0.563
+   },
+   "previous_hour_per_mm": {
+    "pct": 1.2,
+    "ci95_pct": [-2.1, 4.5],
+    "pct_shrunk": 3.4
+   },
+   "sustained": {
+    "light": {
+     "pct": 3.6,
+     "ci95_pct": [-1.0, 7.3],
+     "pct_shrunk": 4.0
+    },
+    "moderate": {
+     "pct": 5.3,
+     "ci95_pct": [-3.2, 12.1],
+     "pct_shrunk": 8.5
+    }
+   }
+  }
+ ],
+ "per_leg_spread_beyond_noise_log": {
+  "light": 0.0074,
+  "moderate": 0.0347,
+  "rain_prev_mm": 0.0028
+ },
+ "share_of_days_by_hour": {
+  "6": {
+   "dry": 0.677,
+   "light": 0.29,
+   "moderate": 0.032,
+   "heavy": 0.0
+  },
+  "7": {
+   "dry": 0.677,
+   "light": 0.323,
+   "moderate": 0.0,
+   "heavy": 0.0
+  },
+  "8": {
+   "dry": 0.613,
+   "light": 0.355,
+   "moderate": 0.032,
+   "heavy": 0.0
+  },
+  "9": {
+   "dry": 0.548,
+   "light": 0.387,
+   "moderate": 0.065,
+   "heavy": 0.0
+  },
+  "10": {
+   "dry": 0.581,
+   "light": 0.419,
+   "moderate": 0.0,
+   "heavy": 0.0
+  },
+  "11": {
+   "dry": 0.548,
+   "light": 0.387,
+   "moderate": 0.065,
+   "heavy": 0.0
+  },
+  "12": {
+   "dry": 0.516,
+   "light": 0.419,
+   "moderate": 0.065,
+   "heavy": 0.0
+  },
+  "13": {
+   "dry": 0.484,
+   "light": 0.387,
+   "moderate": 0.129,
+   "heavy": 0.0
+  },
+  "14": {
+   "dry": 0.484,
+   "light": 0.452,
+   "moderate": 0.065,
+   "heavy": 0.0
+  },
+  "15": {
+   "dry": 0.484,
+   "light": 0.387,
+   "moderate": 0.129,
+   "heavy": 0.0
+  },
+  "16": {
+   "dry": 0.548,
+   "light": 0.355,
+   "moderate": 0.097,
+   "heavy": 0.0
+  },
+  "17": {
+   "dry": 0.452,
+   "light": 0.452,
+   "moderate": 0.097,
+   "heavy": 0.0
+  },
+  "18": {
+   "dry": 0.581,
+   "light": 0.355,
+   "moderate": 0.065,
+   "heavy": 0.0
+  },
+  "19": {
+   "dry": 0.645,
+   "light": 0.29,
+   "moderate": 0.065,
+   "heavy": 0.0
+  },
+  "20": {
+   "dry": 0.677,
+   "light": 0.29,
+   "moderate": 0.032,
+   "heavy": 0.0
+  },
+  "21": {
+   "dry": 0.677,
+   "light": 0.323,
+   "moderate": 0.0,
+   "heavy": 0.0
+  },
+  "22": {
+   "dry": 0.645,
+   "light": 0.323,
+   "moderate": 0.032,
+   "heavy": 0.0
+  },
+  "23": {
+   "dry": 0.581,
+   "light": 0.29,
+   "moderate": 0.129,
+   "heavy": 0.0
+  },
+  "all": {
+   "dry": 0.579,
+   "light": 0.36,
+   "moderate": 0.061,
+   "heavy": 0.0
+  }
+ },
+ "label": "estimated",
+ "generated_by": "data/weather/analyse_weather_hourly.py"
+}
