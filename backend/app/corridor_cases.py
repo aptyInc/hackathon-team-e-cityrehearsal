@@ -5,7 +5,8 @@
                                          baseline) at that volume, appends the results; stage "in_review"
     POST /corridor/cases/{id}/decide     {decider, decision: approve|reject|revise, reason} -> stage "decided"
     GET  /corridor/cases/{id}            case with runs, events, fingerprints
-    GET  /corridor/cases                 list
+    GET  /corridor/cases/{id}/verify     {ok, events: [{seq, fingerprint, recomputed, matches, prev_ok}], evidence: [...]}
+    GET  /corridor/cases                 list, each row with its latest decision and decided_at
 
 Append-only: runs and events are never changed or deleted. Every event carries a SHA-256 fingerprint of the evidence
 it rests on (run fingerprints, brief fingerprint, its own body) chained to the previous event's fingerprint, so any
@@ -18,7 +19,7 @@ from pydantic import BaseModel
 
 from . import corridor as cor
 from .agent import store as agent_store
-from .agent.tools import ivs, label, load_run, mins, new_id
+from .agent.tools import ivs, label, load_run, mins, new_id, vol
 
 router = APIRouter()
 
@@ -30,6 +31,8 @@ with cor.db() as _c:
     CREATE TABLE IF NOT EXISTS corridor_case_events(case_id TEXT, seq INTEGER, kind TEXT, actor TEXT, body TEXT,
         fingerprint TEXT, prev TEXT, created REAL, PRIMARY KEY(case_id, seq));
     """)
+    if "volume_scale" not in [r[1] for r in _c.execute("PRAGMA table_info(corridor_case_runs)")]:
+        _c.execute("ALTER TABLE corridor_case_runs ADD COLUMN volume_scale REAL")   # the level the run was asked for
 
 
 class CaseIn(BaseModel):
@@ -70,10 +73,12 @@ def _event(case_id: str, kind: str, actor: str, body: dict) -> str:
     return fp
 
 
-def _add_runs(case_id: str, runs: list[dict], role: str, by: str):
+def _add_runs(case_id: str, runs: list[dict], role: str, by: str, volume_scale: float | None = None):
     with cor.db() as c:
         for r in runs:
-            c.execute("INSERT INTO corridor_case_runs VALUES(?,?,?,?,?)", (case_id, r["run_id"], role, by, time.time()))
+            c.execute("INSERT INTO corridor_case_runs(case_id, run_id, role, added_by, created, volume_scale) "
+                      "VALUES(?,?,?,?,?,?)", (case_id, r["run_id"], role, by, time.time(),
+                                             volume_scale if volume_scale is not None else vol(r)))
 
 
 def _row(c, case_id: str):
@@ -85,11 +90,17 @@ def _row(c, case_id: str):
 
 @router.get("/corridor/cases")
 def list_cases():
+    """Every corridor case, newest first, with its latest decision (approve/reject/revise) and when it was made."""
     with cor.db() as c:
         rows = c.execute("""SELECT k.*, (SELECT COUNT(*) FROM corridor_case_runs r WHERE r.case_id=k.id) AS runs
                             FROM corridor_cases k ORDER BY created DESC""").fetchall()
+        last = {}
+        for e in c.execute("SELECT case_id, body, created FROM corridor_case_events WHERE kind='decision' ORDER BY seq"):
+            last[e["case_id"]] = (json.loads(e["body"]).get("decision"), e["created"])
     return [{"case_id": r["id"], "title": r["title"], "stage": r["stage"], "brief_id": r["brief_id"],
-             "created_by": r["created_by"], "created": r["created"], "runs": r["runs"]} for r in rows]
+             "created_by": r["created_by"], "created": r["created"], "runs": r["runs"],
+             "decision": last.get(r["id"], (None, None))[0], "decided_at": last.get(r["id"], (None, None))[1]}
+            for r in rows]
 
 
 @router.get("/corridor/cases/{case_id}")
@@ -104,7 +115,8 @@ def get_case(case_id: str):
         fps[res["run_id"]] = _run_fp(res)
         runs.append({"run_id": res["run_id"], "role": l["role"], "added_by": l["added_by"],
                      "option": label(ivs(res)), "interventions": ivs(res),
-                     "volume_scale": res["inputs"].get("volume_scale"), "total_min": mins(res["journey"]["total_s"]),
+                     "volume_scale": l["volume_scale"] if l["volume_scale"] is not None else vol(res),
+                     "total_min": mins(res["journey"]["total_s"]),
                      "inputs": res["inputs"], "warnings": res.get("warnings", []), "sample": bool(res.get("sample")),
                      "fingerprint": fps[res["run_id"]]})
     if row["brief_id"]:
@@ -152,7 +164,7 @@ def review(case_id: str, body: ReviewIn):
         res = cor.run_blocking(cor.CorridorRunIn(interventions=option, volume_scale=body.volume_scale,
                                                  run_by=body.reviewer, case_id=case_id))
         results.append(res)
-    _add_runs(case_id, results, "review", body.reviewer)
+    _add_runs(case_id, results, "review", body.reviewer, body.volume_scale)
     base = next(r for r in results if not ivs(r))
     summary = [{"run_id": r["run_id"], "option": label(ivs(r)), "total_min": mins(r["journey"]["total_s"]),
                 "change_vs_baseline_min": round((r["journey"]["total_s"] - base["journey"]["total_s"]) / 60, 1),
@@ -176,3 +188,41 @@ def decide(case_id: str, body: DecideIn):
     with cor.db() as c:
         c.execute("UPDATE corridor_cases SET stage='decided' WHERE id=?", (case_id,))
     return get_case(case_id)
+
+
+@router.get("/corridor/cases/{case_id}/verify")
+def verify_case(case_id: str):
+    """Recompute every event's SHA-256 on the server (same JSON encoding as when it was written) and check the chain;
+    also re-check the fingerprints of the runs and the brief the events rest on against what is stored now."""
+    with cor.db() as c:
+        _row(c, case_id)
+        events = c.execute("SELECT * FROM corridor_case_events WHERE case_id=? ORDER BY seq", (case_id,)).fetchall()
+    out, prev_fp, recorded = [], None, {}
+    for e in events:
+        body = json.loads(e["body"])
+        recomputed = _sha({"case_id": case_id, "seq": e["seq"], "kind": e["kind"], "actor": e["actor"], "body": body,
+                           "prev": e["prev"]})
+        out.append({"seq": e["seq"], "kind": e["kind"], "fingerprint": e["fingerprint"], "recomputed": recomputed,
+                    "matches": recomputed == e["fingerprint"], "prev_ok": e["prev"] == prev_fp})
+        prev_fp = e["fingerprint"]
+        recorded |= body.get("runs") or {}
+        recorded |= body.get("evidence") or {}
+        recorded |= {r["run_id"]: r["fingerprint"] for r in body.get("results") or []}
+        if body.get("brief_id") and body.get("brief_fingerprint"):
+            recorded["brief:" + body["brief_id"]] = body["brief_fingerprint"]
+    evidence = []
+    for key, fp in recorded.items():
+        if key.startswith("brief:"):
+            try:
+                b = agent_store.get_brief(key[6:])
+                now = hashlib.sha256(json.dumps({"markdown": b["markdown"], "fingerprints": b["fingerprints"]},
+                                                sort_keys=True).encode()).hexdigest()
+            except HTTPException:
+                now = None
+        else:
+            res = cor.stored_run(key)
+            now = cor.fingerprint(res) if res else None
+        evidence.append({"id": key, "recorded": fp, "recomputed": now, "matches": now == fp})
+    ok = bool(out) and all(e["matches"] and e["prev_ok"] for e in out) and all(x["matches"] for x in evidence)
+    return {"case_id": case_id, "ok": ok, "events": out, "evidence": evidence,
+            "method": "sha256 of json.dumps({case_id, seq, kind, actor, body, prev}, sort_keys=True), recomputed server-side"}

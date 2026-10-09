@@ -92,6 +92,13 @@ def ivs(res: dict) -> list[dict]:
     return res.get("interventions", [])
 
 
+def vol(res: dict) -> float:
+    """The traffic volume a run was asked for (a MOCK_SIM sample keeps the sample's own 1.0 in inputs)."""
+    if res.get("sample") and "requested" in res:
+        return res["requested"].get("volume_scale", 1.0)
+    return res.get("inputs", {}).get("volume_scale", 1.0)
+
+
 def label(interventions: list[dict]) -> str:
     if not interventions:
         return "baseline (no change)"
@@ -154,7 +161,7 @@ def diff(res: dict, base: dict, leg_min: float = 0.5) -> dict:
 
 def summarize(res: dict, base: dict | None) -> dict:
     out = {"run_id": res["run_id"], "fingerprint": res.get("fingerprint"), "option": label(ivs(res)),
-           "interventions": ivs(res), "volume_scale": res["inputs"].get("volume_scale"),
+           "interventions": ivs(res), "volume_scale": vol(res),
            "total_min": mins(res["journey"]["total_s"]), "data": "SIMULATED (SUMO)",
            "time_window": res.get("time", {}).get("label"), "warnings": res.get("warnings", []),
            "inputs": res.get("inputs", {})}
@@ -249,7 +256,7 @@ def compare_runs(ctx: Context, inp: dict) -> dict:
     rows = []
     for r in runs:
         row = {"run_id": r["run_id"], "option": label(ivs(r)),
-               "volume_scale": r["inputs"].get("volume_scale"), "total_min": mins(r["journey"]["total_s"]),
+               "volume_scale": vol(r), "total_min": mins(r["journey"]["total_s"]),
                "change_vs_reference_min": round((r["journey"]["total_s"] - ref["journey"]["total_s"]) / 60, 1),
                "warnings": len(r.get("warnings", []))}
         if r is not ref:
@@ -257,7 +264,7 @@ def compare_runs(ctx: Context, inp: dict) -> dict:
             row["biggest_leg_changes"] = d["legs"][:3]
             row["biggest_junction_changes"] = d["junctions"][:3]
         rows.append(row)
-    vols = {r["inputs"].get("volume_scale") for r in runs}
+    vols = {vol(r) for r in runs}
     return {"reference": ref["run_id"], "data": "SIMULATED", "rows": rows,
             **({"caution": f"runs use different volume scales {sorted(vols)}; compare like with like"} if len(vols) > 1 else {})}
 
@@ -283,8 +290,8 @@ def render_brief(ctx: Context, inp: dict, runs: list[dict]) -> tuple[str, dict]:
     bases = {}
     for r in runs:
         if not ivs(r):
-            bases.setdefault(round(r["inputs"].get("volume_scale", 1.0), 3), r)
-    for vs in {round(r["inputs"].get("volume_scale", 1.0), 3) for r in runs} - set(bases):
+            bases.setdefault(round(vol(r), 3), r)
+    for vs in {round(vol(r), 3) for r in runs} - set(bases):
         bases[vs] = baseline_for(vs, ctx)
     all_runs = list({r["run_id"]: r for r in list(bases.values()) + runs}.values())
     lines = [f"# Decision brief: {inp.get('title', 'corridor option')}", "",
@@ -294,8 +301,8 @@ def render_brief(ctx: Context, inp: dict, runs: list[dict]) -> tuple[str, dict]:
              "## Options tested", "",
              "| Option | Cost class | Volume | Trip (min, simulated) | Change vs no change (min) | Run |",
              "|---|---|---|---|---|---|"]
-    for r in sorted(all_runs, key=lambda r: (r["inputs"].get("volume_scale", 1), bool(ivs(r)), r["journey"]["total_s"])):
-        vs = round(r["inputs"].get("volume_scale", 1.0), 3)
+    for r in sorted(all_runs, key=lambda r: (vol(r), bool(ivs(r)), r["journey"]["total_s"])):
+        vs = round(vol(r), 3)
         b = bases[vs]
         cost = ", ".join(sorted({COST_CLASS.get(iv["kind"], iv["kind"]) for iv in ivs(r)})) or "none"
         ch = "-" if r is b else f"{(r['journey']['total_s'] - b['journey']['total_s']) / 60:+.1f}"
@@ -308,7 +315,7 @@ def render_brief(ctx: Context, inp: dict, runs: list[dict]) -> tuple[str, dict]:
     for r in runs:
         if not ivs(r):
             continue
-        d = diff(r, bases[round(r["inputs"].get("volume_scale", 1.0), 3)])
+        d = diff(r, bases[round(vol(r), 3)])
         target = {iv["junction_id"] for iv in ivs(r)}
         worse = [j for j in d["junctions"] if j["delay_s"][1] > j["delay_s"][0] and j["junction"].split()[0] not in target]
         slower = [l for l in d["legs"] if l["change_min"] > 0]
@@ -318,7 +325,7 @@ def render_brief(ctx: Context, inp: dict, runs: list[dict]) -> tuple[str, dict]:
                                                f"queue {j['queue_m'][0]}->{j['queue_m'][1]} m" for j in worse[:3]))
         if slower:
             txt.append("slower legs: " + "; ".join(f"{l['leg']} {l['change_min']:+} min" for l in slower[:3]))
-        lines.append(f"- **{label(ivs(r))}** (volume {r['inputs'].get('volume_scale')}): "
+        lines.append(f"- **{label(ivs(r))}** (volume {vol(r)}): "
                      + (". ".join(txt) if txt else "no nearby junction or leg got noticeably worse") + ".")
     lines += ["", "## Risks and assumptions", "",
               "- All trip and junction times for options are **simulated** (SUMO traffic model); only TomTom figures are measured.",

@@ -521,7 +521,29 @@ def corridor_calibration():
     """How well the simulation matches TomTom: the calibrated knobs and the last round's fit (sim/corridor/calibration.json)."""
     if not CALIBRATION.exists():
         raise HTTPException(404, "The corridor simulation is not calibrated yet (sim/corridor/calibration.json is missing).")
-    return json.loads(CALIBRATION.read_text())
+    cal = json.loads(CALIBRATION.read_text())
+    try:
+        cal |= tomtom_basis(cal)
+    except Exception:   # an older or partial calibration file: serve it as it is
+        pass
+    return cal
+
+
+def tomtom_basis(cal: dict) -> dict:
+    """Why the calibration's TomTom total differs from GET /corridor's July total: the calibration target is TomTom's
+    per-leg July speeds over the simulated network's legs, which are shorter than TomTom's own route. The simulated
+    length is recovered from the file itself (target seconds x TomTom speed per leg); nothing is hard-coded."""
+    avg = tomtom_periods()[0]
+    speed = {f"{l['from_id']}->{l['to_id']}": l["speed_kmh"] for l in avg["legs"]}
+    legs = cal["result"]["legs"]
+    sim_km = sum(l["tomtom_s"] * speed[l["leg"]] / 3.6 for l in legs) / 1000
+    cal_min = cal["result"].get("tomtom_total_s", sum(l["tomtom_s"] for l in legs)) / 60
+    tt_km, tt_min = avg["distance_m"] / 1000, avg["total_s"] / 60
+    return {"tomtom_basis": f"TomTom July leg speeds applied to the simulated {sim_km:.1f} km ({cal_min:.1f} min); "
+                            f"TomTom's own route is {tt_km:.1f} km / {tt_min:.1f} min",
+            "tomtom_basis_detail": {"simulated_route_km": round(sim_km, 2), "calibration_tomtom_min": round(cal_min, 1),
+                                    "tomtom_route_km": round(tt_km, 2), "tomtom_route_min": round(tt_min, 1),
+                                    "tomtom_period": avg["label"], "data_label": "measured speeds, simulated distances"}}
 
 
 @router.get("/corridor/runs/{run_id}")

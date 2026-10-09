@@ -83,12 +83,36 @@ assert c.post(f"/corridor/cases/{ccid}/decide", json={"decider": "commissioner",
 rv = c.post(f"/corridor/cases/{ccid}/review", json={"reviewer": "reviewer", "volume_scale": 1.2, "note": "peak +20%"}).json()
 assert rv["stage"] == "in_review" and sum(r["role"] == "review" for r in rv["runs"]) == 3, [r["role"] for r in rv["runs"]]
 assert rv["events"][-1]["prev"] == rv["events"][0]["fingerprint"], "events are hash-chained"
+assert {r["volume_scale"] for r in rv["runs"] if r["role"] == "review"} == {1.2}, "review runs report the level they ran at"
+assert {r["volume_scale"] for r in rv["runs"] if r["role"] == "option"} == {1.0}
 assert c.post(f"/corridor/cases/{ccid}/decide", json={"decider": "c", "decision": "maybe", "reason": "x"}).status_code == 400
 dec = c.post(f"/corridor/cases/{ccid}/decide", json={"decider": "commissioner", "decision": "approve",
                                                       "reason": "Signal retime first; flyover pushes the queue to Nanal Nagar"}).json()
 assert dec["stage"] == "decided" and dec["decision"]["decision"] == "approve" and len(dec["events"]) == 3
 assert c.post(f"/corridor/cases/{ccid}/review", json={"reviewer": "r2"}).status_code == 409, "decided cases are closed"
-assert any(k["case_id"] == ccid for k in c.get("/corridor/cases").json())
+row = next(k for k in c.get("/corridor/cases").json() if k["case_id"] == ccid)
+assert row["decision"] == "approve" and row["decided_at"] >= row["created"], row
+assert all("decision" in k and "decided_at" in k for k in c.get("/corridor/cases").json())
+ver = c.get(f"/corridor/cases/{ccid}/verify").json()
+assert ver["ok"] and [e["seq"] for e in ver["events"]] == [0, 1, 2], ver
+assert all(e["matches"] and e["prev_ok"] and e["recomputed"] == e["fingerprint"] for e in ver["events"])
+assert ver["evidence"] and all(x["matches"] for x in ver["evidence"]), ver["evidence"]
+import sqlite3 as _sq  # noqa: E402  tamper with one event, check verify notices, put it back
+from app.corridor import DB as _DB  # noqa: E402
+with _sq.connect(_DB) as _con:
+    _orig = _con.execute("SELECT body FROM corridor_case_events WHERE case_id=? AND seq=2", (ccid,)).fetchone()[0]
+    _con.execute("UPDATE corridor_case_events SET body=? WHERE case_id=? AND seq=2", (_orig.replace("approve", "reject"), ccid))
+try:
+    bad = c.get(f"/corridor/cases/{ccid}/verify").json()
+    assert not bad["ok"] and not bad["events"][2]["matches"] and bad["events"][1]["matches"], bad["events"]
+finally:
+    with _sq.connect(_DB) as _con:
+        _con.execute("UPDATE corridor_case_events SET body=? WHERE case_id=? AND seq=2", (_orig, ccid))
+assert c.get(f"/corridor/cases/{ccid}/verify").json()["ok"]
+assert c.get("/corridor/cases/cc_nothere/verify").status_code == 404
+cal = c.get("/corridor/calibration")
+if cal.status_code == 200:
+    assert "TomTom's own route is" in cal.json()["tomtom_basis"], cal.json().get("tomtom_basis")
 
 # ---- planning assistant (Claude client mocked: no API cost) ----
 import json as _json  # noqa: E402
