@@ -5,6 +5,7 @@
 | `raw/ymca_geometry.csv` | Same study, Table 1 — entry and circulating widths, 17 m central island | counted (study) |
 | `raw/tomtom_ymca_speeds.csv` | TomTom Traffic Stats route analysis, job 10048164 — 8 road stretches in/out of YMCA Circle, weekdays 1–31 Jul 2026, 24 one-hour slots | measured |
 | `raw/tomtom_hitec_kondapur_speeds.csv` | TomTom Traffic Stats route analysis, job 10048181 — Cyber Towers junction (HITEC City, 8 stretches) and Kothaguda junction (Kondapur, 6 stretches), weekdays 1–31 Jul 2026, 24 one-hour slots | measured |
+| `raw/tomtom_ymca_junction_live.csv`, `raw/tomtom_ymca_turn_ratios.csv` | TomTom Junction Analytics archive, junction 6ac7d6870b461bdaf5cd8158 — per minute from 8 Oct 23:17 IST: delay, queue, volume per road; turn ratios over rolling 30-minute windows (`python3 data/tomtom/fetch_junction_archive.py 2026-10-08`) | measured; volume and queue estimated (TomTom model) |
 | `tomtom/` | Request files, fetch script and raw TomTom results (JSON, Excel, GeoJSON, Shapefile) | measured |
 | `raw/ymca_buildings.geojson` | Overture Maps building footprints around YMCA Circle (3,370), downloaded 9 Oct 2026. No heights in Overture here: `render_height_m` = floors × 3.2 m, floors assumed from footprint area | footprints counted, heights assumed |
 | `gariahat/` | Gariahat and Phari junctions from OpenStreetMap + published before/after study | study results |

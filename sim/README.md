@@ -19,11 +19,14 @@ Produces C1 vehicle frames and C2 run results (see /contracts). Install and run 
 | **0.9** | **15.6** | **17.9** | **10.8** | **16.1** | **4.6 km/h** | 21 |
 | 1.0 | 5.0 | 4.1 | 3.2 | 3.5 | 15.7 km/h | 98 |
 
-The circle sits at its tipping point: free flow at 80%, gridlock at 100%. **Use scale 0.9 as the baseline** until calibration improves.
+The simulated circle sits at a tipping point: free flow at 80%, gridlock at 100%.
+
+**Correction from TomTom's morning data (9 Oct, 08:00–09:07):** the real circle carried about 5,800 vehicles/h in total (1,104–1,732 per road, TomTom estimate) with only 2–8 s of delay per road. Our model jams at ~3,050. So the model's **roundabout capacity is too low**; lowering the volume (scale 0.9) only hides that. Fix capacity first, then calibrate volume.
 
 ## Next steps (Simulation owner)
+0. **Raise the simulated roundabout capacity** to real Hyderabad levels: check right-of-way at the ring entries in `netedit` (entries yielding to the ring with large gaps), try junction-model settings per vehicle type (`jmTimegapMinor`, `impatience`) one road at a time, and check that two-wheelers use the sublanes on the ring. Target: ~5,800 veh/h total through the circle with single-digit seconds of delay, as TomTom measured.
 1. South road (10.8 vs 19.2 km/h) and north-east road (15.6 vs 23.0) are too slow at 0.9: check the merge where three roads feed the south entry (`747373024#0`) and the upstream junctions in `netedit`.
-2. Replace the overnight turn ratios with rush-hour ones once Friday's TomTom data is in: `build_demand.py --since 08:00 --until 11:00`.
+2. Use rush-hour turn ratios: `build_demand.py --since 08:00 --until 11:00` (refresh the data first with `python3 data/tomtom/fetch_junction_archive.py 2026-10-08`). Morning shares differ from night ones, e.g. 59% straight from the north-east road in the morning vs 75% at night.
 3. Reduce teleports (21 at scale 0.9): check lane changes just before the roundabout.
 4. Free-flow speeds are too high at low volume (NE 41 km/h vs TomTom ~27 km/h at 03:00): lower `speedFactor` or the 60 km/h OSM limits on the approaches.
 5. Implement the runner: C3 variant spec in, C2 run result and C1 frames out (contracts in `/contracts`).
