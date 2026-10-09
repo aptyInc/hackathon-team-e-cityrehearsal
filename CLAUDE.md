@@ -40,8 +40,8 @@ Nobody waits for SUMO. Switch to `MOCK_SIM=0` at integration checkpoints.
 ## Working rules
 1. `main` always runs. Run `make smoke` before merging.
 2. One branch per person (`sim/...`, `agent/...`, `frontend/...`). Merge every 2–3 hours.
-3. Integration checkpoints: Fri 18:00, Sat 00:00, Sat 06:00 — 15-minute pause, one person merges, run the full demo.
-4. Feature freeze Sat 10:00. Build freeze Sat 12:00 (final version on `main`).
+3. Integration checkpoints: Fri 16:00, Fri 22:00, Sat 04:00 — 15-minute pause, one person merges, run the full demo.
+4. Feature freeze Sat 08:00. Build freeze Sat 10:00 (final version on `main`).
 5. Secrets go in `.env` only (see `.env.example`). No production data, credentials or customer data (handbook rule).
 6. Label every traffic input as `counted`, `estimated` or `assumed` (`inputs.counts_source` in C2).
 7. The agent builds variants only from templates in `/sim/templates`; it never edits raw network files.
