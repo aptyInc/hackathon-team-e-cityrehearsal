@@ -10,6 +10,9 @@ intervention is {"junction_id": "j07", "kind": "flyover", "params": {...}}; kind
                          share of the cycle's green time (cycle minus yellow/all-red) given to the phases that let the
                          corridor's through traffic into the junction
     widening             add_lanes (1-2, default 1), length_m (default 300, on the corridor either side of the junction)
+    one_way              road (side road name or edge id; default the smallest two-way side road), direction ("in":
+                         only traffic towards the junction, default; "out": only away), length_m (default 200)
+    u_turn               not built yet (left out with a warning)
 Method (as flyover.py): export the network as plain XML, edit it, rebuild once with netconvert (corridor_net.rebuild).
 Everything is planned on the source network. Split road pieces keep their original edge ids on the side away from
 the junction, so trips from the corridor's first edge to its last edge, and probes on those edges, still work.
@@ -36,7 +39,7 @@ import corridor_net as cn  # noqa: E402
 KINDS = ("flyover", "underpass", "signal_retime", "widening", "one_way", "u_turn")
 JUNCTIONS = {p["id"]: p for p in cn.CORRIDOR["points"] if p["kind"] == "junction"}
 GRADE = ("flyover_", "underpass_")
-ORDER = {"widening": 0, "signal_retime": 1, "flyover": 2, "underpass": 2}
+ORDER = {"widening": 0, "one_way": 1, "signal_retime": 1, "flyover": 2, "underpass": 2}
 
 
 def apply(net_path: Path, out: Path, interventions: list[dict]) -> list[str]:
@@ -428,8 +431,59 @@ def widening(ctx, jid, kind, params):
     return edit, notes
 
 
+# ---------------------------------------------------------------- one-way side road (stretch)
+
+def one_way(ctx, jid, kind, params):
+    """A side road at the junction becomes one-way for vehicles for ~`length_m` m: `direction` "in" keeps only the
+    traffic driving towards the junction, "out" only the traffic driving away. The closed carriageway stays open to
+    pedestrians, so lane links and signal programs keep their shape (retime separately to use the freed green)."""
+    net = ctx["net"]
+    direction, reach = params.get("direction", "in"), float(params.get("length_m", 200))
+    if direction not in ("in", "out"):
+        raise ValueError(f"one_way direction must be 'in' or 'out', got {direction!r}")
+    group = {n.getID() for g in ctx["groups"].values() for n in g.get(jid, [])}
+    corridor_edges = {e.getID() for p in ctx["paths"].values() for e in p}
+    nodes = [net.getNode(n) for n in group]
+    side = {"in": [e for n in nodes for e in n.getIncoming() if e.getFromNode().getID() not in group],
+            "out": [e for n in nodes for e in n.getOutgoing() if e.getToNode().getID() not in group]}
+    side = {k: [e for e in v if e.getID() not in corridor_edges and e.allows("passenger")] for k, v in side.items()}
+    road_of = lambda e: e.getName() or e.getID().lstrip("-").split("#")[0]  # noqa: E731
+    roads = sorted({road_of(e) for v in side.values() for e in v})
+    names = {road_of(path[k]) for path, i0, i1 in sides(ctx, jid).values() for k in range(max(0, i0 - 3), min(len(path), i1 + 4))}
+    two_way = [r for r in roads if r not in names and all(any(road_of(e) == r for e in v) for v in side.values())]
+    if not params.get("road") and not two_way:
+        return None, [f"no two-way side road at {jid}; nothing to make one-way"]
+    want = params.get("road") or min(two_way, key=lambda r: sum(e.getLaneNumber() for v in side.values() for e in v if road_of(e) == r))
+    if want not in roads and not any(e.getID() == want for v in side.values() for e in v):
+        raise ValueError(f"one_way road {want!r} is not a side road at {jid}; use one of {', '.join(roads)}")
+    closed = [e for e in side["out" if direction == "in" else "in"] if want in (road_of(e), e.getID())]
+    if not closed:
+        return None, [f"{want} already carries traffic only {'towards' if direction == 'in' else 'away from'} {jid}"]
+    shut = set()
+    for e in closed:     # follow the closed carriageway away from the junction for `reach` m
+        done = 0.0
+        while e is not None and done < reach and e.getID() not in corridor_edges:
+            shut.add(e.getID())
+            done += e.getLength()
+            nxt = [x for x in (e.getOutgoing() if direction == "in" else e.getIncoming()) if road_of(x) == road_of(e)]
+            e = nxt[0] if len(nxt) == 1 else None
+    notes = [f"{want} is one-way {'towards' if direction == 'in' else 'away from'} the junction for {reach:.0f} m "
+             f"(edges {', '.join(sorted(shut))}); traffic the other way must find another road"]
+
+    def edit(prefix):
+        edg = ET.parse(f"{prefix}.edg.xml")
+        for e in edg.getroot().iter("edge"):
+            if e.get("id") in shut:
+                for el in [e, *e.findall("lane")]:
+                    el.attrib.pop("disallow", None)
+                    el.attrib.pop("allow", None)
+                e.set("allow", "pedestrian")
+        edg.write(f"{prefix}.edg.xml")
+    return edit, notes
+
+
 TEMPLATES = {"flyover": grade_separation, "underpass": grade_separation, "signal_retime": signal_retime,
-             "widening": widening}
+             "widening": widening, "one_way": one_way}
 
 
 if __name__ == "__main__":

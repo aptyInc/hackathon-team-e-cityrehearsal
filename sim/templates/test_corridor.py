@@ -47,6 +47,8 @@ CASES = [
     ("retime j03 share 0.3", [{"junction_id": "j03", "kind": "signal_retime", "params": {"cycle_s": 90, "corridor_green_share": 0.3}}], "runs"),
     ("widening j05", [{"junction_id": "j05", "kind": "widening", "params": {"add_lanes": 1}}], "runs"),
     ("widening j07", [{"junction_id": "j07", "kind": "widening", "params": {}}], "runs"),
+    ("one_way j06", [{"junction_id": "j06", "kind": "one_way", "params": {}}], "runs"),
+    ("one_way j09 out", [{"junction_id": "j09", "kind": "one_way", "params": {"direction": "out"}}], "runs"),
     ("flyover j07+retime j09", [{"junction_id": "j07", "kind": "flyover", "params": {}},
                                 {"junction_id": "j09", "kind": "signal_retime", "params": {"corridor_green_share": 0.7}}], "faster"),
 ]

@@ -30,7 +30,8 @@ Unknown junction/kind or a param out of range raises `ValueError`; everything el
 | `flyover` / `underpass` | `lanes` (1-4, default 2), `speed_kmh` (default 60, or the road's speed if faster), `length_m` (100-3000; default = junction span + 400 m) | One structure per direction (+6 m / -6 m) from ~200 m before the junction to ~200 m after it. Through traffic can take it; turning and cross traffic stay on the ground junction. Edge ids: `flyover_j07_fwd`, `flyover_j07_rev`. Not at j04 (already a flyover). |
 | `signal_retime` | `cycle_s` (40-240, default 120), `corridor_green_share` (alias `main_share`, 0.1-0.9, default 0.5) | Rewrites every signal the corridor meets at the junction. Yellow times kept; the green time (cycle minus yellow) is split: `share` to the phases that give the corridor's through traffic green, the rest to the other phases (proportional to their old lengths, 5 s minimum, warning under 10 s). |
 | `widening` (stretch) | `add_lanes` (1-2, default 1), `length_m` (default 300) | Extra lanes on the corridor within `length_m` either side of the junction, both directions. Signals there get a fresh default plan (warning). |
-| `one_way`, `u_turn` | - | Not built yet: left out with a warning. |
+| `one_way` (stretch) | `road` (side road name or edge id; default the smallest two-way side road), `direction` (`in` = only towards the junction, default; `out`), `length_m` (default 200) | The other carriageway of that side road is closed to vehicles (kept for pedestrians, so signal programs keep their shape; retime separately to use the freed green). |
+| `u_turn` | - | Not built yet: left out with a warning. |
 
 Design checks in the warnings: flyover lanes vs the road before the ramp and after the landing (lane drop),
 structure slower than the ground road, structures too close to each other (shortened or left out), retime phases
