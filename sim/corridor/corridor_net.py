@@ -32,7 +32,6 @@ MIN_GREEN_S = 10       # shortest green (s5: police let a green run from 10 s; a
 FREE_LEFT = os.environ.get("CR_FREE_LEFT", "1") != "0"   # s5: left-turners go in every phase, giving way (assumed)
 FLYOVER_COST = 0.7     # route(): a metre on an existing flyover counts as 0.7 m: through traffic takes them (assumed;
                        # TomTom's fastest legs are exactly the flyover stretches)
-INNER_WAIT = "g"       # links inside a junction outside their own stage: "g" give way, "r" wait for their stage
 
 
 def _angle(e):

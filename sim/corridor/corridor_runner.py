@@ -169,7 +169,9 @@ VEHICLES = [
 SIGMA_SCALE = float(os.environ.get("CR_SIGMA_SCALE", "0.4"))   # x the doc's imperfection (0.5, fast 0.6): 0.2 / 0.24
 SIGMA_NOTE = ("calibrated (spec 0.5): 0.2, fast riders 0.24. With the spec's 0.5 the Nanal Nagar section (j07-j09, near "
               "capacity) varied 278-404 s between seeds (sd ~70 s: a variant-vs-baseline comparison there would carry about "
-              "+-3 min of noise); at 0.2, 257-277 s (sd ~10 s, about +-0.5 min)")
+              "+-3 min of noise). At 0.2, on the calibrated model (seeds 2-4): section sd 9-27 s, so a change confined to one "
+              "section is beyond noise above +-0.4-1.3 min (largest at Nanal Nagar, j07-j09); a change to every leg (rain) "
+              "above about +-2.4 min (whole-trip sd 50 s)")
 YELLOW_GO_S = 4                   # s7: nobody brakes for amber: whoever reaches the line in the 4 s amber goes (assumed)
 RED_SPEED = 11.1                  # s7: red-runners keep their speed, up to 40 km/h (assumed)
 GIVE_WAY_SPEED, GIVE_WAY_PROB = 1.5, 0.3   # s6: noses out in front of a priority vehicle crawling below 1.5 m/s, 30% per 0.5 s (assumed)
@@ -475,7 +477,7 @@ ASSUMED_VPH_PER_LANE, ASSUMED_VPH_MAX = 200, 450              # an arm without T
 ARM_LANE_CAP = 800                    # veh/h per lane at most on a side arm (its share of a signal's green; assumed): where
                                       # the network has fewer lanes than the road (ISB Road: 1), TomTom's volume backs up
 ARM_LANE_CAP_GIVE_WAY = 400           # ... where the arm gives way (no signal: under the Biodiversity flyover, Gachibowli Circle)
-NOT_INSERTED_OK = 0.05                # calibration: up to this share of vehicles may wait to enter (side arms at capacity
+NOT_INSERTED_OK = 0.08                # calibration: up to this share of vehicles may wait to enter (side arms at capacity
                                       # queue beyond the modelled roads); more counts as the network not coping
 EXTEND_M = 300                        # traffic leaving a junction drives this far on before it leaves the network
 TOPUP_BACK_M = 400                    # corridor top-up traffic enters this far before the junction, in the moving stream
@@ -699,19 +701,6 @@ def _extend(net, e, avoid, metres=EXTEND_M):
         done += x.getLength()
         e = x
     return out
-
-
-def _after(path, i, metres):
-    """Index of the first path edge at least `metres` past the end of path[i], skipping flyover/underpass edges and the
-    edge landing from one (traffic joining at the junction cannot use them)."""
-    k, done = i + 1, 0.0
-    while k < len(path) - 1 and done < metres:
-        done += path[k].getLength()
-        k += 1
-    grade = lambda e: e.getID().startswith(("flyover_", "underpass_"))  # noqa: E731
-    while k < len(path) - 1 and (grade(path[k]) or grade(path[k - 1])):
-        k += 1
-    return k
 
 
 def demand(net, base_groups, volume_scale=1.0, through=None, cross_scale=CROSS_SCALE, tomtom=None, base=None, arms=None):
@@ -2177,7 +2166,7 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03, refit=False):
             hist.append((v, cs, t, stuck))
             at_floor, at_ceiling = v <= HOUR_VOLUME[0] + 1e-6, v >= HOUR_VOLUME[1] - 1e-6
             if stuck:                                   # too much traffic for the network
-                if not at_floor and cs == 1.0:
+                if not at_floor and (cs <= 1.0 or err < 0):     # (faster caps never clear a jam caused by volume)
                     v = max(HOUR_VOLUME[0], round(v * 0.85, 3))
                 else:
                     cs = round(min(HOUR_CAP[1], cs * 1.1), 3)
