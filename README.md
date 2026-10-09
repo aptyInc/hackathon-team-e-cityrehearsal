@@ -69,6 +69,15 @@ All data and its sources are listed in [data/README.md](data/README.md). The fil
 - If Python reports `CERTIFICATE_VERIFY_FAILED`: run `export SSL_CERT_FILE=$(python -m certifi)` inside `.venv` (python.org Python on macOS ships without certificates), or use `curl` for TomTom calls (the collector already does).
 - Building footprints (Overture Maps): `pip install overturemaps` then `overturemaps download --bbox=78.4843,17.3902,78.4975,17.4005 -f geojson --type=building -o data/raw/ymca_buildings.geojson`.
 
+### 4. Corridor API (Lingampally to Lakdikapul)
+The backend serves the corridor screen (`frontend/corridor.html`); code in `backend/app/corridor.py`, contract C5.
+- `GET /corridor`: the 13 corridor points, TomTom leg times for the typical July day and each day 1-15 July (**measured**), and the route the simulation drives as GeoJSON (A->B and B->A, whole route and per leg). The route is cached in `backend/.cache` after the first call.
+- `POST /corridor/runs` `{interventions: [{junction_id: "j07", kind: "flyover", params: {}}], volume_scale}`: a **simulated** journey. With `MOCK_SIM=1` it returns the sample (with a warning when you asked for something else). With `MOCK_SIM=0` it runs SUMO (1-2 minutes, one run at a time) and needs `sim/corridor/calibration.json`. The same request again returns the stored result instantly (`cached: true`); a change to the calibration or to the runner/template code starts a fresh run.
+- Long runs: `POST /corridor/runs?async=1` answers at once with `{run_id, status}`; poll `GET /corridor/runs/{run_id}` until `status` is `done` (with `result`) or `failed` (with `error`).
+- `GET /corridor/junctions/live`: the latest TomTom Junction Analytics minute per approach at Tolichowki, Nanal Nagar and Rethibowli, plus the last-60-minute mean (delay **measured**, queue and volume **estimated**). Reads `data/raw/tomtom_corridor_junction_live.csv`, or the path in `CR_CORRIDOR_JA_LIVE`.
+- Corridor runs work with `GET /runs/{id}`, `WS /stream/{id}` and `GET /runs/{id}/roads` like YMCA runs.
+- Disk: after each real run the API keeps only the newest 15 run folders (`CR_KEEP_RUNS`) under `sim/out/runs` and `sim/out/corridor` (or `CR_SIM_OUT`).
+
 Deployed URL: _(add if deployed)_
 
 ## Team
