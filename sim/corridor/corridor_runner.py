@@ -1,16 +1,33 @@
 """Corridor simulation, Lingampally -> Lakdikapul: interventions in, C5 corridor result out.
 
-Traffic (assumed volumes, then calibrated): through traffic both ways, cross traffic at every signalised junction, and
-probe cars A -> B that record when they pass each junction, which gives the trip time split by leg.
+Traffic
+  - Through traffic both ways along the corridor on fixed routes (end-to-end volume per direction: calibrated).
+  - Cross traffic at every signalised junction. Where TomTom Junction Analytics measures the junction (corridor_junctions
+    .json, picked up automatically), each cross-road approach gets TomTom's volume (mean of the minutes collected,
+    `estimated`) times cross_scale, and TomTom's turn ratios decide how much joins the corridor each way or crosses it.
+    Elsewhere: CROSS_VPH per approach, a third each way (`assumed`). Joining traffic drives JOIN_M on the corridor.
+    Cross traffic enters INSERT_BACK_M up its road, so the junction's queue does not block it from entering.
+  - Probe cars every minute both ways record when they pass each corridor point: the trip time split by leg.
 
-`calibrate()` tunes each leg's road speed until the probes' leg times match TomTom's July 2026 average. That speed
-stands in for side friction SUMO does not model (buses stopping, parked vehicles, pedestrians, merging autos). The
-baseline therefore reproduces the measured trip, and interventions change it through the junction delays.
+Running fast: the corridor runs as 5 sections (SECTIONS) at once, one SUMO each. A section is its legs plus 1 km of
+road before them (traffic reaches the first junction in realistic platoons) and 300 m after; traffic entering it is the
+corridor flow at that point. Trip time = sum of the legs. Each section starts full (fill flows), so 10 minutes of
+warm-up and 15 minutes of probes are enough. A run takes about 40-70 s; frames (C1) cover 5 minutes.
+
+Calibration (`calibrate()`, writes calibration.json), in plain words: TomTom measured how long each leg takes on
+average (July 2026, 6 am-11 pm). We run the baseline, compare each leg with TomTom and adjust, a few times over:
+  - leg too fast -> lower its speed cap. The cap stands in for what SUMO leaves out: buses stopping, parked vehicles,
+    pedestrians, autos pulling in and out ("side friction").
+  - leg too slow -> raise its cap; if it is already at 60 km/h the time is lost at the junction ending the leg, so the
+    corridor gets more of that junction's green (up to 80%).
+  - still too slow with 80% green -> there is more traffic than the modelled roads carry, so all traffic is lowered 10%.
+The baseline then reproduces the measured trip, and interventions change it through what SUMO does model: junction
+delays, queues, lanes and signals. Every knob is labelled in calibration.json and in the C5 result (inputs.sources).
 
     python sim/corridor/corridor_runner.py calibrate          # writes sim/corridor/calibration.json
     python sim/corridor/corridor_runner.py run [j07:flyover]  # prints the C5 result summary
 """
-import csv, gzip, heapq, json, math, os, shutil, subprocess, sys, time, uuid, xml.etree.ElementTree as ET
+import csv, heapq, json, math, os, shutil, subprocess, sys, time, uuid, xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -42,6 +59,7 @@ INSERT_BACK_M = 250               # cross traffic enters this far up its road, n
 FILL_STEP_M, FILL_SPEED = 2500, 6.0   # the corridor starts full: extra entry points every 2.5 km until traffic at 6 m/s arrives
 MIX = {"two_wheeler": 0.45, "car": 0.30, "auto": 0.18, "bus": 0.07}   # assumed
 MAX_KMH = 60                      # speed cap on the corridor before calibration
+MAX_SHARE = 0.8                   # calibration gives the corridor at most this share of a junction's green
 STEP = 0.5                        # s; the vehicle types' reaction times (tau 0.6-1.0 s) need steps no longer than this
 WARMUP = 600                      # s before the first probe leaves
 PROBE_EVERY, PROBE_SPAN = 60, 900   # one probe car each way per minute for 15 minutes
@@ -700,18 +718,24 @@ def calibrate(rounds=8, fresh=False):
         ratios = [l["time_s"] / l["tomtom_time_s"] for l in legs]
         score = max(abs(x - 1) for x in ratios) + 2 * abs(j["total_s"] / j["tomtom_total_s"] - 1)
         print(f"round {r}: sim {j['total_s'] / 60:.1f} min vs TomTom {j['tomtom_total_s'] / 60:.1f} min | leg ratios "
-              f"{[round(x, 2) for x in ratios]} | shares {shares} | {res['inputs']['wall_seconds']} s", flush=True)
+              f"{[round(x, 2) for x in ratios]} | shares {shares} | through {through} cross {cross_scale} | {res['inputs']['wall_seconds']} s", flush=True)
         if best is None or score < best[0]:
-            best = (score, list(caps), dict(shares), res)
+            best = (score, list(caps), dict(shares), res, dict(through), cross_scale)
         if all(abs(x - 1) < 0.07 for x in ratios) and abs(j["total_s"] / j["tomtom_total_s"] - 1) < 0.03:
             break
+        overloaded = False
         for k, x in enumerate(ratios):
             new = max(8.0, min(MAX_KMH, caps[k] * x ** 0.8))
             end = pts[k + 1]
             if x > 1.07 and caps[k] >= MAX_KMH - 0.1 and end in signals:
-                shares[end] = round(min(0.8, shares.get(end, cn.CORRIDOR_GREEN_SHARE) + 0.05), 2)
+                if shares.get(end, cn.CORRIDOR_GREEN_SHARE) >= MAX_SHARE - 1e-6:
+                    overloaded = True       # still too slow with the corridor's green at its limit: too much traffic
+                shares[end] = round(min(MAX_SHARE, shares.get(end, cn.CORRIDOR_GREEN_SHARE) + 0.1), 2)
             caps[k] = round(new, 1)
-    _, caps, shares, res = best
+        if overloaded:
+            through = {d: round(v * 0.9) for d, v in through.items()}
+            cross_scale = round(cross_scale * 0.9, 3)
+    _, caps, shares, res, through, cross_scale = best
     j = res["journey"]
     CALIBRATION.write_text(json.dumps({
         "target": f"TomTom Traffic Stats job {TOMTOM_JOB}: Lingampally -> Lakdikapul, July 2026 every day 06:00-23:00",
@@ -721,9 +745,9 @@ def calibrate(rounds=8, fresh=False):
                        "pedestrians, autos), both directions",
             "green_share": f"calibrated: corridor share of the green time at junctions where the leg was still too slow at "
                            f"{MAX_KMH} km/h; elsewhere {cn.CORRIDOR_GREEN_SHARE} (assumed)",
-            "through_vph": "assumed: end-to-end corridor traffic per direction, set below the evening counts so the all-day "
-                           "average does not overload the modelled 2-lane approaches",
-            "cross_scale": "assumed: share of TomTom Junction Analytics' evening cross-road volumes used for the all-day "
+            "through_vph": "calibrated: end-to-end corridor traffic per direction; starts at THROUGH_VPH (assumed) and is "
+                           "lowered 10% at a time while a leg stays too slow with the corridor's green at its limit",
+            "cross_scale": "calibrated as through_vph: share of TomTom Junction Analytics' evening cross-road volumes used for the all-day "
                            "average"},
         "result": {"sim_total_s": j["total_s"], "tomtom_total_s": j["tomtom_total_s"],
                    "legs": [{"leg": f"{l['from_id']}->{l['to_id']}", "sim_s": l["time_s"], "tomtom_s": l["tomtom_time_s"],
