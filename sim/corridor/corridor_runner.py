@@ -1028,7 +1028,7 @@ def rain_on_structures(net_path, interventions, factors):
     done = []
     for edge in tree.getroot().iter("edge"):
         eid = edge.get("id") or ""
-        f = next((v for p, v in prefixes.items() if eid.startswith(p) or eid.startswith(":" + p)), None)
+        f = next((v for p, v in prefixes.items() if eid.startswith(p)), None)    # the decks, not the ramp junctions
         if f is not None:
             for lane in edge.iter("lane"):
                 lane.set("speed", f"{float(lane.get('speed')) * f:.2f}")
