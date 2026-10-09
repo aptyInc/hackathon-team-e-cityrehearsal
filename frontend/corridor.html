@@ -1,0 +1,2137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Terascope AI · Corridor</title>
+<!-- Owner: Frontend and 3D workstream. Corridor view, Lingampally to Lakdikapul.
+     Talks to the backend over C4 (contracts/api.md, corridor section): GET /corridor, POST /corridor/runs -> C5 result,
+     WS /stream/{run_id} -> C1 frames, GET /runs/{run_id}/roads. TomTom measured leg times from data/raw/corridor_legs_tomtom.csv. -->
+<link href="tokens.css" rel="stylesheet" />
+<link href="vendor/maplibre-gl.css" rel="stylesheet" />
+<script src="vendor/maplibre-gl.js"></script>
+<script src="vendor/deck.gl.min.js"></script>
+<style>
+  /* Direction A "Control room" (tokens.css, frontend/design/brief.md): full-bleed dark map, frosted-glass panels. */
+  body { margin: 0; font: 13px/1.45 var(--f); color: var(--tx); background: var(--bg); -webkit-font-smoothing: antialiased; }
+  #map { position: absolute; inset: 0; top: var(--nav-h, 0px); background: var(--bg); }   /* nav.js: the shared top bar sets --nav-h */
+  .panel { position: absolute; background: var(--glass); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: 14px 16px; box-shadow: var(--sh), var(--hi); font-size: 13px; box-sizing: border-box; z-index: 2; }
+  .panel::-webkit-scrollbar { width: 8px; } .panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 8px; }
+  #left { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 380px; max-height: calc(100vh - var(--nav-h, 0px) - 24px); overflow: auto; }
+  /* the layers panel ends above the Reset view pill, which sits above the trip panel (viewguard.js sets --reset-bottom) */
+  #right { top: calc(var(--nav-h, 0px) + 12px); right: 12px; width: 256px; max-height: calc(100vh - var(--nav-h, 0px) - var(--reset-bottom, 36px) - 60px); overflow: auto; }
+  body.chat-open #reset-view { right: 438px; }
+  #journey > .row:first-of-type { padding-right: 30px; }   /* room for the collapse chevron */
+  #left > h1 { padding-right: 30px; }
+  #journey { left: 404px; right: 12px; bottom: 12px; max-height: 46vh; overflow: auto; padding: 12px 16px; }
+  h1 { font-size: 17px; font-weight: 700; letter-spacing: -.01em; margin: 0 0 4px; }
+  h2 { font: 600 11px/1.3 var(--f); margin: 20px 0 9px; color: var(--t-orange); text-transform: uppercase; letter-spacing: .03em; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  h2 .tag { margin-left: 0; }
+  button { height: 34px; padding: 0 16px; border: 1px solid transparent; border-radius: 999px; cursor: pointer; font: 600 12.5px var(--f); white-space: nowrap;
+    color: #fff; background: var(--cta); box-shadow: none;
+    transition: filter .15s, background .15s, border-color .15s; }
+  button:hover { filter: brightness(1.08); }
+  button.secondary { color: #1c1c1c; background: var(--chg); box-shadow: none; }
+  button.ghost { background: transparent; color: var(--tx); border-color: oklch(1 0 0 / .32); box-shadow: none; }
+  button.ghost:hover { border-color: var(--tx); background: oklch(1 0 0 / .05); filter: none; }
+  button:disabled { opacity: .45; cursor: default; filter: none; }
+  button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--t-orange); outline-offset: 2px; }
+  select, input:not([type]), input[type=text], input[type=number], textarea { font: 500 12.5px var(--f); color: var(--tx); border: 1px solid var(--line-2); border-radius: 9px;
+    background-color: rgba(0,0,0,.3); box-sizing: border-box; }
+  select { height: 34px; padding: 0 30px 0 12px; -webkit-appearance: none; appearance: none;
+    background: rgba(0,0,0,.3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c9c9c9' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center; }
+  select:disabled { opacity: .5; } select option { background: #1c1c1c; color: var(--tx); }
+  input:not([type]), input[type=text], input[type=number] { height: 32px; padding: 0 10px; }
+  input[type=checkbox] { accent-color: var(--sim); width: 15px; height: 15px; margin: 0; }
+  input[type=range] { width: 100%; accent-color: var(--t-orange); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  td, th { text-align: left; padding: 6px 5px; border-bottom: 1px solid var(--line); font-size: 12px; vertical-align: top; }
+  th { color: var(--tx-3); font: 500 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+  .warn { background: var(--bad-bg); border: 1px solid oklch(0.605 0.205 31 / .3); padding: 7px 9px; margin: 6px 0; font-size: 12px; border-radius: 9px; }
+  .ok { color: var(--good); } .bad { color: var(--bad); } .mid { color: var(--warn); }
+  .muted { color: var(--tx-2); } small { color: var(--tx-2); }
+  label.t { display: flex; align-items: center; gap: 8px; margin: 8px 0; cursor: pointer; color: var(--tx); }
+  .chip { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 5px; }
+  .tag { display: inline-flex; align-items: center; gap: 5px; height: 18px; padding: 0 7px; border-radius: 999px; font: 700 9.5px/1 var(--f); letter-spacing: .06em;
+    vertical-align: 1px; margin-left: 6px; text-transform: none; white-space: nowrap; color: var(--tx-2); background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px var(--line-2); }
+  .tag::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex: none; }
+  .tag.real { color: var(--real); background: var(--real-bg); box-shadow: inset 0 0 0 1px var(--real-line); }
+  .tag.sim { color: var(--sim); background: var(--sim-bg); box-shadow: inset 0 0 0 1px var(--sim-line); }
+  .tag.sim::before { border-radius: 1px; transform: rotate(45deg); width: 5px; height: 5px; }
+  .tag.mix { color: var(--neutral); }
+  .tag.sample { color: var(--warn); background: var(--warn-bg); box-shadow: inset 0 0 0 1px oklch(0.837 0.164 84 / .35); }
+  .tag.rec { color: var(--good); background: var(--good-bg); box-shadow: inset 0 0 0 1px oklch(0.546 0.145 155 / .35); }
+  a { color: var(--t-orange); }
+  /* journey strip: name · bar of legs (width = minutes) · total */
+  .strip { display: grid; grid-template-columns: 200px 1fr 92px; gap: 12px; align-items: center; margin: 5px 0; }
+  .strip .name { font-size: 12px; line-height: 1.3; color: var(--tx); }
+  .bar { display: flex; gap: 2px; height: 26px; }
+  .leg { height: 100%; flex: 0 1 auto; min-width: 2px; box-sizing: border-box; border-radius: 5px; color: oklch(0.225 0 0 / .88); font: 600 11px var(--mono); letter-spacing: -.02em;
+         display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,.25); }
+  .leg.changed { box-shadow: inset 0 0 0 2px #fff, 0 0 12px oklch(0.837 0.164 84 / .6); }
+  .leg:hover { filter: brightness(1.15); }
+  .total { font: 600 18px var(--mono); letter-spacing: -.04em; text-align: right; white-space: nowrap; }
+  .ticks { position: relative; height: 16px; font: 500 10px var(--mono); color: var(--tx-3); }
+  .ticks span { position: absolute; transform: translateX(-50%); cursor: pointer; }
+  .ticks span:hover { color: var(--tx); }
+  .deltas { margin-top: 8px; }
+  .delta { display: inline-block; padding: 2px 9px; border-radius: 99px; margin: 2px 4px 2px 0; font: 600 11.5px var(--mono); cursor: pointer; }
+  .delta.up { background: var(--bad-bg); color: var(--bad); box-shadow: inset 0 0 0 1px oklch(0.605 0.205 31 / .3); }
+  .delta.down { background: var(--good-bg); color: var(--good); box-shadow: inset 0 0 0 1px oklch(0.546 0.145 155 / .3); }
+  .headline { font-size: 14px; margin: 4px 0; }
+  .headline b { font-family: var(--mono); }
+  /* map pins */
+  .pin { width: 22px; height: 22px; border-radius: 50%; background: #1c1c1c; color: #fffcfe; font: 600 10.5px/19px var(--mono); text-align: center; box-sizing: border-box;
+         border: 1.5px solid rgba(255,255,255,.7); box-shadow: 0 2px 8px rgba(0,0,0,.6); cursor: pointer; }
+  .pin.end { background: #fff; color: #1c1c1c; border-color: #fff; } .pin.has { background: var(--chg); color: #1c1c1c; border-color: #fff; box-shadow: 0 0 0 3px oklch(0.837 0.164 84 / .25), 0 0 14px oklch(0.837 0.164 84 / .6); }
+  .pin.sel { outline: 2px solid var(--t-orange); outline-offset: 2px; }
+  .pin.fly { box-shadow: 0 0 0 2px rgba(148,163,184,.6), 0 2px 8px rgba(0,0,0,.6); }   /* the main road already crosses here on a flyover */
+  .pin.fly::before { content: ""; position: absolute; left: -7px; right: -7px; bottom: -6px; height: 3px; border-radius: 2px; background: #c9c9c9; }
+  /* interventions and junction table */
+  .iv { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 6px 8px 6px 10px; background: var(--chg-bg); border: 1px solid var(--chg-line); border-radius: 9px; margin: 5px 0; }
+  .iv button { height: 26px; padding: 0 9px; font-size: 12px; }
+  #jt tr.j { cursor: pointer; } #jt tr.j:hover td { background: rgba(255,255,255,.04); } #jt tr.has td:first-child { color: var(--chg); font-weight: 600; }
+  #jt td { font-variant-numeric: tabular-nums; }
+  .d { font: 600 11px var(--mono); }
+  [hidden] { display: none !important; }
+  /* step 2 controls */
+  #iv-params label { display: flex; align-items: center; gap: 6px; color: var(--tx-2); }
+  #iv-params .share { flex: 1 1 100%; display: block; }
+  #iv-params .share b { color: var(--tx); font-family: var(--mono); }
+  .note { font-size: 12px; color: var(--tx-2); margin: 6px 0; line-height: 1.4; }
+  .note.info { background: oklch(0.714 0.143 255 / .08); border: 1px solid oklch(0.714 0.143 255 / .25); padding: 7px 9px; border-radius: 9px; color: var(--tx); }
+  .linkbtn { background: none; color: var(--t-orange); padding: 0; height: auto; text-decoration: underline; font-size: 12px; box-shadow: none; border: 0; }
+  .note.exists { background: var(--warn-bg); border: 1px solid oklch(0.837 0.164 84 / .3); padding: 7px 9px; border-radius: 9px; color: var(--tx); }
+  .flytag { font-size: 11px; color: var(--tx-3); font-weight: 400; }
+  /* result warnings: readable in the trip panel and under the junction table */
+  .warn ul { margin: 3px 0 0; padding-left: 0; list-style: none; } .warn li { margin: 2px 0; line-height: 1.35; }
+  #deltas .warn { font-size: 13px; margin: 6px 0; }
+  /* quick demos: tiles */
+  #presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: stretch; }
+  #presets button { height: auto; min-height: 58px; padding: 9px 10px; text-align: left; white-space: normal; line-height: 1.3; color: var(--tx); font-weight: 500;
+    background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); border: 1px solid var(--line-2); box-shadow: none; border-radius: 12px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 6px; transition: border-color .15s, transform .15s; }
+  #presets button:hover:not(:disabled) { border-color: var(--sim-line); transform: translateY(-1px); filter: none; }
+  #presets button b { color: var(--sim); background: var(--sim-bg); width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font-size: 10px; }
+  /* long runs */
+  #busy { margin: 8px 0; padding: 8px 10px; background: var(--sim-bg); border: 1px solid var(--sim-line); border-radius: 9px; font-size: 12px; color: var(--tx); }
+  .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--sim); border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* live junctions (TomTom Junction Analytics) */
+  .lj { background: oklch(0.714 0.143 255 / .05); border: 1px solid oklch(0.714 0.143 255 / .16); border-radius: 10px; padding: 6px 9px 7px; margin: 6px 0; }
+  .lj .hd { display: flex; justify-content: space-between; gap: 6px; cursor: pointer; font-weight: 600; }
+  .lj .hd:hover span { color: var(--real); }
+  .lj table { margin-top: 3px; } .lj td, .lj th { font-size: 11px; padding: 2px 3px; border: 0; } .lj th { font-weight: 500; }
+  .lj td.n { text-align: right; white-space: nowrap; font-family: var(--mono); } .lj td.nm { color: var(--tx-2); }
+  .lj .calm { font-size: 11px; }
+  .livedot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--real); box-shadow: 0 0 0 3px oklch(0.714 0.143 255 / .18), 0 0 10px var(--real); vertical-align: 0; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 6px oklch(0.714 0.143 255 / 0), 0 0 14px var(--real); } }
+  /* Live now: each junction pin carries its worst live delay, coloured against the usual delay */
+  /* badge fills are fixed brand values the corridor test reads: ok green rgb(0,136,73), mid orange rgb(245,136,50), bad red-orange rgb(226,61,39) */
+  body.mode-live .pin[data-badge]::after { content: attr(data-badge); position: absolute; left: 17px; top: -12px; white-space: nowrap; padding: 0 6px;
+    border-radius: 7px; font: 600 10.5px/17px var(--mono); color: #fff; background: #008849; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 0 12px oklch(0.546 0.145 155 / .55); }
+  body.mode-live .pin[data-sev=mid]::after { background: #f58832; color: #1c1c1c; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 0 12px oklch(0.733 0.163 54 / .55); }
+  body.mode-live .pin[data-sev=bad]::after { background: #e23d27; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 0 14px oklch(0.605 0.205 31 / .7); }
+  /* the two modes: Live now (TomTom, measured) and July typical day (TomTom history + simulation) */
+  body.mode-live .july-only, body.mode-july .live-only { display: none !important; }
+  #modebar { top: calc(var(--nav-h, 0px) + 12px); left: 12px; width: 380px; padding: 8px 10px 10px; z-index: 3; }
+  #left { top: calc(var(--nav-h, 0px) + 20px + var(--mode-h, 76px)); max-height: calc(100vh - var(--nav-h, 0px) - 32px - var(--mode-h, 76px)); }
+  .seg { display: flex; gap: 2px; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 11px; padding: 3px; }
+  .seg button { flex: 1; height: 34px; background: transparent; color: var(--tx-2); font-weight: 500; font-size: 13.5px; padding: 0 6px; border-radius: 8px; border: 0; box-shadow: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .seg button:hover { color: var(--tx); filter: none; }
+  .seg button[aria-selected=true] { background: rgba(255,255,255,.1); color: var(--tx); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(0,0,0,.4); }
+  .seg button .tag { margin-left: 0; }
+  #mode-head { font-size: 12.5px; margin-top: 8px; line-height: 1.4; color: var(--tx-2); }
+  #mode-head b { color: var(--tx); }
+  .lv-legend { font-size: 11px; color: var(--tx-2); margin-top: 6px; line-height: 1.8; }
+  .sev { display: inline-block; padding: 0 6px; border-radius: 6px; font: 600 10px/16px var(--mono); }
+  .sev { color: #fff; border-radius: 999px; } .sev.ok { background: #008849; } .sev.mid { background: #f58832; color: #1c1c1c; } .sev.bad { background: #e23d27; }
+  .qline { display: inline-block; width: 22px; height: 5px; border-radius: 3px; background: var(--slow); box-shadow: 0 0 8px oklch(0.605 0.205 31 / .6); vertical-align: 2px; margin-right: 4px; }
+  /* playback: the recorded window, the hour, and following a car */
+  #win-box label { display: block; } #win-box input { margin: 4px 0; }
+  #win-busy { margin: 6px 0; padding: 6px 9px; background: var(--sim-bg); border: 1px solid var(--sim-line); border-radius: 9px; font-size: 12px; }
+  #follow-card { font-size: 12px; margin: 6px 0; }
+  #follow-card b { font-size: 13px; }
+  #follow-pick { max-width: 100%; flex: 1 1 140px; min-width: 0; }
+  #ride-note { display: block; }
+  #clock { font-family: var(--mono); }
+  #hour-spark { margin: 6px 0 2px; } #hour-spark svg { width: 100%; height: 44px; display: block; }
+  #hour-spark rect { fill: oklch(0.714 0.143 255 / .22); } #hour-spark rect.day { fill: oklch(0.714 0.143 255 / .4); }
+  #hour-spark rect.on { fill: var(--real); filter: drop-shadow(0 0 6px oklch(0.714 0.143 255 / .8)); }
+  #hour-spark rect.pick { cursor: pointer; } #hour-spark rect.pick:hover { fill: oklch(0.714 0.143 255 / .7); }
+  #hour-spark .cap { font-size: 11px; color: var(--tx-3); }
+  /* weather: the hour's weather (GET /weather), the rain what-if (sim.weather, GET /weather/factors), weather now (GET /weather/now) */
+  .wxchip { display: inline-flex; align-items: center; gap: 7px; min-height: 28px; padding: 4px 11px 4px 9px; border-radius: 999px; font-size: 12px; line-height: 1.3; color: var(--tx-2);
+    background: oklch(0.714 0.143 255 / .07); box-shadow: inset 0 0 0 1px oklch(0.714 0.143 255 / .28); box-sizing: border-box; max-width: 100%; }
+  .wxchip b { color: var(--tx); font-weight: 600; }
+  .wxchip svg { width: 16px; height: 16px; flex: none; color: var(--tx-2); }
+  .wxchip.wet { background: oklch(0.714 0.143 255 / .13); box-shadow: inset 0 0 0 1px var(--real-line); } .wxchip.wet svg { color: var(--real); }
+  .wxchip .wx-src { font-size: 10.5px; color: var(--tx-3); white-space: nowrap; }
+  #wx-row { margin-top: 2px; } #wx-row label { display: flex; align-items: center; gap: 6px; }
+  #wx-now { margin: 8px 0 2px; }
+  #weather-note { display: block; margin: 2px 0 4px; }
+  .tag.est { color: var(--warn); background: var(--warn-bg); box-shadow: inset 0 0 0 1px oklch(0.837 0.164 84 / .35); }
+  #rain-strip { margin: 0 0 4px; } #rain-strip svg { width: 100%; height: 16px; display: block; }
+  #rain-strip .trk { fill: oklch(1 0 0 / .03); } #rain-strip .rbar { fill: oklch(0.714 0.143 255 / .5); }
+  #rain-strip g.on .rbar { fill: var(--real); } #rain-strip g.on .trk { fill: oklch(0.714 0.143 255 / .12); }
+  #rain-strip g.pick { cursor: pointer; } #rain-strip g.pick:hover .trk { fill: oklch(0.714 0.143 255 / .15); }
+  #rain-strip .cap { font-size: 11px; color: var(--tx-3); }
+  /* Ask Terascope AI (planner.js) */
+  #ask-open { position: absolute; top: calc(var(--nav-h, 0px) + 12px); right: 280px; z-index: 4; height: 38px; padding: 0 18px; border-radius: 999px; font-weight: 700;
+    color: #fff; background: var(--cta); border: 0; box-shadow: 0 8px 22px -8px oklch(0 0 0 / .7); }
+  #ask-open::before { content: "✦"; color: #fff; margin-right: 8px; }
+  body.chat-open #ask-open { right: 438px; }
+  #chat { top: calc(var(--nav-h, 0px) + 12px); right: 12px; bottom: 12px; width: 414px; display: flex; flex-direction: column; z-index: 5; padding: 12px 14px; background: var(--glass-strong); }
+  #chat[hidden] { display: none !important; }
+  body.chat-open #right { display: none; } body.chat-open #journey { right: 438px; }
+  #chat .hd { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  #chat .hd b { font-size: 15px; font-weight: 600; } #chat .hd b::before { content: "✦ "; color: var(--cta); }
+  #chat .hd button { height: 26px; padding: 0 9px; font-size: 12px; }
+  #chat-log { flex: 1 1 auto; overflow: auto; margin: 10px 0; min-height: 120px; }
+  .msg { margin: 8px 0; padding: 9px 11px; border-radius: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+  .msg.user { background: oklch(0.733 0.163 54 / .16); color: var(--tx); margin-left: 36px; white-space: pre-wrap; border-bottom-right-radius: 4px; }
+  .msg.bot { background: oklch(0.31 0 0 / .85); border: 1px solid var(--line); margin-right: 12px; border-bottom-left-radius: 4px; }
+  .steps { margin: 0 0 6px; padding-left: 0; list-style: none; font-size: 12px; color: var(--tx-2); }
+  .steps li { margin: 2px 0; } .steps li.run { color: var(--warn); } .steps .ck { color: var(--good); font-weight: 700; margin-right: 5px; } .steps li.bad .ck { color: var(--bad); }
+  .working { font-size: 12px; color: var(--sim); }
+  .runs { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 6px; }
+  .rrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 4px 0; font-size: 12px; }
+  .rrow button { height: 26px; padding: 0 9px; font-size: 12px; flex: none; } .rrow button.on { background: var(--real-bg); color: var(--real); border-color: var(--real-line); box-shadow: none; }
+  #chat-sugg { display: flex; flex-direction: column; gap: 6px; }
+  #chat-sugg[hidden] { display: none; }
+  .sugg { height: auto; min-height: 32px; padding: 7px 10px; text-align: left; white-space: normal; background: rgba(255,255,255,.04); color: var(--tx-2); border: 1px solid var(--line-2); box-shadow: none; }
+  .sugg:hover { border-color: var(--chg-line); color: var(--tx); filter: none; }
+  #chat-form { display: flex; gap: 6px; align-items: flex-end; margin-top: 8px; }
+  #chat-in { flex: 1; font: 13px/1.4 var(--f); padding: 8px 10px; border-radius: 10px; resize: vertical; min-height: 38px; max-height: 140px; }
+  #chat-send { height: 38px; }
+  /* markdown from the assistant and the brief (escaped, then a few tags) */
+  .md p { margin: 4px 0; } .md ul, .md ol { margin: 4px 0; padding-left: 20px; } .md li { margin: 1px 0; }
+  .md-h { font-weight: 600; margin: 8px 0 3px; } .md-h1 { font-size: 17px; } .md-h2 { font-size: 15px; } .md-h3, .md-h4 { font-size: 13px; }
+  .md code, .fp { font-family: var(--mono); font-size: 11px; background: rgba(255,255,255,.06); border: 1px solid var(--line); padding: 0 4px; border-radius: 4px; }
+  .md pre { background: rgba(0,0,0,.35); padding: 8px; border-radius: 8px; overflow: auto; font: 11px var(--mono); }
+  .md-q { border-left: 2px solid var(--sim); padding-left: 10px; color: var(--tx-2); margin: 4px 0; }
+  .md-tw { overflow-x: auto; } .md-t { margin: 4px 0; } .md-t th, .md-t td { font-size: 12px; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  .md-t th { text-transform: none; letter-spacing: 0; font: 600 12px var(--f); color: var(--tx-2); }
+  .md hr { border: 0; border-top: 1px solid var(--line); margin: 8px 0; }
+  /* brief */
+  #brief-modal { position: fixed; inset: 0; background: rgba(3,5,8,.6); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 30px 12px; box-sizing: border-box; overflow: auto; }
+  #brief-modal[hidden] { display: none !important; }
+  #brief-sheet { background: var(--glass-strong); backdrop-filter: var(--blur); border: 1px solid var(--line-2); max-width: 760px; width: 100%; border-radius: var(--r-xl); padding: 22px 26px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,.8), var(--hi); box-sizing: border-box; font-size: 14px; line-height: 1.55; }
+  #brief-sheet .bar2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 12px; }
+  #brief-meta { margin-top: 14px; font-size: 12px; color: var(--tx-3); border-top: 1px solid var(--line); padding-top: 8px; }
+  @media print {
+    body.brief-open > *:not(#brief-modal) { display: none !important; }
+    body.brief-open { background: #fff; display: block; color: #111; }
+    #brief-modal { position: static; background: none; padding: 0; display: block; backdrop-filter: none; }
+    #brief-sheet { box-shadow: none; max-width: none; padding: 0; background: #fff; border: 0; backdrop-filter: none; color: #111; }
+    #brief-sheet .noprint { display: none !important; }
+  }
+  /* 4 · decision */
+  #dec input, #dec textarea { width: 100%; }
+  #dec textarea { padding: 7px 10px; font: 13px/1.4 var(--f); }
+  #dec .row input { flex: 1; min-width: 0; }
+  #case { margin-top: 6px; } .case-hd { margin: 4px 0; }
+  #case:not([hidden]) + #dec-new { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 4px; }
+  .stages { display: flex; list-style: none; padding: 0; margin: 8px 0; gap: 4px; }
+  .stages li { flex: 1; text-align: center; font-size: 11px; font-weight: 600; padding: 6px 2px; border-radius: 8px; background: rgba(255,255,255,.04); color: var(--tx-3); border: 1px solid var(--line); }
+  .stages li.done { background: var(--good-bg); color: var(--good); border-color: oklch(0.546 0.145 155 / .3); }
+  .stages li.now { background: oklch(1 0 0 / .08); color: var(--tx); border-color: var(--tx); }
+  .sums { margin: 4px 0; padding-left: 18px; font-size: 12px; }
+  .caseruns td, .caseruns th { font-size: 11px; padding: 3px 3px; }
+  .role { background: rgba(255,255,255,.035); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin: 8px 0; }
+  .role textarea { margin-top: 4px; resize: vertical; }
+  button.ok-b { color: #1c1c1c; background: var(--good-fill); box-shadow: 0 0 0 1px oklch(0.546 0.145 155 / .45); }
+  button.bad-b { color: #fff; background: var(--bad-fill); box-shadow: 0 0 0 1px oklch(0.605 0.205 31 / .45); }
+  .tl-hd { margin-top: 10px; } .tl { list-style: none; padding: 0 0 0 14px; margin: 6px 0; border-left: 1px solid var(--line-2); font-size: 12px; }
+  .tl li { margin: 0 0 10px; position: relative; } .tl li::before { content: ""; position: absolute; left: -20px; top: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--sim); border: 2px solid var(--bg); box-shadow: 0 0 8px oklch(0.733 0.163 54 / .6); }
+  .tl .st { font: 600 10px var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--tx-3); }
+  #case-busy { margin: 6px 0; padding: 7px 9px; background: var(--sim-bg); border: 1px solid var(--sim-line); border-radius: 9px; font-size: 12px; }
+  /* map controls in the dark theme */
+  .maplibregl-ctrl-group { background: var(--glass-strong) !important; border: 1px solid var(--line-2); box-shadow: var(--sh) !important; border-radius: 10px !important; }
+  .maplibregl-ctrl-group button { background: transparent !important; box-shadow: none !important; height: 30px; width: 30px; padding: 0; border-radius: 0; border: 0; filter: invert(1) hue-rotate(180deg) brightness(1.2); }
+  .maplibregl-ctrl-attrib { background: rgba(0,0,0,.45) !important; color: var(--tx-3) !important; } .maplibregl-ctrl-attrib a { color: var(--tx-3) !important; }
+  .maplibregl-popup-content { background: var(--glass-strong) !important; color: var(--tx); border: 1px solid var(--line-2); border-radius: 12px !important; box-shadow: var(--sh) !important; backdrop-filter: var(--blur); }
+  .maplibregl-popup-tip { border-top-color: rgba(14,18,26,.9) !important; border-bottom-color: rgba(14,18,26,.9) !important; }
+  .maplibregl-popup-close-button { color: var(--tx-2); background: none !important; box-shadow: none !important; height: 22px; width: 22px; padding: 0; filter: none; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  /* narrow screens: map on top, panels stacked below it */
+  @media (max-width: 820px) {
+    body { display: flex; flex-direction: column; padding-top: var(--nav-h, 0px); }
+    #map { position: relative; top: 0; height: 55vh; flex: none; order: 0; }
+    .panel { position: static; width: auto !important; max-height: none !important; margin: 10px 10px 0; }
+    #modebar { order: -1; margin-bottom: 0; }
+    .seg button { font-size: 13px; padding: 0 4px; }
+    #journey { order: 1; } #left { order: 2; } #right { order: 3; margin-bottom: 10px; }
+    .strip { grid-template-columns: 88px 1fr 68px; gap: 6px; }
+    .strip .name { font-size: 11px; } .total { font-size: 14px; letter-spacing: -.02em; }
+    #presets { grid-template-columns: 1fr; }
+    #chat { order: 1; max-height: 80vh; } body.chat-open #right { display: block; }
+    #ask-open { position: fixed; top: auto; left: auto; right: 12px; bottom: 12px; z-index: 20; }
+    body.chat-open #ask-open { display: none; }   /* the open chat has its own close button; keep its Ask button uncovered */
+  }
+</style>
+</head>
+<body>
+<script src="nav.js" data-page="corridor"></script>
+<div id="map"></div>
+
+<div id="modebar" class="panel">
+  <div class="seg" role="tablist" aria-label="What the page shows">
+    <button id="mode-live" role="tab" data-mode="live" aria-selected="false" title="What TomTom measures on these roads right now: live traffic, junction delays and queues"><span class="livedot"></span>Live now</button>
+    <button id="mode-july" role="tab" data-mode="july" aria-selected="true" title="TomTom's July average, our simulation of it, and what a change would do">July typical day</button>
+  </div>
+  <div id="mode-head"></div>
+</div>
+
+<div id="left" class="panel">
+  <h1>Lingampally → Lakdikapul</h1>
+  <small>22.4 km commute through 11 junctions · <a href="ymca.html">YMCA Circle close-up</a></small><br>
+  <small id="status" class="july-only">API: checking…</small><small id="status-live" class="live-only">API: checking…</small>
+  <div id="wx-now" class="wxchip live-only" hidden></div>
+  <div id="src" class="july-only"></div>
+
+  <div id="live-box" class="live-only">
+    <h2>Live now at the junctions <span class="tag real">REAL</span></h2>
+    <div class="note">Each junction pin shows the worst delay TomTom measures there now, coloured against the usual delay for this time.
+      Red lines on the roads are the queues TomTom measures now, drawn back from the junction.</div>
+    <div class="lv-legend"><span class="sev ok">12 s</span> about usual · <span class="sev mid">25 s</span> a little worse · <span class="sev bad">90 s</span> 15 s or more over usual ·
+      <span class="qline"></span>queue now</div>
+    <div id="live-empty" class="note info" hidden></div>
+    <div id="live"></div>
+    <small id="live-note" class="muted"></small>
+    <div id="geo-note" class="note" hidden></div>
+  </div>
+
+  <div class="july-only">
+  <h2>Quick demos</h2>
+  <div id="presets">
+    <button id="p-nallagandla" title="A 600 m, 2-lane flyover lifts the main road over the Nallagandla signal, the first signal of the trip. Replaces your list of changes, then simulates."><b>▶</b>Flyover at Nallagandla</button>
+    <button id="p-dlf" title="A 600 m, 2-lane flyover lifts the main road over the busy ISB Rd / DLF signal. Replaces your list of changes, then simulates."><b>▶</b>Flyover at ISB Rd / DLF</button>
+    <button id="p-nanal" title="Nanal Nagar and Rethibowli are only 420 m apart, so one 1.2 km flyover clears both signals. Replaces your list of changes, then simulates."><b>▶</b>One flyover over Nanal Nagar + Rethibowli</button>
+    <button id="p-dlf-retime" title="The DLF signal gives the side roads 70% of the green and the main road 30%. Watch the main-road queue spread back towards the junctions before it. Replaces your list of changes, then simulates."><b>▶</b>Give DLF's side roads more green (watch the ripple)</button>
+  </div>
+
+  <h2>1 · When <span class="tag real">TomTom data</span></h2>
+  <div class="row"><select id="when" style="max-width:100%;flex:1 1 190px;min-width:0" title="The day: TomTom's July average, or one day"></select>
+    <label class="muted" id="hour-box" title="hourly TomTom data arriving tonight">Hour <select id="hour" disabled></select></label></div>
+  <div class="row" id="wx-row"><label class="muted" id="weather-box" hidden title="Rain what-if for the simulation: As measured is the simulation as calibrated to TomTom, rain included as it fell">Weather <select id="weather"></select></label>
+    <span id="wx-chip" class="wxchip" hidden></span></div>
+  <small id="weather-note" class="muted"></small>
+  <small id="hour-note" class="mid" style="display:block"></small>
+  <div id="hour-spark" hidden></div>
+  <div id="rain-strip" hidden></div>
+  <small id="when-note" class="muted"></small>
+  <div id="live-link" class="note" hidden></div>
+
+  <h2>2 · Change a junction</h2>
+  <div class="row">
+    <select id="iv-j"></select>
+    <select id="iv-kind">
+      <option value="flyover">Flyover</option>
+      <option value="underpass">Underpass</option>
+      <option value="signal_retime">Signal timing</option>
+      <option value="widening">Road widening</option>
+      <option value="one_way">One-way side road</option>
+      <option value="u_turn" disabled>U-turn change (soon)</option>
+    </select>
+  </div>
+  <div class="row" id="iv-params"></div>
+  <div id="iv-help" class="note"></div>
+  <div id="iv-exists" class="note exists" hidden></div>
+  <div class="row"><button id="iv-add" class="secondary">Add</button>
+    <button id="iv-nanal" class="linkbtn" hidden>One flyover over Nanal Nagar + Rethibowli</button></div>
+  <div id="iv-merge" class="note info" hidden></div>
+  <div id="iv-list"><small class="muted">No changes yet: today's roads.</small></div>
+
+  <h2>3 · Simulate <span class="tag sim">simulated</span></h2>
+  <div class="row">
+    <button id="sim-today">Simulate today</button>
+    <button id="sim-changes" class="secondary">Simulate with changes</button>
+  </div>
+  <div id="busy" hidden></div>
+  <small id="run-note" class="muted"></small>
+
+  <h2>Junctions <span class="tag sim">simulated</span></h2>
+  <div id="jt"><small class="muted">Run a simulation to see delay and queues at each junction. Click a junction to fly there.</small></div>
+  <div id="warnings"></div>
+
+  <h2>4 · Decision <span class="tag rec">RECORDED</span></h2>
+  <div id="dec">
+    <div id="dec-off" class="note" hidden></div>
+    <div id="case-busy" hidden></div>
+    <div id="case-msg" class="note"></div>
+    <div id="case" hidden></div>
+    <div id="dec-new">
+      <div class="note">Send today's run and the run with changes to a reviewer. Each step (proposal, re-tests, decision) is recorded with who, when and a SHA-256 fingerprint of the evidence. Records are append-only: nothing can be edited or deleted.</div>
+      <div class="row"><input id="case-title" placeholder="What is proposed (title)" /></div>
+      <div class="row"><input id="case-by" placeholder="Your name (optional)" autocomplete="name" /><button id="case-send">Send for review</button></div>
+      <small id="case-why" class="muted"></small>
+    </div>
+    <details id="case-list-box" hidden><summary class="muted">Earlier cases</summary><div id="case-list"></div></details>
+  </div>
+  </div><!-- /july-only -->
+</div>
+
+<div id="right" class="panel">
+  <h2 style="margin-top:0">Layers</h2>
+  <label class="t live-only"><input type="checkbox" id="t-traffic" /> TomTom live traffic <span class="tag real">real</span></label>
+  <label class="t live-only"><input type="checkbox" id="t-queues" checked title="The queue TomTom measures now on each junction approach, drawn on the road" /> Queues now <span class="tag real">real</span></label>
+  <label class="t"><input type="checkbox" id="t-route" checked /> <span class="july-only">Route coloured by speed</span><span class="live-only">Our route, A → B</span></label>
+  <label class="t july-only"><input type="checkbox" id="t-roads" checked /> Model congestion <span class="tag sim">simulated</span></label>
+  <label class="t july-only"><input type="checkbox" id="t-vehicles" checked /> Vehicles <span class="tag sim">simulated</span></label>
+  <label class="t"><input type="checkbox" id="t-buildings" checked /> 3D buildings</label>
+  <label class="t"><input type="checkbox" id="t-night" checked /> Night map</label>
+  <small id="route-src" class="muted july-only"></small><br class="july-only">
+  <small id="traffic-note" class="muted live-only"></small>
+  <small id="queue-info" class="live-only" style="display:block"></small>
+  <small id="bld-note" class="muted"></small>
+  <div class="row" style="margin-top:8px"><button id="overview" class="ghost">Whole corridor</button><button id="orbit" class="ghost">Orbit</button></div>
+  <div class="july-only">
+  <h2>Playback <span class="tag sim">simulated</span></h2>
+  <div class="row">
+    <button id="play" class="ghost" disabled>▶ Play</button>
+    <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option></select>
+  </div>
+  <div class="row" id="watch"></div>
+  <input type="range" id="scrub" min="0" max="0" value="0" disabled />
+  <small id="clock" class="muted">—</small><br>
+  <div id="win-box" hidden>
+    <label class="muted">Watch from minute <b id="win-val">–</b> <input type="range" id="win" min="0" max="0" step="1" value="0" /></label>
+    <small id="win-note" class="muted"></small>
+    <div id="win-busy" hidden></div>
+  </div>
+  <div class="row"><button id="follow" class="ghost" disabled title="Plays a run first">Follow a test car</button></div>
+  <div class="row"><select id="follow-pick" disabled title="Plays a run first"><option value="">Test cars…</option></select></div>
+  <div id="follow-card" class="note info" hidden></div>
+  <div class="row" id="ride-row" hidden><button id="ride" class="secondary" title="Rides one test car from Lingampally to Lakdikapul, its whole simulated trip">Ride the whole trip</button>
+    <select id="ride-speed" title="How fast the ride plays"><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option></select></div>
+  <small id="ride-note" class="muted" hidden></small>
+  <small class="muted" id="click-hint">Click any vehicle on the map to follow it.</small><br>
+  <small id="playinfo"></small>
+  </div>
+  <div style="margin-top:8px;font-size:11px" class="muted july-only">
+    <span class="chip" style="background:#35c177"></span>≥ 25 km/h
+    <span class="chip" style="background:#f58832"></span>15–25
+    <span class="chip" style="background:#e23d27"></span>&lt; 15<br>
+    <span class="chip" style="background:#f58832"></span>two-wheeler <span class="chip" style="background:#c9c9c9"></span>car
+    <span class="chip" style="background:#fcbf26"></span>auto <span class="chip" style="background:#35c177"></span>bus<br>
+    <span id="fly-key"><span class="chip" style="background:#1c1c1c;border-radius:50%;box-shadow:0 0 0 2px #c9c9c9;margin-left:2px"></span>junction with a flyover already built</span>
+  </div>
+</div>
+
+<button id="ask-open" class="july-only" aria-controls="chat" aria-expanded="false">Ask Terascope AI</button>
+
+<div id="journey" class="panel july-only">
+  <div class="row" style="margin:0 0 4px;justify-content:space-between">
+    <b>The trip, leg by leg <small class="muted" style="font-weight:400">· block width = minutes · click a block to fly there</small></b>
+    <span id="journey-tags"></span>
+  </div>
+  <div id="strips"></div>
+  <div id="deltas" class="deltas"></div>
+  <small id="trip-foot" class="muted" style="display:block;margin-top:4px"></small>
+</div>
+
+<div id="chat" class="panel july-only" hidden aria-label="Ask Terascope AI">
+  <div class="hd"><b>Ask Terascope AI</b>
+    <span><button id="chat-new" class="ghost" title="Start a new conversation">New</button> <button id="chat-close" class="ghost" title="Close">✕</button></span></div>
+  <small class="muted">An assistant that runs the corridor simulation for you and explains the results. Its numbers are <span class="tag sim">SIMULATED</span> unless it says TomTom.</small>
+  <div id="chat-log" aria-live="polite"></div>
+  <div id="chat-sugg"></div>
+  <div id="chat-off" class="note info" hidden></div>
+  <form id="chat-form"><textarea id="chat-in" rows="2" placeholder="Ask about the trip, a junction or a change…"></textarea><button id="chat-send" type="submit">Ask</button></form>
+</div>
+
+<div id="brief-modal" hidden role="dialog" aria-modal="true" aria-label="Decision brief">
+  <div id="brief-sheet">
+    <div class="bar2 noprint"><b>Decision brief</b><span><button id="brief-print" class="secondary">Print / save as PDF</button> <button id="brief-close" class="ghost">Close</button></span></div>
+    <div id="brief-body" class="md"></div>
+    <div id="brief-meta"></div>
+  </div>
+</div>
+
+<script src="viewguard.js"></script>
+<script>
+const API = "http://localhost:8000";
+const $ = id => document.getElementById(id);
+window.onerror = (msg, src, line) => ["status", "status-live"].forEach(id => { const s = $(id); if (s) s.innerHTML = `<span class="bad">Page error: ${String(msg).slice(0, 160)} (line ${line})</span>`; });
+window.onunhandledrejection = e => ["status", "status-live"].forEach(id => { const s = $(id); if (s) s.innerHTML = `<span class="bad">Error: ${String(e.reason && e.reason.message || e.reason).slice(0, 160)}</span>`; });
+if (typeof maplibregl === "undefined" || typeof deck === "undefined") $("status").innerHTML = '<span class="bad">Map libraries failed to load (frontend/vendor). Reload the page.</span>';
+const COLORS = { two_wheeler: [245,136,50], car: [201,201,201], auto: [252,191,38], bus: [53,193,119], truck: [146,146,146] };   // brand orange, light grey, yellow, green
+const SIZE = { two_wheeler: [1.9, 0.75, 1.2], car: [4.3, 1.75, 1.5], auto: [2.7, 1.4, 1.7], bus: [11, 2.5, 3.2], truck: [8, 2.4, 3] };
+const STYLE = night => `https://api.tomtom.com/map/1/style/20.4.5-*/${night ? "basic_night" : "basic_main"}.json?key=${cfg.tomtom_maps_key}`;
+const TRAFFIC_TILES = () => `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${cfg.tomtom_maps_key}`;
+const KINDS = { flyover: "Flyover", underpass: "Underpass", signal_retime: "Signal timing", widening: "Road widening", one_way: "One-way", u_turn: "U-turn change" };
+// Choices per intervention, matching sim/templates/corridor.py. A value of "" means "leave it to the template" (param not sent).
+const GRADE_PARAMS = [{ k: "lanes", label: "Lanes each way", values: [1, 2, 3, 4], def: 2 },
+                      { k: "length_m", label: "Length", values: ["", 400, 600, 800, 1200, 2000], names: { "": "auto (junction + 400 m)" }, unit: " m", def: "" }];
+const PARAMS = {
+  flyover: GRADE_PARAMS, underpass: GRADE_PARAMS,
+  signal_retime: [{ k: "cycle_s", label: "Signal cycle", values: [60, 90, 120, 150, 180], unit: " s", def: 120 },
+                  { k: "corridor_green_share", label: "Main road share of green", range: [10, 90, 5], scale: 0.01, def: 50 }],
+  widening: [{ k: "add_lanes", label: "Extra lanes each way", values: [1, 2], def: 1 },
+             { k: "length_m", label: "Length either side", values: [300, 500, 800], unit: " m", def: 300 }],
+  one_way: [],
+};
+const HELP = {
+  flyover: "Main-road traffic goes over the junction; turning and side traffic stay at street level.",
+  underpass: "Main-road traffic goes under the junction; turning and side traffic stay at street level.",
+  signal_retime: "Changes how the signal splits its green time between the main road and the side roads.",
+  widening: "Adds lanes on the main road on both sides of the junction.",
+  one_way: "Closes the smallest side road in one direction (cars can only drive in towards the junction), so the signal has one phase less.",
+};
+const NANAL_PAIR = ["j08", "j09"];   // Nanal Nagar and Rethibowli: about 420 m apart
+const NANAL_FLYOVER = () => ({ junction_id: "j08", kind: "flyover", params: { lanes: 2, length_m: 1200 } });
+// Quick demos: the backend has these exact requests cached, so keep the params as they are.
+const PRESETS = {
+  "p-nallagandla": [{ junction_id: "j01", kind: "flyover", params: { lanes: 2, length_m: 600 } }],
+  "p-dlf": [{ junction_id: "j02", kind: "flyover", params: { lanes: 2, length_m: 600 } }],
+  "p-nanal": [NANAL_FLYOVER()],
+  "p-dlf-retime": [{ junction_id: "j02", kind: "signal_retime", params: { cycle_s: 120, corridor_green_share: 0.3 } }],
+};
+// Junctions the main road already crosses on a flyover (through traffic meets no signal there). A flyover or underpass
+// asked for at one of these is not built (sim/templates/corridor.py answers with a warning); the page says so up front.
+const EXISTING_FLYOVERS = { j03: "Gachibowli Flyover", j04: "Bio-Diversity Park Level 1 Flyover", j06: "Shaikpet Flyover",
+                            j07: "Tolichowki Flyover", j10: "Masab Tank Flyover", j11: "Masab Tank Flyover" };
+const existingFlyover = id => point(id)?.existing_flyover || EXISTING_FLYOVERS[id] || "";
+const RUN_MSG = "Simulating 21 km of traffic, usually under 2 minutes";
+const LIVE_MS = window.LIVE_REFRESH_MS || 60000;   // live junction refresh (tests shorten it)
+const TYPICAL = "2026-07-01..2026-07-31 6:00-23:00";
+
+// Real corridor definition (data/corridor/corridor.json), used when GET /corridor is not there yet.
+const CORRIDOR_EMBED = /*@CORRIDOR@*/{"id":"lingampally_lakdikapul","name":"Lingampally to Lakdikapul","points":[{"id":"A_lingampally","name":"Lingampally (Old Bombay Rd, route start)","lat":17.4878,"lon":78.3142,"kind":"end"},{"id":"j01","name":"Nallagandla Rd jn","lat":17.4795,"lon":78.31992,"kind":"junction"},{"id":"j02","name":"ISB Rd / DLF jn","lat":17.44527,"lon":78.35255,"kind":"junction"},{"id":"j03","name":"Gachibowli Circle","lat":17.43887,"lon":78.36373,"kind":"junction"},{"id":"j04","name":"Biodiversity jn (flyover)","lat":17.42909,"lon":78.37452,"kind":"junction"},{"id":"j05","name":"Khajaguda X Roads","lat":17.42266,"lon":78.38211,"kind":"junction"},{"id":"j06","name":"Narne Rd jn Shaikpet","lat":17.41412,"lon":78.39443,"kind":"junction"},{"id":"j07","name":"Tolichowki","lat":17.39894,"lon":78.41542,"kind":"junction"},{"id":"j08","name":"Nanal Nagar jn","lat":17.39597,"lon":78.42776,"kind":"junction"},{"id":"j09","name":"Rethibowli jn","lat":17.39598,"lon":78.43171,"kind":"junction"},{"id":"j10","name":"NMDC / Masab Tank Rd","lat":17.39948,"lon":78.45039,"kind":"junction"},{"id":"j11","name":"Masab Tank","lat":17.40352,"lon":78.45639,"kind":"junction"},{"id":"B_lakdikapul","name":"Lakdikapul","lat":17.40422,"lon":78.46465,"kind":"end"}]};
+// TomTom measured leg times (data/raw/corridor_legs_tomtom.csv), used when the CSV cannot be fetched (page served from /frontend only).
+const TOMTOM_EMBED = /*@TOMTOM@*/{"legs":[["A_lingampally","j01","Lingampally (Old Bombay Rd, route start)","Nallagandla Rd jn"],["j01","j02","Nallagandla Rd jn","ISB Rd / DLF jn"],["j02","j03","ISB Rd / DLF jn","Gachibowli Circle"],["j03","j04","Gachibowli Circle","Biodiversity jn (flyover)"],["j04","j05","Biodiversity jn (flyover)","Khajaguda X Roads"],["j05","j06","Khajaguda X Roads","Narne Rd jn Shaikpet"],["j06","j07","Narne Rd jn Shaikpet","Tolichowki"],["j07","j08","Tolichowki","Nanal Nagar jn"],["j08","j09","Nanal Nagar jn","Rethibowli jn"],["j09","j10","Rethibowli jn","NMDC / Masab Tank Rd"],["j10","j11","NMDC / Masab Tank Rd","Masab Tank"],["j11","B_lakdikapul","Masab Tank","Lakdikapul"]],"periods":{"2026-07-01..2026-07-31 6:00-23:00":[[1911,402.2,17.1],[5414,829.8,23.5],[1386,240.5,20.8],[1581,184.1,30.9],[1078,151,25.7],[1621,175.2,33.3],[2830,282,36.1],[1370,243.1,20.3],[418,71.6,21],[2241,451.8,17.9],[930,148.8,22.5],[1636,312.3,18.9]],"2026-07-01..2026-07-01 8:00-20:00":[[2005,572,12.6],[5405,825.2,23.6],[1386,256.1,19.5],[1581,183.8,31],[1078,160.5,24.2],[1621,175.8,33.2],[2830,282.8,36],[1370,254.9,19.4],[418,77.2,19.5],[2241,486.3,16.6],[930,146,22.9],[1671,298.4,20.2]],"2026-07-02..2026-07-02 8:00-20:00":[[2005,539.2,13.4],[5405,797,24.4],[1386,285.5,17.5],[1581,313.6,18.1],[1078,195.1,19.9],[1621,173,33.7],[2830,280.2,36.3],[1370,222.3,22.2],[418,72.3,20.8],[2241,454,17.8],[930,147.1,22.8],[1671,325.1,18.5]],"2026-07-03..2026-07-03 8:00-20:00":[[2005,513,14.1],[5405,780.1,24.9],[1386,210.5,23.7],[1581,216.3,26.3],[1078,164.5,23.6],[1621,168.9,34.5],[2830,267.9,38],[1370,255.4,19.3],[418,90.6,16.6],[2241,409.8,19.7],[930,146.5,22.8],[1671,291,20.7]],"2026-07-04..2026-07-04 8:00-20:00":[[2005,642,11.2],[5405,745.2,26.1],[1386,199.2,25.1],[1581,171.1,33.3],[1078,120.4,32.2],[1621,156.5,37.3],[2830,267.9,38],[1370,267.1,18.5],[418,92.3,16.3],[2241,441.7,18.3],[930,152.5,21.9],[1671,418,14.4]],"2026-07-05..2026-07-05 8:00-20:00":[[2005,460.2,15.7],[5405,672,29],[1386,181.3,27.5],[1581,146.3,38.9],[1078,104.5,37.2],[1621,147.3,39.6],[2830,236.5,43.1],[1370,168.2,29.3],[418,61.7,24.4],[2241,355,22.7],[930,137.9,24.3],[1671,246.9,24.4]],"2026-07-06..2026-07-06 8:00-20:00":[[2005,553.9,13],[5405,931.1,20.9],[1386,253.7,19.7],[1581,176,32.3],[1078,143.5,27],[1621,175.1,33.3],[2830,282.9,36],[1370,250,19.7],[418,89.9,16.7],[2241,456.5,17.7],[930,149.3,22.4],[1671,363.6,16.5]],"2026-07-07..2026-07-07 8:00-20:00":[[2005,486.4,14.8],[5405,882.7,22],[1386,267.4,18.7],[1581,186.9,30.4],[1078,175.9,22.1],[1621,176.7,33],[2830,280.2,36.3],[1370,261.2,18.9],[418,72.2,20.8],[2241,448.8,18],[930,150.6,22.2],[1671,374.7,16.1]],"2026-07-08..2026-07-08 8:00-20:00":[[2005,534.3,13.5],[5405,971.2,20],[1386,308,16.2],[1581,182.1,31.2],[1078,173.9,22.3],[1621,179.5,32.5],[2830,284.3,35.8],[1370,272.6,18.1],[418,77.1,19.5],[2241,473.8,17],[930,146.1,22.9],[1671,302.1,19.9]],"2026-07-09..2026-07-09 8:00-20:00":[[2005,500,14.4],[5405,912.2,21.3],[1386,268.4,18.6],[1581,185.1,30.7],[1078,157.6,24.6],[1621,176.7,33],[2830,286,35.6],[1370,291.6,16.9],[418,79,19],[2241,517.2,15.6],[930,151,22.2],[1671,298.6,20.1]],"2026-07-10..2026-07-10 8:00-20:00":[[2005,507.1,14.2],[5405,766,25.4],[1386,229.5,21.7],[1581,168.5,33.8],[1078,141.4,27.5],[1621,167.5,34.8],[2830,260.2,39.2],[1370,253.7,19.4],[418,94.9,15.9],[2241,397.1,20.3],[930,147.5,22.7],[1671,360.4,16.7]],"2026-07-11..2026-07-11 8:00-20:00":[[2005,515.9,14],[5405,938.8,20.7],[1386,189.6,26.3],[1581,141.3,40.3],[1078,105.3,36.8],[1621,153.3,38.1],[2830,261.9,38.9],[1370,204.6,24.1],[418,108.3,13.9],[2241,429.2,18.8],[930,152.7,21.9],[1671,317.1,19]],"2026-07-12..2026-07-12 8:00-20:00":[[2005,449.9,16],[5405,650.5,29.9],[1386,174.3,28.6],[1581,137.8,41.3],[1078,101.5,38.2],[1621,143.6,40.6],[2830,232.2,43.9],[1370,159.2,31],[418,56.2,26.7],[2241,339.8,23.7],[930,136.5,24.5],[1671,269.2,22.3]],"2026-07-13..2026-07-13 8:00-20:00":[[2005,496.9,14.5],[5405,849.6,22.9],[1386,255.6,19.5],[1581,164.8,34.5],[1078,159.1,24.4],[1621,174.3,33.5],[2830,276,36.9],[1370,275.8,17.9],[418,107.4,14],[2241,483.7,16.7],[930,151.6,22.1],[1671,331.3,18.2]],"2026-07-14..2026-07-14 8:00-20:00":[[2005,493.8,14.6],[5405,817.7,23.8],[1386,255.2,19.6],[1581,173.3,32.8],[1078,228.5,17],[1621,175.1,33.3],[2830,276.8,36.8],[1370,265.5,18.6],[418,72.9,20.6],[2241,429.3,18.8],[930,148.1,22.6],[1671,316.8,19]],"2026-07-15..2026-07-15 8:00-20:00":[[2005,481.2,15],[5405,846.4,23],[1386,271.4,18.4],[1581,173.6,32.8],[1078,189.9,20.4],[1621,175,33.3],[2830,286.7,35.5],[1370,307.9,16],[418,104.9,14.3],[2241,536.6,15],[930,149.8,22.3],[1671,341,17.6]]}};
+
+let cfg = { tomtom_maps_key: "" }, map, overlay, apiUp = false;
+let corridor = null, points = [], tomtom = {}, typical = TYPICAL;   // tomtom: {period: [{from_id, to_id, from_name, to_name, distance_m, time_s, speed_kmh}]}
+let tomtomSrc = "";                                     // where the measured legs came from
+let legPaths = null;                                    // {"from|to": [[lon, lat], ...]} cut from GET /corridor's route; null: straight lines
+let interventions = [], base = null, changed = null, selected = null, running = false;
+let live = null, liveAt = null, liveLabels = {};                         // live: [{id, name, time, label, approaches: [...]}] from GET /corridor/junctions/live
+let geometry = undefined;                               // GET /corridor/junctions/geometry: {junction_id: {approach_id: [[lon, lat], ...] towards the junction}}; null: not there
+let roads = null, frames = [], playing = false, pos = 0, lastTick = 0, stream = null, playingRun = null;
+let calib = null;                                       // GET /corridor/calibration (tomtom_basis_detail: route lengths, TomTom over the simulated route)
+const markers = {};
+
+// ---------- two modes: "Live now" (TomTom, measured right now) and "July typical day" (TomTom's July average + our simulation) ----------
+// Kept in the URL hash (#mode=live / #mode=july, next to #case=...); July unless the URL says otherwise.
+const MODE_HEAD = {
+  live: `<b>Live now:</b> what TomTom measures on these roads right now <span class="tag real">REAL</span>`,
+  july: `<b>July typical day:</b> TomTom's July average, and our simulation of it <span class="tag real">REAL</span><span class="tag sim">SIMULATED</span>`,
+};
+const modeFromHash = () => { const m = /(?:^#|&)mode=(live|july)\b/.exec(location.hash || ""); return m ? m[1] : null; };
+let mode = modeFromHash() || "july";
+document.body.classList.add(`mode-${mode}`);
+
+class HttpError extends Error { constructor(status, msg, detail) { super(msg); this.status = status; this.detail = detail; } }
+async function failure(path, r) {   // the server's own message: plain text, or FastAPI's {"detail": ...}
+  let t = (await r.text()).trim();
+  try { const j = JSON.parse(t); if (j && j.detail) t = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch (e) { /* plain text */ }
+  return new HttpError(r.status, `${path}: ${r.status} ${t.slice(0, 200)}`, t.slice(0, 300));
+}
+async function get(path) { const r = await fetch(API + path); if (!r.ok) throw await failure(path, r); return r.json(); }
+async function post(path, body) { const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); if (!r.ok) throw await failure(path, r); return r.json(); }
+
+// ===== SAMPLE FALLBACK: remove this block and the one call in corridorRun() once POST /corridor/runs is live =====
+const SAMPLE_URL = "../contracts/samples/corridor_results.sample.json";   // works when the repo root is served
+const SAMPLE_EMBED = /*@SAMPLE@*/{"baseline":{"run_id":"r_sample_corridor_base","variant_id":"baseline","corridor_id":"lingampally_lakdikapul","time":{"window":"2026-10-09T08:00","minutes":120,"label":"Fri 9 Oct 8-10 am"},"interventions":[],"journey":{"total_s":5852,"distance_m":24329,"tomtom_total_s":5559,"legs":[{"from_id":"A_lingampally","to_id":"j01","from_name":"Lingampally (railway station)","to_name":"Nallagandla Rd jn","distance_m":498,"time_s":100,"speed_kmh":18,"tomtom_time_s":95},{"from_id":"j01","to_id":"j02","from_name":"Nallagandla Rd jn","to_name":"ISB Rd / DLF jn","distance_m":6438,"time_s":1053,"speed_kmh":22,"tomtom_time_s":1000},{"from_id":"j02","to_id":"j03","from_name":"ISB Rd / DLF jn","to_name":"Gachibowli Circle","distance_m":1731,"time_s":445,"speed_kmh":14,"tomtom_time_s":423},{"from_id":"j03","to_id":"j04","from_name":"Gachibowli Circle","to_name":"Biodiversity jn (flyover)","distance_m":1976,"time_s":445,"speed_kmh":16,"tomtom_time_s":423},{"from_id":"j04","to_id":"j05","from_name":"Biodiversity jn (flyover)","to_name":"Khajaguda X Roads","distance_m":1348,"time_s":255,"speed_kmh":19,"tomtom_time_s":242},{"from_id":"j05","to_id":"j06","from_name":"Khajaguda X Roads","to_name":"Narne Rd jn Shaikpet","distance_m":2022,"time_s":485,"speed_kmh":15,"tomtom_time_s":461},{"from_id":"j06","to_id":"j07","from_name":"Narne Rd jn Shaikpet","to_name":"Tolichowki","distance_m":3497,"time_s":1144,"speed_kmh":11,"tomtom_time_s":1087},{"from_id":"j07","to_id":"j08","from_name":"Tolichowki","to_name":"Nanal Nagar jn","distance_m":1690,"time_s":676,"speed_kmh":9,"tomtom_time_s":642},{"from_id":"j08","to_id":"j09","from_name":"Nanal Nagar jn","to_name":"Rethibowli jn","distance_m":525,"time_s":158,"speed_kmh":12,"tomtom_time_s":150},{"from_id":"j09","to_id":"j10","from_name":"Rethibowli jn","to_name":"NMDC / Masab Tank Rd","distance_m":2528,"time_s":535,"speed_kmh":17,"tomtom_time_s":508},{"from_id":"j10","to_id":"j11","from_name":"NMDC / Masab Tank Rd","to_name":"Masab Tank","distance_m":975,"time_s":251,"speed_kmh":14,"tomtom_time_s":238},{"from_id":"j11","to_id":"B_lakdikapul","from_name":"Masab Tank","to_name":"Lakdikapul","distance_m":1101,"time_s":305,"speed_kmh":13,"tomtom_time_s":290}]},"junctions":[{"id":"j01","name":"Nallagandla Rd jn","lat":17.4795,"lon":78.31992,"avg_delay_s":12,"max_queue_m":80,"vehicles":2400},{"id":"j02","name":"ISB Rd / DLF jn","lat":17.44527,"lon":78.35255,"avg_delay_s":25,"max_queue_m":150,"vehicles":3100},{"id":"j03","name":"Gachibowli Circle","lat":17.43887,"lon":78.36373,"avg_delay_s":48,"max_queue_m":320,"vehicles":4200},{"id":"j04","name":"Biodiversity jn (flyover)","lat":17.42909,"lon":78.37452,"avg_delay_s":30,"max_queue_m":210,"vehicles":3900},{"id":"j05","name":"Khajaguda X Roads","lat":17.42266,"lon":78.38211,"avg_delay_s":22,"max_queue_m":140,"vehicles":3300},{"id":"j06","name":"Narne Rd jn Shaikpet","lat":17.41412,"lon":78.39443,"avg_delay_s":35,"max_queue_m":230,"vehicles":2900},{"id":"j07","name":"Tolichowki","lat":17.39894,"lon":78.41542,"avg_delay_s":70,"max_queue_m":480,"vehicles":4100},{"id":"j08","name":"Nanal Nagar jn","lat":17.39597,"lon":78.42776,"avg_delay_s":85,"max_queue_m":520,"vehicles":3800},{"id":"j09","name":"Rethibowli jn","lat":17.39598,"lon":78.43171,"avg_delay_s":40,"max_queue_m":260,"vehicles":3200},{"id":"j10","name":"NMDC / Masab Tank Rd","lat":17.39948,"lon":78.45039,"avg_delay_s":28,"max_queue_m":190,"vehicles":3500},{"id":"j11","name":"Masab Tank","lat":17.40352,"lon":78.45639,"avg_delay_s":33,"max_queue_m":210,"vehicles":3600}],"warnings":[],"inputs":{"counts_source":"sample","label":"assumed","volume_scale":1},"frames_path":null,"roads_path":null,"sample":true},"flyover_j07":{"run_id":"r_sample_corridor_fly","variant_id":"flyover_j07","corridor_id":"lingampally_lakdikapul","time":{"window":"2026-10-09T08:00","minutes":120,"label":"Fri 9 Oct 8-10 am"},"interventions":[{"junction_id":"j07","kind":"flyover","params":{"lanes":2,"length_m":600}}],"journey":{"total_s":5631,"distance_m":24329,"tomtom_total_s":5559,"legs":[{"from_id":"A_lingampally","to_id":"j01","from_name":"Lingampally (railway station)","to_name":"Nallagandla Rd jn","distance_m":498,"time_s":100,"speed_kmh":18,"tomtom_time_s":95},{"from_id":"j01","to_id":"j02","from_name":"Nallagandla Rd jn","to_name":"ISB Rd / DLF jn","distance_m":6438,"time_s":1053,"speed_kmh":22,"tomtom_time_s":1000},{"from_id":"j02","to_id":"j03","from_name":"ISB Rd / DLF jn","to_name":"Gachibowli Circle","distance_m":1731,"time_s":445,"speed_kmh":14,"tomtom_time_s":423},{"from_id":"j03","to_id":"j04","from_name":"Gachibowli Circle","to_name":"Biodiversity jn (flyover)","distance_m":1976,"time_s":445,"speed_kmh":16,"tomtom_time_s":423},{"from_id":"j04","to_id":"j05","from_name":"Biodiversity jn (flyover)","to_name":"Khajaguda X Roads","distance_m":1348,"time_s":255,"speed_kmh":19,"tomtom_time_s":242},{"from_id":"j05","to_id":"j06","from_name":"Khajaguda X Roads","to_name":"Narne Rd jn Shaikpet","distance_m":2022,"time_s":485,"speed_kmh":15,"tomtom_time_s":461},{"from_id":"j06","to_id":"j07","from_name":"Narne Rd jn Shaikpet","to_name":"Tolichowki","distance_m":3497,"time_s":686,"speed_kmh":11,"tomtom_time_s":1087},{"from_id":"j07","to_id":"j08","from_name":"Tolichowki","to_name":"Nanal Nagar jn","distance_m":1690,"time_s":913,"speed_kmh":9,"tomtom_time_s":642},{"from_id":"j08","to_id":"j09","from_name":"Nanal Nagar jn","to_name":"Rethibowli jn","distance_m":525,"time_s":158,"speed_kmh":12,"tomtom_time_s":150},{"from_id":"j09","to_id":"j10","from_name":"Rethibowli jn","to_name":"NMDC / Masab Tank Rd","distance_m":2528,"time_s":535,"speed_kmh":17,"tomtom_time_s":508},{"from_id":"j10","to_id":"j11","from_name":"NMDC / Masab Tank Rd","to_name":"Masab Tank","distance_m":975,"time_s":251,"speed_kmh":14,"tomtom_time_s":238},{"from_id":"j11","to_id":"B_lakdikapul","from_name":"Masab Tank","to_name":"Lakdikapul","distance_m":1101,"time_s":305,"speed_kmh":13,"tomtom_time_s":290}]},"junctions":[{"id":"j01","name":"Nallagandla Rd jn","lat":17.4795,"lon":78.31992,"avg_delay_s":12,"max_queue_m":80,"vehicles":2400},{"id":"j02","name":"ISB Rd / DLF jn","lat":17.44527,"lon":78.35255,"avg_delay_s":25,"max_queue_m":150,"vehicles":3100},{"id":"j03","name":"Gachibowli Circle","lat":17.43887,"lon":78.36373,"avg_delay_s":48,"max_queue_m":320,"vehicles":4200},{"id":"j04","name":"Biodiversity jn (flyover)","lat":17.42909,"lon":78.37452,"avg_delay_s":30,"max_queue_m":210,"vehicles":3900},{"id":"j05","name":"Khajaguda X Roads","lat":17.42266,"lon":78.38211,"avg_delay_s":22,"max_queue_m":140,"vehicles":3300},{"id":"j06","name":"Narne Rd jn Shaikpet","lat":17.41412,"lon":78.39443,"avg_delay_s":35,"max_queue_m":230,"vehicles":2900},{"id":"j07","name":"Tolichowki","lat":17.39894,"lon":78.41542,"avg_delay_s":15,"max_queue_m":90,"vehicles":4100},{"id":"j08","name":"Nanal Nagar jn","lat":17.39597,"lon":78.42776,"avg_delay_s":120,"max_queue_m":690,"vehicles":3800},{"id":"j09","name":"Rethibowli jn","lat":17.39598,"lon":78.43171,"avg_delay_s":40,"max_queue_m":260,"vehicles":3200},{"id":"j10","name":"NMDC / Masab Tank Rd","lat":17.39948,"lon":78.45039,"avg_delay_s":28,"max_queue_m":190,"vehicles":3500},{"id":"j11","name":"Masab Tank","lat":17.40352,"lon":78.45639,"avg_delay_s":33,"max_queue_m":210,"vehicles":3600}],"warnings":["flyover_j07: 2 flyover lanes land 180 m before Nanal Nagar jn; queues from the junction reach the landing at peak"],"inputs":{"counts_source":"sample","label":"assumed","volume_scale":1},"frames_path":null,"roads_path":null,"sample":true}};
+let sampleCache = null;
+async function sampleRun(ivs, why) {
+  if (!sampleCache) { try { const r = await fetch(SAMPLE_URL); if (!r.ok) throw 0; sampleCache = await r.json(); } catch (e) { sampleCache = SAMPLE_EMBED; } }
+  const r = JSON.parse(JSON.stringify(ivs.length ? sampleCache.flyover_j07 : sampleCache.baseline));
+  r.sample = true; r._fallback = why;
+  return r;
+}
+// ===== end SAMPLE FALLBACK =====
+
+// The day (#when: TomTom's July average or one day) and the hour (#hour, 06-22 = 06:00-07:00 .. 22:00-23:00) set the measured
+// row, and the simulation too once the API takes `day` + `hour` (hourOk); until then the simulation is the typical July day.
+// The weather (#weather: "" as measured, or a rain what-if from GET /corridor sim.weather) goes with every simulation request.
+let pickHour = null, hourOk = null, pickWeather = "";
+const simParams = () => ({ ...(hourOk && pickHour != null ? { day: dayId($("when").value), hour: pickHour } : {}), ...(pickWeather ? { weather: pickWeather } : {}) });
+async function corridorRun(ivs) {
+  try { return await post("/corridor/runs", { interventions: ivs, volume_scale: 1.0, ...simParams() }); }
+  catch (e) {
+    if (e.status && ![404, 405].includes(e.status)) throw e;           // a real failure of the simulation: show it
+    return sampleRun(ivs, e.status ? `corridor API answered ${e.status}` : "API not reachable");   // FALLBACK
+  }
+}
+
+// ---------- helpers ----------
+const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function dayLabel(date) { const d = new Date(date + "T12:00:00+05:30"); return `${DAY[d.getUTCDay()]} ${d.getUTCDate()} ${MON[d.getUTCMonth()]}`; }
+const FULLMON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const PERIOD_RE = /^(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})(?:\s+(\d{1,2}):\d{2}-(\d{1,2}):\d{2})?/;
+const isMultiDay = p => { const m = PERIOD_RE.exec(p); return !!m && m[1] !== m[2]; };
+function hoursOf(p) { const m = PERIOD_RE.exec(p); return m && m[3] ? `${m[3].padStart(2, "0")}–${m[4].padStart(2, "0")}` : ""; }
+function typicalName(p) { const m = PERIOD_RE.exec(p); return m ? `typical ${FULLMON[Number(m[1].slice(5, 7)) - 1]} day` : "typical day"; }
+function periodLabel(p) {
+  if (!PERIOD_RE.test(p)) return p;   // a period name the page does not know: show it as is
+  const h = hoursOf(p), t = typicalName(p);
+  return isMultiDay(p) ? `${t[0].toUpperCase()}${t.slice(1)} (TomTom${h ? ", " + h : ""})` : `${dayLabel(p.slice(0, 10))}${h ? ", " + h : ""}`;
+}
+function periodShort(p) { return !PERIOD_RE.test(p) ? p : isMultiDay(p) ? typicalName(p) : dayLabel(p.slice(0, 10)); }
+const isHourly = p => { const m = PERIOD_RE.exec(p || ""); return !!(m && m[3] != null && Number(m[4]) - Number(m[3]) === 1); };   // "... 18:00-19:00"
+const dayId = p => { const m = PERIOD_RE.exec(p || ""); return !m || m[1] !== m[2] ? "july" : m[1]; };   // the API's `day`: "july" or "2026-07-08"
+const hh = h => `${String(h).padStart(2, "0")}:00`;
+const hourSpan = h => `${hh(h)}–${hh(h + 1)}`;
+function measured() {   // the TomTom period on screen: the chosen day, or that day's chosen hour (null: no hourly data for it)
+  const d = $("when").value, m = PERIOD_RE.exec(d || "");
+  if (pickHour == null || !m) return d;
+  return Object.keys(tomtom).find(x => { const q = PERIOD_RE.exec(x); return q && q[1] === m[1] && q[2] === m[2] && isHourly(x) && Number(q[3]) === pickHour; }) || null;
+}
+function pickLabel() { const d = $("when").value; return `${PERIOD_RE.test(d) ? periodShort(d) : d}${pickHour != null ? `, ${hourSpan(pickHour)}` : ""}`; }
+const sumT = legs => legs.reduce((s, l) => s + l.time_s, 0);
+const mins = s => s / 60;
+const fmtMin = s => { const m = s / 60; return m < 10 ? m.toFixed(1) : m.toFixed(0); };
+const signed = (x, d = 1) => (x > 0 ? "+" : x < 0 ? "−" : "±") + Math.abs(x).toFixed(d);
+const short = n => String(n || "").replace(/\s*\(.*?\)\s*/g, " ").trim();
+function pointLabel(id) { const i = points.findIndex(p => p.id === id); return i <= 0 ? "A" : i === points.length - 1 ? "B" : String(i); }
+function point(id) { return points.find(p => p.id === id); }
+function speedRGB(kmh) { return kmh >= 25 ? [53, 193, 119] : kmh >= 15 ? [245, 136, 50] : [226, 61, 39]; }   // brand green / orange / red-orange
+function legSpeed(l) { return l.speed_kmh ?? (l.distance_m && l.time_s ? l.distance_m / l.time_s * 3.6 : 20); }
+function tagsFor(r) { return `<span class="tag sim">SIMULATED</span>${r && r.sample ? '<span class="tag sample">SAMPLE DATA</span>' : ""}`; }
+const greenShare = p => p.corridor_green_share ?? p.main_share;
+function ivText(iv) {
+  const p = iv.params || {}, bits = [];
+  if (p.lanes) bits.push(`${p.lanes} lane${p.lanes > 1 ? "s" : ""}`);
+  if (p.add_lanes) bits.push(`+${p.add_lanes} lane${p.add_lanes > 1 ? "s" : ""}`);
+  if (p.length_m) bits.push(`${p.length_m} m`);
+  if (p.cycle_s) bits.push(`${p.cycle_s} s cycle`);
+  if (greenShare(p) != null) bits.push(`${Math.round(greenShare(p) * 100)}% green to main road`);
+  if (iv.kind === "one_way") bits.push(p.road ? `${p.road}` : "smallest side road", p.direction === "out" ? "outbound only" : "inbound only");
+  if (coversBoth(iv)) bits.push("over Nanal Nagar + Rethibowli");
+  return `${KINDS[iv.kind] || iv.kind}${bits.length ? ", " + bits.join(", ") : ""}`;
+}
+const coversBoth = iv => iv.kind === "flyover" && iv.junction_id === NANAL_PAIR[0] && (iv.params?.length_m || 0) >= 1000;
+const ivKey = ivs => JSON.stringify(ivs.map(i => [i.junction_id, i.kind, i.params]));
+const clock = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+// ---------- load ----------
+async function init() {
+  try { cfg = await get("/config"); apiUp = true; $("status").textContent = `API: ok${cfg.mock ? " (mock mode)" : " (real SUMO runs)"}`; }
+  catch (e) { $("status").textContent = "API not running (run `make dev`): the page uses sample data."; }
+  $("status-live").textContent = apiUp ? "API: ok · live data from TomTom through the API" : "API not running (run `make dev`): live TomTom data comes through the API.";
+  try { corridor = await get("/corridor"); if (!Array.isArray(corridor?.points) || corridor.points.length < 2) throw 0; } catch (e) { corridor = CORRIDOR_EMBED; }
+  points = corridor.points;
+  legPaths = cutRoute(corridor.route);
+  await loadTomTom(corridor.legs || corridor.tomtom?.periods || corridor.tomtom);
+  addHourly(corridor.tomtom?.hourly);
+  if (apiUp) { try { calib = await get("/corridor/calibration"); } catch (e) { calib = null; } }
+  fillWhen(); fillJunctions(); fillParams(); fillHours(); fillWeather(); renderIvs(); renderJourney(); renderJunctions();
+  loadWxFactors();
+
+  const hasKey = !!cfg.tomtom_maps_key;
+  map = new maplibregl.Map({ container: "map", style: hasKey ? STYLE($("t-night").checked) : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+                             center: [78.39, 17.43], zoom: 12, antialias: true });
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+  overlay = new deck.MapboxOverlay({ interleaved: true, layers: [], pickingRadius: 6 });
+  map.addControl(overlay);
+  map.on("style.load", addTrafficLayer);
+  map.on("moveend", () => { buildingsInView(); if (!playing) render(); });   // vehicles and buildings are drawn for what is in view
+  map.on("dragstart", () => { if (following || ride) { stopRide(); setFollow(false); } });
+  map.on("click", e => {   // click any vehicle to follow it: the one drawn nearest the click (the interleaved overlay passes no clicks to layers)
+    if (mode !== "july" || !frames.length || ride || !$("t-vehicles").checked) return;
+    const vp = overlay._deck?.getViewports?.()[0], at = v => vp ? vp.project([v.lon, v.lat, (v.z || 0) + 0.8]) : [map.project([v.lon, v.lat]).x, map.project([v.lon, v.lat]).y];
+    let best = null;
+    for (const v of currentVehicles(map.getZoom() >= 14 ? inView() : null)) {
+      const [x, y] = at(v), d = Math.hypot(x - e.point.x, y - e.point.y);
+      if (d < 14 && (!best || d < best.d)) best = { v, d };
+    }
+    if (best) startFollow(best.v.id);
+  });
+  if (!hasKey) { $("t-traffic").disabled = true; $("t-night").disabled = true; $("t-night").parentElement.title = "Needs the TomTom map key"; }
+  $("traffic-note").textContent = hasKey ? "TomTom's live speeds on every road: green flowing, orange slow, red queuing." : "The TomTom live traffic layer needs the TomTom map key (TOMTOM_MAPS_KEY in .env).";
+  bldNote();
+  addMarkers();
+  overview(false);
+  map.once("load", () => overview(false));
+  setMode(mode, false);
+  render();
+  requestAnimationFrame(tick);
+  loadLive(); setInterval(loadLive, LIVE_MS);
+  loadWxNow(); setInterval(loadWxNow, WX_NOW_MS);
+  if (apiUp) setTimeout(probeHour, 1500);
+}
+
+// ---------- the two modes ----------
+function setMode(m, write = true) {
+  mode = m === "live" ? "live" : "july";
+  document.body.classList.toggle("mode-live", mode === "live"); document.body.classList.toggle("mode-july", mode === "july");
+  ["live", "july"].forEach(k => $(`mode-${k}`).setAttribute("aria-selected", String(k === mode)));
+  $("mode-head").innerHTML = MODE_HEAD[mode];
+  if (write) {   // keep anything else in the hash (#case=...)
+    const q = new URLSearchParams(location.hash.replace(/^#/, "")); q.set("mode", mode);
+    history.replaceState(null, "", "#" + q.toString().replace(/%3D/g, "="));
+  }
+  if (mode === "live") {   // nothing simulated in Live now: stop the playback, the follow camera and the assistant
+    playing = false; $("play").textContent = "▶ Play"; stopRide(); setFollow(false); setOrbit(false);
+    if (document.body.classList.contains("chat-open")) $("chat-close").click();
+    loadGeometry();
+  }
+  if (mode === "live" && cfg.tomtom_maps_key && !trafficTouched) $("t-traffic").checked = true;   // Live now opens with TomTom's live traffic on
+  trafficLayer();
+  syncModeHeight();
+  if (popup) popup.remove();
+  updateMarkers(); renderLive(); render();
+}
+let trafficTouched = false;   // the viewer switched the live traffic layer off or on: keep their choice
+const trafficShown = () => mode === "live" && $("t-traffic").checked;   // live traffic is a Live now layer only
+function trafficLayer() {
+  if (map && map.getLayer("tomtom-traffic")) map.setLayoutProperty("tomtom-traffic", "visibility", trafficShown() ? "visible" : "none");
+}
+function syncModeHeight() {   // the left panel sits under the mode switch
+  const h = $("modebar").getBoundingClientRect().height;
+  if (h) document.documentElement.style.setProperty("--mode-h", `${Math.ceil(h)}px`);
+}
+$("mode-live").onclick = () => setMode("live");
+$("mode-july").onclick = () => setMode("july");
+window.addEventListener("hashchange", () => { const m = modeFromHash(); if (m && m !== mode) setMode(m, false); });
+window.addEventListener("resize", syncModeHeight);
+
+function parseCsv(text) {
+  const split = line => { const out = []; let cur = "", q = false; for (const ch of line) { if (ch === '"') q = !q; else if (ch === "," && !q) { out.push(cur); cur = ""; } else cur += ch; } out.push(cur); return out; };
+  const lines = text.trim().split(/\r?\n/), head = split(lines[0]);
+  return lines.slice(1).map(l => { const v = split(l), o = {}; head.forEach((h, i) => o[h] = v[i]); return o; });
+}
+// Measured legs per period, from GET /corridor's `legs` when present. Accepts rows with a `period` (like the CSV),
+// legs carrying `periods` (object or list), or {period: [legs]}. Only A -> B legs between known points are kept.
+function tomtomFromApi(legs) {
+  if (!legs) return null;
+  const out = {}, idx = id => points.findIndex(p => p.id === id);
+  const push = (p, x) => {
+    const a = idx(x.from_id), z = idx(x.to_id);
+    if (!p || a < 0 || z <= a) return;   // unknown point, or the B -> A direction
+    (out[p] ||= []).push({ from_id: x.from_id, to_id: x.to_id, from_name: x.from_name ?? x.from, to_name: x.to_name ?? x.to,
+      distance_m: +x.distance_m, time_s: +x.time_s, speed_kmh: x.speed_kmh != null ? +x.speed_kmh : (x.distance_m / x.time_s * 3.6) });
+  };
+  if (Array.isArray(legs)) {
+    for (const x of legs) {
+      if (x.period && Array.isArray(x.legs)) x.legs.forEach(l => push(x.period, l));   // {period, label, legs: [...]} (GET /corridor `tomtom.periods`)
+      else if (x.period) push(x.period, x);
+      else if (Array.isArray(x.periods)) x.periods.forEach(v => push(v.period, { ...x, ...v }));
+      else if (x.periods && typeof x.periods === "object") Object.entries(x.periods).forEach(([p, v]) => push(p, { ...x, ...v }));
+    }
+  } else if (Array.isArray(legs.periods)) return tomtomFromApi(legs.periods);
+  else if (typeof legs === "object") {
+    for (const [p, arr] of Object.entries(legs)) if (Array.isArray(arr)) arr.forEach(x => push(p, x));
+  }
+  for (const p of Object.keys(out)) {
+    out[p].sort((a, b) => idx(a.from_id) - idx(b.from_id));
+    if (out[p].some(l => !(l.time_s > 0) || !(l.distance_m > 0))) delete out[p];
+  }
+  return Object.keys(out).length ? out : null;
+}
+async function loadTomTom(apiLegs) {
+  tomtom = tomtomFromApi(apiLegs) || {};
+  tomtomSrc = Object.keys(tomtom).length ? "API" : "";
+  if (!tomtomSrc) {
+    try {
+      const r = await fetch("../data/raw/corridor_legs_tomtom.csv"); if (!r.ok) throw 0;
+      for (const x of parseCsv(await r.text())) (tomtom[x.period] ||= []).push({ from_id: x.from_id, to_id: x.to_id, from_name: x.from, to_name: x.to,
+        distance_m: +x.distance_m, time_s: +x.time_s, speed_kmh: +x.speed_kmh });
+      if (!tomtom[TYPICAL]) throw 0;
+      tomtomSrc = "CSV";
+    } catch (e) {
+      tomtom = {}; tomtomSrc = "embedded";
+      for (const [p, arr] of Object.entries(TOMTOM_EMBED.periods)) tomtom[p] = arr.map(([d, t, s], i) => {
+        const [from_id, to_id, from_name, to_name] = TOMTOM_EMBED.legs[i]; return { from_id, to_id, from_name, to_name, distance_m: d, time_s: t, speed_kmh: s };
+      });
+    }
+  }
+  typical = tomtom[TYPICAL] ? TYPICAL : Object.keys(tomtom).find(isMultiDay) || Object.keys(tomtom)[0];
+}
+
+// GET /corridor tomtom.hourly: {legs: [{from_id, to_id, distance_m}], days: [{day: "july" | "2026-07-08", label}], hours,
+// by_day: {day: {"18": {total_s, legs_s: [12]}}}} becomes one period per day and hour ("2026-07-08..2026-07-08 18:00-19:00",
+// July: "2026-07-01..2026-07-31 18:00-19:00"), the same keys the CSV uses, so the measured row reads them like any period.
+let hourlyDays = {};   // day key "2026-07-08..2026-07-08" -> label from the API
+function addHourly(h) {
+  if (!h || !h.by_day || !Array.isArray(h.legs)) return;
+  const july = Object.keys(tomtom).find(isMultiDay) || TYPICAL, jm = PERIOD_RE.exec(july);
+  const range = d => d === "july" ? `${jm[1]}..${jm[2]}` : `${d}..${d}`;
+  for (const x of h.days || []) if (x && x.day) hourlyDays[range(x.day)] = x.label;
+  for (const [d, hours] of Object.entries(h.by_day)) {
+    if (d !== "july" && !/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
+    for (const [hr, v] of Object.entries(hours || {})) {
+      const n = Number(hr); if (!(n >= 0 && n < 24) || !Array.isArray(v?.legs_s) || v.legs_s.length !== h.legs.length) continue;
+      const legs = h.legs.map((l, k) => ({ from_id: l.from_id, to_id: l.to_id, from_name: point(l.from_id)?.name, to_name: point(l.to_id)?.name,
+        distance_m: +l.distance_m, time_s: +v.legs_s[k], speed_kmh: l.distance_m / v.legs_s[k] * 3.6 }));
+      if (legs.every(l => l.time_s > 0 && l.distance_m > 0)) tomtom[`${range(d)} ${String(n).padStart(2, "0")}:00-${String(n + 1).padStart(2, "0")}:00`] = legs;
+    }
+  }
+}
+
+// ---------- real route line (GET /corridor `route`) ----------
+// Accepts a LineString, MultiLineString, Feature, FeatureCollection, a list of these, or {ab: ..., ba: ...}. The A -> B line is
+// the one that starts nearest A and ends nearest B (a line running B -> A is reversed if it is the only one).
+function routeLines(r, out = []) {
+  if (!r || typeof r !== "object") return out;
+  if (Array.isArray(r)) { r.forEach(x => routeLines(x, out)); return out; }
+  if (r.type === "LineString" && Array.isArray(r.coordinates)) out.push(r.coordinates);
+  else if (r.type === "MultiLineString" && Array.isArray(r.coordinates)) r.coordinates.forEach(c => out.push(c));
+  else if (r.type === "Feature") routeLines(r.geometry, out);
+  else if (r.type === "FeatureCollection") routeLines(r.features, out);
+  else if (!r.type) Object.values(r).forEach(v => routeLines(v, out));
+  return out;
+}
+const M_PER_DEG = 111320;
+function metres(a, b) { const k = Math.cos(a[1] * Math.PI / 180); return Math.hypot((a[0] - b[0]) * k, a[1] - b[1]) * M_PER_DEG; }
+function abLine(route) {
+  const A = points[0], B = points[points.length - 1]; if (!A || !B) return null;
+  const a = [A.lon, A.lat], z = [B.lon, B.lat];
+  let best = null;
+  for (const c of routeLines(route)) {
+    const line = c.filter(q => Array.isArray(q) && isFinite(q[0]) && isFinite(q[1])); if (line.length < 2) continue;
+    const fwd = metres(line[0], a) + metres(line[line.length - 1], z), rev = metres(line[0], z) + metres(line[line.length - 1], a);
+    const cand = fwd <= rev ? { line, score: fwd } : { line: [...line].reverse(), score: rev + 1 };   // prefer a line drawn A -> B
+    if (!best || cand.score < best.score) best = cand;
+  }
+  return best && best.score < 3000 ? best.line : null;
+}
+function project(p, a, b) {   // nearest point to p on segment a-b: [point, metres away]
+  const k = Math.cos(p[1] * Math.PI / 180), dx = (b[0] - a[0]) * k, dy = b[1] - a[1], L = dx * dx + dy * dy;
+  const t = L ? Math.max(0, Math.min(1, (((p[0] - a[0]) * k) * dx + (p[1] - a[1]) * dy) / L)) : 0;
+  const q = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  return [q, metres(p, q)];
+}
+function routeLegFeatures(route) {   // per-leg A -> B lines when the API sends them (properties.kind "leg", from_id, to_id)
+  const idx = id => points.findIndex(p => p.id === id), out = {};
+  for (const f of route?.features || []) {
+    const q = f.properties || {}, c = f.geometry?.coordinates;
+    if (q.kind === "leg" && f.geometry?.type === "LineString" && idx(q.to_id) === idx(q.from_id) + 1 && c.length >= 2) out[`${q.from_id}|${q.to_id}`] = c;
+  }
+  return Object.keys(out).length === points.length - 1 ? out : null;
+}
+function cutRoute(route) {   // {"from|to": path} for each consecutive pair of corridor points, cut from the A -> B line
+  const legs = routeLegFeatures(route); if (legs) return legs;
+  const line = abLine(route?.features ? route.features.filter(f => f.properties?.kind !== "leg") : route); if (!line) return null;
+  const cuts = []; let seg = 0;
+  for (const pt of points) {
+    let best = null;
+    for (let i = seg; i < line.length - 1; i++) {
+      const [q, d] = project([pt.lon, pt.lat], line[i], line[i + 1]);
+      if (!best || d < best.d - 0.5) best = { i, q, d };
+    }
+    if (!best || best.d > 600) return null;   // a point far off the line: the geometry does not match this corridor
+    cuts.push(best); seg = best.i;
+  }
+  const paths = {};
+  for (let k = 0; k < points.length - 1; k++) {
+    const a = cuts[k], b = cuts[k + 1];
+    paths[`${points[k].id}|${points[k + 1].id}`] = [a.q, ...line.slice(a.i + 1, b.i + 1), b.q];
+  }
+  return paths;
+}
+
+// ---------- 1 · when ----------
+const dayRange = p => { const m = PERIOD_RE.exec(p || ""); return m ? `${m[1]}..${m[2]}` : p; };
+function fillWhen() {   // days only (the all-day periods, plus days TomTom has in one-hour slots only); the hour is picked next to it
+  const all = Object.keys(tomtom).filter(p => !isHourly(p)), have = new Set(all.map(dayRange));
+  const extra = [...new Set([...Object.keys(hourlyDays), ...Object.keys(tomtom).filter(isHourly).map(dayRange)])].filter(d => !have.has(d) && !(isMultiDay(d) && all.some(isMultiDay)));
+  const ps = [...all, ...extra].sort((a, b) => (a === typical ? -1 : b === typical ? 1 : a.localeCompare(b)));
+  $("when").innerHTML = ps.map(p => `<option value="${esc(p)}">${esc(periodLabel(p))} · ${tomtom[p] ? `${Math.round(mins(sumT(tomtom[p])))} min` : "by the hour"}</option>`).join("");
+  $("when").value = typical;
+  updateWhenNote();
+}
+function updateWhenNote() {
+  const daily = Object.keys(tomtom).filter(p => p !== typical && PERIOD_RE.test(p) && !isMultiDay(p) && !isHourly(p));
+  const dow = p => new Date(p.slice(0, 10) + "T12:00:00+05:30").getUTCDay();
+  const sun = daily.filter(p => dow(p) === 0), wk = daily.filter(p => dow(p) > 0 && dow(p) < 6);
+  const avg = ps => ps.length ? Math.round(ps.reduce((s, p) => s + mins(sumT(tomtom[p])), 0) / ps.length) : "–";
+  const p = $("when").value, tot = Math.round(mins(sumT(tomtom[p] || []))), h = hoursOf(p).replace(/(\d+)/g, "$1:00");
+  renderSpark();
+  const when = !PERIOD_RE.test(p) ? `for ${esc(p)}` : isMultiDay(p) ? `on an average ${typicalName(p).replace("typical ", "")}${h ? ", " + h : ""}` : `on ${dayLabel(p.slice(0, 10))}${h ? ", averaged " + h : ""}`;
+  $("when-note").innerHTML = (tomtom[p] ? `TomTom measured the whole trip at <b>${tot} min</b> ${when}. ` : `TomTom has ${esc(periodShort(p))} in one-hour slots: pick an hour. `) +
+    (daily.length ? `Weekdays ≈ ${avg(wk)} min, Sundays (${sun.map(x => Number(x.slice(8, 10))).join(" and ")} ${MON[Number((sun[0] || p).slice(5, 7)) - 1] || ""}) ≈ ${avg(sun)} min. ` : "") +
+    (pickHour != null ? (measured() ? `<br>${esc(pickLabel())}: TomTom measured <b>${Math.round(mins(sumT(tomtom[measured()])))} min</b>.` :
+      `<br><span class="mid">No hourly TomTom data for ${esc(pickLabel())} yet.</span>`) : "") +
+    (hourOk ? `<br><b>The day and hour set both the measured (TomTom) row and the simulation.</b>` :
+      `<br><b>Changes the measured (TomTom) row only; the simulation is the typical July day.</b>`) +
+    (pickWeather ? ` The weather what-if changes the simulation only: the TomTom row stays as measured.` : "");
+  renderWx();
+}
+function hourProfile() {   // [{h, min}] for the chosen day, from its hourly periods
+  const d = dayRange($("when").value), out = [];
+  for (const [p, legs] of Object.entries(tomtom)) {
+    if (!isHourly(p) || dayRange(p) !== d) continue;
+    out.push({ h: Number(PERIOD_RE.exec(p)[3]), min: mins(sumT(legs)) });
+  }
+  return out.sort((a, b) => a.h - b.h);
+}
+function renderSpark() {
+  const prof = hourProfile(), el = $("hour-spark");
+  el.hidden = prof.length < 2;
+  if (el.hidden) { el.innerHTML = ""; return; }
+  const max = Math.max(...prof.map(x => x.min)), lo = prof.reduce((a, b) => (b.min < a.min ? b : a)), hi = prof.reduce((a, b) => (b.min > a.min ? b : a));
+  const bars = prof.map(x => { const ht = Math.max(2, x.min / max * 30), ok = x.h >= 6 && x.h <= 22;
+    return `<rect data-h="${x.h}" class="${x.h === pickHour ? "on" : ok ? "day pick" : ""}" x="${x.h * 10 + 1}" y="${32 - ht}" width="8" height="${ht}"><title>${hourSpan(x.h)}: ${x.min.toFixed(1)} min (TomTom)</title></rect>`; }).join("");
+  el.innerHTML = `<svg viewBox="0 0 240 40" preserveAspectRatio="none" role="img" aria-label="Trip minutes by hour">${bars}` +
+    [0, 6, 12, 18, 23].map(h => `<text x="${h * 10 + 5}" y="40" font-size="7" text-anchor="middle" fill="#929292">${h}</text>`).join("") + `</svg>` +
+    `<div class="cap">Trip by hour, ${esc(periodShort($("when").value))} <span class="tag real">REAL</span>: ${Math.round(lo.min)} min at ${hh(lo.h)}, ${Math.round(hi.min)} min at ${hh(hi.h)}. Click an hour to pick it.</div>`;
+  el.querySelectorAll("rect.pick, rect.on").forEach(r => r.onclick = () => { if ($("hour").disabled) return; $("hour").value = r.dataset.h; $("hour").onchange(); });
+}
+let simKeyRun = "{}", rerunTimer = null;   // the day and hour the shown simulation was asked for
+function pickChanged() {   // the measured row follows at once; the simulation follows too (run again) once the API simulates hours
+  updateWhenNote(); renderJourney(); render();
+  clearTimeout(rerunTimer);
+  rerunTimer = setTimeout(function again() {   // quick changes (day, then hour) make one run; a run in progress finishes first
+    if (running) { rerunTimer = setTimeout(again, 500); return; }
+    if (!base || JSON.stringify(simParams()) === simKeyRun) return;
+    const withChanges = !!changed && interventions.length > 0;
+    base = null; changed = null; renderJourney(); renderJunctions();
+    simulate(withChanges);
+  }, 600);
+}
+$("when").onchange = pickChanged;
+$("hour").onchange = () => { pickHour = $("hour").value === "" ? null : Number($("hour").value); pickChanged(); };
+$("weather").onchange = () => { pickWeather = $("weather").value; updateWeatherNote(); pickChanged(); };
+
+// ---------- weather: the chosen day and hour's weather, the rain what-if, the weather now ----------
+// GET /weather?day=july|2026-07-DD -> {label, source, note, hours: [24 slots]} (measured: Open-Meteo reanalysis, a weather model);
+// GET /weather/factors -> {what_if: {dry|light_rain|heavy_rain: {trip_time_pct, trip_time_pct_ci95, meaning}}} (estimated);
+// GET /weather/now -> {text, temperature_c, rain_mm_per_hour, is_raining, rain_effect, label} (modelled), 503 when Open-Meteo is down.
+const WX_NAMES = { "": "As measured", dry: "Dry", light_rain: "Light rain", heavy_rain: "Heavy rain" };
+const WX_PLAIN = { dry: "no rain this hour or the hour before", light_rain: "light rain (0.1–1 mm an hour) for an hour or more",
+                   heavy_rain: "the wettest hours July had (1–5 mm an hour) for an hour or more; not a cloudburst" };
+// The hourly July 2026 analysis (data/rain/README.md), used until GET /weather/factors answers
+const WX_FALLBACK = { dry: { trip_time_pct: 0, trip_time_pct_ci95: [0, 0] }, light_rain: { trip_time_pct: 4.0, trip_time_pct_ci95: [0.5, 6.9] },
+                      heavy_rain: { trip_time_pct: 7.9, trip_time_pct_ci95: [-3.9, 16.1] } };
+const WX_NOW_MS = window.WX_NOW_MS || 600000;   // the API caches the weather now for 10 minutes
+const WX_SVG = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const WX_ICON = {
+  rain: WX_SVG('<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M16 14v6M8 14v6M12 16v6"/>'),
+  cloud: WX_SVG('<path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/>'),
+  sun: WX_SVG('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/>'),
+  moon: WX_SVG('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'),
+};
+let wxOptions = [], wxFactors = null, wxNow = null;
+const wxDays = {}, wxReq = {};   // "july" | "2026-07-08" -> GET /weather?day= answer (null: not available)
+const wxName = w => WX_NAMES[w || ""] ?? String(w).replace(/_/g, " ");
+const runWeather = r => r?.time?.weather ?? r?.requested?.weather ?? r?.inputs?.weather?.weather ?? null;
+const runParams = r => ({ ...(runHour(r) != null ? { day: runDay(r) || "july", hour: runHour(r) } : {}), ...(runWeather(r) ? { weather: runWeather(r) } : {}) });
+const pctTxt = (x, d = 1) => `${x > 0 ? "+" : x < 0 ? "−" : "±"}${Math.abs(x).toFixed(d)}%`;
+const share = x => `${Math.round(x * 100)}%`;
+const mmTxt = x => x >= 10 ? x.toFixed(0) : x.toFixed(1);
+const isWet = (code, mm) => (mm != null && mm >= 0.1) || (code != null && code >= 51);
+function wxIcon(code, wet, day = true) { return wet ? WX_ICON.rain : code != null && code <= 1 ? (day ? WX_ICON.sun : WX_ICON.moon) : WX_ICON.cloud; }
+function wxSetting(w) { return wxFactors?.what_if?.[w] || WX_FALLBACK[w] || null; }
+function wxEstimate(w, r) {   // [pct, [lo, hi]] vs dry: from the run (inputs.weather), else GET /weather/factors, else the saved numbers
+  const iw = r?.inputs?.weather, f = iw?.expected_trip_time_factor_vs_dry, ci = iw?.expected_trip_time_factor_vs_dry_ci95;
+  if (f != null) return [(f - 1) * 100, Array.isArray(ci) ? ci.map(x => (x - 1) * 100) : null];
+  const s = wxSetting(w); return s && s.trip_time_pct != null ? [s.trip_time_pct, s.trip_time_pct_ci95] : null;
+}
+const estTxt = (e, w) => !e ? "" : `${pctTxt(e[0])}${w !== "dry" && e[1] && e[1][0] != null ? ` (95% range ${pctTxt(e[1][0])} to ${pctTxt(e[1][1])})` : ""}`;
+function fillWeather() {   // the what-if settings GET /corridor sim.weather lists; none (older API, no rain factors): the control stays hidden
+  wxOptions = (Array.isArray(corridor?.sim?.weather) ? corridor.sim.weather : []).filter(w => typeof w === "string" && w);
+  $("weather").innerHTML = ["", ...wxOptions].map(w => `<option value="${esc(w)}"${WX_PLAIN[w] ? ` title="${esc(WX_PLAIN[w])}"` : ""}>${esc(wxName(w))}</option>`).join("");
+  if (!wxOptions.includes(pickWeather)) pickWeather = "";
+  $("weather").value = pickWeather;
+  $("weather-box").hidden = !wxOptions.length;
+  updateWeatherNote();
+}
+async function loadWxFactors() {
+  if (!apiUp) return;
+  try { wxFactors = await get("/weather/factors"); } catch (e) { wxFactors = null; }   // the saved numbers stand in
+  updateWeatherNote();
+}
+function updateWeatherNote() {   // what the chosen weather means, with the estimate and its range
+  const el = $("weather-note"), w = pickWeather;
+  if (!wxOptions.length) { el.innerHTML = ""; return; }
+  if (!w) {
+    const d = dayId($("when").value), h = pickHour, s = h != null ? (wxDays[d]?.hours || []).find(x => x.hour === h) : null;
+    el.innerHTML = `<b>As measured:</b> the simulation as calibrated to TomTom, with the rain that actually fell` +
+      (d !== "july" && h != null ? " in that hour" : s && s.share_of_days_with_rain != null ? ` (at ${hh(h)} it rained on ${share(s.share_of_days_with_rain)} of July days)` : " (in a typical July hour it rained on about 4 days in 10)") +
+      `. Pick Dry, Light rain or Heavy rain for a rain what-if.`;
+    return;
+  }
+  const e = wxEstimate(w);
+  el.innerHTML = `<b>${esc(wxName(w))} what-if:</b> ${esc(WX_PLAIN[w] || wxSetting(w)?.meaning || w)}. ` +
+    (e ? `Trip time vs dry: <b>${estTxt(e, w)}</b> <span class="tag est" title="From TomTom's hourly trip times and Open-Meteo's hourly rain, July 2026 (data/rain/README.md)">estimated</span>` +
+      `${w !== "dry" ? " · confidence low to moderate" : ""}. ` : "") +
+    `Only road speeds change; traffic and signals stay as they are (assumed).`;
+}
+function wxDay(d) {   // GET /weather?day= once per day
+  if (!apiUp) { wxDays[d] = null; return Promise.resolve(null); }
+  return wxReq[d] ||= get(`/weather?day=${encodeURIComponent(d)}`)
+    .then(x => (wxDays[d] = Array.isArray(x?.hours) && x.hours.length ? x : null))
+    .catch(e => { wxDays[d] = null; return null; });
+}
+function renderWx() {   // the chip next to the day and hour, and the rain strip under the hour sparkline
+  const d = dayId($("when").value), x = wxDays[d];
+  if (x === undefined) {
+    $("wx-chip").hidden = true; $("rain-strip").hidden = true;
+    wxDay(d).then(() => { if (dayId($("when").value) === d && wxDays[d] !== undefined) renderWx(); });
+    return;
+  }
+  renderWxChip(d, x); renderRainStrip(d, x);
+  if (!pickWeather) updateWeatherNote();
+}
+function renderWxChip(d, x) {   // "Fri 17 Jul 15:00 · Rain 2.9 mm · 25°C", "Rain on 42% of July days at 18:00 · 26°C"
+  const el = $("wx-chip"), hrs = x?.hours || [];
+  let html = "", wet = false, code = null;
+  if (pickHour != null) {
+    const s = hrs.find(q => q.hour === pickHour);
+    if (s && d === "july") {
+      wet = /rain|drizzle|shower|thunder/i.test(s.most_common_text || "");
+      html = `Rain on <b>${share(s.share_of_days_with_rain)}</b> of July days at ${hh(pickHour)}${s.temperature_c != null ? ` · ${Math.round(s.temperature_c)}°C` : ""}`;
+    } else if (s) {
+      code = s.weather_code; wet = isWet(null, s.rain_mm);
+      html = `${dayLabel(d)} ${hh(pickHour)} · <b>${esc(s.text)}${wet ? ` ${mmTxt(s.rain_mm)} mm` : ""}</b>${s.temperature_c != null ? ` · ${Math.round(s.temperature_c)}°C` : ""}`;
+    }
+  } else if (hrs.length) {
+    const day = hrs.filter(q => q.hour >= 6 && q.hour <= 22);
+    if (d === "july") {
+      const m = day.reduce((a, q) => a + q.share_of_days_with_rain, 0) / day.length;
+      html = `July, 06–23: rain in <b>${share(m)}</b> of hours`;
+    } else {
+      const tot = day.reduce((a, q) => a + (q.rain_mm || 0), 0), top = day.reduce((a, q) => (q.rain_mm > a.rain_mm ? q : a), day[0]);
+      wet = tot >= 0.1;
+      html = `${dayLabel(d)}, 06–23: <b>${wet ? `${mmTxt(tot)} mm of rain` : "dry"}</b>${wet && top ? `, most at ${hh(top.hour)} (${mmTxt(top.rain_mm)} mm)` : ""}`;
+    }
+  }
+  el.hidden = !html;
+  if (!html) { el.innerHTML = ""; return; }
+  el.classList.toggle("wet", wet);
+  el.innerHTML = `${wxIcon(code, wet)}<span>${html}</span><span class="wx-src">Open-Meteo</span>`;
+  el.title = `${x.label || "measured (Open-Meteo reanalysis)"}: ${x.source || "Open-Meteo"}. ${x.note || ""}`.trim();
+}
+function renderRainStrip(d, x) {   // 24 bars under the TomTom sparkline: mm of rain that day, or the share of July days with rain
+  const el = $("rain-strip"), hrs = x?.hours || [], july = d === "july";
+  el.hidden = $("hour-spark").hidden || hrs.length < 2;
+  if (el.hidden) { el.innerHTML = ""; return; }
+  const v = q => (july ? q.share_of_days_with_rain : q.rain_mm) || 0, max = july ? 1 : Math.max(2, ...hrs.map(v));   // 2 mm or more fills a bar
+  const bars = hrs.map(q => {
+    const ht = v(q) > 0 ? Math.max(1.5, v(q) / max * 15) : 0, ok = q.hour >= 6 && q.hour <= 22;
+    const tip = `${hourSpan(q.hour)}: ${july ? `rain on ${share(v(q))} of July days` : `${mmTxt(v(q))} mm, ${q.text}`} (Open-Meteo)`;
+    return `<g data-h="${q.hour}" class="${q.hour === pickHour ? "on" : ok ? "pick" : ""}"><title>${esc(tip)}</title>` +
+      `<rect class="trk" x="${q.hour * 10 + 1}" y="0" width="8" height="16"/><rect class="rbar" x="${q.hour * 10 + 1}" y="0" width="8" height="${ht.toFixed(1)}"/></g>`;
+  }).join("");
+  const day = hrs.filter(q => q.hour >= 6 && q.hour <= 22), top = day.reduce((a, q) => (v(q) > v(a) ? q : a), day[0]);
+  const tot = day.reduce((a, q) => a + v(q), 0);
+  el.innerHTML = `<svg viewBox="0 0 240 16" preserveAspectRatio="none" role="img" aria-label="Rain by hour">${bars}</svg>` +
+    `<div class="cap">${july ? `Rain by hour, share of July days with rain (Open-Meteo): most often at ${hh(top.hour)} (${share(v(top))}).`
+      : tot >= 0.1 ? `Rain by hour, ${dayLabel(d)} (Open-Meteo): ${mmTxt(tot)} mm from 06:00 to 23:00, most at ${hh(top.hour)}.` : `Rain by hour, ${dayLabel(d)} (Open-Meteo): dry from 06:00 to 23:00.`}</div>`;
+  el.querySelectorAll("g.pick, g.on").forEach(g => g.onclick = () => { if ($("hour").disabled) return; $("hour").value = g.dataset.h; $("hour").onchange(); });
+}
+function wxResultLine(r) {   // the run's weather what-if for the result line: name, estimate with its range, label
+  const w = runWeather(r); if (!w) return "";
+  const e = wxEstimate(w, r), mock = /MOCK_SIM/.test(r?.inputs?.weather?.note || "");
+  return `<br>Weather what-if: <b>${esc(wxName(w).toLowerCase())}</b>${e ? ` · expected trip time vs dry <b>${estTxt(e, w)}</b>` : ""} <span class="tag est">estimated</span>` +
+    (mock ? ` <span class="mid">(mock mode: not applied to these sample numbers)</span>` : "");
+}
+async function loadWxNow() {   // Live now: the weather at the corridor's midpoint; hidden when the API cannot get it (503)
+  if (!apiUp) { wxNow = null; renderWxNow(); return; }
+  try { wxNow = await get("/weather/now"); } catch (e) { wxNow = null; }
+  renderWxNow();
+}
+function renderWxNow() {   // "Clear sky · 27°C", "Light rain 0.8 mm/h · 24°C · rain like this adds about +4% to the trip"
+  const el = $("wx-now"), w = wxNow;
+  el.hidden = !w || (!w.text && w.temperature_c == null);
+  if (el.hidden) { el.innerHTML = ""; return; }
+  const wet = !!w.is_raining, eff = w.rain_effect;
+  el.classList.toggle("wet", wet);
+  el.innerHTML = wxIcon(w.weather_code, wet, w.is_day !== false) +
+    `<span>Weather now: <b>${esc(w.text || "–")}${wet && w.rain_mm_per_hour != null ? ` ${mmTxt(w.rain_mm_per_hour)} mm/h` : ""}</b>${w.temperature_c != null ? ` · ${Math.round(w.temperature_c)}°C` : ""}` +
+    (wet && eff && eff.trip_time_pct ? ` · rain like this adds about ${pctTxt(eff.trip_time_pct, 0)} to the trip <span class="tag est">estimated</span>` : "") + `</span>` +
+    `<span class="wx-src">modelled${w.stale && w.age_s ? `, ${Math.round(w.age_s / 60)} min old` : ""}</span>`;
+  el.title = `${w.label || "modelled (Open-Meteo forecast), not a rain gauge"}. ${w.source || ""}${w.location?.name ? `, at ${w.location.name}` : ""}${w.time ? `, ${w.time}` : ""}`;
+}
+
+// ---------- live junctions (TomTom Junction Analytics, GET /corridor/junctions/live) ----------
+// Accepts {junctions: [{junction_id|id, name, time, approaches: [...]}]}, a list of those, {j07: {...}}, or flat approach rows
+// ({junction_id, approach, delay_s, ...}, possibly several snapshots: the latest is shown, the last 60 min averaged).
+const num = v => (v === null || v === undefined || v === "" || isNaN(Number(v))) ? null : Number(v);
+function meanOf(x) {   // a 60-minute mean the API may send per approach or per junction
+  const o = x.mean_60min || x.mean_60m || x.last_60min || x.mean60 || x.avg_60min || x.mean_last_hour || x.mean;
+  if (o && typeof o === "object") return { delay_s: num(o.delay_s), usual_delay_s: num(o.usual_delay_s), queue_m: num(o.queue_m), volume_per_hour: num(o.volume_per_hour) };
+  const d = num(x.delay_s_60min ?? x.mean_delay_s ?? x.delay_s_mean ?? x.mean_60min_delay_s ?? x.avg_delay_s_60min);
+  return d == null ? null : { delay_s: d, queue_m: num(x.queue_m_60min ?? x.mean_queue_m ?? x.queue_m_mean) };
+}
+function approachOf(x) {
+  return { id: x.approach_id ?? null, name: x.approach || x.name || "approach", time: x.time || null, delay_s: num(x.delay_s), usual_delay_s: num(x.usual_delay_s),
+           queue_m: num(x.queue_m), volume_per_hour: num(x.volume_per_hour), mean: meanOf(x), label: x.label || "" };
+}
+function normLive(raw) {
+  let list = Array.isArray(raw) ? raw : raw && (raw.junctions || raw.approaches || raw.rows || raw.data || raw.items);
+  if (!list && raw && typeof raw === "object") list = Object.entries(raw).filter(([k, v]) => point(k) && v && typeof v === "object").map(([k, v]) => Array.isArray(v) ? v.map(a => ({ junction_id: k, ...a })) : { junction_id: k, ...v }).flat();
+  if (!Array.isArray(list)) return [];
+  const byId = {};
+  const idOf = x => { const id = x.junction_id ?? x.id; if (point(id)) return id; const nm = String(x.junction || x.name || "").toLowerCase(); return points.find(p => nm && p.name.toLowerCase().startsWith(nm))?.id; };
+  const jn = id => (byId[id] ||= { id, name: point(id)?.name || id, time: null, label: "", mean: null, rows: [] });
+  for (const x of list) {
+    if (!x || typeof x !== "object") continue;
+    const id = idOf(x); if (!id) continue;
+    const j = jn(id);
+    if (Array.isArray(x.approaches)) {
+      x.approaches.forEach(a => j.rows.push(approachOf({ time: x.time, label: x.label, ...a })));
+      j.time = x.time || j.time; j.label = x.label || j.label; j.mean = meanOf(x) || j.mean; j.age_s = num(x.age_s);
+    } else j.rows.push(approachOf(x));
+  }
+  return Object.values(byId).map(j => {
+    const times = j.rows.map(r => r.time).filter(Boolean).sort(), last = times[times.length - 1] || j.time;
+    let approaches = j.rows;
+    if (last && new Set(times).size > 1) {   // several snapshots: the latest per approach, plus a 60-minute mean if the API did not send one
+      const t1 = Date.parse(last), recent = j.rows.filter(r => r.time && t1 - Date.parse(r.time) <= 60 * 60000);
+      approaches = j.rows.filter(r => r.time === last).map(r => {
+        if (r.mean || r.id == null) return r;
+        const same = recent.filter(q => q.id === r.id && q.delay_s != null);
+        const avg = k => { const v = same.map(q => q[k]).filter(v => v != null); return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null; };
+        return same.length > 1 ? { ...r, mean: { delay_s: avg("delay_s"), queue_m: avg("queue_m"), usual_delay_s: avg("usual_delay_s") } } : r;
+      });
+    }
+    approaches = approaches.filter(a => a.delay_s != null);
+    return { id: j.id, name: j.name, time: last, age_s: j.age_s, label: j.label || approaches.find(a => a.label)?.label || "", mean: j.mean, approaches };
+  }).filter(j => j.approaches.length).sort((a, b) => points.findIndex(p => p.id === a.id) - points.findIndex(p => p.id === b.id));
+}
+const worst = j => [...j.approaches].sort((a, b) => (b.delay_s - a.delay_s) || ((b.queue_m || 0) - (a.queue_m || 0))).slice(0, 3);
+const hhmm = t => { const d = new Date(t); return isNaN(d) ? "" : d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }); };
+const fmtQ = m => m == null ? "–" : m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
+function delayClass(a) { const u = a.usual_delay_s ?? 0; return a.delay_s >= u + 15 ? "bad" : a.delay_s > u + 3 ? "mid" : "ok"; }
+async function loadLive() {
+  try { const raw = await get("/corridor/junctions/live"); live = normLive(raw); liveLabels = raw?.labels || {}; liveAt = new Date(); }
+  catch (e) {
+    if (!live || !e.status || [404, 405].includes(e.status)) live = null;   // endpoint not there (yet) or API down: hide the panel
+    else { $("live-note").innerHTML = `<span class="mid">Could not refresh (${e.status}); showing the last update.</span>`; return; }
+  }
+  if (mode === "live") loadGeometry();
+  renderLive();
+}
+// Approach shapes (GET /corridor/junctions/geometry): [{junction_id, approaches: [{approach_id, name, coordinates: [[lon, lat], ...]}]}],
+// each line ordered towards the junction. Matched to the live approaches by approach_id (else by name). 404: queues stay in the panel only.
+function normGeometry(raw) {
+  const list = Array.isArray(raw) ? raw : raw && (raw.junctions || raw.items || raw.data);
+  if (!Array.isArray(list)) return null;
+  const out = {};
+  for (const j of list) {
+    const id = j && (j.junction_id ?? j.id); if (!id || !Array.isArray(j.approaches)) continue;
+    const g = out[id] ||= { byId: {}, byName: {} };
+    for (const a of j.approaches) {
+      const c = (a.coordinates || a.geometry?.coordinates || []).filter(q => Array.isArray(q) && isFinite(q[0]) && isFinite(q[1]));
+      if (c.length < 2) continue;
+      if (a.approach_id != null) g.byId[String(a.approach_id)] = c;
+      if (a.name) g.byName[a.name] = c;
+    }
+  }
+  return Object.keys(out).length ? out : null;
+}
+async function loadGeometry() {
+  if (geometry !== undefined) return;
+  geometry = false;   // loading
+  try { geometry = normGeometry(await get("/corridor/junctions/geometry")); }
+  catch (e) { geometry = e.status && [404, 405, 501].includes(e.status) ? null : undefined; }   // API down: try again with the next live refresh
+  renderLive();
+}
+function cutTail(coords, m) {   // the last m metres of a line drawn towards the junction; short: the queue runs past the drawn approach
+  const out = [coords[coords.length - 1]];
+  let left = m;
+  for (let i = coords.length - 1; i > 0 && left > 0; i--) {
+    const a = coords[i], b = coords[i - 1], d = metres(a, b);
+    if (d >= left) { const t = left / d; out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); left = 0; break; }
+    out.push(b); left -= d;
+  }
+  return { path: out.reverse(), short: left > 1 };
+}
+function queueLines() {   // the measured queue on each live approach, drawn back from the junction along the road
+  if (!geometry || !live) return [];
+  const out = [];
+  for (const j of live) {
+    const g = geometry[j.id]; if (!g) continue;
+    for (const a of j.approaches) {
+      if (!(a.queue_m >= 5)) continue;
+      const c = (a.id != null && g.byId[String(a.id)]) || g.byName[a.name]; if (!c) continue;
+      const { path, short: beyond } = cutTail(c, a.queue_m);
+      if (path.length >= 2) out.push({ path, jid: j.id, name: a.name, queue_m: a.queue_m, delay_s: a.delay_s, usual_delay_s: a.usual_delay_s, beyond });
+    }
+  }
+  return out;
+}
+function renderLive() {
+  const has = !!(live && live.length);
+  updateMarkers();
+  $("live-link").hidden = !has;
+  if (has) {
+    $("live-link").innerHTML = `TomTom is reporting live from ${live.length} of these junctions right now: <button class="linkbtn" id="see-live">see Live now</button>`;
+    $("see-live").onclick = () => { setMode("live"); window.scrollTo(0, 0); };
+  }
+  $("live-empty").hidden = has;
+  $("geo-note").hidden = !has || geometry !== null;
+  $("geo-note").textContent = "Queues are listed per junction here; drawing them on the road needs the approach shapes (GET /corridor/junctions/geometry), not on this server yet.";
+  if (mode === "live") render();
+  if (!has) {
+    $("live-empty").textContent = apiUp ? "No live junction data right now: the API has no TomTom Junction Analytics feed (GET /corridor/junctions/live)." :
+      "API not running (`make dev`): live TomTom junction data comes through the API.";
+    $("live").innerHTML = ""; $("live-note").textContent = "";
+    return;
+  }
+  const nm = n => String(n).replace(/\bRoad\b/g, "Rd").replace(/\b(North|South|East|West) Bound\b/g, (m, d) => d[0] + "-bound");
+  $("live").innerHTML = live.map(j => {
+    const w = worst(j), calm = w.every(a => !a.delay_s && !a.queue_m), hr = w.some(a => a.mean && a.mean.delay_s != null);
+    return `<div class="lj" data-id="${j.id}"><div class="hd" title="Fly to this junction"><span>${pointLabel(j.id)} · ${esc(short(j.name))}</span>` +
+      `<small${j.age_s > 900 ? ' class="mid" title="No fresh data from TomTom for a while"' : ""}>${j.time ? "TomTom " + hhmm(j.time) : ""}${j.age_s > 900 ? `, ${Math.round(j.age_s / 60)} min old` : ""}</small></div>` +
+      (calm ? `<div class="calm ok">Flowing freely: no delay on any of ${j.approaches.length} approaches.</div>` :
+        `<table><tr><th>Worst approaches</th><th class="n">Delay</th><th class="n">Usual</th>${hr ? '<th class="n">Last hr</th>' : ""}<th class="n">Queue</th></tr>` +
+        w.map(a => `<tr class="ap" title="${esc(a.name)}: ${Math.round(a.delay_s)} s delay now${a.usual_delay_s != null ? `, usually ${Math.round(a.usual_delay_s)} s` : ""}">` +
+          `<td class="nm">${esc(nm(a.name))}</td><td class="n"><b class="${delayClass(a)}">${Math.round(a.delay_s)} s</b></td>` +
+          `<td class="n">${a.usual_delay_s != null ? Math.round(a.usual_delay_s) + " s" : "–"}</td>` +
+          `${hr ? `<td class="n">${a.mean && a.mean.delay_s != null ? Math.round(a.mean.delay_s) + " s" : "–"}</td>` : ""}<td class="n">${fmtQ(a.queue_m)}</td></tr>`).join("") + `</table>`) +
+      `${j.mean && j.mean.delay_s != null ? `<div class="calm muted">Last hour, whole junction: ${Math.round(j.mean.delay_s)} s average delay</div>` : ""}</div>`;
+  }).join("");
+  $("live").querySelectorAll(".lj .hd").forEach(el => el.onclick = () => flyToPoint(el.parentElement.dataset.id));
+  const est = live.some(j => /estimated/i.test(j.label)) || /estimated/i.test(liveLabels.queue_m || "");
+  $("live-note").innerHTML = `Delay per approach now vs usual, from TomTom Junction Analytics${est ? " (queue and volume estimated by TomTom)" : ""}. ` +
+    `Updated ${hhmm(liveAt)}, refreshes every ${Math.round(LIVE_MS / 1000)} s.`;
+}
+
+// ---------- 2 · change a junction ----------
+function fillJunctions() {
+  $("iv-j").innerHTML = points.filter(p => p.kind === "junction").map(p =>
+    `<option value="${p.id}"${existingFlyover(p.id) ? ` title="The main road already crosses here on the ${esc(existingFlyover(p.id))}"` : ""}>` +
+    `${pointLabel(p.id)} · ${esc(short(p.name))}${existingFlyover(p.id) ? " (flyover exists)" : ""}</option>`).join("");
+  if (point("j02")) $("iv-j").value = "j02";   // a ground-level signal (the main road crosses j03, j04, j06, j07, j10, j11 on flyovers)
+  syncPicker();
+}
+// A flyover or underpass where the main road is already on one would duplicate it; a signal change there does not touch
+// the main road. Said before simulating (the simulation still runs and its warning shows with the result).
+function existsNote(id, kind) {
+  const fly = existingFlyover(id), nm = short(point(id)?.name);
+  if (!fly) return "";
+  if (kind === "flyover" || kind === "underpass") return `The main road already crosses ${nm} on the ${fly}; this would duplicate it.`;
+  if (kind === "signal_retime") return `The main road passes over ${nm} on the ${fly}, so it meets no signal here; only side and turning traffic would see the change.`;
+  return "";
+}
+function syncPicker() {
+  showNanalButton();
+  const note = existsNote($("iv-j").value, $("iv-kind").value);
+  $("iv-exists").hidden = !note; $("iv-exists").textContent = note;
+}
+function shareText(v) { return `<b>${v}%</b> of green to the main road, ${100 - v}% to side roads`; }
+function fillParams() {
+  const kind = $("iv-kind").value;
+  $("iv-params").innerHTML = (PARAMS[kind] || []).map(c => c.range
+    ? `<label class="muted share">${c.label}: <span data-show="${c.k}">${shareText(c.def)}</span>` +
+      `<input type="range" data-k="${c.k}" data-scale="${c.scale}" min="${c.range[0]}" max="${c.range[1]}" step="${c.range[2]}" value="${c.def}" /></label>`
+    : `<label class="muted">${c.label} <select data-k="${c.k}">${c.values.map(v =>
+        `<option value="${v}" ${v === c.def ? "selected" : ""}>${c.names?.[v] ?? v + (c.unit || "")}</option>`).join("")}</select></label>`).join("");
+  $("iv-params").querySelectorAll("input[type=range]").forEach(r => r.oninput = () => { $("iv-params").querySelector(`[data-show="${r.dataset.k}"]`).innerHTML = shareText(Number(r.value)); });
+  $("iv-help").textContent = HELP[kind] || "";
+}
+function readParams() {
+  const params = {};
+  $("iv-params").querySelectorAll("[data-k]").forEach(el => {
+    if (el.value === "") return;   // "auto": the template decides
+    params[el.dataset.k] = Math.round(Number(el.value) * Number(el.dataset.scale || 1) * 100) / 100;
+  });
+  return params;
+}
+function showNanalButton() { $("iv-nanal").hidden = !NANAL_PAIR.includes($("iv-j").value); }
+$("iv-kind").onchange = () => { fillParams(); syncPicker(); };
+$("iv-j").onchange = () => { selected = $("iv-j").value; updateMarkers(); syncPicker(); };
+function sortIvs() { interventions.sort((a, b) => points.findIndex(p => p.id === a.junction_id) - points.findIndex(p => p.id === b.junction_id)); }
+const MERGE_NOTE = "Nanal Nagar and Rethibowli are only about 420 m apart, so one 1.2 km flyover over both replaces two separate flyovers.";
+function addIv(iv) {   // one of each kind per junction; adding again updates it. Returns a note to show, or "".
+  const same = interventions.findIndex(x => x.junction_id === iv.junction_id && x.kind === iv.kind);
+  if (same >= 0) interventions[same] = iv; else interventions.push(iv);
+  let note = "";
+  const fly = id => interventions.find(x => x.junction_id === id && x.kind === "flyover");
+  if (iv.kind === "flyover" && NANAL_PAIR.includes(iv.junction_id) && fly(NANAL_PAIR[0]) && fly(NANAL_PAIR[1])) {
+    const lanes = iv.params?.lanes || 2;
+    interventions = interventions.filter(x => !(x.kind === "flyover" && NANAL_PAIR.includes(x.junction_id)));
+    interventions.push({ junction_id: "j08", kind: "flyover", params: { lanes, length_m: 1200 } });
+    note = MERGE_NOTE;
+  }
+  sortIvs();
+  return note;
+}
+function setMergeNote(note) { $("iv-merge").hidden = !note; $("iv-merge").textContent = note; }
+function ivsChanged() { renderIvs(); updateMarkers(); renderJourney(); }
+$("iv-add").onclick = () => {
+  setMergeNote(addIv({ junction_id: $("iv-j").value, kind: $("iv-kind").value, params: readParams() }));
+  ivsChanged();
+};
+$("iv-nanal").onclick = () => {   // one long flyover in place of any flyover or underpass at either junction
+  interventions = interventions.filter(x => !(["flyover", "underpass"].includes(x.kind) && NANAL_PAIR.includes(x.junction_id)));
+  interventions.push(NANAL_FLYOVER()); sortIvs();
+  setMergeNote(MERGE_NOTE); ivsChanged();
+};
+function renderIvs() {
+  $("iv-list").innerHTML = interventions.length ? interventions.map((iv, i) =>
+    `<div class="iv"><span><b>${pointLabel(iv.junction_id)} · ${esc(short(point(iv.junction_id)?.name))}</b>: ${esc(ivText(iv))}</span><button class="ghost" data-i="${i}" title="Remove this change">✕</button></div>`).join("")
+    : `<small class="muted">No changes yet: today's roads.</small>`;
+  $("iv-list").querySelectorAll("button").forEach(b => b.onclick = () => { interventions.splice(Number(b.dataset.i), 1); setMergeNote(""); ivsChanged(); });
+}
+
+// ---------- quick demos ----------
+Object.keys(PRESETS).forEach(id => $(id).onclick = () => {
+  if (running) return;
+  interventions = JSON.parse(JSON.stringify(PRESETS[id])); sortIvs();
+  setMergeNote(id === "p-nanal" ? MERGE_NOTE : "");
+  const j = interventions[0].junction_id; $("iv-j").value = j; selected = j; syncPicker();
+  ivsChanged();
+  simulate(true);
+});
+
+// ---------- 3 · simulate ----------
+let busyTimer = null;
+function setRunning(on) {
+  running = on;
+  ["sim-today", "sim-changes", ...Object.keys(PRESETS)].forEach(b => $(b).disabled = on);
+  clearInterval(busyTimer);
+  $("busy").hidden = !on;
+  if (!on) return;
+  const t0 = Date.now(), show = () => { $("busy").innerHTML = `<span class="spin"></span>${RUN_MSG} · <b id="elapsed">${clock((Date.now() - t0) / 1000)}</b>`; };
+  show(); busyTimer = setInterval(show, 1000);
+}
+async function simulate(withChanges) {
+  if (running) return;
+  if (withChanges && !interventions.length) { $("run-note").innerHTML = `<span class="mid">Add at least one change in step 2 first.</span>`; return; }
+  const ivs = JSON.parse(JSON.stringify(interventions)), t0 = Date.now();
+  simKeyRun = JSON.stringify(simParams());
+  const what = (withChanges ? `with ${ivs.length} change${ivs.length > 1 ? "s" : ""}` : "today's roads") + (simParams().hour != null ? `, ${pickLabel()}` : "") +
+    (simParams().weather ? `, ${wxName(simParams().weather).toLowerCase()} (what-if)` : "");
+  $("status").textContent = `Simulating the corridor, ${what}${withChanges && !base ? " (and today's roads to compare)" : ""}…`;
+  $("run-note").textContent = "";
+  setRunning(true);
+  try {
+    const jobs = [];
+    if (!withChanges || !base) jobs.push(corridorRun([]).then(r => { base = r; }));
+    if (withChanges) jobs.push(corridorRun(ivs).then(r => { r._ivs = ivKey(ivs); changed = r; }));
+    await Promise.all(jobs);
+    const r = withChanges ? changed : base, took = (Date.now() - t0) / 1000;
+    setRunning(false);
+    showSource();
+    renderJourney(); renderJunctions(); renderWatch(); render();
+    $("status").textContent = `Corridor, ${what}: simulated${r.sample ? " (sample data)" : ""}${took >= 3 ? ` in ${clock(took)}` : ""}, now playing`;
+    const odd = r._fallback && withChanges && !(ivs.length === 1 && ivs[0].junction_id === "j07" && ivs[0].kind === "flyover");
+    $("run-note").innerHTML = `Simulated window: ${esc(r.time?.label || "calibrated peak")} · traffic input: <b>${esc(r.inputs?.label || "–")}</b>${r.inputs?.counts_source && r.inputs.counts_source !== r.inputs?.label ? ` (${esc(r.inputs.counts_source)})` : ""}` +
+      wxResultLine(r) + (odd ? `<br><span class="mid">The sample always shows a flyover at 7 · Tolichowki, whatever you chose.</span>` : "");
+    winPick = null; play(r);   // loads in the background; the panel stays usable
+  } catch (e) {
+    setRunning(false);
+    const msg = e.status ? `Simulation failed (HTTP ${e.status}): ${e.detail || e.message}` : `Simulation failed: ${e.message}`;
+    $("status").innerHTML = `<span class="bad">${esc(msg.slice(0, 220))}</span>`;
+    $("run-note").innerHTML = `<span class="bad">${esc(msg.slice(0, 300))}</span><br>Nothing was changed; the last results stay on screen.`;
+  }
+}
+function showSource() {
+  const fb = [base, changed].find(r => r && r._fallback), smp = [base, changed].some(r => r && r.sample);
+  $("src").innerHTML = smp ? `<div class="warn" style="background:var(--warn-bg);border-color:oklch(0.837 0.164 84 / .35)"><span class="tag sample" style="margin:0 6px 0 0">SAMPLE DATA</span>` +
+    `Corridor results are the sample file, not a simulation${fb ? ` (${fb._fallback})` : ""}.</div>` : "";
+}
+$("sim-today").onclick = () => simulate(false);
+$("sim-changes").onclick = () => simulate(true);
+
+// ---------- journey strip ----------
+function stripRow(title, tags, legs, max, opts = {}) {
+  const tot = opts.total ?? sumT(legs);
+  const blocks = legs.map((l, i) => {
+    const w = l.time_s / max * 100, d = opts.ref ? l.time_s - (opts.ref[i]?.time_s ?? l.time_s) : 0;
+    const tip = `${pointLabel(l.from_id)} ${short(l.from_name || point(l.from_id)?.name)} → ${pointLabel(l.to_id)} ${short(l.to_name || point(l.to_id)?.name)}: ` +
+      `${fmtMin(l.time_s)} min, ${(l.distance_m / 1000).toFixed(1)} km, ${Math.round(legSpeed(l))} km/h${opts.ref ? ` (${signed(mins(d))} min)` : ""}`;
+    return `<div class="leg${Math.abs(d) >= 30 ? " changed" : ""}" data-leg="${i}" title="${tip}" style="width:${w}%;background:rgb(${speedRGB(legSpeed(l))})">${w > 2.6 ? fmtMin(l.time_s) : ""}</div>`;
+  }).join("");
+  return `<div class="strip" data-strip="${opts.key}"><div class="name">${title}${tags}</div><div class="bar">${blocks}</div><div class="total">${Math.round(mins(tot))} min</div></div>`;
+}
+function renderJourney() {
+  const p = measured(), tt = p ? tomtom[p] || [] : [];
+  const rows = [];
+  if (base) rows.push({ key: "base", title: `${simDay(base)}, roads as they are`, tags: tagsFor(base), legs: base.journey.legs, total: base.journey.total_s });
+  if (tt.length) rows.push({ key: "tomtom", title: `Measured by TomTom, ${pickHour != null ? pickLabel() : periodShort(p)}`, tags: '<span class="tag real">REAL</span>', legs: tt });
+  if (changed) rows.push({ key: "changed", title: `${simDay(changed)}, with your changes`, tags: tagsFor(changed), legs: changed.journey.legs, total: changed.journey.total_s, ref: base && base.journey.legs });
+  const max = Math.max(...rows.map(r => Math.max(r.total ?? 0, sumT(r.legs))), 1);
+  let h = "";
+  rows.forEach((r, k) => {
+    h += stripRow(r.title, r.tags, r.legs, max, r);
+    if (k === 0) {   // where each junction falls on the first strip
+      let c = 0; const t = [`<span style="left:0%;transform:none" data-p="${r.legs[0]?.from_id}">A</span>`];
+      r.legs.forEach(l => { c += l.time_s; t.push(`<span style="left:${c / max * 100}%" data-p="${l.to_id}" title="${short(point(l.to_id)?.name || l.to_name)}">${pointLabel(l.to_id)}</span>`); });
+      h += `<div class="strip" style="margin-top:0"><div></div><div class="ticks">${t.join("")}</div><div></div></div>`;
+    }
+  });
+  $("strips").innerHTML = h;
+  $("strips").querySelectorAll(".leg").forEach(el => el.onclick = () => flyToLeg(Number(el.dataset.leg)));
+  $("strips").querySelectorAll(".ticks span").forEach(el => el.onclick = () => flyToPoint(el.dataset.p));
+  $("journey-tags").innerHTML = (base || changed) && [base, changed].some(r => r && r.sample) ? '<span class="tag sample">SAMPLE DATA</span>' : "";
+  renderDeltas(); renderTripFoot();
+  if (window.planner) planner.sync();   // 4 · decision: what can be sent for review
+}
+const runHour = r => num(r?.time?.hour ?? r?.hour ?? r?.requested?.hour);
+const runDay = r => r?.time?.day ?? r?.day ?? r?.requested?.day ?? null;
+function simDay(r) {   // "Simulated typical July day", "Simulated Wed 8 Jul, 18:00–19:00", "Simulated typical July day, heavy rain"
+  const h = runHour(r), d = runDay(r), day = /^\d{4}-\d{2}-\d{2}$/.test(d || "") ? dayLabel(d) : "typical July day", w = runWeather(r);
+  return `Simulated ${day}${h != null ? `, ${hourSpan(h)}` : ""}${w ? `, ${wxName(w).toLowerCase()}` : ""}`;
+}
+// Why the simulated and measured rows differ in length: our simulated route is a little shorter than TomTom's. Numbers from the
+// result (journey.distance_m, journey.tomtom_total_s: TomTom's speeds over our route) and GET /corridor/calibration tomtom_basis_detail.
+function tripBasis() {
+  const d = calib?.tomtom_basis_detail || {}, j = base?.journey || {};
+  const simKm = num(d.simulated_route_km) ?? (j.distance_m ? j.distance_m / 1000 : null);
+  const ttKm = num(d.tomtom_route_km) ?? ((tomtom[typical] || []).reduce((a, l) => a + l.distance_m, 0) / 1000 || null);
+  const ttSame = j.tomtom_total_s ? mins(j.tomtom_total_s) : num(d.calibration_tomtom_min);
+  return { simKm, ttKm, ttSame, simMin: base ? mins(base.journey.total_s) : null };
+}
+function renderTripFoot() {
+  const t = tripBasis(), km = x => x.toFixed(1);
+  if (t.simKm == null || base?.sample) { $("trip-foot").textContent = ""; return; }   // the sample's numbers are not our route
+  $("trip-foot").innerHTML = `Our simulated route is ${km(t.simKm)} km${t.ttKm ? ` (TomTom's: ${km(t.ttKm)} km)` : ""}.` +
+    (t.ttSame != null ? ` Over the same ${km(t.simKm)} km TomTom measured ${Math.round(t.ttSame)} min${t.simMin != null ? `; the simulation gives ${Math.round(t.simMin)} min` : ""}.` : "") +
+    (base ? " Compare the two simulated rows to see what a change does." : "");
+}
+function renderDeltas() {
+  if (!base) { $("deltas").innerHTML = `<small class="muted">Press “Simulate today” to simulate a typical July day on the roads as they are, then add changes and “Simulate with changes”.</small>`; return; }
+  if (!changed) {
+    $("deltas").innerHTML = base.sample ? `<small>Model ${Math.round(mins(base.journey.total_s))} min vs TomTom ${Math.round(mins(sumT(tomtom[measured()] || [])))} min (${esc(pickLabel())}).</small>` : "";
+    return;
+  }
+  const b = base.journey.total_s, c = changed.journey.total_s, dm = mins(c - b);
+  const ivIdx = (changed.interventions || []).map(iv => points.findIndex(p => p.id === iv.junction_id));
+  const diffs = changed.journey.legs.map((l, i) => {
+    const o = base.journey.legs.find(x => x.from_id === l.from_id && x.to_id === l.to_id) || base.journey.legs[i];
+    const fi = points.findIndex(p => p.id === l.from_id);
+    const up = ivIdx.filter(j => j <= fi && j >= 0);   // an intervention at or before the start of this leg
+    return { i, l, d: l.time_s - o.time_s, knock: up.length ? points[Math.max(...up)] : null };
+  });
+  const moved = diffs.filter(x => Math.abs(x.d) >= 6).sort((x, y) => Math.abs(y.d) - Math.abs(x.d)), same = diffs.length - moved.length;
+  const cls = dm < -0.05 ? "ok" : dm > 0.05 ? "bad" : "";
+  const stale = changed._ivs && changed._ivs !== ivKey(interventions) ? `<div class="mid" style="font-size:12px">Your list of changes was edited after this run: simulate again to update.</div>` : "";
+  $("deltas").innerHTML = `<div class="headline">Whole trip: <b>${Math.round(mins(b))} → ${Math.round(mins(c))} min, <span class="${cls}">${signed(dm)} min</span></b>${tagsFor(changed)}` +
+    ` <small>· with ${(changed.interventions || []).map(iv => `${ivText(iv).toLowerCase()} at ${short(point(iv.junction_id)?.name)}`).join("; ")}` +
+    `${runWeather(changed) ? `, both in ${esc(wxName(runWeather(changed)).toLowerCase())} (what-if)` : ""}</small></div>` + stale +
+    `<div id="run-warn">${warnBox("Warnings for this run", changed.warnings || [])}</div>` +
+    moved.map(x => `<span class="delta ${x.d > 0 ? "up" : "down"}" data-leg="${x.i}" title="${fmtMin(x.l.time_s - x.d)} → ${fmtMin(x.l.time_s)} min">` +
+      `${short(x.l.from_name || point(x.l.from_id)?.name)} → ${short(x.l.to_name || point(x.l.to_id)?.name)} <b>${signed(mins(x.d))} min</b>` +
+      `${x.d > 0 && x.knock ? ` · knock-on from ${pointLabel(x.knock.id)}` : ""}</span>`).join("") +
+    (same ? ` <small class="muted">${same} other leg${same > 1 ? "s" : ""} unchanged</small>` : "");
+  $("deltas").querySelectorAll(".delta").forEach(el => el.onclick = () => flyToLeg(Number(el.dataset.leg)));
+}
+
+// ---------- junction table ----------
+function renderJunctions() {
+  const r0 = base || changed;
+  if (!r0) return;
+  const one = (r, id) => r && r.junctions.find(j => j.id === id);
+  const ivAt = id => interventions.concat(changed ? changed.interventions || [] : []).find(iv => iv.junction_id === id);
+  const cell = (b, c, k, unit) => {
+    if (!b && !c) return "–";
+    if (!c || !b) return `${(c || b)[k]} ${unit}`;
+    const d = c[k] - b[k];
+    if (d === 0) return `${b[k]} ${unit} <span class="muted">(same)</span>`;
+    return `${b[k]} → ${c[k]} ${unit}<br><span class="d ${d < 0 ? "ok" : "bad"}">${signed(d, 0)} ${unit}</span>`;
+  };
+  const ids = points.filter(p => p.kind === "junction").map(p => p.id);
+  $("jt").innerHTML = `<table><tr><th>#</th><th>Junction</th><th>Avg delay${changed && base ? "<br>before → after" : ""}</th><th>Longest queue${changed && base ? "<br>before → after" : ""}</th></tr>` +
+    ids.map(id => { const b = one(base, id), c = one(changed, id), iv = ivAt(id);
+      return `<tr class="j${iv ? " has" : ""}" data-id="${id}"><td>${pointLabel(id)}</td><td>${short(point(id)?.name)}` +
+             `${existingFlyover(id) ? ` <span class="flytag" title="The main road crosses on the ${esc(existingFlyover(id))}">(flyover exists)</span>` : ""}${iv ? `<br><small>${ivText(iv)}</small>` : ""}</td>` +
+             `<td>${cell(b, c, "avg_delay_s", "s")}</td><td>${cell(b, c, "max_queue_m", "m")}</td></tr>`; }).join("") + `</table>`;
+  $("jt").querySelectorAll("tr.j").forEach(tr => tr.onclick = () => flyToPoint(tr.dataset.id));
+  const ws = [...new Set([...(base?.warnings || []), ...(changed?.warnings || [])])];
+  $("warnings").innerHTML = warnBox("Warnings", ws);
+}
+// A result's warnings in plain words: "j07 flyover: j07 already has a flyover: the corridor crosses ..." becomes
+// "7 · Tolichowki, flyover: already has a flyover. The corridor crosses ...". Escaped (warnings come from the server).
+function warnHtml(w) {
+  const named = s => s.replace(/\b(j\d\d)\b/g, (m, id) => point(id) ? `${pointLabel(id)} · ${short(point(id).name)}` : m);
+  const m = /^(j\d\d) ([a-z_]+): (.*)$/s.exec(String(w));
+  if (!m || !point(m[1])) return "⚠ " + esc(named(String(w)));
+  let rest = m[3].replace(new RegExp(`^${m[1]}\\s+`), "").replace(/^signal \d+: /, "at one of its signals, ").replace(/\bsignal \d{5,}\b/g, "a signal");
+  rest = rest.replace(/^([^:.;(]+): (\w)/, (x, a, c) => `${a}. ${c.toUpperCase()}`);
+  return `⚠ <b>${esc(named(m[1]))}, ${esc((KINDS[m[2]] || m[2]).toLowerCase())}:</b> ${esc(named(rest))}`;
+}
+const warnBox = (title, ws) => ws.length ? `<div class="warn"><b>${title}</b><ul>${ws.map(w => `<li>${warnHtml(w)}</li>`).join("")}</ul></div>` : "";
+
+// ---------- map ----------
+function addTrafficLayer() {
+  if (!cfg.tomtom_maps_key || map.getSource("tomtom-traffic")) return;
+  map.addSource("tomtom-traffic", { type: "raster", tiles: [TRAFFIC_TILES()], tileSize: 256, attribution: "© TomTom" });
+  map.addLayer({ id: "tomtom-traffic", type: "raster", source: "tomtom-traffic", paint: { "raster-opacity": 0.9 },
+                 layout: { visibility: trafficShown() ? "visible" : "none" } });
+}
+function addMarkers() {
+  points.forEach(p => {
+    const el = document.createElement("div");
+    el.className = "pin" + (p.kind === "end" ? " end" : ""); el.textContent = pointLabel(p.id); el.title = p.name; el.dataset.id = p.id;
+    el.onclick = e => { e.stopPropagation(); flyToPoint(p.id); };
+    markers[p.id] = new maplibregl.Marker({ element: el }).setLngLat([p.lon, p.lat]).addTo(map);
+  });
+  updateMarkers();
+}
+function updateMarkers() {
+  for (const [id, m] of Object.entries(markers)) {
+    const el = m.getElement(), lj = (live || []).find(j => j.id === id), w = lj && worst(lj)[0];
+    el.classList.toggle("has", mode === "july" && interventions.some(iv => iv.junction_id === id || (id === NANAL_PAIR[1] && coversBoth(iv))));
+    el.classList.toggle("sel", selected === id);
+    el.classList.toggle("live", !!lj);
+    el.classList.toggle("fly", !!existingFlyover(id));
+    if (w) { el.dataset.badge = `${Math.round(w.delay_s)} s`; el.dataset.sev = delayClass(w); }   // drawn in Live now only (CSS)
+    else { delete el.dataset.badge; delete el.dataset.sev; }
+    el.title = point(id)?.name + (existingFlyover(id) ? ` · flyover exists: the main road crosses on the ${existingFlyover(id)}` : "") +
+      (w && mode === "live" ? ` · live now: worst delay ${Math.round(w.delay_s)} s on ${w.name}${w.usual_delay_s != null ? ` (usually ${Math.round(w.usual_delay_s)} s)` : ""}` : "");
+  }
+}
+let popup = null;
+const VIEW_OFFSET = [65, -105];   // put the junction in the middle of the map area the panels leave free (left 400 px, right 270, bottom 250)
+const narrow = () => window.innerWidth <= 820;   // narrow screens: the panels sit below the map, nothing to keep clear of
+const pad = (desk) => narrow() ? 30 : desk;
+function flyToPoint(id) {
+  const p = point(id); if (!p) return;
+  selected = id; updateMarkers();
+  if (p.kind === "junction") { $("iv-j").value = id; syncPicker(); }
+  map.flyTo({ center: [p.lon, p.lat], zoom: 16.2, pitch: 58, bearing: -20, duration: 1800, essential: true, offset: narrow() ? [0, 0] : VIEW_OFFSET });
+  const sim = mode === "july", b = sim && base && base.junctions.find(j => j.id === id), c = sim && changed && changed.junctions.find(j => j.id === id);
+  const stat = (r, lab) => r ? `<br>${lab}: ${r.avg_delay_s} s delay, ${r.max_queue_m} m queue` : "";
+  const lj = !sim && (live || []).find(j => j.id === id), ws = lj ? worst(lj) : [];
+  const liveLine = ws.length ? ws.map((w, k) => `<br>${k ? "" : "Live now: "}<b class="${delayClass(w)}">${Math.round(w.delay_s)} s</b> delay${w.usual_delay_s != null ? ` (usual ${Math.round(w.usual_delay_s)} s)` : ""}, queue ${fmtQ(w.queue_m)} on ${esc(w.name)}`).join("") + ' <span class="tag real">REAL</span>' :
+    !sim ? "<br><span class='muted'>No live TomTom data for this junction.</span>" : "";
+  if (popup) popup.remove();
+  popup = new maplibregl.Popup({ offset: 16, closeButton: true }).setLngLat([p.lon, p.lat])
+    .setHTML(`<b>${pointLabel(id)} · ${esc(p.name)}</b>` +
+      `${existingFlyover(id) ? `<br><span class="flytag">Flyover exists: the main road crosses on the ${esc(existingFlyover(id))}</span>` : ""}${liveLine}${stat(b, "Roads as they are")}${stat(c, "With your changes")}${b || c ? ' <span class="tag sim">SIMULATED</span>' : ""}`).addTo(map);
+}
+function flyToLeg(i) {
+  const legs = (changed || base)?.journey.legs || tomtom[measured()] || [], l = legs[i]; if (!l) return;
+  const a = point(l.from_id), z = point(l.to_id); if (!a || !z) return;
+  selected = null; updateMarkers(); if (popup) popup.remove();
+  const path = legPaths?.[`${l.from_id}|${l.to_id}`] || [[a.lon, a.lat], [z.lon, z.lat]];
+  const xs = path.map(q => q[0]), ys = path.map(q => q[1]);
+  map.fitBounds([[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]],
+                { padding: { top: pad(80), bottom: pad(300), left: pad(430), right: pad(300) }, maxZoom: 16, pitch: 40, duration: 1400 });
+}
+function overview(animate = true) {
+  if (!map || !points.length) return;
+  const lons = points.map(p => p.lon), lats = points.map(p => p.lat);
+  map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+                { padding: { top: pad(60), bottom: pad(260), left: pad(420), right: pad(280) }, pitch: 0, bearing: 0, duration: animate ? 1200 : 0 });
+}
+function routeLegs() {   // what colours the route: the latest simulation, else TomTom for the chosen day
+  const r = changed || base, legs = r ? r.journey.legs : (tomtom[measured()] || []);
+  const by = r ? `${changed ? "the run with changes" : "today's simulation"}${r.sample ? " (sample)" : ""} (SIMULATED speeds)` : `TomTom, ${pickLabel()} (REAL speeds)`;
+  $("route-src").textContent = `Route coloured by ${by}. ${legPaths ? "Drawn on the real road, A → B." : "Straight lines between junctions (road shape not available yet)."}`;
+  return legs.map(l => {
+    const a = point(l.from_id), z = point(l.to_id), path = legPaths?.[`${l.from_id}|${l.to_id}`];
+    return path ? { path, kmh: legSpeed(l) } : a && z ? { path: [[a.lon, a.lat], [z.lon, z.lat]], kmh: legSpeed(l) } : null;
+  }).filter(Boolean);
+}
+
+// ---------- vehicles (C1 frames), same drawing as the YMCA page ----------
+function box(v) {
+  const [L, W] = SIZE[v.type] || SIZE.car, a = v.angle * Math.PI / 180;
+  const fx = Math.sin(a), fy = Math.cos(a), rx = Math.cos(a), ry = -Math.sin(a);
+  const mLat = 1 / 111320, mLon = 1 / (111320 * Math.cos(v.lat * Math.PI / 180)), z = v.z || 0;
+  return [[+1, +1], [+1, -1], [-1, -1], [-1, +1]].map(([s, t]) => {
+    const dx = s * fx * L / 2 + t * rx * W / 2, dy = s * fy * L / 2 + t * ry * W / 2;
+    return [v.lon + dx * mLon, v.lat + dy * mLat, z];
+  });
+}
+function roadColor(p) {
+  if (p.speed_kmh == null || !p.vehicles) return [160, 160, 160, 90];
+  const r = p.speed_kmh / Math.max(p.limit_kmh, 1);
+  return r >= 0.7 ? [53, 193, 119, 215] : r >= 0.45 ? [245, 136, 50, 225] : [226, 61, 39, 235];   // brand green / orange / red-orange
+}
+// Vehicles of the current frame, moved smoothly towards the next frame. `keep` filters first (only vehicles in view), so
+// interpolation and drawing cost stay small on real runs (thousands of vehicles over 21 km).
+let nextCache = { i: -1, map: null };
+function lerpVehicle(v, n, f) {
+  if (!n) return v;
+  const da = ((n.angle - v.angle + 540) % 360) - 180;
+  return { ...v, lon: v.lon + (n.lon - v.lon) * f, lat: v.lat + (n.lat - v.lat) * f, z: (v.z || 0) + ((n.z || 0) - (v.z || 0)) * f, angle: v.angle + da * f, speed: n.speed };
+}
+function nextMap(i) {
+  if (nextCache.i !== i) nextCache = { i, map: new Map(frames[Math.min(i + 1, frames.length - 1)].vehicles.map(v => [v.id, v])) };
+  return nextCache.map;
+}
+function currentVehicles(keep) {
+  if (!frames.length) return [];
+  const i = Math.min(Math.floor(pos), frames.length - 1), f = pos - i, a = frames[i];
+  const vs = keep ? a.vehicles.filter(keep) : a.vehicles;
+  if (f < 0.02 || i >= frames.length - 1) return vs;
+  const next = nextMap(i);
+  return vs.map(v => lerpVehicle(v, next.get(v.id), f));
+}
+function vehicleAt(id) {   // one vehicle (the followed test car), interpolated
+  if (!frames.length) return null;
+  const i = Math.min(Math.floor(pos), frames.length - 1), v = frames[i].vehicles.find(x => x.id === id);
+  return v && i < frames.length - 1 ? lerpVehicle(v, nextMap(i).get(id), pos - i) : v;
+}
+function inView() {   // a filter for what the camera can see (with a margin); null when the whole corridor is in view
+  const b = map.getBounds(), w = b.getEast() - b.getWest(), h = b.getNorth() - b.getSouth();
+  const W = b.getWest() - w * 0.25, E = b.getEast() + w * 0.25, S = b.getSouth() - h * 0.25, N = b.getNorth() + h * 0.25;
+  return v => v.lon > W && v.lon < E && v.lat > S && v.lat < N;
+}
+
+// ---------- flyovers and underpasses (drawn in 3D from the result's interventions) ----------
+// From the model roads when they carry it (structure edges with z, one per direction, written by the sim), else along the
+// route line: the structure's length (default 400 m: ramps ~200 m either side), ramps rising to 6 m over the first and last 150 m.
+const DECK_Z = 6;   // the templates' deck height (sim/templates/corridor.py)
+let structCache = { key: null, data: [] };
+function routeLine() {   // the whole A -> B line with cumulative metres, and where each corridor point sits on it
+  const line = [], at = {};
+  points.forEach((p, k) => {
+    at[p.id] = Math.max(0, line.length - 1);   // each point is the first vertex of its leg
+    if (k === points.length - 1) { if (!line.length) line.push([p.lon, p.lat]); return; }
+    const seg = legPaths?.[`${p.id}|${points[k + 1].id}`] || [[p.lon, p.lat], [points[k + 1].lon, points[k + 1].lat]];
+    if (!line.length) line.push(seg[0]);
+    line.push(...seg.slice(1));
+  });
+  const cum = [0]; for (let i = 1; i < line.length; i++) cum.push(cum[i - 1] + metres(line[i - 1], line[i]));
+  return { line, cum, at };
+}
+function subLine(R, from, to, step = 15) {   // points every `step` m between two distances along the route, with their distance
+  const out = [], total = R.cum[R.cum.length - 1];
+  from = Math.max(0, from); to = Math.min(total, to);
+  let i = 0;
+  for (let d = from; d <= to + 0.01; d += step) {
+    const dd = Math.min(d, to);
+    while (i < R.cum.length - 2 && R.cum[i + 1] < dd) i++;
+    const seg = R.cum[i + 1] - R.cum[i] || 1, t = Math.max(0, Math.min(1, (dd - R.cum[i]) / seg)), a = R.line[i], b = R.line[i + 1] || a;
+    out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, dd]);
+    if (dd >= to) break;
+  }
+  return out;
+}
+function densify(path, step = 15) {   // a vertex every ~15 m, so ramps are smooth and piers spread along the deck
+  const out = [path[0]];
+  for (let i = 1; i < path.length; i++) {
+    const a = path[i - 1], b = path[i], n = Math.max(1, Math.round(metres(a, b) / step));
+    for (let k = 1; k <= n; k++) out.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n, a[2] + (b[2] - a[2]) * k / n]);
+  }
+  return out;
+}
+const notBuilt = (r, id) => (r?.warnings || []).some(w => new RegExp(`^${id}\\b.*(already has a flyover|nothing built)`).test(String(w)));
+function structures(r) {
+  const ivs = (r?.interventions || []).filter(iv => iv.kind === "flyover" || iv.kind === "underpass");
+  const key = r ? `${r.run_id}|${ivKey(ivs)}|${!!legPaths}|${roads ? roads.length : 0}` : null;
+  if (structCache.key === key) return structCache.data;
+  const data = [];
+  const decks = ivs.length ? (roads || []).filter(f => f.properties?.structure) : [];
+  for (const f of decks) {   // the structures the simulation built, exactly where its vehicles drive (heights included)
+    const kind = f.properties.structure, z0 = kind === "underpass" ? -DECK_Z : DECK_Z;
+    data.push({ kind, junction_id: f.properties.junction_id, lanes: f.properties.lanes || 2, oneWay: true,
+                path: densify(f.geometry.coordinates.map(c => [c[0], c[1], c[2] ?? z0])), length_m: null });
+  }
+  if (ivs.length && !decks.length && !(roads && roads.some(f => f.properties?.flyover || f.geometry?.coordinates?.some(c => Math.abs(c[2] || 0) > 1)))) {
+    const R = routeLine();
+    for (const iv of ivs) {
+      if (notBuilt(r, iv.junction_id)) continue;   // a flyover already there: the simulation built nothing, so draw nothing
+      const jd = R.cum[R.at[iv.junction_id]]; if (jd == null) continue;
+      let mid = jd;
+      if (coversBoth(iv)) mid = (jd + R.cum[R.at[NANAL_PAIR[1]]]) / 2;   // one flyover over Nanal Nagar and Rethibowli
+      const len = Math.max(200, Number(iv.params?.length_m) || 400), ramp = Math.min(150, len * 0.3), sign = iv.kind === "underpass" ? -1 : 1;
+      const pts = subLine(R, mid - len / 2, mid + len / 2), s0 = pts[0]?.[2] ?? 0, s1 = pts[pts.length - 1]?.[2] ?? 0;
+      const path = pts.map(([x, y, d]) => [x, y, sign * DECK_Z * Math.max(0, Math.min(1, Math.min(d - s0, s1 - d) / ramp))]);
+      data.push({ kind: iv.kind, junction_id: iv.junction_id, lanes: Number(iv.params?.lanes) || 2, path, length_m: Math.round(s1 - s0) });
+    }
+  }
+  structCache = { key, data };
+  return data;
+}
+
+// ---------- 3D buildings, loaded per corridor point when it comes into view ----------
+const buildings = {};            // point id -> features ([] when there are none), or "loading"
+const BLD_DEFAULT_H = 9;
+const bldHeight = p => num(p?.height) ?? num(p?.render_height_m) ?? (num(p?.num_floors) ? num(p.num_floors) * 3.2 : BLD_DEFAULT_H);
+function bldPolys(fc) {   // features -> one item per polygon with its height
+  const out = [];
+  for (const f of fc?.features || []) {
+    const g = f.geometry; if (!g) continue;
+    const polys = g.type === "Polygon" ? [g.coordinates] : g.type === "MultiPolygon" ? g.coordinates : [];
+    polys.forEach(rings => out.push({ polygon: rings, h: bldHeight(f.properties) }));
+  }
+  return out;
+}
+async function loadBuildings(id) {
+  buildings[id] = "loading";
+  let fc = null;
+  try { fc = await get(`/corridor/buildings/${id}`); }
+  catch (e) { try { const r = await fetch(`../data/corridor/buildings/${id}.geojson`); if (r.ok) fc = await r.json(); } catch (e2) { /* none */ } }
+  buildings[id] = bldPolys(fc); bldCache = null;
+  bldNote(); render();
+}
+function buildingsInView() {
+  if (!map || map.getZoom() < 14 || !$("t-buildings").checked) return;
+  const keep = inView();
+  points.filter(p => !buildings[p.id] && keep({ lon: p.lon, lat: p.lat })).forEach(p => loadBuildings(p.id));
+}
+let bldCache = null;   // same array between loads, so deck.gl does not re-upload the buildings every frame
+function bldData() { return bldCache ||= Object.values(buildings).filter(Array.isArray).flat(); }
+function bldNote() {
+  const done = Object.entries(buildings).filter(([, v]) => Array.isArray(v)), n = done.reduce((s, [, v]) => s + v.length, 0);
+  $("bld-note").textContent = !done.length ? "3D buildings load when you zoom in to a junction." :
+    n ? `${n.toLocaleString("en-IN")} buildings around ${done.filter(([, v]) => v.length).map(([id]) => pointLabel(id)).join(", ")} (footprints: Overture Maps; heights mostly assumed from footprint size).` :
+    "No building outlines for this part of the corridor yet.";
+}
+
+// ---------- camera: orbit, follow a car, ride a test car's whole trip ----------
+let orbiting = false, lastOrbit = 0, following = null, followBearing = null;
+let probeList = null;   // GET /runs/{run_id}/probes: the test cars' whole trips [{id, direction, depart_s, arrive_s, total_s, points}]; null: not on this server
+const probeCache = {};
+let ride = null;        // {probe, t, inWin}: riding one test car from Lingampally to Lakdikapul
+let tOffset = 0;        // seconds to add to a frame's t to get the time since the simulation started
+const FOLLOW_RGB = [255, 252, 254];   // the followed car: brand white, stands out from every vehicle colour
+const isProbe = id => String(id).startsWith("probe_");
+const probeName = id => String(id).replace(/^probe_/, "").replace(/_/g, "-");
+const DIR_NAME = { fwd: "towards Lakdikapul", rev: "towards Lingampally" };
+const TYPE_NAME = { two_wheeler: "Two-wheeler", car: "Car", auto: "Auto", bus: "Bus", truck: "Truck" };
+const volOf = r => Number(r?.inputs?.volume_scale ?? 1);
+function setOrbit(on) { orbiting = on; $("orbit").textContent = on ? "Stop orbit" : "Orbit"; if (on) { setFollow(false); stopRide(); } }
+const probes = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.vehicles.filter(v => String(v.id).startsWith("probe_fwd")) : []; };
+const anyProbe = () => frames.some(f => f.vehicles.some(v => String(v.id).startsWith("probe_fwd")));
+function setFollow(on) {   // the quick button: the test car furthest back (towards Lingampally), so it has the longest drive ahead
+  if (on) {
+    const p = probes().sort((a, b) => a.lon - b.lon)[0];
+    if (!p) { $("playinfo").textContent = "No test car on the road at this moment: press Play and try again."; on = false; }
+    else return startFollow(p.id);
+  }
+  following = null; followUI(); render();
+}
+function startFollow(id) {   // any vehicle in the recorded frames, test car or not
+  if (mode !== "july" || !frames.length) return;
+  stopRide();
+  following = id; followBearing = map.getBearing(); setOrbit(false);
+  if (!playing) $("play").click();
+  followUI(); followTick(); render();
+}
+function followUI() {
+  const on = !!(following || ride);
+  $("follow").textContent = following ? "Stop following" : "Follow a test car";
+  $("follow-card").hidden = !on;
+  if (!on) $("follow-card").innerHTML = "";
+  const want = ride ? ride.probe.id : following || "";
+  $("follow-pick").value = [...$("follow-pick").options].some(o => o.value === want) ? want : "";
+  $("ride").textContent = ride ? "Stop the ride" : "Ride the whole trip";
+}
+function camera(v) {
+  const da = ((v.angle - followBearing + 540) % 360) - 180;
+  followBearing += da * 0.08;
+  map.jumpTo({ center: [v.lon, v.lat], zoom: Math.max(map.getZoom(), 16.5), pitch: 60, bearing: followBearing });
+}
+let followLast = null;   // the followed vehicle's last position, to hand over when it leaves the recorded frames
+function handOver(last) {   // the model runs the corridor in sections, each with its own vehicles: carry on with the nearest one like it
+  const probe = isProbe(last.id), d = q => metres([q.lon, q.lat], [last.lon, last.lat]);
+  const near = currentVehicles().filter(x => x.id !== last.id && (probe ? isProbe(x.id) : x.type === last.type) && d(x) < (probe ? 400 : 80)).sort((a, b) => d(a) - d(b))[0];
+  return near || (probe ? probes()[0] : null);
+}
+function followTick() {
+  if (!following || ride) return;
+  let v = vehicleAt(following);
+  if (!v && followLast && followLast.id === following) { const n = handOver(followLast); if (n) { following = n.id; v = n; followUI(); } }
+  if (!v) { $("playinfo").textContent = "That vehicle left the recorded stretch (or the recorded minutes): pick another one."; following = null; followLast = null; followUI(); return; }
+  followLast = v;
+  camera(v);
+  $("follow-card").innerHTML = carCard(v, frameNowS());
+  $("playinfo").textContent = `Following ${carName(v.id, v.type)}`;
+}
+// where a car is on the corridor: the nearest point of the A -> B line, its leg, how far along, how far off it, which way it drives
+let routeCache = null;
+function routeR() { if (!routeCache || routeCache.lp !== legPaths) routeCache = { lp: legPaths, R: routeLine() }; return routeCache.R; }
+function locate(v) {
+  const R = routeR(); let best = null;
+  for (let i = 0; i < R.line.length - 1; i++) { const [q, d] = project([v.lon, v.lat], R.line[i], R.line[i + 1]); if (!best || d < best.d) best = { i, q, d }; }
+  if (!best) return null;
+  const along = R.cum[best.i] + metres(R.line[best.i], best.q);
+  let leg = 0; for (let n = 0; n < points.length - 1; n++) if (R.cum[R.at[points[n].id]] <= along + 0.01) leg = n;
+  const a = R.line[best.i], b = R.line[best.i + 1] || a, road = (Math.atan2((b[0] - a[0]) * Math.cos(a[1] * Math.PI / 180), b[1] - a[1]) * 180 / Math.PI + 360) % 360;
+  const rev = v.angle != null && Math.abs(((v.angle - road + 540) % 360) - 180) > 90;
+  return { leg, along, off: best.d, rev };
+}
+function paceFromA(loc) {   // minutes from Lingampally to this point at the run's simulated leg times
+  const legs = playingRun?.journey?.legs; if (!legs?.length) return null;
+  const R = routeR(), k = loc.leg, s0 = R.cum[R.at[points[k].id]], s1 = R.cum[R.at[points[k + 1].id]];
+  const frac = s1 > s0 ? Math.max(0, Math.min(1, (loc.along - s0) / (s1 - s0))) : 0;
+  return (legs.slice(0, k).reduce((s, l) => s + l.time_s, 0) + frac * (legs[k]?.time_s || 0)) / 60;
+}
+function nearestJunction(v) {
+  return points.filter(p => p.kind === "junction").map(p => [p, metres([v.lon, v.lat], [p.lon, p.lat])]).sort((a, b) => a[1] - b[1])[0] || [null, Infinity];
+}
+function onStructure(v) {   // "on the Shaikpet Flyover", "on the new flyover at Nanal Nagar jn", ...
+  const z = v.z || 0; if (Math.abs(z) <= 1) return "";
+  const [j, d] = nearestJunction(v), near = j && d < 1500;
+  if (z < -1) return near ? `in the underpass at ${short(j.name)}` : "in an underpass";
+  if (near && existingFlyover(j.id)) return `on the ${existingFlyover(j.id)}`;
+  const iv = near && (playingRun?.interventions || []).find(x => x.kind === "flyover" && (x.junction_id === j.id || (coversBoth(x) && NANAL_PAIR.includes(j.id))));
+  return iv ? `on the new flyover at ${short(point(iv.junction_id)?.name)}` : "on a flyover";
+}
+const carName = (id, type) => isProbe(id) || (probeList || []).some(p => p.id === id) ? `test car ${probeName(id)}` : `${(TYPE_NAME[type] || "vehicle").toLowerCase()} ${id}`;
+function carCard(v, tNow) {   // Test car fwd-3 · 34 km/h · stretch Tolichowki → Nanal Nagar · 23 min since Lingampally · on the Shaikpet Flyover
+  const pr = ride && ride.probe.id === v.id ? ride.probe : (probeList || []).find(p => p.id === v.id);
+  const loc = locate(v), rev = pr ? pr.direction === "rev" : /(^|_)rev/.test(String(v.id)) || (!isProbe(v.id) && !!loc?.rev);
+  const nm = carName(v.id, v.type), bits = [`<b>${esc(nm[0].toUpperCase() + nm.slice(1))}</b>`, `${Math.round((v.speed || 0) * 3.6)} km/h`];
+  if (loc && loc.off < 80) {
+    const a = short(points[loc.leg].name), b = short(points[loc.leg + 1]?.name);
+    bits.push(`stretch ${esc(rev ? `${b} → ${a}` : `${a} → ${b}`)}`);
+    if (pr && pr.depart_s != null) bits.push(`${Math.max(0, Math.round((tNow - pr.depart_s) / 60))} min since ${rev ? "Lakdikapul" : "Lingampally"}`);
+    else if (!rev) { const m = paceFromA(loc); if (m != null) bits.push(`≈ ${Math.round(m)} min from Lingampally at the simulated pace`); }
+  } else if (loc) bits.push(`on a side road near ${esc(short(nearestJunction(v)[0]?.name))}`);
+  const st = onStructure(v); if (st) bits.push(esc(st));
+  return bits.join(" · ") + ' <span class="tag sim">SIMULATED</span>';
+}
+function trailOf(id) {   // the followed car's last ~50 s, from the recorded frames
+  const i = Math.min(Math.floor(pos), frames.length - 1), key = `${id}|${i}|${frames.length}`;
+  if (trailOf.key !== key) {
+    const path = [];
+    for (let k = Math.max(0, i - 12); k <= i; k++) { const v = frames[k]?.vehicles.find(x => x.id === id); if (v) path.push([v.lon, v.lat, (v.z || 0) + 0.6]); }
+    trailOf.key = key; trailOf.path = path;
+  }
+  return trailOf.path;
+}
+function focusCar() {   // the highlighted car: the ride's test car, or the followed vehicle
+  if (ride) {
+    const v = probeAt(ride.probe, ride.t); if (!v) return null;
+    const trail = ride.probe.points.filter(q => q.t >= ride.t - 90 && q.t <= ride.t).map(q => [q.lon, q.lat, (q.z || 0) + 0.6]);
+    return { v, trail: [...trail, [v.lon, v.lat, (v.z || 0) + 0.6]] };
+  }
+  if (!following) return null;
+  const v = vehicleAt(following); if (!v) return null;
+  return { v, trail: [...trailOf(following), [v.lon, v.lat, (v.z || 0) + 0.6]] };
+}
+
+// ---------- ride a test car's whole trip (GET /runs/{run_id}/probes) ----------
+function heading(P, i) {   // compass bearing from point i to the next point it moved to
+  for (let k = i + 1; k < P.length && k < i + 30; k++) {
+    const a = P[i], b = P[k];
+    if (metres([a.lon, a.lat], [b.lon, b.lat]) > 2) return (Math.atan2((b.lon - a.lon) * Math.cos(a.lat * Math.PI / 180), b.lat - a.lat) * 180 / Math.PI + 360) % 360;
+  }
+  return 0;
+}
+function probeAt(pr, t) {   // the test car at time t on its track, interpolated
+  const P = pr.points, n = P.length; if (!n) return null;
+  const at = (q, k, extra = {}) => ({ id: pr.id, type: "car", lon: q.lon, lat: q.lat, z: q.z || 0, speed: q.speed || 0, leg: q.leg, angle: heading(P, Math.max(0, Math.min(k, n - 2))), ...extra });
+  if (t <= P[0].t) return at(P[0], 0);
+  if (t >= P[n - 1].t) return at(P[n - 1], n - 2);
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (P[mid].t <= t) lo = mid; else hi = mid; }
+  const a = P[lo], b = P[hi], f = (t - a.t) / Math.max(1e-6, b.t - a.t);
+  return at(a, lo, { lon: a.lon + (b.lon - a.lon) * f, lat: a.lat + (b.lat - a.lat) * f, z: (a.z || 0) + ((b.z || 0) - (a.z || 0)) * f, speed: (a.speed || 0) + ((b.speed || 0) - (a.speed || 0)) * f });
+}
+async function loadProbes(r) {
+  let list = probeCache[r.run_id];
+  if (list === undefined) {
+    try {
+      const raw = await get(`/runs/${encodeURIComponent(r.run_id)}/probes`), arr = Array.isArray(raw) ? raw : raw?.probes || raw?.items || [];
+      list = arr.filter(p => p && p.id != null && Array.isArray(p.points) && p.points.length >= 2)
+                .map(p => ({ ...p, direction: p.direction || (/rev/.test(String(p.id)) ? "rev" : "fwd"), points: [...p.points].sort((a, b) => a.t - b.t) }));
+      if (!list.length) list = null;
+    } catch (e) { list = null; }   // 404: not on this server yet, the ride is hidden
+    probeCache[r.run_id] = list;
+  }
+  if (playingRun !== r) return;
+  probeList = list;
+  $("ride-row").hidden = !probeList;
+  fillPicker();
+}
+function framesProbes() {   // test cars in the recorded frames: id -> first time seen (s since the start)
+  const m = new Map();
+  for (const f of frames) for (const v of f.vehicles) if (isProbe(v.id) && !m.has(v.id)) m.set(v.id, f.t + tOffset);
+  return m;
+}
+function fillPicker() {
+  const opts = [], seen = new Set();
+  for (const p of probeList || []) {
+    seen.add(p.id);
+    opts.push([p.id, `${probeName(p.id)} · ${DIR_NAME[p.direction] || p.direction} · leaves minute ${Math.round((p.depart_s ?? p.points[0].t) / 60)}`]);
+  }
+  for (const [id, t] of framesProbes()) if (!seen.has(id)) opts.push([id, `${probeName(id)} · ${DIR_NAME[/(^|_)rev/.test(id) ? "rev" : "fwd"]} · on the road at minute ${Math.floor(t / 60)}`]);
+  $("follow-pick").innerHTML = `<option value="">${opts.length ? `Test cars (${opts.length})…` : "No test cars in this run"}</option>` + opts.map(([id, t]) => `<option value="${esc(id)}">${esc(t)}</option>`).join("");
+  $("follow-pick").disabled = !opts.length;
+  $("follow-pick").title = opts.length ? "Follow one of the model's test cars (direction, when it set off)" : "No test cars in this run";
+  followUI();
+}
+$("follow-pick").onchange = () => {
+  const id = $("follow-pick").value;
+  if (!id) { stopRide(); setFollow(false); return; }
+  const k = frames.findIndex(f => f.vehicles.some(v => v.id === id));
+  if (k >= 0) {   // in the recorded minutes: jump to where it first shows if it is not on the road now
+    if (!vehicleAt(id)) { pos = k; $("scrub").value = k; showClock(); }
+    startFollow(id);
+  } else if ((probeList || []).some(p => p.id === id)) startRide(id);   // outside the recorded minutes: ride its whole trip
+};
+function startRide(id) {
+  const L = probeList || [];
+  const pr = L.find(p => p.id === id) || L.find(p => p.id === $("follow-pick").value) || L.find(p => p.id === following) || L.find(p => p.direction !== "rev") || L[0];
+  if (!pr || mode !== "july") return;
+  playing = false; $("play").textContent = "▶ Play"; following = null; setOrbit(false);
+  ride = { probe: pr, t: pr.depart_s ?? pr.points[0].t, inWin: false };
+  followBearing = map.getBearing(); lastTick = 0;
+  const ws = warmS(playingRun), w = frames.length ? [Math.floor((frames[0].t + tOffset - ws) / 60), Math.ceil((frames[frames.length - 1].t + tOffset - ws) / 60)] : null;
+  $("ride-note").hidden = false;
+  $("ride-note").innerHTML = `Riding test car ${[esc(probeName(pr.id)), DIR_NAME[pr.direction]].filter(Boolean).join(" ")}: its whole simulated trip${pr.total_s ? `, ${Math.round(pr.total_s / 60)} min` : ""}. ` +
+    (w ? `Other traffic is shown only while the ride is inside the recorded window (minutes ${w[0]}–${w[1]}); outside it the test car drives alone on the map.` : "No other traffic was recorded for this run.");
+  followUI(); rideTick(); render();
+}
+function stopRide(arrived) {
+  if (!ride) return;
+  const pr = ride.probe; ride = null;
+  $("ride-note").hidden = !arrived;
+  if (arrived) $("ride-note").textContent = `Test car ${probeName(pr.id)} arrived at ${pr.direction === "rev" ? "Lingampally" : "Lakdikapul"}${pr.total_s ? ` after ${Math.round(pr.total_s / 60)} min` : ""}.`;
+  followUI(); showClock(); render();
+}
+function rideTick() {
+  const v = probeAt(ride.probe, ride.t); if (!v) return;
+  if (frames.length) {   // other traffic only inside the recorded minutes
+    const t0 = frames[0].t + tOffset, t1 = frames[frames.length - 1].t + tOffset;
+    ride.inWin = ride.t >= t0 && ride.t <= t1;
+    if (ride.inWin) { pos = Math.min(frames.length - 1, (ride.t - t0) / frameStep()); $("scrub").value = Math.floor(pos); }
+  }
+  camera(v);
+  $("follow-card").innerHTML = carCard(v, ride.t);
+  $("clock").textContent = `${simDay(playingRun)} · ${simMinTxt(ride.t)} · riding at ${$("ride-speed").value}×` +
+    (ride.inWin ? " · other traffic shown (recorded window)" : " · outside the recorded window: no other traffic");
+}
+$("ride").onclick = () => { if (ride) stopRide(); else startRide(); };
+
+// ---------- the recorded window ("Watch from minute") and the hour ----------
+const fwin = r => { const w = r?.frames_window; return w && isFinite(w.from_s) && isFinite(w.to_s) ? w : null; };
+// the warm-up before the measured period (from_s counts from the simulation start, from_min from the measured period's start):
+// the clock, the ride note and "Recorded: minutes …" all count minutes of the measured period
+const warmS = r => { const w = fwin(r); return w && w.from_min != null ? Math.max(0, w.from_s - w.from_min * 60) : 0; };
+const simMinTxt = s => { const m = Math.floor((s - warmS(playingRun)) / 60); return m < 0 ? "warm-up, before the simulated period" : `minute ${m} of the simulated period`; };
+// minutes of the measured period; the API's from_s/to_s count from the simulation start (warm-up included)
+const winFrom = w => w.from_min != null ? Math.round(w.from_min) : Math.round(w.from_s / 60);
+const winTo = w => w.from_min != null && w.minutes != null ? Math.round(w.from_min + w.minutes) : Math.round(w.to_s / 60);
+const frameNowS = () => { const f = frames[Math.min(Math.floor(pos), frames.length - 1)]; return f ? f.t + tOffset : 0; };
+const winCache = {};   // "<run key>|<from minute>" -> the same run, recorded from that minute
+const runKey = r => `${ivKey(r.interventions || [])}|${volOf(r)}|${runDay(r) ?? ""}|${runHour(r) ?? ""}|${runWeather(r) ?? ""}`;
+let winBusy = false, winPick = null;
+function renderWindow() {
+  const r = playingRun, w = fwin(r);
+  $("win-box").hidden = !w || !(w.sim_minutes_total > 5);
+  if ($("win-box").hidden) return;
+  const max = Math.max(0, Math.floor(w.sim_minutes_total - 5)), from = winFrom(w);
+  winCache[`${runKey(r)}|${from}`] ||= r;
+  $("win").max = max;
+  if (!winBusy) { $("win").value = Math.min(from, max); $("win-val").textContent = $("win").value; }
+  $("win-note").innerHTML = `Recorded: minutes ${from}–${winTo(w)} of the ${Math.round(w.sim_minutes_total)} simulated. Pick another start to record 5 minutes from there: the same run, so the results stay identical.`;
+}
+$("win").oninput = () => { $("win-val").textContent = $("win").value; };
+$("win").onchange = () => watchFrom(Number($("win").value));
+async function watchFrom(m) {
+  const r = playingRun, w = fwin(r); if (!r || !w || winBusy) return;
+  winPick = m;
+  const key = `${runKey(r)}|${m}`;
+  if (winFrom(w) === m) return;
+  if (winCache[key]) return play(winCache[key]);
+  winBusy = true;
+  const t0 = Date.now(), show = () => { $("win-busy").innerHTML = `<span class="spin"></span>Recording minutes ${m}–${m + 5} of this run (usually 30–60 s) · <b id="win-el">${clock((Date.now() - t0) / 1000)}</b>`; };
+  $("win-busy").hidden = false; show();
+  const timer = setInterval(show, 1000);
+  $("win").disabled = true;
+  let err = "";
+  try {
+    const x = await post("/corridor/runs", { interventions: r.interventions || [], volume_scale: volOf(r), frames_from_min: m, frames_minutes: 5, ...runParams(r) });
+    const xw = fwin(x);
+    if (!xw || winFrom(xw) !== m) throw new Error("this API does not record another window yet");
+    x._ivs = r._ivs; winCache[key] = x;
+    if (playingRun === r) play(x);
+  } catch (e) { err = `Could not record minutes ${m}–${m + 5}: ${e.status ? `HTTP ${e.status} ` : ""}${e.detail || e.message}`; winPick = null; }
+  finally {
+    winBusy = false; clearInterval(timer); $("win-busy").hidden = true; $("win").disabled = false;
+    renderWindow();
+    if (err) $("win-note").innerHTML = `<span class="bad">${esc(err.slice(0, 220))}</span>`;
+  }
+}
+function watchRun(r) {   // Watch today / with changes: keep the minute picked with the slider
+  const w = fwin(r);
+  if (winPick == null || !w || Math.round(w.from_s / 60) === winPick) return play(r);
+  const hit = winCache[`${runKey(r)}|${winPick}`];
+  if (hit) return play(hit);
+  const m = winPick; play(r); watchFrom(m);
+}
+function fillHours() {   // 06:00-07:00 .. 22:00-23:00
+  $("hour").innerHTML = `<option value="">All day</option>` + Array.from({ length: 17 }, (_, i) => i + 6).map(h => `<option value="${h}">${hourSpan(h)}</option>`).join("");
+  setHourOk(hourOk);
+}
+function setHourOk(ok) {   // usable once the API simulates hours, or once GET /corridor has hourly TomTom periods (then the measured row only)
+  hourOk = ok;
+  const hourly = Object.keys(tomtom).some(isHourly), on = !!ok || hourly;
+  $("hour").disabled = !on;
+  if (!on && pickHour != null) { pickHour = null; $("hour").value = ""; }
+  $("hour-box").title = ok ? "The hour sets the measured (TomTom) row and the simulation" : on ? "The hour sets the measured (TomTom) row; the simulation is still the typical July day" : "hourly TomTom data arriving tonight";
+  $("hour-note").textContent = on ? "" : "Hour: hourly TomTom data arriving tonight.";
+  updateWhenNote();
+}
+async function probeHour() {   // does the API take `hour` yet? GET /corridor says so (sim.hours); older APIs: try once
+  if (Array.isArray(corridor?.sim?.hours)) return setHourOk(corridor.sim.hours.includes(8));
+  const KEY = `cr.hour.${API}`;
+  try { const c = JSON.parse(localStorage.getItem(KEY) || "null"); if (c && Date.now() - c.at < 30 * 60000) return setHourOk(!!c.ok); } catch (e) { /* no storage */ }
+  let ok = null;
+  try { const r = await post("/corridor/runs", { interventions: [], volume_scale: 1.0, day: "july", hour: 8 }); ok = runHour(r) === 8; }   // an API that ignores `hour` answers without it
+  catch (e) { if (e.status && e.status < 500 && ![404, 405].includes(e.status)) ok = false; }   // 422 "hourly data not available yet"
+  if (ok === null) return;   // API down or no corridor runs: ask again next time
+  try { localStorage.setItem(KEY, JSON.stringify({ ok, at: Date.now() })); } catch (e) { /* no storage */ }
+  setHourOk(ok);
+}
+
+function render() {
+  if (!overlay) return;
+  const layers = [], near = map.getZoom() >= 14, night = $("t-night").checked, sim = mode === "july";
+  if (buildings && $("t-buildings").checked && near) layers.push(new deck.PolygonLayer({
+    id: "buildings", data: bldData(), extruded: true, wireframe: false, opacity: 0.6,
+    getPolygon: d => d.polygon, getElevation: d => d.h, getFillColor: night ? [74, 74, 74] : [214, 208, 196], material: { ambient: 0.5, diffuse: 0.6 },
+    updateTriggers: { getFillColor: night },
+  }));
+  if ($("t-route").checked) layers.push(new deck.PathLayer({   // Live now: just where our route runs (TomTom's live layer shows the speeds)
+    id: "route", data: routeLegs(), widthUnits: "pixels", getWidth: sim ? 7 : 3, capRounded: true, jointRounded: true, opacity: sim ? (near ? (legPaths ? 0.55 : 0.35) : 0.85) : 0.6,
+    getPath: d => d.path, getColor: d => sim ? [...speedRGB(d.kmh), 220] : [201, 201, 201, 170], updateTriggers: { getColor: [base, changed, $("when").value, pickHour, mode] },
+  }));
+  if (!sim) {   // Live now: the measured queues on the road, nothing simulated
+    const q = $("t-queues").checked ? queueLines() : [];
+    if (q.length) {
+      layers.push(new deck.PathLayer({ id: "live-queues-casing", data: q, widthUnits: "pixels", getWidth: 11, capRounded: true, jointRounded: true, getPath: d => d.path, getColor: [7, 9, 13, 235] }));
+      layers.push(new deck.PathLayer({
+        id: "live-queues", data: q, widthUnits: "pixels", getWidth: 6, capRounded: true, jointRounded: true, getPath: d => d.path, getColor: [226, 61, 39, 250], pickable: true,
+        onHover: ({ object: o }) => { $("queue-info").innerHTML = o ? `Queue now: <b>${fmtQ(o.queue_m)}</b>${o.beyond ? " (longer than the road drawn)" : ""} on ${esc(o.name)} into ${esc(short(point(o.jid)?.name))}, ` +
+          `${Math.round(o.delay_s)} s delay${o.usual_delay_s != null ? ` (usual ${Math.round(o.usual_delay_s)} s)` : ""} <span class="tag real">REAL</span>` : ""; },
+      }));
+    }
+    overlay.setProps({ layers, effects: lighting(night) });
+    return;
+  }
+  if (roads && $("t-roads").checked) layers.push(new deck.PathLayer({
+    id: "roads", data: roads.filter(f => !f.properties?.structure), widthUnits: "meters", widthMinPixels: 2, capRounded: true, jointRounded: true, opacity: 0.8,
+    getPath: f => f.geometry.coordinates.map(c => [c[0], c[1], c[2] != null ? c[2] : f.properties.flyover ? DECK_Z : 0.3]),
+    getWidth: f => (f.properties.lanes || 2) * 3.2, getColor: f => roadColor(f.properties),
+  }));
+  const st = structures(playingRun || changed);
+  if (st.length) {
+    layers.push(new deck.PathLayer({
+      id: "structures", data: st, widthUnits: "meters", widthMinPixels: 3, capRounded: false, jointRounded: true, billboard: false,
+      getPath: d => d.path, getWidth: d => d.lanes * (d.oneWay ? 1 : 2) * 3.5 + 1.5, getColor: d => d.kind === "underpass" ? [70, 70, 78, 230] : [168, 166, 160, 240],
+      pickable: true, onHover: ({ object }) => { if (object) $("playinfo").textContent = `${KINDS[object.kind]} at ${short(point(object.junction_id)?.name)}: ${object.length_m} m, ${object.lanes} lanes each way (drawn from the plan)`; },
+    }));
+    if (near) layers.push(new deck.ColumnLayer({   // piers under the deck
+      id: "piers", data: st.filter(d => d.kind === "flyover").flatMap(d => d.path.filter((q, i) => i % 3 === 1 && q[2] > 2)),
+      diskResolution: 8, radius: 1.1, extruded: true, getPosition: q => [q[0], q[1], 0], getElevation: q => q[2] - 0.4, getFillColor: [140, 138, 132],
+    }));
+  }
+  const fc = focusCar(), hl = ride ? null : following;
+  if ($("t-vehicles").checked && frames.length && (!ride || ride.inWin)) {   // a ride outside the recorded minutes: the test car alone
+    const keepRide = ride ? v => v.id !== ride.probe.id : null, inv = near ? inView() : null;
+    const keep = keepRide && inv ? v => keepRide(v) && inv(v) : keepRide || inv;
+    if (near) layers.push(new deck.PolygonLayer({
+      id: "vehicles", data: currentVehicles(keep), extruded: true, getPolygon: box, getElevation: v => (SIZE[v.type] || SIZE.car)[2],
+      getFillColor: v => v.id === hl ? FOLLOW_RGB : COLORS[v.type] || [0, 0, 0], getLineColor: [0, 0, 0, 0], material: { ambient: 0.45, diffuse: 0.7, shininess: 20 },
+      updateTriggers: { getPolygon: pos, getFillColor: hl }, pickable: true,
+      onHover: ({ object }) => { if (!following && !ride) $("playinfo").textContent = object ? `${object.type} ${object.id} · ${(object.speed * 3.6).toFixed(0)} km/h · click to follow it` : ""; },
+    }));
+    else layers.push(new deck.ScatterplotLayer({   // whole-corridor view: a dot per vehicle, too small for boxes
+      id: "vehicle-dots", data: currentVehicles(keep), radiusUnits: "pixels", getRadius: v => v.id === hl ? 6 : 2, getPosition: v => [v.lon, v.lat, v.z || 0],
+      getFillColor: v => v.id === hl ? [...FOLLOW_RGB, 255] : [...(COLORS[v.type] || [0, 0, 0]), 220], updateTriggers: { getPosition: pos, getRadius: hl, getFillColor: hl },
+      pickable: true,
+    }));
+  }
+  if (fc) {   // the followed car: a short trail, a halo, and (riding) the car itself
+    layers.push(new deck.PathLayer({ id: "follow-trail", data: [{ path: fc.trail }], widthUnits: "pixels", getWidth: 4, capRounded: true, jointRounded: true,
+      getPath: d => d.path, getColor: [...FOLLOW_RGB, 200], updateTriggers: { getPath: [pos, ride && ride.t] } }));
+    layers.push(new deck.ScatterplotLayer({ id: "follow-halo", data: [fc.v], radiusUnits: "meters", getRadius: 7, radiusMinPixels: 9, stroked: true, filled: true,
+      getFillColor: [...FOLLOW_RGB, 60], getLineColor: [...FOLLOW_RGB, 255], lineWidthUnits: "pixels", getLineWidth: 2, getPosition: v => [v.lon, v.lat, (v.z || 0) + 0.2],
+      updateTriggers: { getPosition: [pos, ride && ride.t] } }));
+    if (ride) layers.push(new deck.PolygonLayer({ id: "ride-car", data: [fc.v], extruded: true, getPolygon: box, getElevation: SIZE.car[2], getFillColor: FOLLOW_RGB,
+      material: { ambient: 0.5, diffuse: 0.7 }, updateTriggers: { getPolygon: ride.t } }));
+  }
+  overlay.setProps({ layers, effects: lighting(night) });
+}
+function lighting(night) {
+  return [new deck.LightingEffect({ ambient: new deck.AmbientLight({ intensity: night ? 0.7 : 1.1 }),
+    sun: new deck.DirectionalLight({ color: night ? [160, 180, 230] : [255, 250, 240], intensity: night ? 0.9 : 1.6, direction: [-1, -2, -3] }) })];
+}
+function frameStep() { return frames.length > 1 ? Math.max(0.1, frames[1].t - frames[0].t) : 1; }
+function tick(ts) {
+  if (ride && mode === "july") {
+    const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
+    ride.t += Math.min(dt, 0.25) * Number($("ride-speed").value);
+    const end = ride.probe.arrive_s ?? ride.probe.points[ride.probe.points.length - 1].t;
+    if (ride.t >= end) { ride.t = end; rideTick(); stopRide(true); }
+    else { rideTick(); render(); }
+  } else if (playing && frames.length && mode === "july") {
+    const dt = lastTick ? (ts - lastTick) / 1000 : 0; lastTick = ts;
+    pos += dt * Number($("speed").value) / frameStep();   // 1× = real time, whatever the frame interval (real runs: ~2 s)
+    if (pos >= frames.length - 1) { pos = frames.length - 1; playing = false; $("play").textContent = "▶ Play"; }
+    $("scrub").value = Math.floor(pos);
+    showClock();
+    followTick();
+    render();
+  } else lastTick = ts;
+  if (orbiting) { const now = performance.now(); if (lastOrbit) map.setBearing(map.getBearing() + (now - lastOrbit) / 1000 * 6); lastOrbit = now; } else lastOrbit = 0;   // 6 degrees a second
+  requestAnimationFrame(tick);
+}
+function showClock() {   // minutes since the simulation started (no clock time: the run is a typical July day, not a particular hour)
+  if (ride) return;
+  const f = frames[Math.floor(pos)]; if (!f) return;
+  $("clock").textContent = `${simDay(playingRun)} · ${simMinTxt(f.t + tOffset)} · ${f.vehicles.length} vehicles`;
+}
+function renderWatch() {
+  $("watch").innerHTML = (base ? `<button class="ghost" id="watch-base">Watch roads as they are</button>` : "") + (changed ? `<button class="ghost" id="watch-changed">Watch with changes</button>` : "");
+  if (base) $("watch-base").onclick = () => watchRun(base);
+  if (changed) $("watch-changed").onclick = () => watchRun(changed);
+}
+async function play(r) {
+  playingRun = r;
+  stopRide(); probeList = null; $("ride-row").hidden = true; $("ride-note").hidden = true; tOffset = 0;
+  frames = []; nextCache = { i: -1, map: null }; setFollow(false); $("follow").disabled = true; roads = null; pos = 0; playing = false; $("play").textContent = "▶ Play"; $("play").disabled = true; $("scrub").disabled = true; $("scrub").max = 0; $("clock").textContent = "—";
+  fillPicker(); renderWindow();
+  if (stream) { stream.onmessage = null; stream.onclose = null; stream.close(); stream = null; }
+  if (r.sample && !r.frames_path) { render(); $("playinfo").textContent = "No vehicle playback for sample data: it comes with the real corridor simulation."; return; }
+  if (r.roads_path !== null) { try { roads = (await get(`/runs/${r.run_id}/roads`)).features; } catch (e) { roads = null; } }
+  if (playingRun !== r) return;
+  render();
+  loadProbes(r);
+  $("playinfo").textContent = "Loading vehicle positions…";
+  let flown = false;
+  await new Promise(resolve => {
+    const ws = stream = new WebSocket(API.replace("http", "ws") + `/stream/${r.run_id}`);
+    ws.onmessage = e => {
+      if (stream !== ws) return;
+      const fr = JSON.parse(e.data); frames.push(fr);
+      if (frames.length === 1) {   // frames count from the simulation start, or (some APIs) from the recorded window's start
+        const w = fwin(r); tOffset = w && fr.t < w.from_s - 2 * (w.step_s || 4) ? w.from_s - fr.t : 0;
+        $("scrub").disabled = false; $("play").disabled = false; showClock();
+      }
+      if ($("follow").disabled && fr.vehicles.some(v => String(v.id).startsWith("probe_fwd"))) { $("follow").disabled = false; $("follow").title = "The camera rides along with one of the model's test cars"; }
+      $("scrub").max = frames.length - 1;
+      if (frames.length % 50 === 0) $("playinfo").textContent = `${frames.length} frames loaded…`;
+    };
+    ws.onclose = resolve; ws.onerror = resolve;
+    setTimeout(() => {
+      if (stream !== ws || !frames.length || mode !== "july" || ride) return;
+      playing = true; $("play").textContent = "❚❚ Pause";
+      if (!flown && map.getZoom() < 14 && !following) { flown = true; flyToPoint(focusJunction(r)); }   // vehicles are too small to see from the corridor overview
+    }, 1500);
+  });
+  if (playingRun !== r) return;
+  if (!following && !ride) $("playinfo").textContent = frames.length ? `${frames.length} frames · ${r.variant_id}` : "No vehicle positions for this run.";
+  $("follow").disabled = !anyProbe(); $("follow").title = anyProbe() ? "The camera rides along with one of the model's test cars" : "No test cars in this run";
+  fillPicker();
+}
+function focusJunction(r) {   // first changed junction, else the one with the longest queue
+  if (r.interventions && r.interventions.length) return r.interventions[0].junction_id;
+  return [...r.junctions].sort((a, b) => b.max_queue_m - a.max_queue_m)[0]?.id || "j07";
+}
+
+// ---------- controls ----------
+$("play").onclick = () => { playing = !playing; $("play").textContent = playing ? "❚❚ Pause" : "▶ Play"; lastTick = 0; };
+$("scrub").oninput = e => { pos = Number(e.target.value); showClock(); render(); };
+["t-route", "t-roads", "t-vehicles"].forEach(id => $(id).onchange = render);
+$("t-buildings").onchange = () => { buildingsInView(); render(); };
+$("t-night").onchange = e => { if (cfg.tomtom_maps_key) map.setStyle(STYLE(e.target.checked), { diff: false }); render(); };
+$("orbit").onclick = () => setOrbit(!orbiting);
+$("follow").onclick = () => setFollow(!following);
+$("ride-speed").onchange = () => { if (ride) rideTick(); };
+$("t-traffic").onchange = () => { trafficTouched = true; trafficLayer(); };
+$("t-queues").onchange = render;
+function resetView() {   // "Whole corridor", the Reset view pill and the R key (viewguard.js): nothing moves the camera, the whole corridor
+  stopRide(); setFollow(false); setOrbit(false); selected = null; updateMarkers(); if (popup) popup.remove(); overview(true);
+}
+$("overview").onclick = resetView;
+init();
+crView.init({ reset: resetView, escape: () => { if (ride) stopRide(); if (following) setFollow(false); if (orbiting) setOrbit(false); },
+              panels: [{ id: "left", label: "controls" }, { id: "right", label: "layers" }, { id: "journey", label: "trip" }], above: "#journey", right: 12 });
+</script>
+<script src="md.js"></script>
+<script src="planner.js"></script>
+</body>
+</html>

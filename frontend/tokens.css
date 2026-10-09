@@ -1,0 +1,49 @@
+/* Terascope AI design tokens (brand: https://www.terascope.live/). Owner: Frontend.
+   Shared by every page (content pages get it through app.css; map pages link it directly) and by nav.js.
+   Brand charcoal, Montserrat, red-orange CTA. Data meaning, the same on every screen:
+   REAL / measured = brand blue · SIMULATED = brand orange · with your changes = brand yellow · better = brand green · worse = brand red-orange.
+   Text tints (--good, --bad, --tx-3) are lighter versions of the brand hues so small text passes WCAG AA on the charcoal. */
+@font-face { font-family: "Montserrat"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("vendor/fonts/montserrat-latin.woff2") format("woff2"); }
+:root {
+  color-scheme: dark;
+  /* brand palette (exact values from the site) */
+  --t-bg: oklch(0.26 0 0); --t-bg-deep: oklch(0.225 0 0); --t-white: oklch(0.994 0.004 340); --t-muted: oklch(0.835 0 0);
+  --t-subtle: oklch(0.51 0 0); --t-line: oklch(0.38 0 0);
+  --t-red: oklch(0.605 0.205 31); --t-orange: oklch(0.733 0.163 54); --t-blue: oklch(0.714 0.143 255);
+  --t-yellow: oklch(0.837 0.164 84); --t-green: oklch(0.546 0.145 155);
+  /* surfaces */
+  --bg: var(--t-bg); --bg-2: var(--t-bg-deep); --surface: oklch(0.29 0 0); --surface-2: oklch(0.32 0 0);
+  --glass: oklch(0.26 0 0 / .78); --glass-strong: oklch(0.225 0 0 / .9);
+  --blur: blur(16px) saturate(120%);
+  --line: oklch(0.38 0 0 / .75); --line-2: oklch(0.5 0 0 / .6);
+  --hi: inset 0 1px 0 oklch(1 0 0 / .05);
+  --paper: var(--t-white); --paper-tx: oklch(0.26 0 0); --paper-muted: oklch(0.45 0 0);   /* light marketing cards */
+  /* text */
+  --tx: var(--t-white); --tx-2: var(--t-muted); --tx-3: oklch(0.66 0 0);
+  /* brand roles */
+  --brand: var(--t-red); --cta: var(--t-red); --accent: var(--t-orange);
+  /* data meaning */
+  --real: var(--t-blue); --real-bg: oklch(0.714 0.143 255 / .14); --real-line: oklch(0.714 0.143 255 / .45);
+  --sim: var(--t-orange); --sim-bg: oklch(0.733 0.163 54 / .14); --sim-line: oklch(0.733 0.163 54 / .45);
+  --chg: var(--t-yellow); --chg-bg: oklch(0.837 0.164 84 / .13); --chg-line: oklch(0.837 0.164 84 / .45);
+  --good: oklch(0.72 0.16 155); --good-fill: var(--t-green); --good-bg: oklch(0.546 0.145 155 / .18);
+  --bad: oklch(0.70 0.18 31); --bad-fill: var(--t-red); --bad-bg: oklch(0.605 0.205 31 / .16);
+  --warn: var(--t-yellow); --warn-bg: oklch(0.837 0.164 84 / .12);
+  --neutral: var(--t-muted);
+  /* map speed ramp: brand green / orange / red-orange */
+  --fast: var(--t-green); --mid-speed: var(--t-orange); --slow: var(--t-red);
+  /* scale */
+  --r-sm: 7px; --r: 10px; --r-lg: 14px; --r-xl: 18px; --pill: 999px;
+  --sh: 0 12px 36px -12px oklch(0 0 0 / .7), 0 2px 6px oklch(0 0 0 / .35);
+  --f: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: var(--f);                                   /* numbers use Montserrat with tabular figures */
+  --code: ui-monospace, SFMono-Regular, Menlo, monospace;   /* only for fingerprints and ids */
+  /* legacy names used by older page styles */
+  --ink: var(--tx); --soft: oklch(1 0 0 / .04); --blue: var(--t-blue); --muted: var(--tx-2); --ok: var(--good); --mid: var(--warn);
+}
+body { font-variant-numeric: tabular-nums; }
+@media print {
+  :root { color-scheme: light; --bg: #fff; --bg-2: #fff; --surface: #fff; --surface-2: #fff; --glass: #fff; --glass-strong: #fff;
+    --line: #ddd; --line-2: #ccc; --tx: #111; --tx-2: #444; --tx-3: #666; --real: #1d5fb3; --sim: #b35a12; --chg: #8a6a00;
+    --good: #0a6b3a; --bad: #b3261e; --warn: #8a6a00; --sh: none; --hi: none; }
+}

@@ -1,4 +1,4 @@
-"""Widen edges listed in an .edg.xml patch and let netconvert recompute their lane connections.
+"""Apply numLanes, width and speed from an .edg.xml patch and let netconvert recompute lane connections.
 
 Patching a built network directly keeps its old connections, so a new third lane would lead nowhere.
 Instead: export the network as plain XML, set numLanes/width on the listed edges, drop every connection
@@ -18,8 +18,9 @@ with tempfile.TemporaryDirectory() as tmp:
         if e.get("id") in widen:
             for lane in list(e.findall("lane")):
                 e.remove(lane)  # per-lane overrides would pin the old lane count
-            e.set("numLanes", widen[e.get("id")].get("numLanes"))
-            e.set("width", widen[e.get("id")].get("width"))
+            for attr in ("numLanes", "width", "speed"):
+                if widen[e.get("id")].get(attr):
+                    e.set(attr, widen[e.get("id")].get(attr))
     edg.write(f"{prefix}.edg.xml")
     con = ET.parse(f"{prefix}.con.xml"); root = con.getroot()
     # netconvert computes no further connections for an edge that has any loaded connection, so clear ALL

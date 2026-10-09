@@ -1,28 +1,30 @@
-"""Run the same baseline traffic through several networks and compare (Scenarios / Simulation).
+"""Run the same traffic through several options and compare them (Scenarios / Simulation).
 
-Usage (repo root, inside .venv): python sim/scripts/compare_variants.py [net.xml ...]
-Default: baseline vs sim/out/ymca_flyover.net.xml (build it with python sim/templates/flyover.py).
-Prints trips done, stuck vehicles, teleports, average speed, time lost per trip, vehicles on the flyover,
-and speeds on the landing roads (the lane-drop check).
+Usage (repo root, inside .venv):
+    python sim/scripts/compare_variants.py                       # baseline vs the 3-lane 400 m flyover
+    python sim/scripts/compare_variants.py '{"variant_id":"flyover_2lane","template":"flyover","params":{"lanes":2}}' ...
+    python sim/scripts/compare_variants.py --scale 0.8 ...       # C2 volume_scale (1.0 = today's calibrated traffic)
 """
-import subprocess, sys, re, xml.etree.ElementTree as ET
-sys.path.insert(0, "sim/scripts")
-def run(net, scale, tag):
-    subprocess.run([sys.executable, "sim/scripts/build_demand.py", "--scale", str(scale)], check=True, capture_output=True)
-    open("sim/out/cmp.add.xml", "w").write(f'<additional><edgeData id="h" file="{tag}.edgedata.xml" begin="600" end="4200"/></additional>')
-    p = subprocess.run(["sumo", "-n", net, "-r", "sim/demand/ymca_baseline.rou.xml", "-a", "sim/out/cmp.add.xml", "--lateral-resolution", "0.3",
-                        "--end", "4200", "--no-step-log", "--duration-log.statistics", "--time-to-teleport", "300", "--seed", "42",
-                        "--tripinfo-output", f"sim/out/{tag}.tripinfo.xml"], capture_output=True, text=True)
-    s = dict(re.findall(r"\n (Inserted|Running|Waiting|Teleports|Speed|TimeLoss): ([0-9.]+)", p.stdout + p.stderr))
-    trips = list(ET.parse(f"sim/out/{tag}.tripinfo.xml").getroot().iter("tripinfo"))
-    ed = {e.get("id"): e for e in ET.parse(f"sim/out/{tag}.edgedata.xml").getroot().iter("edge")}
-    fly = sum(int(float(ed[e].get("entered", 0))) for e in ed if e.startswith("flyover_"))
-    land = {e: round(float(ed[e].get("speed", 0)) * 3.6, 1) for e in ed if e.startswith(("28110319#0", "-313328846#10")) and ed[e].get("speed")}
-    return {"done": len(trips), "running+waiting": int(s.get("Running", 0)) + int(s.get("Waiting", 0)), "teleports": s.get("Teleports", "0"),
-            "avg km/h": round(float(s.get("Speed", 0)) * 3.6, 1), "time lost per trip s": round(float(s.get("TimeLoss", 0))), "on flyover": fly, "landing road km/h": land}
-if __name__ == "__main__":
-    nets = sys.argv[1:] or ["sim/networks/ymca.net.xml", "sim/out/ymca_flyover.net.xml"]
-    for scale in (0.9, 1.0):
-        for net in nets:
-            tag = net.split("/")[-1].replace(".net.xml", "")
-            print(f"scale {scale} {tag:14}", run(net, scale, f"{tag}{scale}"), flush=True)
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import runner  # noqa: E402
+
+scale = float(sys.argv[sys.argv.index("--scale") + 1]) if "--scale" in sys.argv else 1.0
+specs = [json.loads(a) for a in sys.argv[1:] if a.startswith("{")] or [
+    {"variant_id": "baseline", "template": "baseline", "params": {}},
+    {"variant_id": "flyover_3lane_400m", "template": "flyover", "params": {"lanes": 3, "length_m": 400}}]
+print(f"{'option':22} {'circle delay':>12} {'circle queue':>12} {'corridor':>9} {'trips':>6}  approach speeds km/h (NE E S W)      warnings")
+for spec in specs:
+    r = runner.run(spec, scale, run_id=f"cmp_{spec['variant_id']}", frames=False)
+    c = next(j for j in r["junctions"] if j["id"] == "ymca_circle")
+    sp = r["approach_speed_kmh"]
+    print(f"{spec['variant_id']:22} {c['avg_delay_s']:10.1f} s {c['max_queue_m']:10} m {r['corridor_travel_time_s']:7} s {r['trips']:6}  "
+          + " ".join(f"{sp[d]:5.1f}" for d in ("ne", "e", "s", "w")) + f"   {len(r['warnings'])}", flush=True)
+    for j in r["junctions"]:
+        if j["id"] != "ymca_circle" and (j["avg_delay_s"] > 15 or j["max_queue_m"] > 100):
+            print(f"    ripple: {j['id']} delay {j['avg_delay_s']} s, queue {j['max_queue_m']} m")
+    for w in r["warnings"]:
+        print("    warning:", w)

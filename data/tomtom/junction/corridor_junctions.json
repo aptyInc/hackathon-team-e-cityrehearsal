@@ -1,0 +1,65 @@
+{
+ "note": "TomTom Junction Analytics junctions on the Lingampally -> Lakdikapul corridor. One trial account per junction; each account's key lives in .env under key_env (never in the repo). Add a junction by adding a line here and its key to .env.",
+ "junctions": [
+  {
+   "corridor_id": "j01",
+   "name": "Nallagandla Rd jn",
+   "tomtom_id": "6ac8fefa596e57ce4e75d8ee",
+   "key_env": "TOMTOM_JA_KEY_J01"
+  },
+  {
+   "corridor_id": "j02",
+   "name": "ISB Rd / DLF jn",
+   "tomtom_id": "6ac8e4be65f0eaf0559ca2dd",
+   "key_env": "TOMTOM_JA_KEY_J02"
+  },
+  {
+   "corridor_id": "j03",
+   "name": "Gachibowli Circle",
+   "tomtom_id": "6ac8e1ad596e57ce4e75cd62",
+   "key_env": "TOMTOM_JA_KEY_J03"
+  },
+  {
+   "corridor_id": "j04",
+   "name": "Biodiversity jn (flyover)",
+   "tomtom_id": "6ac8d7722028d7ade19fe9f7",
+   "key_env": "TOMTOM_JA_KEY_J04"
+  },
+  {
+   "corridor_id": "j05",
+   "name": "Khajaguda X Roads",
+   "tomtom_id": "6ac8e6e2f7a7fe27a7f34172",
+   "key_env": "TOMTOM_JA_KEY_J05"
+  },
+  {
+   "corridor_id": "j06",
+   "name": "Narne Rd jn Shaikpet",
+   "tomtom_id": "6ac8eb54596e57ce4e75d164",
+   "key_env": "TOMTOM_JA_KEY_J06"
+  },
+  {
+   "corridor_id": "j07",
+   "name": "Tolichowki",
+   "tomtom_id": "6ac8c577b7250f79f2ffd2ad",
+   "key_env": "TOMTOM_JA_KEY_J07"
+  },
+  {
+   "corridor_id": "j08",
+   "name": "Nanal Nagar jn",
+   "tomtom_id": "6ac8cbcef7a7fe27a7f33716",
+   "key_env": "TOMTOM_JA_KEY_J08"
+  },
+  {
+   "corridor_id": "j09",
+   "name": "Rethibowli jn",
+   "tomtom_id": "6ac8b8f3b7250f79f2ffce32",
+   "key_env": "TOMTOM_JA_KEY_J09"
+  },
+  {
+   "corridor_id": "j10",
+   "name": "NMDC / Masab Tank Rd",
+   "tomtom_id": "6ac8d32465f0eaf0559c9c23",
+   "key_env": "TOMTOM_JA_KEY_J10"
+  }
+ ]
+}

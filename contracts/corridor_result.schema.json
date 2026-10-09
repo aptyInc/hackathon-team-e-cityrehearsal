@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "C5 Corridor run result (sim -> agent, frontend, db)",
+  "description": "One simulated journey along a corridor (data/corridor/corridor.json) at a time window, with optional interventions at its junctions. Added 9 Oct 2026; fields may be added, never renamed or removed.",
+  "type": "object",
+  "required": ["run_id", "variant_id", "corridor_id", "time", "interventions", "journey", "junctions", "warnings", "inputs"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "variant_id": {"type": "string"},
+    "corridor_id": {"type": "string"},
+    "time": {"type": "object", "properties": {"window": {"type": ["string", "null"], "description": "ISO start in IST, or null for the calibrated typical morning"},
+                                              "minutes": {"type": "integer"}, "label": {"type": "string"}}},
+    "interventions": {"type": "array", "items": {"type": "object", "required": ["junction_id", "kind"],
+      "properties": {"junction_id": {"type": "string", "description": "a corridor point id, e.g. j07"},
+                     "kind": {"enum": ["flyover", "underpass", "signal_retime", "widening", "one_way", "u_turn"]},
+                     "params": {"type": "object", "description": "flyover/underpass: lanes, length_m; signal_retime: cycle_s, main_share; widening: lanes, to_id; one_way: direction; u_turn: action"}}}},
+    "journey": {"type": "object", "required": ["total_s", "legs"],
+      "properties": {"total_s": {"type": "number"}, "distance_m": {"type": "number"}, "tomtom_total_s": {"type": ["number", "null"]},
+        "legs": {"type": "array", "items": {"type": "object", "required": ["from_id", "to_id", "time_s"],
+          "properties": {"from_id": {"type": "string"}, "to_id": {"type": "string"}, "from_name": {"type": "string"}, "to_name": {"type": "string"},
+                         "distance_m": {"type": "number"}, "time_s": {"type": "number"}, "speed_kmh": {"type": "number"},
+                         "tomtom_time_s": {"type": ["number", "null"], "description": "measured time for the same leg and window, when available"}}}}}},
+    "junctions": {"type": "array", "items": {"type": "object", "required": ["id", "avg_delay_s", "max_queue_m"],
+      "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "lat": {"type": "number"}, "lon": {"type": "number"},
+                     "avg_delay_s": {"type": "number"}, "max_queue_m": {"type": "number"}, "vehicles": {"type": "number"}}}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "inputs": {"type": "object", "required": ["counts_source", "volume_scale"],
+      "properties": {"counts_source": {"type": "string"}, "label": {"enum": ["counted", "estimated", "assumed"]}, "volume_scale": {"type": "number"}}},
+    "frames_path": {"type": ["string", "null"]},
+    "roads_path": {"type": ["string", "null"]}
+  }
+}

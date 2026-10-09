@@ -1,0 +1,509 @@
+{
+ "baseline": {
+  "run_id": "r_sample_corridor_base",
+  "variant_id": "baseline",
+  "corridor_id": "lingampally_lakdikapul",
+  "time": {
+   "window": "2026-10-09T08:00",
+   "minutes": 120,
+   "label": "Fri 9 Oct 8-10 am"
+  },
+  "interventions": [],
+  "journey": {
+   "total_s": 5852,
+   "distance_m": 24329,
+   "tomtom_total_s": 5559,
+   "legs": [
+    {
+     "from_id": "A_lingampally",
+     "to_id": "j01",
+     "from_name": "Lingampally (railway station)",
+     "to_name": "Nallagandla Rd jn",
+     "distance_m": 498,
+     "time_s": 100,
+     "speed_kmh": 18,
+     "tomtom_time_s": 95
+    },
+    {
+     "from_id": "j01",
+     "to_id": "j02",
+     "from_name": "Nallagandla Rd jn",
+     "to_name": "ISB Rd / DLF jn",
+     "distance_m": 6438,
+     "time_s": 1053,
+     "speed_kmh": 22,
+     "tomtom_time_s": 1000
+    },
+    {
+     "from_id": "j02",
+     "to_id": "j03",
+     "from_name": "ISB Rd / DLF jn",
+     "to_name": "Gachibowli Circle",
+     "distance_m": 1731,
+     "time_s": 445,
+     "speed_kmh": 14,
+     "tomtom_time_s": 423
+    },
+    {
+     "from_id": "j03",
+     "to_id": "j04",
+     "from_name": "Gachibowli Circle",
+     "to_name": "Biodiversity jn (flyover)",
+     "distance_m": 1976,
+     "time_s": 445,
+     "speed_kmh": 16,
+     "tomtom_time_s": 423
+    },
+    {
+     "from_id": "j04",
+     "to_id": "j05",
+     "from_name": "Biodiversity jn (flyover)",
+     "to_name": "Khajaguda X Roads",
+     "distance_m": 1348,
+     "time_s": 255,
+     "speed_kmh": 19,
+     "tomtom_time_s": 242
+    },
+    {
+     "from_id": "j05",
+     "to_id": "j06",
+     "from_name": "Khajaguda X Roads",
+     "to_name": "Narne Rd jn Shaikpet",
+     "distance_m": 2022,
+     "time_s": 485,
+     "speed_kmh": 15,
+     "tomtom_time_s": 461
+    },
+    {
+     "from_id": "j06",
+     "to_id": "j07",
+     "from_name": "Narne Rd jn Shaikpet",
+     "to_name": "Tolichowki",
+     "distance_m": 3497,
+     "time_s": 1144,
+     "speed_kmh": 11,
+     "tomtom_time_s": 1087
+    },
+    {
+     "from_id": "j07",
+     "to_id": "j08",
+     "from_name": "Tolichowki",
+     "to_name": "Nanal Nagar jn",
+     "distance_m": 1690,
+     "time_s": 676,
+     "speed_kmh": 9,
+     "tomtom_time_s": 642
+    },
+    {
+     "from_id": "j08",
+     "to_id": "j09",
+     "from_name": "Nanal Nagar jn",
+     "to_name": "Rethibowli jn",
+     "distance_m": 525,
+     "time_s": 158,
+     "speed_kmh": 12,
+     "tomtom_time_s": 150
+    },
+    {
+     "from_id": "j09",
+     "to_id": "j10",
+     "from_name": "Rethibowli jn",
+     "to_name": "NMDC / Masab Tank Rd",
+     "distance_m": 2528,
+     "time_s": 535,
+     "speed_kmh": 17,
+     "tomtom_time_s": 508
+    },
+    {
+     "from_id": "j10",
+     "to_id": "j11",
+     "from_name": "NMDC / Masab Tank Rd",
+     "to_name": "Masab Tank",
+     "distance_m": 975,
+     "time_s": 251,
+     "speed_kmh": 14,
+     "tomtom_time_s": 238
+    },
+    {
+     "from_id": "j11",
+     "to_id": "B_lakdikapul",
+     "from_name": "Masab Tank",
+     "to_name": "Lakdikapul",
+     "distance_m": 1101,
+     "time_s": 305,
+     "speed_kmh": 13,
+     "tomtom_time_s": 290
+    }
+   ]
+  },
+  "junctions": [
+   {
+    "id": "j01",
+    "name": "Nallagandla Rd jn",
+    "lat": 17.4795,
+    "lon": 78.31992,
+    "avg_delay_s": 12,
+    "max_queue_m": 80,
+    "vehicles": 2400
+   },
+   {
+    "id": "j02",
+    "name": "ISB Rd / DLF jn",
+    "lat": 17.44527,
+    "lon": 78.35255,
+    "avg_delay_s": 25,
+    "max_queue_m": 150,
+    "vehicles": 3100
+   },
+   {
+    "id": "j03",
+    "name": "Gachibowli Circle",
+    "lat": 17.43887,
+    "lon": 78.36373,
+    "avg_delay_s": 48,
+    "max_queue_m": 320,
+    "vehicles": 4200
+   },
+   {
+    "id": "j04",
+    "name": "Biodiversity jn (flyover)",
+    "lat": 17.42909,
+    "lon": 78.37452,
+    "avg_delay_s": 30,
+    "max_queue_m": 210,
+    "vehicles": 3900
+   },
+   {
+    "id": "j05",
+    "name": "Khajaguda X Roads",
+    "lat": 17.42266,
+    "lon": 78.38211,
+    "avg_delay_s": 22,
+    "max_queue_m": 140,
+    "vehicles": 3300
+   },
+   {
+    "id": "j06",
+    "name": "Narne Rd jn Shaikpet",
+    "lat": 17.41412,
+    "lon": 78.39443,
+    "avg_delay_s": 35,
+    "max_queue_m": 230,
+    "vehicles": 2900
+   },
+   {
+    "id": "j07",
+    "name": "Tolichowki",
+    "lat": 17.39894,
+    "lon": 78.41542,
+    "avg_delay_s": 70,
+    "max_queue_m": 480,
+    "vehicles": 4100
+   },
+   {
+    "id": "j08",
+    "name": "Nanal Nagar jn",
+    "lat": 17.39597,
+    "lon": 78.42776,
+    "avg_delay_s": 85,
+    "max_queue_m": 520,
+    "vehicles": 3800
+   },
+   {
+    "id": "j09",
+    "name": "Rethibowli jn",
+    "lat": 17.39598,
+    "lon": 78.43171,
+    "avg_delay_s": 40,
+    "max_queue_m": 260,
+    "vehicles": 3200
+   },
+   {
+    "id": "j10",
+    "name": "NMDC / Masab Tank Rd",
+    "lat": 17.39948,
+    "lon": 78.45039,
+    "avg_delay_s": 28,
+    "max_queue_m": 190,
+    "vehicles": 3500
+   },
+   {
+    "id": "j11",
+    "name": "Masab Tank",
+    "lat": 17.40352,
+    "lon": 78.45639,
+    "avg_delay_s": 33,
+    "max_queue_m": 210,
+    "vehicles": 3600
+   }
+  ],
+  "warnings": [],
+  "inputs": {
+   "counts_source": "sample",
+   "label": "assumed",
+   "volume_scale": 1.0
+  },
+  "frames_path": null,
+  "roads_path": null,
+  "sample": true
+ },
+ "flyover_j07": {
+  "run_id": "r_sample_corridor_fly",
+  "variant_id": "flyover_j07",
+  "corridor_id": "lingampally_lakdikapul",
+  "time": {
+   "window": "2026-10-09T08:00",
+   "minutes": 120,
+   "label": "Fri 9 Oct 8-10 am"
+  },
+  "interventions": [
+   {
+    "junction_id": "j07",
+    "kind": "flyover",
+    "params": {
+     "lanes": 2,
+     "length_m": 600
+    }
+   }
+  ],
+  "journey": {
+   "total_s": 5631,
+   "distance_m": 24329,
+   "tomtom_total_s": 5559,
+   "legs": [
+    {
+     "from_id": "A_lingampally",
+     "to_id": "j01",
+     "from_name": "Lingampally (railway station)",
+     "to_name": "Nallagandla Rd jn",
+     "distance_m": 498,
+     "time_s": 100,
+     "speed_kmh": 18,
+     "tomtom_time_s": 95
+    },
+    {
+     "from_id": "j01",
+     "to_id": "j02",
+     "from_name": "Nallagandla Rd jn",
+     "to_name": "ISB Rd / DLF jn",
+     "distance_m": 6438,
+     "time_s": 1053,
+     "speed_kmh": 22,
+     "tomtom_time_s": 1000
+    },
+    {
+     "from_id": "j02",
+     "to_id": "j03",
+     "from_name": "ISB Rd / DLF jn",
+     "to_name": "Gachibowli Circle",
+     "distance_m": 1731,
+     "time_s": 445,
+     "speed_kmh": 14,
+     "tomtom_time_s": 423
+    },
+    {
+     "from_id": "j03",
+     "to_id": "j04",
+     "from_name": "Gachibowli Circle",
+     "to_name": "Biodiversity jn (flyover)",
+     "distance_m": 1976,
+     "time_s": 445,
+     "speed_kmh": 16,
+     "tomtom_time_s": 423
+    },
+    {
+     "from_id": "j04",
+     "to_id": "j05",
+     "from_name": "Biodiversity jn (flyover)",
+     "to_name": "Khajaguda X Roads",
+     "distance_m": 1348,
+     "time_s": 255,
+     "speed_kmh": 19,
+     "tomtom_time_s": 242
+    },
+    {
+     "from_id": "j05",
+     "to_id": "j06",
+     "from_name": "Khajaguda X Roads",
+     "to_name": "Narne Rd jn Shaikpet",
+     "distance_m": 2022,
+     "time_s": 485,
+     "speed_kmh": 15,
+     "tomtom_time_s": 461
+    },
+    {
+     "from_id": "j06",
+     "to_id": "j07",
+     "from_name": "Narne Rd jn Shaikpet",
+     "to_name": "Tolichowki",
+     "distance_m": 3497,
+     "time_s": 686,
+     "speed_kmh": 11,
+     "tomtom_time_s": 1087
+    },
+    {
+     "from_id": "j07",
+     "to_id": "j08",
+     "from_name": "Tolichowki",
+     "to_name": "Nanal Nagar jn",
+     "distance_m": 1690,
+     "time_s": 913,
+     "speed_kmh": 9,
+     "tomtom_time_s": 642
+    },
+    {
+     "from_id": "j08",
+     "to_id": "j09",
+     "from_name": "Nanal Nagar jn",
+     "to_name": "Rethibowli jn",
+     "distance_m": 525,
+     "time_s": 158,
+     "speed_kmh": 12,
+     "tomtom_time_s": 150
+    },
+    {
+     "from_id": "j09",
+     "to_id": "j10",
+     "from_name": "Rethibowli jn",
+     "to_name": "NMDC / Masab Tank Rd",
+     "distance_m": 2528,
+     "time_s": 535,
+     "speed_kmh": 17,
+     "tomtom_time_s": 508
+    },
+    {
+     "from_id": "j10",
+     "to_id": "j11",
+     "from_name": "NMDC / Masab Tank Rd",
+     "to_name": "Masab Tank",
+     "distance_m": 975,
+     "time_s": 251,
+     "speed_kmh": 14,
+     "tomtom_time_s": 238
+    },
+    {
+     "from_id": "j11",
+     "to_id": "B_lakdikapul",
+     "from_name": "Masab Tank",
+     "to_name": "Lakdikapul",
+     "distance_m": 1101,
+     "time_s": 305,
+     "speed_kmh": 13,
+     "tomtom_time_s": 290
+    }
+   ]
+  },
+  "junctions": [
+   {
+    "id": "j01",
+    "name": "Nallagandla Rd jn",
+    "lat": 17.4795,
+    "lon": 78.31992,
+    "avg_delay_s": 12,
+    "max_queue_m": 80,
+    "vehicles": 2400
+   },
+   {
+    "id": "j02",
+    "name": "ISB Rd / DLF jn",
+    "lat": 17.44527,
+    "lon": 78.35255,
+    "avg_delay_s": 25,
+    "max_queue_m": 150,
+    "vehicles": 3100
+   },
+   {
+    "id": "j03",
+    "name": "Gachibowli Circle",
+    "lat": 17.43887,
+    "lon": 78.36373,
+    "avg_delay_s": 48,
+    "max_queue_m": 320,
+    "vehicles": 4200
+   },
+   {
+    "id": "j04",
+    "name": "Biodiversity jn (flyover)",
+    "lat": 17.42909,
+    "lon": 78.37452,
+    "avg_delay_s": 30,
+    "max_queue_m": 210,
+    "vehicles": 3900
+   },
+   {
+    "id": "j05",
+    "name": "Khajaguda X Roads",
+    "lat": 17.42266,
+    "lon": 78.38211,
+    "avg_delay_s": 22,
+    "max_queue_m": 140,
+    "vehicles": 3300
+   },
+   {
+    "id": "j06",
+    "name": "Narne Rd jn Shaikpet",
+    "lat": 17.41412,
+    "lon": 78.39443,
+    "avg_delay_s": 35,
+    "max_queue_m": 230,
+    "vehicles": 2900
+   },
+   {
+    "id": "j07",
+    "name": "Tolichowki",
+    "lat": 17.39894,
+    "lon": 78.41542,
+    "avg_delay_s": 15,
+    "max_queue_m": 90,
+    "vehicles": 4100
+   },
+   {
+    "id": "j08",
+    "name": "Nanal Nagar jn",
+    "lat": 17.39597,
+    "lon": 78.42776,
+    "avg_delay_s": 120,
+    "max_queue_m": 690,
+    "vehicles": 3800
+   },
+   {
+    "id": "j09",
+    "name": "Rethibowli jn",
+    "lat": 17.39598,
+    "lon": 78.43171,
+    "avg_delay_s": 40,
+    "max_queue_m": 260,
+    "vehicles": 3200
+   },
+   {
+    "id": "j10",
+    "name": "NMDC / Masab Tank Rd",
+    "lat": 17.39948,
+    "lon": 78.45039,
+    "avg_delay_s": 28,
+    "max_queue_m": 190,
+    "vehicles": 3500
+   },
+   {
+    "id": "j11",
+    "name": "Masab Tank",
+    "lat": 17.40352,
+    "lon": 78.45639,
+    "avg_delay_s": 33,
+    "max_queue_m": 210,
+    "vehicles": 3600
+   }
+  ],
+  "warnings": [
+   "flyover_j07: 2 flyover lanes land 180 m before Nanal Nagar jn; queues from the junction reach the landing at peak"
+  ],
+  "inputs": {
+   "counts_source": "sample",
+   "label": "assumed",
+   "volume_scale": 1.0
+  },
+  "frames_path": null,
+  "roads_path": null,
+  "sample": true
+ }
+}

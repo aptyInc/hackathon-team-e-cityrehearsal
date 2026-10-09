@@ -1,0 +1,295 @@
+{
+ "_meta": {
+  "source": "Overture Maps Foundation, buildings theme (release 2026-09-23.1); footprints from OpenStreetMap (ODbL-1.0), Google Open Buildings (CC BY-4.0 / ODbL), Microsoft ML Buildings (ODbL) and others",
+  "label": "footprints measured; heights measured where Overture has them, else estimated from floors, else assumed from footprint area",
+  "fetched": "2026-10-09",
+  "dedup": "each building in exactly one file (nearest point where squares overlap)",
+  "stats": {
+   "seen": 26987,
+   "kept": 16403,
+   "measured": 7,
+   "estimated": 71,
+   "assumed": 16325
+  }
+ },
+ "A_lingampally": {
+  "file": "data/corridor/buildings/A_lingampally.geojson",
+  "count": 1297,
+  "bbox": [
+   78.309962,
+   17.48373,
+   78.318438,
+   17.49187
+  ],
+  "size_kb": 372.9,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 1,
+   "assumed": 1296
+  },
+  "name": "Lingampally (Old Bombay Rd, route start)",
+  "half_width_m": 450,
+  "overlaps": []
+ },
+ "j01": {
+  "file": "data/corridor/buildings/j01.geojson",
+  "count": 1825,
+  "bbox": [
+   78.315682,
+   17.47543,
+   78.324158,
+   17.48357
+  ],
+  "size_kb": 522.1,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 7,
+   "assumed": 1818
+  },
+  "name": "Nallagandla Rd jn",
+  "half_width_m": 450,
+  "overlaps": []
+ },
+ "j02": {
+  "file": "data/corridor/buildings/j02.geojson",
+  "count": 432,
+  "bbox": [
+   78.348313,
+   17.4412,
+   78.356787,
+   17.44934
+  ],
+  "size_kb": 148.6,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 12,
+   "assumed": 420
+  },
+  "name": "ISB Rd / DLF jn",
+  "half_width_m": 450,
+  "overlaps": []
+ },
+ "j03": {
+  "file": "data/corridor/buildings/j03.geojson",
+  "count": 806,
+  "bbox": [
+   78.359493,
+   17.4348,
+   78.367967,
+   17.44294
+  ],
+  "size_kb": 242.9,
+  "height_labels": {
+   "measured": 3,
+   "estimated": 5,
+   "assumed": 798
+  },
+  "name": "Gachibowli Circle",
+  "half_width_m": 450,
+  "overlaps": []
+ },
+ "j04": {
+  "file": "data/corridor/buildings/j04.geojson",
+  "count": 439,
+  "bbox": [
+   78.370283,
+   17.42502,
+   78.378757,
+   17.43316
+  ],
+  "size_kb": 134.1,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 13,
+   "assumed": 426
+  },
+  "name": "Biodiversity jn (flyover)",
+  "half_width_m": 450,
+  "overlaps": [
+   "j05"
+  ]
+ },
+ "j05": {
+  "file": "data/corridor/buildings/j05.geojson",
+  "count": 570,
+  "bbox": [
+   78.377873,
+   17.41859,
+   78.386347,
+   17.42673
+  ],
+  "size_kb": 165.8,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 6,
+   "assumed": 564
+  },
+  "name": "Khajaguda X Roads",
+  "half_width_m": 450,
+  "overlaps": [
+   "j04"
+  ]
+ },
+ "j06": {
+  "file": "data/corridor/buildings/j06.geojson",
+  "count": 1253,
+  "bbox": [
+   78.390193,
+   17.41005,
+   78.398667,
+   17.41819
+  ],
+  "size_kb": 363.7,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 0,
+   "assumed": 1253
+  },
+  "name": "Narne Rd jn Shaikpet",
+  "half_width_m": 450,
+  "overlaps": []
+ },
+ "j07": {
+  "file": "data/corridor/buildings/j07.geojson",
+  "count": 1946,
+  "bbox": [
+   78.411184,
+   17.39487,
+   78.419656,
+   17.40301
+  ],
+  "size_kb": 559.1,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 4,
+   "assumed": 1942
+  },
+  "name": "Tolichowki",
+  "half_width_m": 450,
+  "overlaps": []
+ },
+ "j08": {
+  "file": "data/corridor/buildings/j08.geojson",
+  "count": 758,
+  "bbox": [
+   78.423524,
+   17.3919,
+   78.431996,
+   17.40004
+  ],
+  "size_kb": 222.4,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 2,
+   "assumed": 756
+  },
+  "name": "Nanal Nagar jn",
+  "half_width_m": 450,
+  "overlaps": [
+   "j09"
+  ]
+ },
+ "j09": {
+  "file": "data/corridor/buildings/j09.geojson",
+  "count": 776,
+  "bbox": [
+   78.427474,
+   17.39191,
+   78.435946,
+   17.40005
+  ],
+  "size_kb": 224.7,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 1,
+   "assumed": 775
+  },
+  "name": "Rethibowli jn",
+  "half_width_m": 450,
+  "overlaps": [
+   "j08"
+  ]
+ },
+ "j10": {
+  "file": "data/corridor/buildings/j10.geojson",
+  "count": 1638,
+  "bbox": [
+   78.446154,
+   17.39541,
+   78.454626,
+   17.40355
+  ],
+  "size_kb": 471.7,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 0,
+   "assumed": 1638
+  },
+  "name": "NMDC / Masab Tank Rd",
+  "half_width_m": 450,
+  "overlaps": [
+   "j11"
+  ]
+ },
+ "j11": {
+  "file": "data/corridor/buildings/j11.geojson",
+  "count": 1111,
+  "bbox": [
+   78.452154,
+   17.39945,
+   78.460626,
+   17.40759
+  ],
+  "size_kb": 326.1,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 6,
+   "assumed": 1105
+  },
+  "name": "Masab Tank",
+  "half_width_m": 450,
+  "overlaps": [
+   "j10",
+   "B_lakdikapul"
+  ]
+ },
+ "B_lakdikapul": {
+  "file": "data/corridor/buildings/B_lakdikapul.geojson",
+  "count": 857,
+  "bbox": [
+   78.460414,
+   17.40015,
+   78.468886,
+   17.40829
+  ],
+  "size_kb": 255.0,
+  "height_labels": {
+   "measured": 4,
+   "estimated": 0,
+   "assumed": 853
+  },
+  "name": "Lakdikapul",
+  "half_width_m": 450,
+  "overlaps": [
+   "j11"
+  ]
+ },
+ "route_band": {
+  "file": "data/corridor/buildings/route_band.geojson",
+  "count": 2695,
+  "bbox": [
+   78.309709,
+   17.393644,
+   78.465802,
+   17.489155
+  ],
+  "size_kb": 792.3,
+  "height_labels": {
+   "measured": 0,
+   "estimated": 14,
+   "assumed": 2681
+  },
+  "name": "Route band, 150 m either side, excluding point squares",
+  "band_m": 150
+ }
+}
