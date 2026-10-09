@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / ".env")
 MOCK = os.getenv("MOCK_SIM", "1") == "1"
 SAMPLES = ROOT / "contracts" / "samples"
-DB = ROOT / "backend" / "cityrehearsal.db"
+DB = Path(os.environ.get("CR_DB", ROOT / "backend" / "cityrehearsal.db"))   # CR_DB: the smoke test uses a throwaway one
 
 
 def db():

@@ -2,6 +2,8 @@
 import os, sys
 from pathlib import Path
 os.environ.setdefault("MOCK_SIM", "1")
+import tempfile  # noqa: E402
+os.environ.setdefault("CR_DB", str(Path(tempfile.mkdtemp()) / "smoke.db"))   # keep test cases out of the real decision log
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 from fastapi.testclient import TestClient  # noqa: E402
 from app.main import app  # noqa: E402
