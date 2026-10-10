@@ -43,6 +43,7 @@ if [ -f "$SRC/backend/cityrehearsal.db" ]; then
   done
   echo "cached runs: $(grep -c 'sim/out/corridor/rc_' "$LIST") folders, ${total} MB"
 fi
+export COPYFILE_DISABLE=1     # macOS: no AppleDouble ._* files or xattr headers in the archive
 tar -czf "$OUT/terascope-data.tar.gz" -C "$SRC" -T "$LIST"
 ls -l "$OUT/terascope-data.tar.gz"
 
