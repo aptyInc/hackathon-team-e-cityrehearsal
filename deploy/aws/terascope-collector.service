@@ -1,0 +1,18 @@
+[Unit]
+Description=Terascope AI TomTom junction collector (one snapshot per minute into data/raw)
+After=network-online.target terascope-api.service
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/terascope
+EnvironmentFile=/etc/terascope/env
+ExecStart=/usr/bin/python3 /opt/terascope/data/tomtom/collect_corridor_junctions.py
+Restart=always
+RestartSec=30
+StandardOutput=append:/opt/terascope/data/tomtom/junction/corridor_collector.log
+StandardError=append:/opt/terascope/data/tomtom/junction/corridor_collector.log
+
+[Install]
+WantedBy=multi-user.target

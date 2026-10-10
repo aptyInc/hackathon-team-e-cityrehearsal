@@ -1,0 +1,10 @@
+[Unit]
+Description=Terascope AI: copy the live data, the cached runs and the decision log to S3 (terascope-sync.timer, every 5 min)
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/terascope
+EnvironmentFile=/etc/terascope/env
+ExecStart=/usr/local/bin/terascope-sync
