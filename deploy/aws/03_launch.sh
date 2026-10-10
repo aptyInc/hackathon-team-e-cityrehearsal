@@ -9,7 +9,9 @@ OUT="${OUT:-${TMPDIR:-/tmp}/terascope-release}"; mkdir -p "$OUT"
 REGION="${AWS_REGION:-ap-southeast-2}"
 ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 BUCKET="terascope-demo-${ACCOUNT}"
-TYPES="${TYPES:-c7i.2xlarge c6i.2xlarge m6i.2xlarge c6a.2xlarge t3.2xlarge c7i.xlarge c6i.xlarge m6i.xlarge t3.xlarge}"
+# The free plan only launches free-tier-eligible types (m7i-flex.large is the largest: 2 vCPU, 8 GB); the paid plan
+# allows the rest, subject to the on-demand vCPU quota (L-1216C47A; 5 on a new account, c7i.2xlarge needs 8).
+TYPES="${TYPES:-c7i.2xlarge c6i.2xlarge m6i.2xlarge c6a.2xlarge t3.2xlarge c7i.xlarge c6i.xlarge m6i.xlarge t3.xlarge m7i-flex.large c7i-flex.large t3.small}"
 DISK_GB="${DISK_GB:-60}"
 
 AMI="$(aws ssm get-parameter --name /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id \

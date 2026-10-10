@@ -16,9 +16,10 @@ sudo -u ubuntu "$APP/.venv/bin/pip" install -q -r "$APP/backend/requirements.txt
 SUMO_HOME="$("$APP/.venv/bin/python" -c 'import sumo; print(sumo.SUMO_HOME)')"
 "$APP/.venv/bin/sumo" --version | head -1
 
+PARALLEL="$(nproc)"; [ "$PARALLEL" -gt 4 ] && PARALLEL=4     # one SUMO per core, at most 4 (the demo's warm-up size)
 cat > /etc/terascope/env <<EOF
 MOCK_SIM=0
-CR_SIM_PARALLEL=4
+CR_SIM_PARALLEL=${CR_SIM_PARALLEL:-$PARALLEL}
 CR_KEEP_RUNS=60
 CR_KEEP_RUNS_MB=8000
 SUMO_HOME=$SUMO_HOME
