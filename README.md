@@ -33,24 +33,37 @@ every junction carries traffic, including the roads under the flyovers, with Ind
 plus 40% of TomTom's junction volumes on every arm) is lighter than TomTom's evening estimates: it is calibrated to
 the all-day trip time.
 
-On the corridor screen you can:
-1. See the trip split by stretch: **measured** by TomTom (REAL) next to our **simulation** (SIMULATED).
-2. See **live** delay and queues at 10 of the 11 junctions (TomTom Junction Analytics; all except Masab Tank).
-3. Add a change at any junction (flyover, underpass, signal retime, widening, one-way side road) and see how many
-   minutes the trip gains or loses, and which junction gets worse (ripple).
-4. Watch it in 3D, with simulated vehicles driving over the new flyover.
-5. Try the quick demos (about 2 s each once the cache is warm, 1-2 min each the first time; warm-up steps in
-   `docs/demo-script.md`). Simulated, ± about 0.9 min run to run:
+On the corridor screen (one screen, branded **Terascope AI**; on screen every number is labelled **real data** or
+**simulated**, never a vendor name) you can:
+1. See the trip split by stretch: **measured** (REAL, "Real data · typical day", 58.2 min) next to the
+   **simulation with your changes** (SIMULATED), and the live weather in the header.
+2. See **live** delay and queues at 10 of the 11 junctions (all except Masab Tank; expand one to fly there), the
+   **live trip** estimate against the typical day at the same hour, and **Simulate now**: a now-cast of the whole
+   corridor tuned to the live traffic (about 20 s once warm).
+3. Add a change at any junction (flyover, underpass, signal retime, widening, one-way side road), or press
+   **✦ Advise me** for the pre-computed verdict, and see how many minutes the trip gains or loses and which junction
+   gets worse (ripple).
+4. Slide the weather from Dry to Heavy rain; the reported water-logging points are drawn on the map.
+5. Watch it in 3D, with simulated vehicles driving over the new flyover (playback at 3×; **Follow a car** rides a
+   test car's whole trip from Lingampally).
+6. Try the quick actions (about 2 s each once the cache is warm, 1-2 min each the first time; warm-up steps in
+   `docs/demo-script.md`). Simulated, typical day; noise about ±0.5 min for a one-junction change, ±1.5 min
+   corridor-wide; every change is measured against the simulation of today's roads:
 
-| Quick demo | Trip | Change | At 120% traffic |
-|---|---|---|---|
-| Today's roads | 55.4 min | - | trip 57.0 min |
-| Flyover at Nallagandla (2 lanes, 600 m) | 53.5 min | −1.9 | −1.5 |
-| Flyover at ISB Rd / DLF (2 lanes, 600 m) | 53.8 min | −1.7 | −1.4 |
-| One flyover over Nanal Nagar + Rethibowli (1.2 km) | 53.4 min | −2.1 | −2.0 |
-| Give DLF's side roads more green (30% to the main road) | 58.0 min | +2.6 (the stretch before DLF +2.7) | - |
+| Quick action / what-if | Trip | Change |
+|---|---|---|
+| Today's roads (**Start engine**) | 56.6 min | real data 56.2 on the same 21.6 km |
+| Flyover at Nallagandla (2 lanes, 600 m) | 54.6 min | −2.0 |
+| Flyover at ISB Rd / DLF (2 lanes, 600 m) | 54.7 min | −1.9 |
+| One flyover over Nanal Nagar + Rethibowli (1.2 km) | 53.5 min | −3.1 (still saves at 110% traffic) |
+| Give DLF's side roads more green (30% to the main road) | 57.3 min | +0.7 (ripple: the queue before DLF) |
+| Light rain / heavy rain, today's roads | 58.1 / 63.8 min | +1.5 / +7.2 (about 2.7 of it at reported water-logging points) |
+| Heavy rain + the Nanal Nagar + Rethibowli flyover | 61.2 min | −2.6 vs today's roads in heavy rain |
 
-Asking for a flyover at Tolichowki answers "already has a flyover; nothing built".
+Asking for a flyover at Tolichowki answers "already has a flyover; nothing built". The advisor's pre-computed
+verdicts: Nanal Nagar and Nallagandla build the underpass (the Nanal Nagar signal retime, −0.3, is inside the noise);
+ISB Rd / DLF build the flyover; Rethibowli one-way side road first; Khajaguda nothing tested beats the noise; the six
+junctions the main road already crosses on a flyover get no build.
 
 Two more places back up the model:
 - **YMCA Circle, Narayanaguda** (Hyderabad): the deep-dive junction. The model's speeds match TomTom within about
@@ -82,7 +95,7 @@ cd frontend && python3 -m http.server 5174      # screens
 
 Any free port works for the screens (the team uses 5174 because 5173 is often taken). Without the API running, the corridor page still opens and shows sample data, tagged SAMPLE DATA.
 
-Corridor screen, one view (no tabs): the header shows the route and the weather now (real data, live). Left: **Quick actions**, **Start engine** (simulate today's roads) and **Run with changes**, then **Simulated**: pick a junction, a modification (flyover, underpass, signal retime, widening, one-way) and the weather (slider from dry to heavy rain), then the junction results and the decision. The simulated A → B trip is drawn on the map, coloured by simulated speed per stretch (today and with changes side by side). Right: the live trip with **Simulate now**, and the live junctions accordion (open one to fly there, close it to fly back), then the layers. Simulations always use the typical day (all-day average). Labels on screen say only **real data** or **simulated data**.
+Corridor screen, one view (no tabs): the header shows the route and the weather now (real data, live). Left: **Quick actions**, **Start engine** (simulate today's roads) and **Run with changes**, then **Simulated**: pick a junction (**✦ Advise me** for the pre-computed verdict), a modification (flyover, underpass, signal retime, widening, one-way) and the weather (slider Dry · As measured · Light rain · Heavy rain, with the reported water-logging points under it and on the map), then the junction results and the **Decision** step (send for review, re-test at 80% or 110% traffic, approve with a reason). The simulated A → B trip is drawn on the map, coloured by simulated speed per stretch (today and with changes side by side); the playback pill at the top of the map has one timeline at 3× and **Follow a car**. Right: the live trip with **Simulate now**, and the live junctions accordion (open one to fly there, close it to fly back), then the layers. **Ask Terascope AI** sits above the **Reset view** pill (R). Simulations always use the typical day (all-day average). Labels on screen say only **real data** or **simulated data**.
 
 ## Data sources and labels
 Every traffic input is labelled **counted** (or **measured**), **estimated** or **assumed**, and every number on screen
@@ -117,22 +130,28 @@ Each workstream owns one folder (see `CLAUDE.md`). Team members are listed at th
 
 **The proposed solution.** CityRehearsal is a virtual environment where cities simulate proposed decisions, compare alternatives, identify unintended consequences and record an evidence-based approval process before construction begins.
 
-**What the team actually built** (status Fri 9 Oct, 21:30; the 24-hour build is the roads and traffic module):
+**What the team actually built** (status Sat 10 Oct, 05:40; the 24-hour build is the roads and traffic module):
 - Lingampally to Lakdikapul corridor: road network from OpenStreetMap routed over the five existing flyovers, TomTom
-  stretch times, live data at 10 junctions, the corridor API and the 3D corridor screen with quick demos.
+  stretch times, live data at 10 junctions, a live trip estimate and a "Simulate now" now-cast tuned to it, the
+  corridor API and the one-screen 3D corridor page with quick actions.
+- Indian driver behaviour (`docs/driver-behaviour.md`: amber and red running, box blocking, free left, protected
+  right turn, U-turns, seven vehicle types with fast riders) and traffic on all 42 junction arms, each input labelled
+  measured, estimated or assumed.
 - Corridor calibrated to TomTom: 56.6 min simulated vs 56.2 min measured on the same roads, every stretch within about 6%; every hour 06-23 within 3%.
 - Five kinds of fixes as templates, each with design checks (for example a warning when flyover lanes squeeze into
   fewer lanes).
+- Weather: the hour's weather in the header, a rain what-if (light rain +1.5 min, heavy rain +7.2 min on the typical
+  day) with reported water-logging points that slow the lanes around them (about 2.7 of the 7.2 min).
 - YMCA Circle: calibrated simulation (within about 3 km/h of TomTom), 3D view, simulate any moment since 8 Oct
   from TomTom junction data, or live.
 - Case workflow in the API: options, runs, submit with a SHA-256 fingerprint, reviewer must re-run before
   recommending, commissioner decides with a reason (checked by `make smoke`).
-- AI planning assistant (chat on the corridor screen): tests the cheap fix first and writes a decision brief. In a
-  real run on ISB Rd / DLF it tried a signal retime (−0.2 min), then a flyover (−0.9 min), and advised against
-  building (about 7 US cents).
-- Review and decision in the corridor screen (re-test at 80% or 120% traffic, approve with a reason) and a Decisions log.
+- Terascope AI advisor (chat and **✦ Advise me** on the corridor screen): tests the cheap fix first, re-tests the best
+  options in heavy rain and at 110% traffic, writes a decision brief, and has a pre-computed verdict for every
+  junction (for example Nanal Nagar: the signal retime is inside the noise, build the underpass).
+- Review and decision in the corridor screen (re-test at 80% or 110% traffic, approve with a reason) and a Decisions log.
 - Gariahat backtest (`sim/gariahat/README.md`): delay at Gariahat down 59% (study: 75%).
-- In progress: polish, demo recording and dry runs.
+- In progress: demo recording, screenshots and dry runs (`docs/demo-script.md`).
 
 ## Business case
 Full version: [docs/business-case.md](docs/business-case.md).
@@ -148,7 +167,7 @@ Full version: [docs/business-case.md](docs/business-case.md).
   predicted before and measured after), data must be affordable, and engineers must trust it enough to act.
 
 ## Key features
-- [x] Corridor screen: TomTom trip strip, live junction panel, add fixes, 3D view with vehicles (Predict, Build)
+- [x] Corridor screen: trip strip (real data vs simulated), live junctions and live trip, Simulate now, weather and rain what-if, add fixes, 3D view with vehicles (Predict, Build)
 - [x] Corridor fix templates: flyover, underpass, signal retime, widening, one-way side road
 - [x] 3D view of YMCA Circle with calibrated mixed traffic (Predict)
 - [x] Review and sign-off API with logged decisions and evidence fingerprints

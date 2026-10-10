@@ -3,20 +3,23 @@
 One key message per slide. Few words on the slide, the rest in the speaker notes. The live demo sits in the middle
 (slide 5); if the demo fails, slide 5 has screenshots as backup (see `docs/demo-script.md`, fallback plan).
 
-All corridor numbers come from the calibrated runs (Fri 9 Oct, evening; table in `docs/demo-script.md`, "The
-numbers"). The only open placeholder is `[[ASK]]`. Figures marked *(to verify)* must be checked before they go on a
-slide, or dropped.
+All corridor numbers come from the final calibrated runs (Sat 10 Oct, early morning; table in `docs/demo-script.md`,
+"The numbers"). The only open placeholder is `[[ASK]]`. Figures marked *(to verify)* must be checked before they go on
+a slide, or dropped.
+
+**Words:** the product is **Terascope AI**. On slides say **real data** / **measured** and **simulated**; never a data
+vendor or a month (the About-the-data page in the app names every source). Never the old project name.
 
 ---
 
 ### 1. Title
 **Key message:** Test before you build.
 
-**On the slide:** CityRehearsal. "Rehearse a road decision on a copy of the city before spending public money."
+**On the slide:** Terascope AI. "Rehearse a road decision on a copy of the city before spending public money."
 Team E. Photo or 3D view of the corridor.
 
-**Speaker notes:** "We are Team E. CityRehearsal lets a city test a road decision on a simulated copy of its real
-roads, before it builds anything."
+**Speaker notes:** "We are Team E. Terascope AI lets a city test a road decision on a simulated copy of its real
+roads, with real traffic data and Indian drivers, before it builds anything."
 
 ---
 
@@ -37,15 +40,15 @@ Biodiversity flyover on our own corridor was closed weeks after opening in 2019 
 ### 3. Our corridor: a real one-hour commute
 **Key message:** We picked a real, painful trip and measured it.
 
-**On the slide:** Map of Lingampally to Lakdikapul. "22.4 km · 11 junctions · 58 minutes (TomTom, July 2026 average)."
-"5 flyovers already on the route · signals at 5 junctions · live data at 10." Trip strip: slowest stretch Nallagandla
-to ISB Rd / DLF, 13.8 min; next, Rethibowli to NMDC, 7.5 min.
+**On the slide:** Map of Lingampally to Lakdikapul. "22.4 km · 11 junctions · 58 minutes on a typical day (real data,
+measured from vehicles)." "5 flyovers already on the route · signals at 5 junctions · live data at 10 · weather live."
+Trip strip: slowest stretch Nallagandla to ISB Rd / DLF, 13.8 min; next, Rethibowli to NMDC, 7.5 min.
 
-**Speaker notes:** "This is a commute thousands of people make every day, from Lingampally to Lakdikapul. TomTom
-measured it at 58 minutes on an average July day; about 62 on a weekday, 48 on a Sunday. We split it into 12
-stretches between junctions, so we can see exactly where the time goes. The main road already crosses five flyovers;
-it stops at signals at five junctions: Nallagandla, ISB Road / DLF, Khajaguda, Nanal Nagar and Rethibowli. And ten of
-the eleven junctions send us live data every minute."
+**Speaker notes:** "This is a commute thousands of people make every day, from Lingampally to Lakdikapul. Real data
+puts it at 58 minutes on a typical day. We split it into 12 stretches between junctions, so we can see exactly where
+the time goes. The main road already crosses five flyovers; it stops at signals at five junctions: Nallagandla, ISB
+Road / DLF, Khajaguda, Nanal Nagar and Rethibowli. Ten of the eleven junctions send us live data every minute, and
+the weather on the corridor is live too."
 
 ---
 
@@ -53,29 +56,33 @@ the eleven junctions send us live data every minute."
 **Key message:** Real data in, a calibrated copy, cheap fixes first, structures only when tested, humans decide.
 
 **On the slide:** A simple left-to-right flow:
-Real data (TomTom, OpenStreetMap, counts) → Simulated copy (checked against TomTom) → Options (signal timing first,
-then flyover, underpass, widening) → AI assistant compares and writes a brief → Reviewer re-tests at 120% →
-Commissioner approves → Sealed record.
+Real data (traffic, live junctions, weather, OpenStreetMap, counts) → Simulated copy with Indian drivers (checked
+against real data) → Options, cheapest first (signal timing, one-way, widening, underpass, flyover) → Terascope AI
+advises and writes a brief → Reviewer re-tests at 80% / 110% traffic → Commissioner approves with a reason → Sealed
+record.
 
-**Speaker notes:** "Predict: where do jams form today? Mitigate: what is the cheapest fix that works, like signal
-timing? Build: only if needed, and only a design we have tested. Every number on screen says whether it is REAL,
-measured, or SIMULATED. Every input says whether it was counted, estimated or assumed."
+**Speaker notes:** "Predict: where do jams form today, and right now? Mitigate: what is the cheapest fix that works,
+like signal timing? Build: only if needed, and only a design we have tested, in dry weather and in heavy rain. Every
+number on screen says whether it is real data or simulated. Every input says whether it was counted, estimated or
+assumed. The AI advises; it never decides."
 
 ---
 
 ### 5. Live demo
 **Key message:** See it work on the real corridor.
 
-**On the slide:** Just the URL and the word "Demo". Backup: 6 screenshots (trip strip with the live panel,
-"Tolichowki already has a flyover", the new flyover over Nanal Nagar + Rethibowli in 3D, the DLF ripple chip, the
-assistant's answer, the case at 120% with its fingerprint).
+**On the slide:** Just the URL (http://localhost:8000/) and the word "Demo". Backup: 7 screenshots (trip strip with
+the live junctions and the weather chip, "Tolichowki already has a flyover", the advisor's answer for Nanal Nagar, the
+new flyover over Nanal Nagar + Rethibowli in 3D, heavy rain with the water-logging droplets, Simulate now, the case at
+110% with its fingerprint).
 
 **Speaker notes:** Follow `docs/demo-script.md`, beats 0:15 to 3:40 (about 3.5 minutes). Storyline: Predict (58 min
-measured, where it goes, live panel) → Trust (55.4 simulated vs 56.2 measured on the same roads; YMCA; Gariahat;
-"Tolichowki already has a flyover") → Build where it pays (one flyover over Nanal Nagar + Rethibowli, −2.1 min, cars
-on the deck) → Mitigate first and watch the ripple (more green for DLF's side roads: +2.6 min) → the assistant tries
-the cheap fix first and advises against a weak DLF flyover → reviewer re-test at 120% (still −2.0 min) →
-commissioner approves with a reason; fingerprint.
+measured, where it goes, live junctions, weather now) → Trust (56.6 simulated vs 56.2 measured on the same roads;
+"Tolichowki already has a flyover"; YMCA; Gariahat) → Advise ("What should we do at Nanal Nagar?": cheap fix first,
+inside the noise, build the underpass; one flyover over Nanal Nagar + Rethibowli −3.1 min; cars on the deck; follow a
+car) → Rain (heavy rain +7.2 min with the reported water-logging points; the flyover still wins 2.6) → Live (Simulate
+now, about 20 s) → Review at 110% (still saves) → Decide (commissioner approves with a reason; fingerprint; the
+Decisions log).
 
 ---
 
@@ -83,20 +90,26 @@ commissioner approves with a reason; fingerprint.
 **Key message:** We check the model against reality, and we say how far off it is.
 
 **On the slide:** Three proof points:
-- YMCA Circle, Hyderabad: model speeds within about 3 km/h of TomTom.
-- Gariahat, Kolkata: our replay cuts delay at Gariahat by 59% (study: 75%); Phari slows in the same direction, and its approach delay doubles if the flyover draws ~15% more traffic (the study expected the inflow to "increase substantially" but gave no number).
-- Corridor: simulated trip 55.4 min vs 56.2 min measured by TomTom on the same 21.6 km; every one of the 12
-  stretches within about 5%. It drives over the five flyovers that already exist, and refuses to "build" a sixth at
-  Tolichowki ("already has a flyover").
+- Corridor: simulated trip 56.6 min vs 56.2 min measured on the same 21.6 km; every hour from 06:00 to 23:00 within
+  3%. Traffic on all 42 junction arms, seven vehicle types, Indian driver behaviour (amber and red running, box
+  blocking, free left, protected right, U-turns, fast riders). It drives over the five flyovers that already exist,
+  and refuses to "build" a sixth at Tolichowki ("already has a flyover").
+- YMCA Circle, Hyderabad: model speeds within about 3 km/h of real data.
+- Gariahat, Kolkata: our replay cuts delay at Gariahat by 59% (study: 75%); Phari slows in the same direction, and its
+  approach delay doubles if the flyover draws ~15% more traffic (the study expected the inflow to "increase
+  substantially" but gave no number).
 Visual: `sim/gariahat/chart.png` (study vs simulator, before and after).
-Small print: run-to-run noise about ±0.9 min per option. Simulated main-road traffic is below TomTom's evening
-estimates (calibrated to the all-day trip). Rain adds about 5% while it rains (not statistically certain).
+Small print: run-to-run noise about ±0.5 min for a change at one junction, ±1.5 min corridor-wide. Simulated traffic
+is lighter than the evening estimates (calibrated to the trip time, hour by hour). Rain: light rain +1.5 min, heavy
+rain +7.2 min, estimated from a month of measured hourly trips and hourly rain (low to moderate confidence);
+water-logging points are reported, not measured by us.
 
-**Speaker notes:** "A simulator is only useful if it matches reality. On our corridor it is within 2 percent of
-TomTom's trip time, and every stretch within about 5. We calibrated YMCA Circle to TomTom speeds, to within about
+**Speaker notes:** "A simulator is only useful if it matches reality. On our corridor it is within one percent of the
+measured trip time, and every hour of the day within three. The drivers behave like Hyderabad drivers: riders filter
+to the front, the box gets blocked, the amber gets run. We calibrated YMCA Circle to measured speeds, to within about
 3 km/h. We replayed a real flyover from Kolkata and got the same main lesson the researchers did. And we say what we
-don't know: our traffic is lighter than TomTom's evening estimates, every result has about a minute of noise, and
-rain adds about 5% that we can't be sure of."
+don't know: our traffic is lighter than the evening estimates, every one-junction result has half a minute of noise,
+and the rain effect is an estimate."
 
 ---
 
@@ -106,10 +119,11 @@ rain adds about 5% that we can't be sure of."
 **On the slide:** Table with 5 buyers: traffic police, municipal engineering (GHMC), HMDA, metro and smart-city SPVs,
 consultancies. One line each on what they use it for.
 
-**Speaker notes:** "Traffic police own the cheapest fixes, signal timing, which is where the tool shines first.
-Consultancies write the traffic studies cities pay for; they buy fastest. Municipal engineering and the metropolitan
-authority are the bigger contracts once we have references." First 100 users: 1 design partner in Hyderabad, 2-3
-universities, 5 consultancies, 2 more cities (see `docs/business-case.md`).
+**Speaker notes:** "Traffic police own the cheapest fixes, signal timing, which is where the tool shines first, and
+'Simulate now' gives them the corridor as it is this minute. Consultancies write the traffic studies cities pay for;
+they buy fastest. Municipal engineering and the metropolitan authority are the bigger contracts once we have
+references." First 100 users: 1 design partner in Hyderabad, 2-3 universities, 5 consultancies, 2 more cities (see
+`docs/business-case.md`).
 
 ---
 
@@ -120,9 +134,9 @@ universities, 5 consultancies, 2 more cities (see `docs/business-case.md`).
 traffic data licences. "Prices are assumptions; pilot will set them."
 
 **Speaker notes:** "We'd sell a one-off junction study, a yearly subscription per corridor, and a city licence. Our
-working assumption is Rs 15 to 25 lakh per corridor per year. The biggest cost is traffic data from TomTom; we need a
-commercial quote, and we'd mix in the city's own counts. The value case is simple: if one test stops one wrong design,
-or lets a signal change replace a structure, it pays for many years of the subscription."
+working assumption is Rs 15 to 25 lakh per corridor per year. The biggest cost is commercial traffic data; we need a
+quote, and we'd mix in the city's own counts. The value case is simple: if one test stops one wrong design, or lets a
+signal change replace a structure, it pays for many years of the subscription."
 
 ---
 
@@ -134,8 +148,8 @@ Q3 new corridor in under 2 weeks, 3 consultancies · Q4 100 users. Risks we know
 liability. The ask: [[ASK]] (for example, an introduction to a city traffic team, or time to run the pilot).
 
 **Speaker notes:** "The most important test is simple: predict the effect of a real signal change before it goes in,
-then measure it with TomTom afterwards. If that works, cities will trust the tool for bigger decisions. On liability:
-the tool recommends, people decide, and the sealed record shows what was known at the time. Thank you."
+then measure it afterwards. If that works, cities will trust the tool for bigger decisions. On liability: the tool
+recommends, people decide, and the sealed record shows what was known at the time. Thank you."
 
 ---
 
@@ -145,13 +159,15 @@ the tool recommends, people decide, and the sealed record shows what was known a
 **Key message:** It is real, and it runs.
 
 **On the slide:** OpenStreetMap network of a 22.4 km corridor with 11 junctions (main road over 5 existing flyovers,
-signals at 5); calibrated to TomTom (55.4 vs 56.2 min); live TomTom data at 10 junctions; 5 kinds of fixes (flyover,
-underpass, signal timing, widening, one-way); 3D view with simulated vehicles; AI planning assistant (Claude with
-tool use, about 7 US cents a question); review and approval flow with SHA-256 fingerprints; YMCA Circle calibrated;
-Gariahat backtest.
+signals at 5, traffic on all 42 arms); Indian driver behaviour (`docs/driver-behaviour.md`); calibrated to real data
+(56.6 vs 56.2 min, every hour within 3%); live data at 10 junctions and a live trip estimate; "Simulate now"
+now-cast tuned to live traffic; weather now and a rain what-if with reported water-logging points; 5 kinds of fixes
+(flyover, underpass, signal timing, widening, one-way); 3D view with simulated vehicles and follow-a-car; Terascope
+AI advisor (Claude with tool use; cheapest first; pre-computed verdict for every junction; writes a brief); review at
+80% / 110% and approval with SHA-256 fingerprints; YMCA Circle calibrated; Gariahat backtest.
 
 **Speaker notes:** Credit each workstream: Simulation, Scenarios, AI agent, Frontend and 3D, Data and proof, Business
-and pitch. Mention that every number on screen is tagged real or simulated.
+and pitch. Mention that every number on screen is tagged real data or simulated.
 
 ---
 
@@ -159,15 +175,16 @@ and pitch. Mention that every number on screen is tagged real or simulated.
 
 | Question | Answer |
 |---|---|
-| How accurate is it? | On the corridor: 55.4 min simulated vs 56.2 min measured on the same roads (1.4%), every stretch within about 5%. At YMCA Circle, within about 3 km/h of TomTom speeds. Run to run, results move by about ±0.9 min. We show real and simulated side by side on every screen. |
-| Is 2 minutes worth a flyover? | That is the city's call, with the cost in hand; we have no sourced cost yet. Our job is the honest number: 2.1 min, still 2.0 at 20% more traffic, for every trip on the corridor. |
-| Why not a flyover at Tolichowki? | There already is one. The main road crosses Tolichowki on the Tolichowki Flyover; the tool says so and builds nothing. |
-| Your traffic looks lighter than TomTom's. | Yes. The model carries 1,500 vehicles an hour each way through, plus half of TomTom's evening cross-road volumes: below TomTom's evening estimates. We calibrated to the all-day trip time. That is why the reviewer re-tests at 120%. |
-| Why did the assistant's DLF flyover save less than the button? | It chose its own design (50 km/h, default length): −0.9 min against the button's −1.7 (600 m). Both are small and within about a minute of noise of each other; neither is a strong case. |
-| Can a cheap fix make things worse? | Yes, and the tool shows it: giving DLF's side roads more green makes the trip 2.6 min slower, as the queue backs up towards Nallagandla. |
-| Why not just use Google Maps or TomTom? | They tell you today's traffic. They can't tell you what happens if you build a flyover. We use their data as the starting point. |
-| Is the AI making decisions? | No. It proposes and tests options from fixed templates and writes a brief. In our run it advised *against* a flyover at DLF. A reviewer re-tests; a commissioner approves with a reason. |
-| What does the data cost? | We used TomTom trial accounts. A commercial price is the biggest unknown in our business case; we would also use the city's own counts. |
-| What about two-wheelers and autos? | SUMO's sublane model lets two-wheelers share and filter between lanes; driver settings tuned to Hyderabad speeds. |
-| What about rain? | On this corridor, light monsoon rain added about 5% while raining; not statistically certain from 15 days of data. |
+| How accurate is it? | On the corridor: 56.6 min simulated vs 56.2 min measured on the same roads (under 1%), every hour 06:00–23:00 within 3%. At YMCA Circle, within about 3 km/h of measured speeds. Run to run, a one-junction result moves by about ±0.5 min, a corridor-wide one by ±1.5. We show real and simulated side by side on every screen. |
+| Is 3 minutes worth a flyover? | That is the city's call, with the cost in hand; we have no sourced cost yet. Our job is the honest number: 3.1 min, 2.6 in heavy rain, still saving at 10% more traffic, for every trip on the corridor. |
+| Why not a flyover at Tolichowki? | There already is one. The main road crosses Tolichowki on the Tolichowki Flyover; the tool says so and builds nothing. Same at Gachibowli, Biodiversity, Shaikpet, NMDC and Masab Tank. |
+| Why does the advisor say underpass at Nanal Nagar, but you showed a flyover? | Both are structures that clear the signal; the advisor ranks by minutes saved beyond the noise, ripple, robustness in rain and at 110%, and an assumed cost ladder, and picks the underpass at that junction. The quick action is one 1.2 km flyover over two signals, Nanal Nagar and Rethibowli, which is why it saves more. Either way: the signal retime alone (−0.3) is inside the noise. |
+| What about ISB Rd / DLF? | The advisor's verdict there is to build the flyover (−1.9 min as a quick action). Giving DLF's side roads more green makes the trip 0.7 min slower and moves the queue back towards Nallagandla: cheap is not automatically good. |
+| Your traffic looks lighter than the evening estimates. | Yes. The model carries 1,215 vehicles an hour each way end to end, plus 40% of the measured junction volumes on every arm. It is calibrated to the measured trip time, hour by hour. That is why the reviewer re-tests at 110%. |
+| What about rain? | Heavy rain adds 7.2 min to the trip, about 2.7 of it at reported water-logging points (Shaikpet, Tolichowki, Lakdikapul and others); light rain adds 1.5. The rain factor is estimated from a month of measured hourly trips and hourly rain, low to moderate confidence. The flyover still saves 2.6 min in heavy rain. |
+| What is "Simulate now"? | A now-cast: the typical-day model for this hour, tuned so its trip matches the live trip from live speeds, then run with the roads as they are (about 20 s once warm). A traffic engineer can test a change against today, not an average. |
+| Why not just use Google Maps or a traffic-data vendor? | They tell you today's traffic. They can't tell you what happens if you build a flyover. We use their data as the starting point. |
+| Is the AI making decisions? | No. It tests options from fixed templates, cheapest first, and writes a brief marked "a recommendation for review, not a decision". A reviewer re-tests at 80% or 110%; a commissioner approves with a reason; every step is fingerprinted. |
+| What does the data cost? | We used trial accounts of a commercial traffic-data vendor (TomTom). A commercial price is the biggest unknown in our business case; we would also use the city's own counts. |
+| What about two-wheelers and autos? | Seven vehicle types in SUMO's sublane model: two-wheelers and autos filter between lanes and gather at the front of the queue; fast riders speed, weave and run the amber. Each behaviour is labelled measured, estimated or assumed (`docs/driver-behaviour.md`). |
 | Who is liable if the prediction is wrong? | The tool supports the decision; the sealed record shows the evidence and assumptions at the time; humans sign off. |
