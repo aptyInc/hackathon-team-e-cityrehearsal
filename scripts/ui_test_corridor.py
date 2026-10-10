@@ -1049,11 +1049,10 @@ with sync_playwright() as p:
     case = "R follow"; print(case)
     check(pg.evaluate("() => [dirOf({direction: 'A->B'}), dirOf({direction: 'B->A'}), dirOf({id: 'probe_rev_3.1'}), dirOf({id: 'probe_fwd_0.2'})]") == ["fwd", "rev", "rev", "fwd"],
           "the API's A->B / B->A directions read (they were read as 'towards Lakdikapul' both ways)")
-    pg.select_option("#speed", "1")
     pg.click("#follow"); pg.wait_for_timeout(1200)
     st = pg.evaluate("() => ride && [ride.probe.id, ride.t, ride.inWin]")
-    check(st and st[0] == "probe_fwd_1" and 600 <= st[1] < 700 and st[2] is False and pg.input_value("#speed") == "30",
-          f"Follow a car: test car fwd-1's whole trip from Lingampally, at 30x: {st}")
+    check(st and st[0] == "probe_fwd_1" and 600 <= st[1] < 700 and st[2] is False and pg.input_value("#speed") == "3",
+          f"Follow a car: test car fwd-1's whole trip from Lingampally, at the fixed 3x: {st}")
     card = pg.inner_text("#follow-card")
     check(pg.inner_text("#follow") == "Stop following" and pg.inner_text("#fc-title") == "Test car fwd-1 · Lingampally → Lakdikapul" and "Lingampally → Nallagandla Rd jn" in card
           and "min since Lingampally" in card and "of ~55" in card and "km/h" in card and "SIMULATED" in card and "drives alone" in card, f"follow card: {card!r}")
@@ -1062,7 +1061,6 @@ with sync_playwright() as p:
     check(layer(pg, "vehicles") == -1 and layer(pg, "vehicle-dots") == -1 and layer(pg, "ride-car") == 1 and layer(pg, "follow-halo") == 1, "outside the recorded minutes: the test car alone, highlighted")
     cam = pg.evaluate("() => { const v = probeAt(ride.probe, ride.t), c = map.getCenter(); return [v.lon - c.lng, v.lat - c.lat, map.getPitch()]; }")
     check(abs(cam[0]) < 3e-4 and abs(cam[1]) < 3e-4 and cam[2] > 55, f"camera rides with the car: {cam}")
-    pg.select_option("#speed", "10")
     pg.evaluate("() => { ride.t = 1000; }"); pg.wait_for_timeout(500)
     ids = layer_props(pg, "vehicles", "l => l.props.data.map(v => v.id)") or []
     card = pg.inner_text("#follow-card")

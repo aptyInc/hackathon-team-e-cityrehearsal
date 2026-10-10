@@ -106,7 +106,7 @@
   <h2>Playback <span class="tag sim">simulated</span></h2>
   <div class="row">
     <button id="play" class="ghost" disabled>▶ Play</button>
-    <select id="speed"><option value="1">1×</option><option value="5">5×</option><option value="10" selected>10×</option></select>
+    <select id="speed" hidden aria-hidden="true"><option value="3" selected>3×</option></select>   <!-- playback runs at 3x; not shown -->
     <span id="clock" class="muted">—</span>
   </div>
   <input type="range" id="scrub" min="0" max="0" value="0" disabled />

@@ -370,7 +370,7 @@
 <div id="pb" class="panel" hidden aria-label="Playback">
   <div class="pb-row">
     <button id="play" class="pb-play" disabled title="Play / pause (simulated vehicles)" aria-label="Play">▶</button>
-    <select id="speed" title="Playback speed"><option value="1">1×</option><option value="10" selected>10×</option><option value="30">30×</option><option value="60">60×</option></select>
+    <select id="speed" hidden aria-hidden="true"><option value="3" selected>3×</option></select>   <!-- playback runs at 3x everywhere; not shown -->
     <input type="range" id="scrub" min="0" max="0" step="1" value="0" disabled aria-label="Timeline: minute of the simulated period" />
     <span id="tl-time" class="pb-time">–</span>
   </div>
@@ -2084,7 +2084,7 @@ function startRide(id) {
   following = null; followLast = null; setOrbit(false);
   ride = { probe: pr, t: dep(pr), simT: null, inWin: false, skip: new Set([pr.id, ...(pr.segments || []).map(s => s.vehicle_id)]) };
   followBearing = map.getBearing();
-  if (Number($("speed").value) < 30) $("speed").value = "30";   // a 50-minute trip: 30x by default (change it in the pill)
+  // playback speed is fixed at 3x (the hidden #speed select) for traffic and for following a car
   setPlaying(true);
   $("playinfo").textContent = "";
   followUI(); rideTick(); render();
