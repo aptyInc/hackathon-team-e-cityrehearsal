@@ -34,6 +34,9 @@ TERASCOPE_BUCKET=$BUCKET
 AWS_DEFAULT_REGION=$REGION
 EOF
 
+echo "== cached runs: point the decision log's run files at $APP (see fix_run_paths.py)"
+sudo -u ubuntu python3 "$APP/deploy/aws/fix_run_paths.py" "$APP/backend/cityrehearsal.db" "$APP"
+
 echo "== services"
 install -m 644 "$APP/deploy/aws/terascope-api.service" "$APP/deploy/aws/terascope-collector.service" \
   "$APP/deploy/aws/terascope-sync.service" "$APP/deploy/aws/terascope-sync.timer" /etc/systemd/system/

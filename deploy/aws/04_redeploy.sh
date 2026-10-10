@@ -37,8 +37,10 @@ EOF
 )
 fi
 
+PARAMS="${TMPDIR:-/tmp}/terascope-ssm-params.json"
+printf '{"commands": %s}' "$CMDS" > "$PARAMS"       # a JSON file: the CLI's shorthand syntax mangles quotes and newlines
 CMD="$(aws ssm send-command --instance-ids "$ID" --document-name AWS-RunShellScript --comment "terascope redeploy" \
-       --timeout-seconds 1800 --parameters "commands=${CMDS}" --query Command.CommandId --output text)"
+       --timeout-seconds 1800 --parameters "file://${PARAMS}" --query Command.CommandId --output text)"
 echo "command ${CMD} on ${ID}; waiting"
 for i in $(seq 1 180); do
   S="$(aws ssm get-command-invocation --command-id "$CMD" --instance-id "$ID" --query Status --output text 2>/dev/null || echo Pending)"
