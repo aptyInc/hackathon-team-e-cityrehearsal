@@ -118,7 +118,7 @@
 <script src="app.js"></script>
 <script src="md.js"></script>
 <script>
-const { $, esc, get, when, pct, ivText, STAGES, stageName, decisionText, fp, apiProblem } = CR;
+const { $, esc, get, when, pct, ivText, STAGES, stageName, decisionText, fp, apiProblem, plain } = CR;
 const { md } = window.crMarkdown;
 let cases = null, filter = "all", current = null;
 
@@ -233,7 +233,7 @@ function renderDetail(c) {
     `<p class="note">Trip = whole Lingampally → Lakdikapul trip in the simulation. Traffic 100% = today's calibrated traffic; the reviewer re-tests with more or less.</p>`
     : `<p class="note">No runs attached.</p>`;
   if (runs.some(r => (r.warnings || []).length)) {
-    const ws = [...new Set(runs.flatMap(r => r.warnings || []))];
+    const ws = [...new Set(runs.flatMap(r => r.warnings || []).map(plain))];
     $("runs").innerHTML += `<details><summary class="muted">${ws.length} warning${ws.length > 1 ? "s" : ""} from the simulation</summary><ul class="note">${ws.map(w => `<li>${esc(w)}</li>`).join("")}</ul></details>`;
   }
   // evidence
@@ -257,7 +257,7 @@ async function loadBrief(c) {
   try {
     const b = await get(`/briefs/${encodeURIComponent(id)}`);
     if (current !== c) return;
-    $("brief-body").innerHTML = md(b.markdown || "*(empty brief)*");
+    $("brief-body").innerHTML = md(plain(b.markdown) || "*(empty brief)*");
     $("brief-meta").hidden = false;
     $("brief-meta").innerHTML = `Brief <code>${esc(b.brief_id || id)}</code>${b.created_at ? ` · written ${esc(when(b.created_at))}` : ""}${b.fingerprint ? ` · fingerprint ${fp(b.fingerprint)}` : ""}` +
       `${(b.run_ids || []).length ? ` · runs ${b.run_ids.map(r => `<code>${esc(r)}</code>`).join(", ")}` : ""}`;

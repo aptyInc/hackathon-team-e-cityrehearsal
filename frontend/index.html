@@ -109,33 +109,33 @@
       <p class="where"><i data-lucide="map-pin"></i>Now demonstrating on the Lingampally → Lakdikapul corridor and at YMCA Circle, Hyderabad.</p>
       <div class="cta"><a class="btn" href="corridor.html">Open the corridor <i data-lucide="arrow-up-right"></i></a><a class="btn ghost" href="ymca.html">YMCA Circle in 3D <i data-lucide="arrow-right"></i></a></div>
     </div>
-    <div class="viz card" id="viz" hidden aria-label="The corridor route, coloured by TomTom’s measured speed">
+    <div class="viz card" id="viz" hidden aria-label="The corridor route, coloured by the measured speed (real data)">
       <svg id="route-svg" viewBox="0 0 620 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
       <div class="ov">Lingampally → Lakdikapul<span class="tag real">REAL</span></div>
-      <div class="kpi"><b id="v-min">58<small> min</small></b><span>typical July trip, TomTom</span></div>
+      <div class="kpi"><b id="v-min">58<small> min</small></b><span>typical-day trip, real data</span></div>
       <div class="lg"><span><i style="background:var(--fast)"></i>≥ 25 km/h</span><span><i style="background:var(--mid-speed)"></i>15–25</span><span><i style="background:var(--slow)"></i>&lt; 15</span></div>
     </div>
   </section>
 
   <div id="live" class="card" aria-live="polite">
     <span class="lv-h"><span class="dot off" id="live-dot"></span>Live at corridor junctions <span class="tag real">REAL</span></span>
-    <span id="live-body" class="muted">Loading TomTom live data…</span>
+    <span id="live-body" class="muted">Loading live data…</span>
     <span id="wx-now" class="lv-item" hidden></span>
-    <a id="live-map" href="corridor.html#mode=live">See it on the map →</a>
+    <a id="live-map" href="corridor.html">See it on the map →</a>
   </div>
 
   <section class="grid">
     <a class="card primary" id="card-corridor" href="corridor.html">
       <div class="kicker">Main demo · corridor</div>
       <h2>Lingampally → Lakdikapul corridor</h2>
-      <div class="big"><span class="num" id="c-min">58 min</span><span>by car on a typical July day <span class="tag real">REAL</span></span></div>
-      <small id="c-src">Measured by TomTom Traffic Stats, July 2026, 06:00–23:00.</small>
+      <div class="big"><span class="num" id="c-min">58 min</span><span>by car on a typical day <span class="tag real">REAL</span></span></div>
+      <small id="c-src">Real data: measured travel times on a typical day, 06:00–23:00.</small>
       <div class="legs" id="c-legs" aria-hidden="true"></div>
       <div class="legs-key"><span>Lingampally</span><span><span class="chip" style="background:var(--fast)"></span>≥ 25 km/h<span class="chip" style="background:var(--mid-speed)"></span>15–25<span class="chip" style="background:var(--slow)"></span>&lt; 15</span><span>Lakdikapul</span></div>
       <div class="facts">
         <span><b id="c-km">22.4 km</b>route</span>
         <span><b id="c-jn">11</b>junctions</span>
-        <span><b id="c-live">–</b>with live TomTom data</span>
+        <span><b id="c-live">–</b>reporting live (real data)</span>
       </div>
       <p class="desc">Simulate the whole commute, try a flyover, a signal retime or a wider road at any junction, see the knock-on at the next one,
         ask the AI assistant, and send the result for review.</p>
@@ -145,7 +145,7 @@
       <a class="card" id="card-ymca" href="ymca.html">
         <div class="kicker">Close-up · one junction in 3D <span class="tag sim">SIMULATED</span></div>
         <h2>YMCA Circle, Narayanaguda</h2>
-        <p class="desc">One roundabout up close: thousands of simulated two-wheelers, cars, autos and buses, TomTom's live delay on each road,
+        <p class="desc">One roundabout up close: thousands of simulated two-wheelers, cars, autos and buses, the live measured delay on each road,
           and a 3-lane flyover test.</p>
         <span class="btn ghost go">Open the close-up <i data-lucide="arrow-right"></i></span>
       </a>
@@ -162,7 +162,7 @@
   <h2 class="sec-h">How it works</h2>
   <ol class="steps card light">
     <li><div class="sh"><span class="k">1</span><h3>Predict</h3><span class="badge-ic"><i data-lucide="search"></i></span></div>
-      <p>A computer copy of the real roads (OpenStreetMap, simulated in SUMO) is tuned until its trip times match TomTom's measurements.
+      <p>A computer copy of the real roads (OpenStreetMap, simulated in SUMO) is tuned until its trip times match the real, measured ones.
         Then it shows where queues build up and why.</p><div class="pt"><span class="pilltag">Simulate</span><span class="pilltag">Identify</span></div></li>
     <li><div class="sh"><span class="k">2</span><h3>Mitigate first</h3><span class="badge-ic"><i data-lucide="split"></i></span></div>
       <p>Try the cheap fixes before the expensive ones: signal timing, a one-way side road, a wider approach. Only then a flyover,
@@ -172,14 +172,14 @@
         fingerprinted so the record cannot be changed quietly.</p><div class="pt"><span class="pilltag">Compare</span><span class="pilltag">Decide</span></div></li>
   </ol>
 
-  <footer>Every number on these screens is tagged <span class="tag real">REAL</span> (measured, mostly by TomTom) or
+  <footer>Every number on these screens is tagged <span class="tag real">REAL</span> (real data, measured) or
     <span class="tag sim">SIMULATED</span> (our model). Where each one comes from and how far to trust it: <a href="data.html">About the data</a>.</footer>
 </main>
 
 <script src="vendor/lucide.min.js"></script>
 <script src="app.js"></script>
 <script>
-const { $, esc, get, hhmm, when, stageName, apiProblem } = CR;
+const { $, esc, get, hhmm, when, stageName, apiProblem, plain } = CR;
 // Saved copy of TomTom's typical July day (data/raw/corridor_legs_tomtom.csv): [metres, seconds, km/h] per leg, A -> B.
 const SAVED_LEGS = [[1911, 402.2, 17.1], [5414, 829.8, 23.5], [1386, 240.5, 20.8], [1581, 184.1, 30.9], [1078, 151, 25.7], [1621, 175.2, 33.3],
                     [2830, 282, 36.1], [1370, 243.1, 20.3], [418, 71.6, 21], [2241, 451.8, 17.9], [930, 148.8, 22.5], [1636, 312.3, 18.9]];
@@ -231,13 +231,13 @@ async function loadCorridor() {
     $("c-min").textContent = `${Math.round(tot / 60)} min`;
     $("c-km").textContent = `${km.toFixed(1)} km`;
     $("c-jn").textContent = String((c.points || []).filter(x => x.kind === "junction").length || 11);
-    $("c-src").textContent = `Measured by TomTom Traffic Stats: ${p.label || "typical July day"}, ${p.legs.length} stretches between junctions.`;
+    $("c-src").textContent = `Real data, measured: ${plain(p.label || "typical day")}, ${p.legs.length} stretches between junctions.`;
     drawLegs(p.legs);
     $("v-min").innerHTML = `${Math.round(tot / 60)}<small> min</small>`;
     try { drawRoute(c, p.legs); } catch (e2) { /* the picture is decoration */ }
   } catch (e) {
     drawLegs(SAVED_LEGS.map(([d, t, s]) => ({ distance_m: d, time_s: t, speed_kmh: s })));
-    $("c-src").textContent = "Measured by TomTom Traffic Stats, July 2026, 06:00–23:00 (saved copy: the API is not answering).";
+    $("c-src").textContent = "Real data: measured travel times on a typical day, 06:00–23:00 (saved copy: the API is not answering).";
   }
 }
 async function loadLive() {
@@ -252,7 +252,7 @@ async function loadLive() {
     $("live-dot").classList.toggle("off", !fresh.length);
     $("live-body").classList.remove("muted");
     $("live-body").innerHTML =
-      `<span class="lv-item" id="lv-count"><b>${js.length}</b> TomTom junction${js.length > 1 ? "s" : ""} reporting${fresh.length < js.length ? ` <small class="mid">(${js.length - fresh.length} not updated for 15+ min)</small>` : ""}</span>` +
+      `<span class="lv-item" id="lv-count"><b>${js.length}</b> junction${js.length > 1 ? "s" : ""} reporting live${fresh.length < js.length ? ` <small class="mid">(${js.length - fresh.length} not updated for 15+ min)</small>` : ""}</span>` +
       ` · <span class="lv-item" id="lv-time">updated <b>${esc(hhmm(last))}</b></span>` +
       (worst ? ` · <span class="lv-item" id="lv-worst">worst delay right now: <b class="${worst.a.delay_s >= (worst.a.usual_delay_s ?? 0) + 15 ? "bad" : "mid"}">${Math.round(worst.a.delay_s)} s</b>` +
         ` on ${esc(worst.a.name)} at ${esc(worst.j.name)}${worst.a.usual_delay_s != null ? ` <small>(usually ${Math.round(worst.a.usual_delay_s)} s)</small>` : ""}</span>` : "");
@@ -260,7 +260,7 @@ async function loadLive() {
   } catch (e) {
     $("live-dot").classList.add("off");
     $("live-body").classList.add("muted");
-    $("live-body").textContent = apiProblem(e, "Live TomTom junction data");
+    $("live-body").textContent = apiProblem(e, "Live junction data");
   }
 }
 async function loadCases() {

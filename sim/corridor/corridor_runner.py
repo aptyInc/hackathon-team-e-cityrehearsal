@@ -8,25 +8,34 @@ each corridor point projected onto the route (a flyover piece can run past a jun
 Traffic
   - Through traffic both ways along the corridor on fixed routes (end-to-end volume per direction: calibrated). At
     Lakdikapul (B) it disperses before the last ~130 m, a 5-into-2-lane give-way merge; only probe cars drive on.
-  - Cross traffic at every signalised junction. Where TomTom Junction Analytics measures the junction (corridor_junctions
-    .json, picked up automatically), each cross-road approach gets TomTom's volume (mean of the minutes collected,
-    `estimated`) times cross_scale, and TomTom's turn ratios decide how much joins the corridor each way or crosses it.
-    Elsewhere: CROSS_VPH per approach, a third each way (`assumed`). Joining traffic drives JOIN_M on the corridor.
-    Cross traffic enters INSERT_BACK_M up its road, so the junction's queue does not block it from entering.
+  - Every arm of every junction carries traffic (junction_arms(), demand()), including the ground roads under the
+    flyovers (j03, j04, j06, j07, j10/j11) and the corridor's own carriageway below them. Each arm gets TomTom Junction
+    Analytics' volume (mean of the minutes collected within 06-23 h, `estimated`) x cross_scale, leaving by the exits in
+    TomTom's measured turn shares (left/straight/right/U by angle, probe-weighted); with too few probes, or no TomTom
+    at the junction (j01's and j05's TomTom areas are 1.3-2 km off the corridor; j11 has none), `assumed` volumes and
+    splits. Corridor approaches are topped up only by the shortfall to TomTom's volume (traffic already arriving there
+    is counted first: no double counting). Traffic turning onto the corridor drives JOIN_M on it, the rest EXTEND_M
+    on its road. Side-road traffic enters INSERT_BACK_M up its road, so the junction's queue does not block it.
+  - Drivers (VEHICLES, docs/driver-behaviour.md): seven vehicle types in the measured mix, Indian following gaps and
+    reaction times (capacity x1.35 via headways), speeding, amber/red running, box blocking, giving way, side-street
+    forcing; signals: free left, protected right phase, corridor >= 65% of the green (one approach at a time at big
+    junctions is built but off: it gridlocked; corridor_net.BIG_JUNCTIONS). Out of scope (non-sublane model): lateral
+    behaviour (filtering, weaving, side clearance) and creeping past the stop line (a viewer effect).
   - Probe cars every 30 s both ways record when they pass each corridor point: the trip time split by leg.
 
 Noise: journey.total_s_se is the uncertainty of the trip time as an absolute number: the probe cars' spread in this
 run combined with the run-to-run spread (the calibrated baseline with 3 other seeds, run_to_run_sd_s in
-calibration.json). Comparing a variant with the baseline is a paired comparison: driving is deterministic (Krauss
-sigma 0), every run uses the same seed, the same traffic and the same netconvert rebuild (sim/templates/corridor.py
-rebuilds every variant; the baseline gets a rebuild with no change), so a change only moves the legs of the sections
-it touches. For that, use total_s_se_probes: a change is beyond noise when it exceeds about twice both runs'
-total_s_se_probes combined (about +-0.8 min).
+calibration.json). Comparing a variant with the baseline is a paired comparison: every run uses the same seed, the
+same traffic (planned on the unchanged network) and the same netconvert rebuild (sim/templates/corridor.py rebuilds
+every variant; the baseline gets a rebuild with no change), and each section is its own SUMO run, so a change only
+moves the legs of the sections it touches. Drivers are imperfect (sigma, docs/driver-behaviour.md s3), so inside a
+touched section the change also reshuffles the random draws: there the noise is the seed-to-seed spread of that
+section (see SIGMA_NOTE for the measured size); a change is beyond noise when it exceeds about twice that spread x sqrt 2.
 
 Running fast: the corridor runs as 6 sections (SECTIONS) at once, one SUMO each. A section is its legs plus 1 km of
 road before them (traffic reaches the first junction in realistic platoons) and 300 m after; traffic entering it is the
 corridor flow at that point. Trip time = sum of the legs. Each section starts full (fill flows), so 10 minutes of
-warm-up and 15 minutes of probes are enough. A run takes about 20-40 s; frames (C1) cover 5 minutes.
+warm-up and 15 minutes of probes are enough. A run takes about 30-60 s with 3 SUMO processes (CR_SIM_PARALLEL); frames (C1) cover 5 minutes.
 
 Calibration (`calibrate()`, writes calibration.json), in plain words: TomTom measured how long each leg takes on
 average (July 2026, 6 am-11 pm, `counted`) and, this evening, how long vehicles wait on the corridor's approaches at
@@ -77,7 +86,6 @@ sys.path.insert(0, str(ROOT / "sim/templates"))
 import corridor_net as cn  # noqa: E402
 import sumolib  # noqa: E402
 from sumolib import geomhelper  # noqa: E402
-from build_demand import VTYPES  # noqa: E402
 
 NET = HERE / "corridor.net.xml"
 CALIBRATION = HERE / "calibration.json"
@@ -93,19 +101,25 @@ CROSS_SCALE = 0.6                 # share of TomTom's estimated cross-road volum
 CROSS_VPH = 450                   # per cross-road approach at junctions without TomTom counts (assumed)
 ASSUMED_SPLIT = {"fwd": 1 / 3, "rev": 1 / 3, "cross": 1 / 3}   # cross traffic: joins A->B, joins B->A, crosses (assumed)
 MIN_TURN_PROBES = 10              # TomTom turn ratios are used for an approach once this many probe trips back them
-JOIN_M = 3000                     # cross traffic that joins the corridor drives this far on it, then leaves (assumed)
+JOIN_M = 1500                     # traffic that joins the corridor drives this far on it, then leaves (assumed; was 3 km:
+                                  # with every arm loaded, joins from several junctions piled up beyond TomTom's volumes)
 INSERT_BACK_M = 250               # cross traffic enters this far up its road, not at the stop line
 FILL_STEP_M, FILL_SPEED = 2500, 6.0   # the corridor starts full: extra entry points every 2.5 km until traffic at 6 m/s arrives
-MIX = {"two_wheeler": 0.45, "car": 0.30, "auto": 0.18, "bus": 0.07}   # assumed
+MIX = {"two_wheeler": 0.47, "auto": 0.19, "car": 0.27, "bus": 0.04, "truck": 0.03}   # assumed (docs/driver-behaviour.md s2; VEHICLES)
 MAX_KMH = 60                      # speed cap on the corridor before calibration
 MAX_SHARE = 0.8                   # calibration gives the corridor at most this share of a junction's green
 MIN_DEMAND = 0.7                  # calibration lowers traffic to no less than this share of the starting volumes
-MIN_SHARE = 0.35                  # ... and gives the corridor at least this share of a junction's green
+MIN_SHARE = 0.35                  # ... and gives the corridor at least this share of a junction's green at a big junction
+MIN_SHARE_MAIN = 0.65             # ... and at a main x minor junction (docs/driver-behaviour.md s5: main road >= 65%)
 STABLE_SHARE = {"j03": 0.7}       # ... except Gachibowli Circle: below 70% its roundabout fills up and locks in some runs
+
+
+def min_share(jid):
+    return STABLE_SHARE.get(jid, MIN_SHARE if jid in cn.BIG_JUNCTIONS else MIN_SHARE_MAIN)
 FREE_KMH = 50                     # free-flow speed on the corridor's roads (assumed): a leg's time above it is delay
 STEP = 0.5                        # s; the vehicle types' reaction times (tau 0.6-1.0 s) need steps no longer than this
 SEED = 2                          # SUMO random seed: the same for the baseline and every variant (common random numbers)
-SIGMA = 0                         # driver imperfection (Krauss sigma): 0, so baseline and variants differ only by the change
+SIGMA = 0                         # the probe cars only: they drive at the speed cap without imperfection (traffic: VEHICLES)
 TELEPORT_S = 300                  # s a vehicle may stand still before SUMO lifts it out of a deadlock
 PARALLEL = int(os.environ.get("CR_SIM_PARALLEL", "6"))   # SUMO processes at once per run (one per section at most)
 WARMUP = 600                      # s before the first probe leaves
@@ -125,7 +139,68 @@ HOUR_MAX_KMH = 80                 # ... and no leg faster than this
 SECTIONS = [("A_lingampally", "j01"), ("j01", "j02"), ("j02", "j04"), ("j04", "j07"), ("j07", "j09"), ("j09", "B_lakdikapul")]
 LEAD_IN_M, TAIL_M = 1000, 300     # road simulated before / after each section's legs
 C1_TYPES = {"two_wheeler", "car", "auto", "bus", "truck"}
-JUNCTION_BLOCKER_S = 5            # s a vehicle waits behind one stuck inside the junction before squeezing past (assumed; with SUMO's default, never, the junctions locked up)
+JUNCTION_BLOCKER_S = int(os.environ.get("CR_JUNCTION_BLOCKER_S", "15"))   # s a vehicle waits behind one stuck inside the junction before moving past it (docs/driver-behaviour.md s6, assumed)
+IMPATIENCE_S = int(os.environ.get("CR_IMPATIENCE_S", "30"))   # s of waiting after which a driver who must give way accepts much smaller gaps (s6, assumed)
+
+# ---------- drivers (docs/driver-behaviour.md; labels as the doc: measured / estimated / assumed) ----------
+# Non-sublane model (the sublane model was ~11x slower): vehicles keep to their lane in single file, so lateral
+# behaviour (s4: position in the lane, side clearance, filtering, weaving) is out of scope.
+CAPACITY = 1.35                   # s1 (assumed): real capacity = marked lanes x 1.35. Single file cannot fit 3 two-wheelers
+                                  # across a lane, so the factor goes on the following headway instead; the network's
+                                  # lanes are unchanged, so the intervention templates (flyover lanes, widening) see the
+                                  # same roads
+HEADWAY_FACTOR = 1.55             # every type's tau and minGap / this (tau not below STEP): the mix's saturation headway at
+                                  # a 36 km/h discharge, tau + (length + minGap) / v, drops from 1.31 s (doc values) to
+                                  # 0.97 s, i.e. capacity x1.35 (estimated; dividing by 1.35 itself gave only x1.23,
+                                  # since vehicle lengths do not shrink)
+# id, C1 type, share, vClass, length, width (m), top speed (km/h), accel, decel (m/s2), minGap (m), tau (s), sigma,
+# speedFactor, jmDriveAfterRedTime (s; -1 = stops), jmIgnoreKeepClearTime (s)       (s2, s3, s7; all assumed)
+VEHICLES = [
+    ("two_wheeler_fast", "two_wheeler", 0.47 * 0.3, "motorcycle", 2.0, 0.8, 80, 3.0, 5.0, 0.6, 0.6, 0.6, "normc(1.25,0.1,1.05,1.5)", 2, 0),
+    ("two_wheeler", "two_wheeler", 0.47 * 0.7, "motorcycle", 2.0, 0.8, 60, 2.5, 4.5, 0.8, 0.8, 0.5, "normc(1.0,0.1,0.8,1.2)", 1, 0),
+    ("auto_fast", "auto", 0.19 * 0.5, "passenger", 2.6, 1.5, 60, 1.4, 4.0, 1.0, 0.8, 0.6, "normc(1.2,0.1,1.0,1.4)", 2, 0),
+    ("auto", "auto", 0.19 * 0.5, "passenger", 2.6, 1.5, 50, 1.2, 4.0, 1.2, 0.9, 0.5, "normc(1.0,0.1,0.8,1.2)", 1, 0),
+    ("car", "car", 0.27, "passenger", 4.3, 1.8, 80, 2.6, 4.5, 2.0, 1.0, 0.5, "normc(1.0,0.1,0.8,1.2)", 1, 5),
+    ("bus", "bus", 0.04, "bus", 12.0, 2.5, 60, 1.0, 4.0, 2.5, 1.0, 0.5, "normc(1.0,0.1,0.8,1.2)", -1, 10),
+    ("truck", "truck", 0.03, "truck", 7.5, 2.5, 60, 1.0, 4.0, 2.5, 1.0, 0.5, "normc(1.0,0.1,0.8,1.2)", -1, 10),
+]
+# the doc's prose says half of two-wheeler riders and 30% of autos are fast; its table says the reverse (30% / half):
+# the table is followed, as the doc's own note says
+SIGMA_SCALE = float(os.environ.get("CR_SIGMA_SCALE", "0.4"))   # x the doc's imperfection (0.5, fast 0.6): 0.2 / 0.24
+SIGMA_NOTE = ("calibrated (spec 0.5): 0.2, fast riders 0.24. With the spec's 0.5 the Nanal Nagar section (j07-j09, near "
+              "capacity) varied 278-404 s between seeds (sd ~70 s: a variant-vs-baseline comparison there would carry about "
+              "+-3 min of noise). At 0.2, on the calibrated model (seeds 2-4): section sd 9-27 s, whole trip sd 50 s; paired "
+              "variant-minus-baseline at the same seed, measured at seeds 2, 3, 4: flyover j08 -3.1 / -3.1 / -2.7 min (sd "
+              "0.25 min), heavy rain +2.2 / +3.3 / +3.6 min (sd 0.7 min): a one-junction change is beyond noise above about "
+              "+-0.5 min, a change to every leg (rain) above about +-1.5 min")
+YELLOW_GO_S = 4                   # s7: nobody brakes for amber: whoever reaches the line in the 4 s amber goes (assumed)
+RED_SPEED = 11.1                  # s7: red-runners keep their speed, up to 40 km/h (assumed)
+GIVE_WAY_SPEED, GIVE_WAY_PROB = 1.5, 0.3   # s6: noses out in front of a priority vehicle crawling below 1.5 m/s, 30% per 0.5 s (assumed)
+SIDE_SPEED, SIDE_PROB = 5.0, 0.5           # s6: side-street drivers force in while the main road is under 5 m/s, 50% per 0.5 s (estimated)
+
+
+def c1_type(vtype):
+    """C1 vehicle type of a simulation vType (two_wheeler_fast -> two_wheeler, car_side -> car, probe -> car)."""
+    base = vtype.split("@")[0].removesuffix("_side").removesuffix("_fast")
+    return base if base in C1_TYPES else "car"
+
+
+def vtypes_xml():
+    """The vehicle types (VEHICLES), each also as a side-street variant (<id>_side: forces its way into a slow main
+    road, SIDE_SPEED/SIDE_PROB), and two distributions: "mix" (main roads) and "mix_side" (side streets)."""
+    lines = []
+    for side in (False, True):
+        for vid, _, _, vcls, length, width, kmh, accel, decel, gap, tau, sigma, sf, red, keep in VEHICLES:
+            jm = (f'jmDriveAfterYellowTime="{YELLOW_GO_S}" jmStoplineGap="0" jmIgnoreKeepClearTime="{keep}" '
+                  f'jmIgnoreFoeSpeed="{SIDE_SPEED if side else GIVE_WAY_SPEED}" jmIgnoreFoeProb="{SIDE_PROB if side else GIVE_WAY_PROB}"'
+                  + (f' jmDriveAfterRedTime="{red}" jmDriveRedSpeed="{RED_SPEED}"' if red >= 0 else ""))
+            lines.append(f'    <vType id="{vid}{"_side" if side else ""}" vClass="{vcls}" length="{length}" width="{width}" '
+                         f'maxSpeed="{kmh / 3.6:.2f}" accel="{accel}" decel="{decel}" minGap="{gap / HEADWAY_FACTOR:.2f}" '
+                         f'tau="{max(STEP, tau / HEADWAY_FACTOR):.2f}" sigma="{sigma * SIGMA_SCALE:.3f}" speedFactor="{sf}" {jm}/>')
+        names = [v[0] + ("_side" if side else "") for v in VEHICLES]
+        lines.append(f'    <vTypeDistribution id="{"mix_side" if side else "mix"}" vTypes="{" ".join(names)}" '
+                     f'probabilities="{" ".join(f"{v[2]:.4f}" for v in VEHICLES)}"/>')
+    return "\n".join(lines)
 
 
 # ---------- network ----------
@@ -248,19 +323,21 @@ def calibrated_net(out: Path, caps=None, shares=None):
             for lane in edge.iter("lane"):
                 lane.set("speed", f"{v:.2f}")
     tree.write(out)
-    if shares and any(abs(v - cn.CORRIDOR_GREEN_SHARE) > 1e-6 for v in shares.values()):
-        cn.signal_plans(out, shares)
+    cn.signal_plans(out, shares or {})      # the plans of docs/driver-behaviour.md s5 with the calibrated green shares
     return out
 
 
 # ---------- traffic ----------
 def tomtom_volumes(field="volume_per_hour"):
-    """TomTom Junction Analytics: mean of `field` (veh/h, or delay_s) per (junction_id, approach_id) over all minutes
-    collected so far, and the time span collected ('first .. last' minute)."""
+    """TomTom Junction Analytics: mean of `field` (veh/h, or delay_s) per (junction_id, approach_id) over the minutes
+    collected so far within the simulated day (HOURS, local time: the collector runs through the night too), and the
+    time span used ('first .. last' minute)."""
     if not JA_LIVE.exists():
         return {}, None
     sums, times = {}, []
     for r in csv.DictReader(JA_LIVE.open()):
+        if not (HOURS[0] <= int(r["time"][11:13]) <= HOURS[-1]):
+            continue
         k = (r["junction_id"], r["approach_id"])
         n, v = sums.get(k, (0, 0.0))
         sums[k] = (n + 1, v + float(r.get(field) or 0))
@@ -390,92 +467,488 @@ def junction_counts(net, groups, fwd, rev):
     return cross, corridor, span
 
 
-def _after(path, i, metres):
-    """Index of the first path edge at least `metres` past the end of path[i], skipping flyover/underpass edges and the
-    edge landing from one (traffic joining at the junction cannot use them)."""
-    k, done = i + 1, 0.0
-    while k < len(path) - 1 and done < metres:
-        done += path[k].getLength()
-        k += 1
-    grade = lambda e: e.getID().startswith(("flyover_", "underpass_"))  # noqa: E731
-    while k < len(path) - 1 and (grade(path[k]) or grade(path[k - 1])):
-        k += 1
-    return k
+# ---------- every arm of every junction ----------
+GROUND_R, GROUND_R_WIDE = 70, 130     # m: a junction's nodes lie within this of its corridor point (wider if too few arms)
+TOMTOM_NEAR_M = 400                   # a TomTom junction area centred further than this from the corridor junction is
+                                      # another junction (j01's and j05's areas are 1.3-2 km away): not used there
+ARM_MIN_VPH = 50                      # TomTom approaches below this are left out (colony lanes)
+ARM_UPSTREAM_M = 400                  # a TomTom approach counts for an arm when it lies this far up the arm's road at most
+ASSUMED_TURNS = {"L": 0.3, "S": 0.55, "R": 0.15, "U": 0.0}   # left (short turn, lefthand traffic), straight, right, U (assumed)
+ASSUMED_VPH_PER_LANE, ASSUMED_VPH_MAX = 200, 450              # an arm without TomTom (assumed)
+ARM_LANE_CAP = 800                    # veh/h per lane at most on a side arm (its share of a signal's green; assumed): where
+                                      # the network has fewer lanes than the road (ISB Road: 1), TomTom's volume backs up
+ARM_LANE_CAP_GIVE_WAY = 400           # ... where the arm gives way (no signal: under the Biodiversity flyover, Gachibowli Circle)
+NOT_INSERTED_OK = 0.08                # calibration: up to this share of vehicles may wait to enter (side arms at capacity
+                                      # queue beyond the modelled roads); more counts as the network not coping
+EXTEND_M = 300                        # traffic leaving a junction drives this far on before it leaves the network
+TOPUP_BACK_M = 400                    # corridor top-up traffic enters this far before the junction, in the moving stream
+FLYOVER_SHARE = 0.81                  # through traffic that takes the flyover where there is one (docs/driver-behaviour.md s1, measured)
 
 
-def demand(net, base_groups, volume_scale=1.0, through=None, cross_scale=CROSS_SCALE, tomtom=None):
-    """All traffic as flows [{"id", "route": [edge ids], "vph", "kind"}]: through traffic both ways along the corridor
-    (fixed routes), and cross traffic at every junction (TomTom volumes where measured, else CROSS_VPH per approach)
-    that crosses the corridor or joins it for JOIN_M metres. `base_groups` are the junction node ids of the unchanged
-    network, so cross traffic still meets the ground junction under a flyover. Returns (flows, info)."""
+HEADING_M = 80                        # a road's direction into / out of a junction: over its last / first this many metres
+
+
+def _poly_heading(pts, last=True, metres=HEADING_M):
+    """Direction of a polyline (XY points) over its last (or first) `metres`: robust to the curve of a roundabout's
+    entry or a slip road's last few metres."""
+    pts = pts[::-1] if last else list(pts)
+    done, far = 0.0, pts[1] if len(pts) > 1 else pts[0]
+    for a, b in zip(pts, pts[1:]):
+        far = b
+        done += math.dist(a[:2], b[:2])
+        if done >= metres:
+            break
+    (x0, y0), (x1, y1) = pts[0][:2], far[:2]
+    return math.atan2(y0 - y1, x0 - x1) if last else math.atan2(y1 - y0, x1 - x0)
+
+
+def _geo_heading(coords, net, last=True):
+    return _poly_heading([net.convertLonLat2XY(c[0], c[1]) for c in coords], last)
+
+
+def _end_heading(e, last=True):
+    """Direction of edge `e` (and the road behind it / after it, up to HEADING_M) into (last) or out of a junction."""
+    shape = list(e.getShape())
+    x = e
+    while sum(math.dist(a[:2], b[:2]) for a, b in zip(shape, shape[1:])) < HEADING_M:
+        nxt = (x.getFromNode().getIncoming() if last else x.getToNode().getOutgoing())
+        nxt = [y for y in nxt if (y.getToNode() != x.getFromNode() if not last else y.getFromNode() != x.getToNode())]
+        if len(nxt) != 1:
+            break
+        x = nxt[0]
+        shape = (list(x.getShape()) + shape[1:]) if last else (shape + list(x.getShape())[1:])
+    return _poly_heading(shape, last)
+
+
+def turn_classes(h_in, h_outs):
+    """L / S / R / U for each heading out of a junction, given the heading into it (left = counter-clockwise; in
+    lefthand traffic the short turn). Straight on: the exit closest to the approach's heading, if within 60 degrees
+    (roads bend at junctions); U: turned back by more than 150 degrees."""
+    d = [math.degrees(math.remainder(h - h_in, 2 * math.pi)) for h in h_outs]
+    best = min(range(len(d)), key=lambda i: abs(d[i])) if d else None
+    return ["S" if i == best and abs(x) < 60 else "U" if abs(x) > 150 else "L" if x > 0 else "R" for i, x in enumerate(d)]
+
+
+def _inside(pt, ring):
+    """Point in polygon (ray casting), XY."""
+    x, y, hit = pt[0], pt[1], False
+    for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1]):
+        if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
+            hit = not hit
+    return hit
+
+
+def junction_clusters(net, base_groups, on_path):
+    """{junction id: [node ids]}: where each corridor junction's arms meet. The signalised junctions the corridor
+    crosses at ground level keep their signal's nodes (base_groups); elsewhere (under a flyover, or where side roads
+    merge into and split off the corridor) the nodes within GROUND_R m of the junction that join 3+ roads, one of them
+    not the corridor."""
+    def nb(n):
+        return {e.getFromNode().getID() for e in n.getIncoming()} | {e.getToNode().getID() for e in n.getOutgoing()}
+    out = {}
+    for p in cn.CORRIDOR["points"]:
+        if p["kind"] != "junction":
+            continue
+        if base_groups.get(p["id"]):
+            out[p["id"]] = sorted(base_groups[p["id"]])
+            continue
+        x, y = net.convertLonLat2XY(p["lon"], p["lat"])
+        for r in (GROUND_R, GROUND_R_WIDE):
+            ids = {n.getID() for n in net.getNodes() if math.dist(n.getCoord()[:2], (x, y)) < r and len(nb(n)) >= 3
+                   and any(e.getID() not in on_path and e.allows("passenger") for e in n.getIncoming() + n.getOutgoing())}
+            ins = [e for i in ids for e in net.getNode(i).getIncoming() if e.getFromNode().getID() not in ids and e.allows("passenger")]
+            if len(ins) >= 2:
+                break
+        out[p["id"]] = sorted(ids)
+    return out
+
+
+def _road_chain(e, stop, metres=ARM_UPSTREAM_M):
+    """{edge id: metres up the road from the arm's end}: arm `e` and the road behind it (closest heading), for matching
+    TomTom's approaches to arms."""
+    out, done = {e.getID(): 0.0}, 0.0
+    while done < metres:
+        node = e.getFromNode()
+        if node.getID() in stop:
+            break
+        ins = [x for x in node.getIncoming() if x.allows("passenger") and x.getFromNode() != e.getToNode()]
+        if not ins:
+            break
+        prev = min(ins, key=lambda x: abs(math.remainder(cn._angle(x) - cn._angle(e), 2 * math.pi)))
+        if abs(math.remainder(cn._angle(prev) - cn._angle(e), 2 * math.pi)) > math.radians(60) or prev.getID() in out:
+            break
+        done += e.getLength()
+        e = prev
+        out[e.getID()] = done
+    return out
+
+
+def _tomtom_model(jid, net):
+    """TomTom's junction model for `jid` when its area is at the corridor junction, else None."""
+    path = ROOT / f"data/tomtom/junction/corridor/{jid}_definition.json"
+    if not path.exists():
+        return None
+    d = json.loads(path.read_text())
+    p = next(q for q in cn.CORRIDOR["points"] if q["id"] == jid)
+    ring = ((d.get("rawJunction") or {}).get("geometry") or {}).get("coordinates") or [[]]
+    pts = [net.convertLonLat2XY(c[0], c[1]) for c in ring[0]]
+    if pts:
+        cx, cy = sum(x for x, _ in pts) / len(pts), sum(y for _, y in pts) / len(pts)
+        here = net.convertLonLat2XY(p["lon"], p["lat"])
+        if not _inside(here, pts) and math.dist((cx, cy), here) > TOMTOM_NEAR_M:
+            return None
+    return d["junctionModel"]
+
+
+def junction_arms(net, base_groups):
+    """Every arm of every corridor junction, on the base network: {junction id: {"nodes", "tomtom": "used"/"not at
+    this junction"/"none", "arms": [{"edge", "road", "lanes", "vph" (TomTom mean, or assumed; None on a corridor arm
+    without TomTom), "label", "turns": {"L","S","R","U"} shares, "turn_source", "probes", "corridor": "fwd"/"rev"/None,
+    "signal": bool, "approaches": [TomTom approach names]}]}}.
+    Volumes: TomTom Junction Analytics' mean per approach (estimated), matched to the arm whose road it lies on (end of
+    the approach within ARM_UPSTREAM_M up the arm); several on one arm -> the largest (TomTom splits roads into
+    overlapping approaches). Turns: TomTom's turn ratios turned into left/straight/right/U shares by the angle between
+    the approach and each exit (probe-weighted), when MIN_TURN_PROBES probes back them; else ASSUMED_TURNS.
+    fed_by_corridor: the corridor edge where TomTom measured an arm's traffic, when that is on the corridor before it
+    splits into a flyover and the road below (j04): that volume is the flyover's and the road's together."""
+    fwd, rev = cn.route(net), cn.route(net, reverse=True)
+    F, R = {e.getID() for e in fwd}, {e.getID() for e in rev}
+    clusters = junction_clusters(net, base_groups, F | R)
+    all_nodes = {n for ids in clusters.values() for n in ids}
+    vol, _ = tomtom_volumes()
+    turns = tomtom_turns()
+    out = {}
+    for jid, ids in clusters.items():
+        ids = set(ids)
+        ins = sorted({e.getID(): e for i in ids for e in net.getNode(i).getIncoming()
+                      if e.getFromNode().getID() not in ids and e.allows("passenger")}.values(), key=lambda e: e.getID())
+        model = _tomtom_model(jid, net)
+        status = "none" if not (ROOT / f"data/tomtom/junction/corridor/{jid}_definition.json").exists() else "used" if model else "not at this junction"
+        chains = {e.getID(): _road_chain(e, all_nodes - ids) for e in ins}
+        hits = {}
+        for a in (model or {}).get("approaches", []):
+            v = vol.get((jid, str(a["id"])), 0)
+            c = a["segmentedGeometry"]["coordinates"][-1]
+            if v < ARM_MIN_VPH or len(c) < 2:
+                continue
+            m = _match(net, c[-2], c[-1], radius=60)
+            if m is None:
+                continue
+            if m.getFromNode().getID() in ids:        # TomTom's approach ends inside the junction: the arm feeding it
+                cand = [e for e in ins if e.getToNode() == m.getFromNode()]
+                arm = min(cand, key=lambda e: abs(math.remainder(cn._angle(e) - cn._angle(m), 2 * math.pi))) if cand else None
+            else:
+                cand = [(chains[e.getID()][m.getID()], e) for e in ins if m.getID() in chains[e.getID()]]
+                arm = min(cand, key=lambda t: t[0])[1] if cand else None
+            if arm is None:
+                continue
+            # turn class of each exit seen from this approach: an exit name can repeat, the one starting nearest the
+            # approach's end is taken
+            whole = [q for seg in a["segmentedGeometry"]["coordinates"] for q in seg]
+            h_in, end = _geo_heading(whole, net), net.convertLonLat2XY(*c[-1][:2])
+            heads = {}
+            for x in model["exits"]:
+                xc = [q for seg in x["segmentedGeometry"]["coordinates"] for q in seg]
+                if len(xc) >= 2:
+                    dd = math.dist(net.convertLonLat2XY(*xc[0][:2]), end)
+                    if x["name"] not in heads or dd < heads[x["name"]][0]:
+                        heads[x["name"]] = (dd, _geo_heading(xc, net, last=False))
+            names = sorted(heads)
+            kind = dict(zip(names, turn_classes(h_in, [heads[n][1] for n in names])))
+            cls = {}
+            for name, w in turns.get((jid, a["name"]), {}).items():
+                if name in kind and w > 0:
+                    cls[kind[name]] = cls.get(kind[name], 0.0) + w
+            fed = m.getID() if m.getID() in F | R else None    # measured on the corridor before it splits (flyover / road below)
+            hits.setdefault(arm.getID(), []).append((v, a["name"], cls, fed))
+        arms = []
+        for e in ins:
+            corr = "fwd" if e.getID() in F else "rev" if e.getID() in R else None
+            got = hits.get(e.getID(), [])
+            probes = {}
+            for _, _, cls, _ in got:
+                for k, w in cls.items():
+                    probes[k] = probes.get(k, 0.0) + w
+            n = sum(probes.values())
+            fed = None if corr else next((f for *_, f in got if f), None)
+            if got:
+                vph, label = max(v for v, *_ in got), "estimated (TomTom Junction Analytics)"
+            elif corr:
+                vph, label = None, "none (corridor traffic as it arrives)"
+            else:
+                vph, label = min(ASSUMED_VPH_MAX, ASSUMED_VPH_PER_LANE * e.getLaneNumber()), "assumed"
+            arms.append({"edge": e.getID(), "road": e.getName() or (got[0][1] if got else ""), "lanes": e.getLaneNumber(),
+                         "vph": round(vph) if vph is not None else None, "label": label,
+                         "turns": {k: round(probes.get(k, 0.0) / n, 3) for k in "LSRU"} if n >= MIN_TURN_PROBES else dict(ASSUMED_TURNS),
+                         "turn_source": f"estimated (TomTom turn ratios, {n:.0f} probes)" if n >= MIN_TURN_PROBES else "assumed",
+                         "probes": round(n, 1), "corridor": corr, "signal": e.getToNode().getType() == "traffic_light",
+                         "fed_by_corridor": fed, "approaches": sorted({name for _, name, *_ in got})})
+        out[jid] = {"nodes": sorted(ids), "tomtom": status, "arms": arms}
+    return out
+
+
+def _extend(net, e, avoid, metres=EXTEND_M):
+    """Edges after `e` along the same road (closest heading) for about `metres`, not onto `avoid` edges or nodes."""
+    out, done = [], 0.0
+    while done < metres:
+        nxt = [x for x in e.getOutgoing() if x.allows("passenger") and x.getID() not in avoid and x.getToNode().getID() not in avoid
+               and x.getToNode() != e.getFromNode()]
+        if not nxt:
+            break
+        x = min(nxt, key=lambda x: abs(math.remainder(cn._angle(x) - cn._angle(e), 2 * math.pi)))
+        if abs(math.remainder(cn._angle(x) - cn._angle(e), 2 * math.pi)) > math.radians(60):
+            break
+        out.append(x.getID())
+        done += x.getLength()
+        e = x
+    return out
+
+
+def demand(net, base_groups, volume_scale=1.0, through=None, cross_scale=CROSS_SCALE, tomtom=None, base=None, arms=None):
+    """All traffic as flows [{"id", "route": [edge ids], "vph", "kind", "jid", "dir"}]: through traffic both ways along
+    the corridor (fixed routes, `through` veh/h end to end), and traffic on every arm of every junction
+    (junction_arms(): TomTom's volume x cross_scale where measured, else assumed), leaving by its exits in TomTom's
+    measured turn shares (else assumed). Traffic that turns onto the corridor drives JOIN_M along it, then leaves; traffic
+    leaving on another road drives EXTEND_M on, then leaves.
+    No double counting on the corridor: at a corridor approach TomTom measures (at a junction, or on a flyover), the
+    traffic already in the network that passes there (through traffic, traffic that joined upstream, earlier top-ups)
+    is counted first, and only the shortfall to TomTom's volume x cross_scale is added ("top-up": local traffic that
+    entered between junctions), 400 m before the junction. The top-up takes the approach's turning traffic first (the
+    through traffic only goes straight on), the rest goes straight on. Approaches are taken in driving order.
+    Demand is planned on the unchanged network `base` (so a variant carries exactly the baseline's demand; only routes
+    change) and routed on `net`. `arms`: frozen junction_arms() (calibration.json), else measured now. Returns
+    (flows, info)."""
     through = through or THROUGH_VPH
+    base = base or net
+    if arms is None:
+        arms = (tomtom or {}).get("arms") or junction_arms(base, base_groups)
+    groups = {j: [net.getNode(n) for n in ids if net.hasNode(n)] for j, ids in base_groups.items()}
+    if tomtom:
+        corridor, span = tomtom["corridor"], tomtom["span"]
+    else:
+        _, corridor, span = junction_counts(net, groups, cn.route(net), cn.route(net, reverse=True))
+    plan = _plan(base, arms, corridor, through, cross_scale, volume_scale)
+    flows, summary, ctx = _route_plan(net, plan, arms, through, volume_scale)
+    return flows, {"cross": summary, "corridor": corridor, "tomtom_span": span, "paths": ctx["paths"], "pos": ctx["pos"],
+                   "cut": ctx["cut"], "arms": arms}
+
+
+def _ctx(net, arms):
+    """Routing helpers for one network: corridor paths, where junctions lie on them, the Lakdikapul cut."""
     fwd, rev = cn.route(net), cn.route(net, reverse=True)
     paths = {"fwd": fwd, "rev": rev}
-    on_path = {e.getID() for e in fwd + rev}
-    groups = {j: [net.getNode(n) for n in ids if net.hasNode(n)] for j, ids in base_groups.items()}
-    node_jid = {n.getID(): jid for jid, g in groups.items() for n in g}
-    # TomTom's numbers as frozen in calibration.json (so runs are reproducible and match the calibration), else live
-    measured, corridor, span = (tomtom["cross"], tomtom["corridor"], tomtom["span"]) if tomtom else junction_counts(net, groups, fwd, rev)
-    measured = {e: m for e, m in measured.items() if net.hasEdge(e)}
+    pidx = {tag: {e.getID(): i for i, e in enumerate(p)} for tag, p in paths.items()}
     # Lakdikapul (B): traffic disperses at the junction there; past the last wide piece of road only the probe cars drive
     # on (the route's last ~130 m squeeze 5 lanes into 2 at a give-way merge, which jammed the whole last leg)
     end = len(fwd) - 2
     while end > 0 and fwd[end].getLaneNumber() < 3 and sum(e.getLength() for e in fwd[end:]) < 800:
         end -= 1
     cut = {"fwd": fwd[end].getID() if fwd[end].getLaneNumber() >= 3 else fwd[-1].getID(), "rev": rev[-1].getID()}
-    clip = lambda r, tag: r[:r.index(cut[tag]) + 1] if cut[tag] in r else r  # noqa: E731
-    flows = [{"id": f"t{tag[0]}", "route": clip([e.getID() for e in p], tag), "vph": through[tag] * volume_scale, "kind": "through", "dir": tag}
-             for tag, p in paths.items()]
-    pos = {"fwd": locate(net, fwd), "rev": locate(net, rev, reverse=True)}
-    approaches = {}
-    for e_id, m in measured.items():
-        approaches.setdefault(m["jid"], []).append((net.getEdge(e_id), m["vph"] * cross_scale, m["split"], "estimated", m["split_source"], m["road"]))
-    summary = {}
-    for jid, nodes in groups.items():
-        ids = {n.getID() for n in nodes}
-        if not ids:
-            continue
-        if jid not in approaches:
-            ins = [e for n in nodes for e in n.getIncoming() if e.getID() not in on_path and e.getFromNode().getID() not in ids
-                   and e.allows("passenger")]
-            approaches[jid] = [(e, CROSS_VPH, dict(ASSUMED_SPLIT), "assumed", "assumed", e.getName()) for e in ins]
-        outs = [e for n in nodes for e in n.getOutgoing() if e.getID() not in on_path and e.getToNode().getID() not in ids
-                and e.allows("passenger")]
-        joins = {}
-        for tag, path in paths.items():
-            i = pos[tag][jid][0]
-            a, b = _after(path, i, 150), _after(path, i, JOIN_M)
-            joins[tag] = (path[a], clip([x.getID() for x in path[a + 1:b + 1]], tag))
-        rows = []
-        for e, vph, split, label, split_source, road in approaches[jid]:
-            start = _upstream(e, on_path | set(node_jid))
-            dests = []
-            for tag in ("fwd", "rev"):
-                to, rest = joins[tag]
-                p, _ = net.getShortestPath(start, to, vClass="passenger")
-                if p and sum(x.getLength() for x in p) < 3000:
-                    dests.append((tag, [x.getID() for x in p] + rest, split.get(tag, 0.0)))
-            ok = []
-            for o in outs:
-                if o.getToNode() == e.getFromNode() or o.getID() == e.getID():
-                    continue
-                p, _ = net.getShortestPath(start, o, vClass="passenger")
-                if p and sum(x.getLength() for x in p) < 2000:
-                    ok.append(p)
-            dests += [("cross", [x.getID() for x in p], split.get("cross", 0.0) / len(ok)) for p in ok]
-            total = sum(s for _, _, s in dests)
-            if not dests or total <= 0:
+    return {"net": net, "paths": paths, "pidx": pidx, "on_path": set(pidx["fwd"]) | set(pidx["rev"]), "cut": cut,
+            "pos": {"fwd": locate(net, fwd), "rev": locate(net, rev, reverse=True)},
+            "all_nodes": {n for a in arms.values() for n in a["nodes"]}}
+
+
+def _clip_dir(ctx, route, tag):
+    c = ctx["cut"].get(tag)
+    return route[:route.index(c) + 1] if c in route else route
+
+
+def _tail(ctx, tag, edge_id):
+    """Corridor edges after `edge_id` for JOIN_M (then the joining traffic leaves), clipped at Lakdikapul."""
+    path, i = ctx["paths"][tag], ctx["pidx"][tag][edge_id]
+    rest, done = [], 0.0
+    for e in path[i + 1:]:
+        if done >= JOIN_M:
+            break
+        rest.append(e.getID())
+        done += e.getLength()
+    return _clip_dir(ctx, rest, tag)
+
+
+def _onward(ctx, o):
+    """(route after exit edge `o`, direction): along the corridor for JOIN_M when `o` is on it or the road reaches it
+    within 800 m (e.g. the road under a new flyover meets its landing), else EXTEND_M on along the road."""
+    for tag in ("fwd", "rev"):
+        if o.getID() in ctx["pidx"][tag]:
+            return _tail(ctx, tag, o.getID()), tag
+    ext = _extend(ctx["net"], o, ctx["all_nodes"] - {o.getToNode().getID()}, 800)
+    for i, e in enumerate(ext):
+        for tag in ("fwd", "rev"):
+            if e in ctx["pidx"][tag]:
+                return ext[:i + 1] + _tail(ctx, tag, e), tag
+    done, keep = 0.0, []
+    for e in ext:
+        if done >= EXTEND_M:
+            break
+        keep.append(e)
+        done += ctx["net"].getEdge(e).getLength()
+    return keep, "cross"
+
+
+def _exits(ctx, jid, arm, start, arms):
+    """{turn class: [(route, direction)]}: from `start` through `arm` (edge objects) to each road leaving junction `jid`."""
+    net, ids = ctx["net"], set(arms[jid]["nodes"])
+    outs = {e.getID(): e for i in ids if net.hasNode(i) for e in net.getNode(i).getOutgoing()
+            if e.getToNode().getID() not in ids and e.allows("passenger")}
+    head = [arm]
+    if start != arm:
+        p, _ = net.getShortestPath(start, arm, vClass="passenger")
+        head = p if p else [arm]
+    found = []
+    for o in sorted(outs.values(), key=lambda e: e.getID()):
+        p, _ = net.getShortestPath(arm, o, vClass="passenger")
+        if p and sum(x.getLength() for x in p[1:-1]) <= 600:      # through the junction, not round the block
+            found.append((o, p))
+    kinds = turn_classes(_end_heading(arm), [_end_heading(o, last=False) for o, _ in found])
+    out = {}
+    for (o, p), k in zip(found, kinds):
+        if o.getToNode() == arm.getFromNode():
+            k = "U"
+        rest, tag = _onward(ctx, o)
+        out.setdefault(k, []).append(([x.getID() for x in head] + [x.getID() for x in p[1:]] + rest, tag))
+    return out
+
+
+def _back(ctx, tag, edge_id, metres):
+    """Corridor edge `metres` before `edge_id` (not past another junction's nodes; one with room to enter)."""
+    path, i = ctx["paths"][tag], ctx["pidx"][tag][edge_id]
+    k, done = i, 0.0
+    while k > 0 and done < metres and path[k - 1].getToNode().getID() not in ctx["all_nodes"] - {path[i].getToNode().getID()}:
+        k -= 1
+        done += path[k].getLength()
+    while k > 0 and path[k].getLength() < 20:
+        k -= 1
+    return path[k].getID()
+
+
+def _plan(base, arms, corridor, through, cross_scale, volume_scale):
+    """Demand on the unchanged network: [{"jid", "arm", "start", "kind": "arm"/"topup"/"flyover_topup", "vph": {class:
+    veh/h}, "vtype", ...}], with the top-ups sized against the traffic already there (see demand())."""
+    ctx = _ctx(base, arms)
+    flows = [{"route": _clip_dir(ctx, [e.getID() for e in p], tag), "vph": through[tag] * volume_scale}
+             for tag, p in ctx["paths"].items()]
+    avoid = ctx["on_path"] | ctx["all_nodes"]
+    plan = []
+
+    def add(item):          # route the item on the base network so later top-ups see its traffic
+        plan.append(item)
+        for route, _, vph in _routes(ctx, item, arms):
+            flows.append({"route": route, "vph": vph})
+
+    for jid, a in arms.items():
+        for arm in a["arms"]:
+            if arm["corridor"] or arm["vph"] is None or not base.hasEdge(arm["edge"]):
                 continue
-            for tag, edges, share in dests:
-                v = vph * volume_scale * share / total
-                if v >= 1:
-                    flows.append({"id": f"x{jid[1:]}_{len(flows)}", "route": edges, "vph": v, "kind": "cross", "jid": jid, "dir": tag})
-            used = {k: round(sum(s for t, _, s in dests if t == k) / total, 3) for k in ("fwd", "rev", "cross")}
-            rows.append({"road": road, "edge": e.getID(), "enters_on": start.getID(), "vph": round(vph * volume_scale),
-                         "label": label, "split": used, "split_source": split_source})
-        summary[jid] = {"approaches": len(rows), "vph": sum(r["vph"] for r in rows),
-                        "label": rows[0]["label"] if rows else "none", "roads": rows}
-    return flows, {"cross": summary, "corridor": corridor, "tomtom_span": span, "paths": paths, "pos": pos, "cut": cut}
+            e = base.getEdge(arm["edge"])
+            total = arm["vph"] * (cross_scale if arm["label"].startswith("estimated") else 1.0)
+            total = min(total, (ARM_LANE_CAP if arm["signal"] else ARM_LANE_CAP_GIVE_WAY) * e.getLaneNumber()) * volume_scale
+            turns, start, src = dict(arm["turns"]), _upstream(e, avoid).getID(), arm["turn_source"]
+            fed = arm.get("fed_by_corridor")
+            if fed and base.hasEdge(fed):
+                # TomTom measured it on the corridor before the flyover splits off: below go the turning traffic and
+                # the through traffic that does not take the flyover; it comes from the corridor (the flyover's
+                # top-up below counts it as already there)
+                turns["S"] = turns.get("S", 0.0) * (1 - FLYOVER_SHARE)
+                total *= sum(turns.values())
+                n = sum(turns.values()) or 1.0
+                turns = {k: v / n for k, v in turns.items()}
+                start, src = fed, src + f"; through traffic {FLYOVER_SHARE:.0%} on the flyover (measured)"
+            add({"jid": jid, "arm": arm["edge"], "start": start, "kind": "arm", "road": arm["road"],
+                 "vph": {k: total * s for k, s in turns.items()}, "vtype": "mix" if arm["signal"] or fed else "mix_side",
+                 "label": arm["label"], "turn_source": src, "tomtom_vph": arm["vph"]})
+    for tag in ("fwd", "rev"):          # corridor approaches TomTom measures, in driving order
+        pts = []
+        for jid, a in arms.items():
+            for arm in a["arms"]:
+                if arm["corridor"] == tag and arm["vph"] is not None and arm["edge"] in ctx["pidx"][tag]:
+                    pts.append((ctx["pidx"][tag][arm["edge"]], jid, arm["edge"], arm["vph"], arm["turns"], "topup", arm["turn_source"], arm["road"]))
+        armed = {p[2] for p in pts}
+        for jid, d in corridor.items():
+            m = d.get(tag)
+            if m and m["edge"] in ctx["pidx"][tag] and m["edge"] not in armed and not any(p[1] == jid for p in pts):
+                pts.append((ctx["pidx"][tag][m["edge"]], jid, m["edge"], m["vph"], {"S": 1.0}, "flyover_topup", "on the flyover: straight on", m["road"]))
+        for _, jid, edge, vph, turns, kind, src, road in sorted(pts):
+            target = vph * cross_scale * volume_scale
+            arriving = sum(f["vph"] for f in flows if edge in f["route"])
+            top = max(0.0, target - arriving)
+            turning = target * (1 - turns.get("S", 0.0))
+            if top >= turning:
+                split = {k: target * s for k, s in turns.items() if k != "S"} | {"S": top - turning}
+            else:
+                split = {k: top * s / max(1e-9, 1 - turns.get("S", 0.0)) for k, s in turns.items() if k != "S"} | {"S": 0.0}
+            if top < 1:
+                plan.append({"jid": jid, "arm": edge, "start": edge, "kind": kind, "road": road, "vph": {}, "tag": tag,
+                             "tomtom_vph": vph, "arriving_vph": round(arriving), "label": "estimated (TomTom Junction Analytics)",
+                             "turn_source": src, "vtype": "mix"})
+                continue
+            add({"jid": jid, "arm": edge, "start": _back(ctx, tag, edge, TOPUP_BACK_M), "kind": kind, "road": road, "vph": split,
+                 "tag": tag, "tomtom_vph": vph, "arriving_vph": round(arriving), "label": "estimated (TomTom Junction Analytics)",
+                 "turn_source": src, "vtype": "mix"})
+    return plan
+
+
+def _routes(ctx, item, arms):
+    """[(route, direction, veh/h)] of one plan item on ctx's network. A turn class with no road to take on this network
+    gives its traffic to the other classes (in proportion)."""
+    net = ctx["net"]
+    if not item["vph"] or not net.hasEdge(item["arm"]):
+        return []
+    start = net.getEdge(item["start"]) if net.hasEdge(item["start"]) else net.getEdge(item["arm"])
+    if item["kind"] == "flyover_topup":
+        tag = item["tag"]
+        if item["arm"] not in ctx["pidx"][tag] or start.getID() not in ctx["pidx"][tag]:
+            return []
+        i0, i1 = ctx["pidx"][tag][start.getID()], ctx["pidx"][tag][item["arm"]]
+        route = [e.getID() for e in ctx["paths"][tag][i0:i1 + 1]] + _tail(ctx, tag, item["arm"])
+        return [(_clip_dir(ctx, route, tag), tag, sum(item["vph"].values()))]
+    ex = _exits(ctx, item["jid"], net.getEdge(item["arm"]), start, arms)
+    vph = {k: v for k, v in item["vph"].items() if v > 0}
+    have = {k: v for k, v in vph.items() if ex.get(k)}
+    if not have:
+        avail = [k for k in ("S", "L", "R") if ex.get(k)]
+        have = {avail[0]: 0.0} if avail else {}
+    total, kept = sum(vph.values()), sum(have.values())
+    out = []
+    for k, v in have.items():
+        v = total * v / kept if kept > 0 else total
+        for route, tag in ex[k]:
+            out.append((route, tag, v / len(ex[k])))
+    return out
+
+
+def _route_plan(net, plan, arms, through, volume_scale):
+    """Flows on `net` from the plan, and the per-junction summary (C5 inputs.cross_traffic)."""
+    ctx = _ctx(net, arms)
+    flows = [{"id": f"t{tag[0]}", "route": _clip_dir(ctx, [e.getID() for e in p], tag), "vph": through[tag] * volume_scale,
+              "kind": "through", "dir": tag} for tag, p in ctx["paths"].items()]
+    summary = {}
+    for it in plan:
+        rows = _routes(ctx, it, arms)
+        for route, tag, v in rows:
+            if v >= 1:      # side-road traffic enters INSERT_BACK_M before the end of its first road piece (some are km long)
+                first = net.getEdge(route[0]).getLength()
+                flows.append({"id": f"x{it['jid'][1:]}_{len(flows)}", "route": route, "vph": v, "kind": "cross", "jid": it["jid"],
+                              "dir": tag, "vtype": it.get("vtype", "mix"),
+                              "depart_pos": max(0.0, first - INSERT_BACK_M) if it["kind"] == "arm" and len(route) > 1 else 0.0})
+        total = sum(v for _, _, v in rows)
+        by = {k: round(sum(v for _, t, v in rows if t == k) / total, 3) if total else 0.0 for k in ("fwd", "rev", "cross")}
+        s = summary.setdefault(it["jid"], {"approaches": 0, "vph": 0, "label": "assumed", "roads": [],
+                                           "tomtom": arms.get(it["jid"], {}).get("tomtom", "none")})
+        if total >= 1:
+            s["approaches"] += 1
+            s["vph"] += round(total)
+        if it["label"].startswith("estimated"):
+            s["label"] = "estimated"
+        s["roads"].append({"road": it.get("road", ""), "edge": it["arm"], "enters_on": it["start"], "vph": round(total),
+                           "label": "estimated" if it["label"].startswith("estimated") else "assumed", "split": by,
+                           "split_source": it["turn_source"], "kind": {"arm": "arm", "topup": "corridor top-up",
+                                                                      "flyover_topup": "corridor top-up (flyover)"}[it["kind"]],
+                           "turns_vph": {k: round(v) for k, v in it["vph"].items()}, "tomtom_vph": it.get("tomtom_vph"),
+                           **({"arriving_vph": it["arriving_vph"]} if "arriving_vph" in it else {})})
+    for jid in arms:
+        summary.setdefault(jid, {"approaches": 0, "vph": 0, "label": "none", "roads": [], "tomtom": arms[jid].get("tomtom", "none")})
+    return flows, summary, ctx
 
 
 # ---------- sections ----------
@@ -519,10 +992,12 @@ def section_routes(net, sec, flows, info, out: Path):
     inside = {e.getID() for s in slices.values() for e in s}
     inside |= {e for f in flows if f.get("jid") in sec["junctions"] for e in f["route"] if e not in corridor}
     stop = {"fwd": WARMUP + PROBE_SPAN + 60, "rev": end - 300}    # A->B traffic behind the last probe cannot affect it
-    lines = ['<routes>', VTYPES.replace('<vType ', f'<vType sigma="{SIGMA}" '),
+    lines = ['<routes>', vtypes_xml(),
+             # the probe car: a car with the car's junction behaviour, driving at the speed cap (speedFactor 1, sigma 0)
              f'    <vType id="probe" sigma="{SIGMA}" vClass="passenger" length="4.3" minGap="1.0" tau="0.8" maxSpeed="16.7" accel="2.6" decel="4.5" '
-             'speedFactor="1.0" color="1,1,1"><param key="has.vehroute.device" value="true"/><param key="has.fcd.device" value="true"/></vType>',
-             f'    <vTypeDistribution id="mix" vTypes="{" ".join(MIX)}" probabilities="{" ".join(str(v) for v in MIX.values())}"/>']
+             f'speedFactor="1.0" color="1,1,1" jmDriveAfterYellowTime="{YELLOW_GO_S}" jmStoplineGap="0" jmIgnoreKeepClearTime="5" '
+             f'jmIgnoreFoeSpeed="{GIVE_WAY_SPEED}" jmIgnoreFoeProb="{GIVE_WAY_PROB}" jmDriveAfterRedTime="1" jmDriveRedSpeed="{RED_SPEED}">'
+             '<param key="has.vehroute.device" value="true"/><param key="has.fcd.device" value="true"/></vType>']
     entering = {"fwd": 0.0, "rev": 0.0}
     body = []
     for f in flows:
@@ -539,8 +1014,12 @@ def section_routes(net, sec, flows, info, out: Path):
                 entering[tag] += f["vph"]
         tag = f.get("dir", "fwd")
         stop_at = stop.get(tag, end) if f["kind"] == "through" or (f["kind"] == "cross" and f["jid"] not in sec["junctions"]) else end
-        body.append(f'    <flow id="{k}{f["id"]}" type="mix" begin="0" end="{stop_at}" vehsPerHour="{f["vph"]:.0f}" '
-                    f'departLane="best" departSpeed="max"><route edges="{" ".join(run)}"/></flow>')
+        pos = f' departPos="{f["depart_pos"]:.0f}"' if f.get("depart_pos") and run[0] == f["route"][0] else ""
+        # traffic arriving from the previous section enters on the least busy lane (on its best lane, the many flows
+        # entering the section on the same piece of road could not all get in)
+        lane = "best" if run[0] == f["route"][0] else "free"
+        body.append(f'    <flow id="{k}{f["id"]}" type="{f.get("vtype", "mix")}" begin="0" end="{stop_at}" vehsPerHour="{f["vph"]:.0f}" '
+                    f'departLane="{lane}" departSpeed="max"{pos}><route edges="{" ".join(run)}"/></flow>')
     for tag, s in slices.items():
         # the section starts full: the traffic entering it also enters every FILL_STEP_M along the way until the
         # vehicles from the previous entry point get there (at FILL_SPEED), so probes meet steady traffic early on
@@ -552,6 +1031,7 @@ def section_routes(net, sec, flows, info, out: Path):
                             f'vehsPerHour="{entering[tag]:.0f}" departLane="best" departSpeed="max">'
                             f'<route edges="{" ".join(_clip([x.getID() for x in s[i + 1:]], info["cut"][tag]))}"/></flow>')
                 last = cum
+    for tag, s in slices.items():     # last: SUMO ignores flows listed after a later-starting one (the B->A fill flows were)
         body.append(f'    <flow id="probe_{tag}_{k}" type="probe" begin="{WARMUP}" end="{WARMUP + PROBE_SPAN}" period="{PROBE_EVERY}" '
                     f'departLane="best" departSpeed="max"><route edges="{" ".join(x.getID() for x in s)}"/></flow>')
     out.write_text("\n".join(lines + body + ['</routes>']))
@@ -596,7 +1076,7 @@ def simulate(net, net_path: Path, sec, outdir: Path, frames=True, seed=SEED, win
     cmd = [sumolib.checkBinary("sumo"), "-n", str(net_path), "-r", str(outdir / f"routes_{k}.xml"), "-a", str(outdir / f"det_{k}.xml"),
            "--begin", "0", "--end", str(sec["end"]), "--seed", str(seed), "--step-length", str(STEP), "--no-step-log",
            "--log", str(outdir / f"sumo_{k}.log"), "--time-to-teleport", str(TELEPORT_S), "--ignore-route-errors",
-           "--ignore-junction-blocker", str(JUNCTION_BLOCKER_S),
+           "--ignore-junction-blocker", str(JUNCTION_BLOCKER_S), "--time-to-impatience", str(IMPATIENCE_S),
            "--device.vehroute.probability", "0", "--vehroute-output", str(outdir / f"probes_{k}.xml"),
            "--vehroute-output.exit-times", "--statistic-output", str(outdir / f"stats_{k}.xml"),
            "--device.fcd.probability", "0", "--device.fcd.period", str(PROBE_TRACK_S), "--fcd-output", str(outdir / f"fcd_{k}.xml"),
@@ -625,8 +1105,7 @@ def simulate(net, net_path: Path, sec, outdir: Path, frames=True, seed=SEED, win
                     x, y, z = v[tc.VAR_POSITION3D]
                     lon, lat = net.convertXY2LonLat(x, y)
                     if lo <= lon < hi:
-                        vt = v[tc.VAR_TYPE]
-                        vehicles.append({"id": vid, "type": vt if vt in C1_TYPES else "car", "lon": round(lon, 5), "lat": round(lat, 5),
+                        vehicles.append({"id": vid, "type": c1_type(v[tc.VAR_TYPE]),"lon": round(lon, 5), "lat": round(lat, 5),
                                          "z": round(z, 1) if abs(z) >= 0.05 else 0, "angle": round(v[tc.VAR_ANGLE]), "speed": round(v[tc.VAR_SPEED], 1)})
                 f.write(json.dumps({"t": t, "vehicles": vehicles}, separators=(",", ":")) + "\n")
                 t += FRAMES[2]
@@ -1044,6 +1523,91 @@ def rain_on_structures(net_path, interventions, factors):
     return done
 
 
+# ---------- water-logging hotspots (rain what-if, junction-specific) ----------
+WATERLOGGING = ROOT / "data/weather/waterlogging_points.json"
+WATERLOG_LABEL = "assumed, scaled by reported severity"
+WATERLOG_SAMPLE_M = 25.0          # lane shapes are sampled this often when testing the distance to the junction
+
+
+def waterlogging_points():
+    """data/weather/waterlogging_points.json (reported water-logging hotspots per corridor junction) or None."""
+    return json.loads(WATERLOGGING.read_text()) if WATERLOGGING.exists() else None
+
+
+def waterlogging_factors(weather):
+    """[(point, extra speed factor)] for this rain setting: the hotspots that flood in it (factor < 1), in corridor
+    order. [] when dry, or without the data file. The table is the data file's (extra_speed_factor), so the API
+    (/weather/factors) and the simulation always agree."""
+    wl = waterlogging_points()
+    if not wl or weather not in (wl.get("extra_speed_factor") or {}):
+        return []
+    table = wl["extra_speed_factor"][weather]
+    order = {p["id"]: i for i, p in enumerate(cn.CORRIDOR["points"])}
+    out = []
+    for p in wl.get("points", []):
+        f = float(table.get(p.get("severity"), 1.0))
+        if p.get("junction_id") in order and f < 1.0:
+            out.append((p, f))
+    return sorted(out, key=lambda x: order[x[0]["junction_id"]])
+
+
+def rain_at_hotspots(net_path, weather, base):
+    """Extra speed cap on every lane within radius_m of a reported water-logging junction: the corridor approaching
+    and leaving it, its cross arms and the junction's own internal lanes (not a flyover deck above it: that is why a
+    flyover helps there). ON TOP of the per-leg rain factors (the measured average over a leg); the hotspot factor is
+    the local extra the leg average hides. Returns the C5 inputs.weather fields (waterlogging, affected_junctions)."""
+    hot = waterlogging_factors(weather)
+    wl = waterlogging_points() or {}
+    radius = float(wl.get("radius_m", 300))
+    if not hot:
+        return {"waterlogging": [], "affected_junctions": [], "waterlogging_radius_m": radius,
+                "waterlogging_note": "no reported water-logging point floods in this rain setting" if wl else "data/weather/waterlogging_points.json missing"}
+    pts = {p["id"]: p for p in cn.CORRIDOR["points"]}
+    centres = {}
+    for p, f in hot:
+        c = p if p.get("lat") and p.get("lon") else pts[p["junction_id"]]   # a team-supplied spot, else the junction centre
+        centres[p["junction_id"]] = (base.convertLonLat2XY(c["lon"], c["lat"]), f)
+
+    def samples(shape):
+        """Points every WATERLOG_SAMPLE_M along the lane's shape (its vertices included)."""
+        out = []
+        for (x1, y1), (x2, y2) in zip(shape, shape[1:]):
+            n = max(1, int(math.dist((x1, y1), (x2, y2)) / WATERLOG_SAMPLE_M))
+            out += [(x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n) for i in range(n + 1)]
+        return out or shape
+
+    tree = ET.parse(net_path)
+    touched = {jid: 0 for jid in centres}
+    for edge in tree.getroot().iter("edge"):
+        eid = edge.get("id") or ""
+        if eid.startswith("flyover_"):      # the deck is above the water (rain_on_structures slows it by the leg mean)
+            continue
+        for lane in edge.iter("lane"):
+            shape = [tuple(map(float, xy.split(",")[:2])) for xy in (lane.get("shape") or "").split()]
+            if not shape:
+                continue
+            pts_ = samples(shape)
+            gap = {jid: min(math.dist(s, c) for s in pts_) for jid, (c, _) in centres.items()}
+            hit = [jid for jid, d in gap.items() if d <= radius]
+            if hit:
+                jid = min(hit, key=lambda j: (centres[j][1], gap[j]))     # the strongest hotspot, then the nearest
+                lane.set("speed", f"{float(lane.get('speed')) * centres[jid][1]:.2f}")
+                touched[jid] += 1
+    tree.write(net_path)
+    label = f"{WATERLOG_LABEL} ({wl.get('label', 'reported (public sources), not measured by us')})"
+    return {"waterlogging": [{"junction_id": p["junction_id"], "name": p.get("name") or pts[p["junction_id"]]["name"],
+                              "junction_name": pts[p["junction_id"]]["name"], "severity": p.get("severity"),
+                              "extra_speed_factor": f, "lanes_slowed": touched[p["junction_id"]], "label": label,
+                              "what_reported": p.get("what_reported"), "sources": p.get("sources", [])} for p, f in hot],
+            "affected_junctions": [pts[p["junction_id"]]["name"] for p, _ in hot],
+            "waterlogging_radius_m": radius,
+            "waterlogging_note": (f"{weather.replace('_', ' ')}: lanes within {radius:.0f} m of {len(hot)} reported water-logging "
+                                  f"junction(s) get an extra speed cap (x{min(f for _, f in hot)}-x{max(f for _, f in hot)}, "
+                                  f"{WATERLOG_LABEL}) on top of the per-stretch rain factor (the measured leg average). The stretch "
+                                  "factor is the average rain effect over the whole leg; the junction factor is the local extra where "
+                                  "water collects, which that average hides.")}
+
+
 # ---------- hour of the day ----------
 class HourlyUnavailable(LookupError):
     """run(hour=...) without calibration_hourly.json, or without that hour in it."""
@@ -1289,16 +1853,19 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
             rain["structures_slowed"] = rain_on_structures(variant, list(interventions), rain_f)
     else:   # the baseline goes through the same netconvert rebuild as every variant, so they differ only by the change
         cn.rebuild(net_path, variant, lambda prefix: None)
+    if rain:     # reported water-logging junctions: extra local cap on top of the leg factors (rain_at_hotspots)
+        rain.update(rain_at_hotspots(variant, weather, base))
     net_path = variant
     net = sumolib.net.readNet(str(net_path))
     flows, info = demand(net, base_groups, volume_scale, through, cross_scale if cross_scale is not None else cal["cross_scale"],
-                         tomtom or cal["tomtom"])
+                         tomtom or cal["tomtom"], base=base)
     secs = sections(net, info)
     approaches = approach_edges(info, base_groups)
     count_edges = [m["edge"] for d in info["corridor"].values() for m in d.values()] + [e for v in approaches.values() for e in v]
+    clusters = {j: a["nodes"] for j, a in info["arms"].items()} | base_groups     # every junction's ground nodes (stats)
     for sec in secs:
         section_routes(net, sec, flows, info, outdir / f"routes_{sec['k']}.xml")
-        detectors(net, base_groups, sec, outdir / f"det_{sec['k']}.xml", count_edges)
+        detectors(net, clusters, sec, outdir / f"det_{sec['k']}.xml", count_edges)
     with ThreadPoolExecutor(min(len(secs), PARALLEL)) as pool:
         frame_files = list(pool.map(lambda s: simulate(net, net_path, s, outdir, frames, seed, window), secs))
     frames_path = merge_frames(frame_files, outdir / "frames.jsonl") if frames else None
@@ -1338,7 +1905,7 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
         loaded += int(stats.find("vehicles").get("loaded")); waiting += int(stats.find("vehicles").get("waiting"))
     if teleports > 0.01 * loaded:
         warnings.append(f"{teleports} vehicles were stuck for 5 minutes and skipped ahead (gridlock somewhere on the network)")
-    if waiting > 0.02 * loaded:
+    if waiting > NOT_INSERTED_OK * loaded:
         warnings.append(f"{waiting} vehicles could not enter the network by the end (queues back up beyond the modelled roads)")
     if min(n_probes) < PROBE_SPAN // PROBE_EVERY:
         warnings.append(f"in some sections only {min(n_probes)} of {PROBE_SPAN // PROBE_EVERY} probe cars got through in time")
@@ -1388,6 +1955,10 @@ def run(interventions=(), volume_scale=1.0, run_id=None, frames=True, caps=None,
                    "sources": sources_note(cal, info) + ([{"input": f"weather what-if: {weather}", "label": "estimated",
                                                            "source": f"{WEATHER_LABEL}: speed caps x per-leg factor relative to "
                                                                      f"{rain['relative_to']}; demand and signals unchanged"}] if rain else [])
+                              + ([{"input": "water-logging hotspots: " + ", ".join(rain["affected_junctions"]), "label": WATERLOG_LABEL,
+                                   "source": f"data/weather/waterlogging_points.json (reported in public sources, not measured by us): extra speed cap "
+                                             f"within {rain['waterlogging_radius_m']:.0f} m of each reported junction, on top of the leg factor"}]
+                                 if rain and rain.get("waterlogging") else [])
                    + ([{"input": f"time of day {hour_cfg.get('window') or hour_label(hour)}", "label": "calibrated",
                                                            "source": f"traffic x{hour_cfg.get('volume_scale', 1.0)}, speed caps x{hour_cfg.get('cap_scale', 1.0)} on the all-day "
                                                                      f"calibration, fitted to TomTom {hour_cfg.get('period', 'hourly leg times')} "
@@ -1462,20 +2033,33 @@ def sources_note(cal, sources):
     return [
         {"input": "leg travel times (calibration target)", "label": "counted",
          "source": f"TomTom Traffic Stats job {TOMTOM_JOB}: probe vehicles, July 2026 every day 06:00-23:00"},
-        {"input": "cross-road volumes at " + (", ".join(sorted(j for j, v in sources["cross"].items() if v["label"] == "estimated")) or "no junction"),
-         "label": "estimated", "source": f"TomTom Junction Analytics (model estimates from probe data), mean over {span or 'no data yet'}"},
-        {"input": "where cross traffic goes (turn shares)", "label": "estimated",
-         "source": "TomTom Junction Analytics turn ratios where collected; elsewhere a third each way (assumed)"},
-        {"input": "cross-road volumes at the other junctions", "label": "assumed", "source": f"{CROSS_VPH} veh/h per approach"},
+        {"input": "traffic on every arm of every junction at " + (", ".join(sorted(j for j, v in sources["cross"].items() if v["label"] == "estimated")) or "no junction"),
+         "label": "estimated", "source": f"TomTom Junction Analytics (model estimates from probe data), mean over {span or 'no data yet'} "
+                                         f"(minutes within 06-23 h) x cross_scale; corridor approaches topped up only by the shortfall "
+                                         f"to TomTom's volume (traffic already arriving counted first)"},
+        {"input": "where each arm's traffic goes (turn shares)", "label": "estimated",
+         "source": f"TomTom Junction Analytics turn ratios (left/straight/right/U by angle, probe-weighted) where at least "
+                   f"{MIN_TURN_PROBES} probes back them; elsewhere {', '.join(f'{k} {v:.0%}' for k, v in ASSUMED_TURNS.items())} (assumed)"},
+        {"input": "arms without TomTom (j01, j05: TomTom's areas are elsewhere; j11: none; side streets)", "label": "assumed",
+         "source": f"{ASSUMED_VPH_PER_LANE} veh/h per lane, at most {ASSUMED_VPH_MAX} veh/h per arm"},
+        {"input": "through traffic taking a flyover", "label": "measured", "source": f"{FLYOVER_SHARE:.0%} (docs/driver-behaviour.md s1)"},
         {"input": "end-to-end corridor volume", "label": "calibrated" if cal["calibrated"] else "assumed",
          "source": "set so the corridor approaches at the TomTom junctions carry TomTom's volume (inputs.corridor_volumes)"},
         {"input": "speed cap per leg (side friction: bus stops, parking, pedestrians, autos)", "label": "calibrated" if cal["calibrated"] else "assumed",
          "source": "set so the probe cars' leg times match TomTom's"},
-        {"input": "signal plans", "label": "assumed", "source": f"{cn.SIGNAL_CYCLE_S} s cycle, a corridor stage and a cross-road stage, "
-                                                                 f"corridor gets {cn.CORRIDOR_GREEN_SHARE:.0%} of the green (corridor_net.signal_plans)"},
+        {"input": "signal plans", "label": "assumed",
+         "source": f"docs/driver-behaviour.md s5: {cn.YELLOW_S} s amber, free left in every phase; main x minor junctions: corridor both "
+                   f"ways, a {cn.RIGHT_TURN_S} s protected right-turn phase, then the side road, {cn.SIGNAL_CYCLE_S} s cycle, corridor "
+                   f">= {MIN_SHARE_MAIN:.0%} of the green; big junctions ({', '.join(sorted(cn.BIG_JUNCTIONS))}): one approach at a "
+                   f"time, {cn.BIG_CYCLE_S} s cycle (corridor_net.signal_plans)"},
         {"input": "corridor green share where calibrated", "label": "calibrated" if cal["green_share"] else "assumed",
          "source": ", ".join(f"{j} {v:.0%}" for j, v in sorted(cal["green_share"].items())) or "none"},
-        {"input": "vehicle mix", "label": "assumed", "source": ", ".join(f"{k} {v:.0%}" for k, v in MIX.items())},
+        {"input": "vehicle mix", "label": "assumed", "source": ", ".join(f"{k} {v:.0%}" for k, v in MIX.items())
+                                                              + "; fast riders: 30% of two-wheelers, 50% of autos (docs/driver-behaviour.md s2 table)"},
+        {"input": "driver behaviour (sizes, speeds, gaps, reaction times, amber/red running, box blocking, giving way)", "label": "assumed",
+         "source": f"docs/driver-behaviour.md s2-s7 (VEHICLES); capacity x{CAPACITY} via following headways (tau, minGap / {HEADWAY_FACTOR}, estimated); "
+                   f"imperfection {SIGMA_NOTE}; side-street traffic forces in below {SIDE_SPEED:g} m/s ({SIDE_PROB:.0%}, estimated); "
+                   f"lateral behaviour (filtering, weaving) and creeping past the stop line not modelled (non-sublane model)"},
         {"input": "joining traffic", "label": "assumed", "source": f"drives {JOIN_M / 1000:.0f} km along the corridor, then turns off"},
         {"input": "junction delay on the corridor's approaches (calibration target)", "label": "estimated",
          "source": f"TomTom Junction Analytics, mean over {span or 'no data yet'} (evening); capped at each leg's all-day time "
@@ -1515,15 +2099,18 @@ def calibrate(rounds=8, fresh=False, through=None, cross_scale=None):
     pts = [p["id"] for p in cn.CORRIDOR["points"]]
     cal = calibration()
     caps = list(cal["cap_kmh"]) if cal["calibrated"] and not fresh else [min(MAX_KMH, 2.0 * kmh) for *_, kmh in tt]
-    shares = {} if fresh else dict(cal["green_share"])
+    shares = {} if fresh else {j: max(min_share(j), v) for j, v in cal["green_share"].items()}
     through, cross_scale = dict(through or cal["through_vph"]), cross_scale or cal["cross_scale"]
     floor = {"through": {d: v * MIN_DEMAND for d, v in through.items()}, "cross": cross_scale * MIN_DEMAND}
     base = sumolib.net.readNet(str(NET))
     groups = cn.junction_groups(base)
     signals = {j for j, g in groups.items() if g}
     cross, corridor, span = junction_counts(base, groups, cn.route(base), cn.route(base, reverse=True))   # live TomTom data
-    tomtom = {"span": span, "cross": cross, "corridor": corridor,
-              "note": "TomTom Junction Analytics means used by every run (frozen at calibration; refreshed by calibrate())"}
+    arms = junction_arms(base, {j: [n.getID() for n in g] for j, g in groups.items() if g})
+    tomtom = {"span": span, "cross": cross, "corridor": corridor, "arms": arms,
+              "note": "TomTom Junction Analytics means (minutes within 06-23 h) used by every run: corridor approaches "
+                      "(volume check, delay targets) and every arm of every junction (junction_arms: volumes and turn "
+                      "shares); frozen at calibration, refreshed by calibrate()"}
     best = None
     for r in range(rounds):
         res = run(caps=caps, shares=shares, through=through, cross_scale=cross_scale, frames=False, run_id=f"calib_{r}", tomtom=tomtom)
@@ -1555,11 +2142,11 @@ def calibrate(rounds=8, fresh=False, through=None, cross_scale=None):
                 continue
             share = shares.get(jid, cn.CORRIDOR_GREEN_SHARE)
             if simd < 0.75 * target and ratios[pts.index(jid) - 1] < 1.07:
-                shares[jid] = round(max(STABLE_SHARE.get(jid, MIN_SHARE), share - 0.05), 2)
+                shares[jid] = round(max(min_share(jid), share - 0.05), 2)
             elif simd > 1.33 * target + 5:
                 shares[jid] = round(min(MAX_SHARE, share + 0.05), 2)
         inp = res["inputs"]
-        if inp["teleports"] > 0.01 * inp["vehicles_loaded"] or inp["vehicles_not_inserted"] > 0.02 * inp["vehicles_loaded"]:
+        if inp["teleports"] > 0.01 * inp["vehicles_loaded"] or inp["vehicles_not_inserted"] > NOT_INSERTED_OK * inp["vehicles_loaded"]:
             overloaded = True
         if overloaded and cross_scale * 0.9 >= floor["cross"] - 1e-6:
             through = {d: round(v * 0.9) for d, v in through.items()}
@@ -1599,7 +2186,7 @@ def calibrate(rounds=8, fresh=False, through=None, cross_scale=None):
     return caps, shares
 
 
-def calibrate_hourly(hours=None, rounds=8, tol=0.03):
+def calibrate_hourly(hours=None, rounds=8, tol=0.03, refit=False):
     """Fit each hour of the day to TomTom's hourly trip time and write calibration_hourly.json. Needs TomTom rows in
     data/raw/corridor_legs_tomtom.csv whose period is one hour (row_hour(): e.g. "2026-07-01..2026-07-31 08:00-09:00").
     Starting from the all-day calibration, per hour: the simulated trip is too slow -> less traffic, too fast -> more
@@ -1619,7 +2206,10 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
         raise RuntimeError("run calibrate() first: the hourly scales sit on top of the all-day calibration")
     out = hourly_calibration() or {}
     out.setdefault("hours", {})
-    if not asked:
+    prev_fits = dict(out["hours"]) if refit else {}
+    if refit:          # the model changed: refit every hour, each starting from its own previous scales
+        out["hours"] = {}
+    if not asked and not refit:
         todo = [h for h in todo if str(h) not in out["hours"]]
     # start with the hour most like the all-day average (the all-day calibration fits it best), then outwards, so
     # each hour starts from a fitted neighbour
@@ -1641,6 +2231,9 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
             else:
                 slope = near.get("slope_s_per_volume") or 600.0
                 v = round(min(HOUR_VOLUME[1], max(HOUR_VOLUME[0], near["volume_scale"] + (t_est - t_near) / slope)), 3)
+        own = (prev_fits or {}).get(str(h))
+        if own:        # refitting an hour (the model changed): start from its own previous scales
+            v, cs = float(own["volume_scale"]), float(own.get("cap_scale", 1.0))
         hist, best, seen = [], None, []
         for r in range(rounds):
             caps = [min(HOUR_MAX_KMH, round(c * cs, 1)) for c in cal["cap_kmh"]]
@@ -1652,7 +2245,7 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
             if target is None:
                 raise RuntimeError(f"hour {h:02d}: the hourly rows have neither leg times nor a trip total")
             t = j["total_s"]
-            stuck = inp["teleports"] > 0.01 * inp["vehicles_loaded"] or inp["vehicles_not_inserted"] > 0.02 * inp["vehicles_loaded"]
+            stuck = inp["teleports"] > 0.01 * inp["vehicles_loaded"] or inp["vehicles_not_inserted"] > NOT_INSERTED_OK * inp["vehicles_loaded"]
             err = t / target - 1
             seen.append((v, cs, t, stuck))
             print(f"{hour_label(h)} round {r}: sim {t / 60:.1f} min vs TomTom {target / 60:.1f} min ({how}) | volume x{v:.3f} "
@@ -1665,7 +2258,7 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
             hist.append((v, cs, t, stuck))
             at_floor, at_ceiling = v <= HOUR_VOLUME[0] + 1e-6, v >= HOUR_VOLUME[1] - 1e-6
             if stuck:                                   # too much traffic for the network
-                if not at_floor and cs == 1.0:
+                if not at_floor and (cs <= 1.0 or err < 0):     # (faster caps never clear a jam caused by volume)
                     v = max(HOUR_VOLUME[0], round(v * 0.85, 3))
                 else:
                     cs = round(min(HOUR_CAP[1], cs * 1.1), 3)
@@ -1714,8 +2307,9 @@ def calibrate_hourly(hours=None, rounds=8, tol=0.03):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["calibrate"]:
         calibrate()
-    elif sys.argv[1:2] == ["calibrate_hourly"]:
-        calibrate_hourly([int(a) for a in sys.argv[2:]] or None)
+    elif sys.argv[1:2] == ["calibrate_hourly"]:       # calibrate_hourly [refit] [8 9 ...]
+        args = [a for a in sys.argv[2:] if a != "refit"]
+        calibrate_hourly([int(a) for a in args] or None, refit="refit" in sys.argv[2:])
     elif sys.argv[1:2] == ["fit_day"]:        # fit_day 2026-07-08 18: fit (or reuse) one day and hour, print the result
         res = run(hour=int(sys.argv[3]), day=sys.argv[2], frames=False)
         print(res["time"], round(res["journey"]["total_s"] / 60, 1), "min vs TomTom", round(res["journey"]["tomtom_total_s"] / 60, 1))

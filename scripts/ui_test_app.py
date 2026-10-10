@@ -12,12 +12,14 @@ Cases
      How it works in 3 steps, card links
   D  Decisions (mocked): list newest first with stage, author, time; stage filters with counts (and #stage= links);
      case detail: stage tracker, verdict, timeline proposed -> in review -> decided with actor, time, decision, reason,
-     re-test results; runs table (option in words, traffic level incl. the review's 120%, trip minutes, change vs today,
+     re-test results; runs table (option in words, traffic level incl. the review's 110%, trip minutes, change vs today,
      SAMPLE DATA tag); evidence fingerprints short with the full SHA-256 on hover; chain explanation and link check
-     (intact and broken); brief rendered as markdown with HTML escaped; Print brief; Open in corridor link; back to list;
-     unknown case and missing brief say so
-  E  Corridor deep link: corridor.html#case=<id> opens that case in step 4 (July typical day mode); corridor.html#mode=live
-     (the home page's "See it on the map") opens Live now
+     (intact and broken); brief rendered as markdown with HTML escaped (data-provider names in it shown as "real data");
+     Print brief; Open in corridor link; back to list; unknown case and missing brief say so
+  E  Corridor deep link: corridor.html#case=<id> opens that case in step 4; corridor.html#mode=live (old links) opens the
+     corridor normally, with the live junctions box and the journey
+  Plain words: home, YMCA close-up and decisions never show the data provider's name ("TomTom") or the month of the saved
+     averages ("July"), in text or tooltips; the map's own attribution ("© TomTom") is the one exception
   F  About the data (mocked /corridor/calibration): sources REAL vs SIMULATED, live junction count, TomTom 58 min and the
      day range, per-stretch table (12 stretches + whole trip, sim vs TomTom, coloured difference), calibrated knobs with
      labels, junction delays, volumes with the "fewer vehicles than TomTom" note, inputs table with what is assumed,
@@ -100,7 +102,7 @@ def live():
 
 def run_row(rid, n, option_ivs, total_min, role="option", by="engineer", vol=1.0, sample=False):
     return {"run_id": rid, "role": role, "added_by": by, "option": "raw option text", "interventions": option_ivs, "volume_scale": vol,
-            "total_min": total_min, "inputs": {"label": "estimated", "volume_scale": vol}, "warnings": ["test warning: lanes merge"] if option_ivs else [],
+            "total_min": total_min, "inputs": {"label": "estimated", "volume_scale": vol}, "warnings": ["test warning: lanes merge", "2 of 13 TomTom points not used"] if option_ivs else [],
             "sample": sample, "fingerprint": sha(n)}
 
 
@@ -132,7 +134,7 @@ CASES["c_2"]["events"] = events("c_2", [("proposed", "Asha", {"title": "Signal r
                                        ("review", "Ravi", {"volume_scale": 0.8, "note": "quiet hours", "results": []}, 1791556100.0)], broken=True)
 CASES["c_3"]["events"] = events("c_3", [
     ("proposed", "engineer", {"title": "Flyover at Tolichowki", "brief_id": "b_1", "runs": {"r3a": sha(5), "r3b": sha(6)}}, 1791553000.0),
-    ("review", "Asha (traffic police)", {"volume_scale": 1.2, "note": "peak +20%", "results": [
+    ("review", "Asha (traffic police)", {"volume_scale": 1.1, "note": "peak +10%", "results": [
         {"run_id": "r3c", "option": "baseline (no change)", "total_min": 117.0, "change_vs_baseline_min": 0.0, "fingerprint": sha(7)},
         {"run_id": "r3d", "option": "flyover at j07 Tolichowki", "total_min": 113.2, "change_vs_baseline_min": -3.8, "fingerprint": sha(8)}]}, 1791553600.0),
     ("decision", "Commissioner R.", {"decision": "approve", "reason": "Retime first; flyover only if the queue persists", "evidence": {}}, 1791554200.0)])
@@ -142,7 +144,7 @@ for c in CASES.values():
     c["fingerprint"] = c["events"][-1]["fingerprint"]
 CASES["c_3"]["fingerprints"]["brief:b_1"] = sha(9)
 CASE_LIST = [{k: c[k] for k in ("case_id", "title", "stage", "brief_id", "created_by", "created")} | {"runs": len(c["runs"])} for c in CASES.values()]
-BRIEF = {"brief_id": "b_1", "markdown": "# Decision brief: Tolichowki\n\n**Recommendation:** retime first.\n\n1. Evidence one\n2. Evidence two\n\n"
+BRIEF = {"brief_id": "b_1", "markdown": "# Decision brief: Tolichowki\n\n**Recommendation:** retime first.\n\n1. Evidence one: TomTom Traffic Stats, July 2026\n2. Evidence two\n\n"
          "| Option | Trip |\n|---|---|\n| Flyover | 93.8 min |\n\n<img src=x onerror=\"window.__xss=1\"><script>window.__xss=2</script>",
          "run_ids": ["r3a", "r3b"], "fingerprints": {"r3a": sha(5), "r3b": sha(6)}, "fingerprint": sha(9), "created_at": "2026-10-09T19:05:00+05:30"}
 FACT = [1.01, 1.02, 0.86, 1.05, 0.98, 1.03, 1.0, 0.97, 0.91, 1.02, 0.99, 1.01]
@@ -245,6 +247,21 @@ def api_get(path):
         return None, None
 
 
+# Visible text and tooltips, minus the map's attribution control ("© TomTom" there is required): any "TomTom" or "July" left.
+BRAND_JS = r"""() => {
+  let text = document.body.innerText;
+  for (const a of document.querySelectorAll('.maplibregl-ctrl-attrib')) if (a.innerText) text = text.split(a.innerText).join(' ');
+  const tips = [...document.querySelectorAll('[title], [aria-label], [placeholder]')].filter(e => !e.closest('.maplibregl-ctrl-attrib'))
+    .map(e => ['title', 'aria-label', 'placeholder'].map(k => e.getAttribute(k) || '').join(' '));
+  return [text, ...tips].join('\n').match(/[^\n]{0,40}(TomTom|July)[^\n]{0,40}/g) || [];
+}"""
+
+
+def no_brand(pg, where):
+    hits = pg.evaluate(BRAND_JS)
+    check(not hits, f"{where}: no 'TomTom' or 'July' in text or tooltips (map attribution aside): {hits[:3] or 'none'}")
+
+
 UNDER_BAR = {"home": ["main"], "corridor": ["#map", "#left", "#right", "#ask-open", ".maplibregl-ctrl-top-right"],
              "ymca": ["#map", "#left", "#right"], "decisions": ["main"], "data": ["main"]}
 
@@ -266,6 +283,8 @@ with sync_playwright() as p:
         under = {s: rect(pg, s) for s in UNDER_BAR[pid]}
         check(nav[1] == 0 and 40 <= nav[3] <= 48 and all(r and r[1] >= nav[3] - 0.5 for r in under.values()),
               f"{pid}: bar {nav[3]:.0f} px; below it: {', '.join(f'{s} {r[1]:.0f}' if r else f'{s} missing' for s, r in under.items())}")
+        if pid in ("home", "ymca", "decisions"):
+            no_brand(pg, pid)
         if pid == "corridor":
             left = rect(pg, "#left")
             check(left[3] <= 950 - 11, f"corridor: left panel ends inside the window ({left[3]:.0f} of 950)")
@@ -296,12 +315,13 @@ with sync_playwright() as p:
     pitch = pg.inner_text("#pitch")
     check(all(w in pitch for w in ("Predict", "mitigate", "low-cost", "build", "tested", "reviewed and recorded")), f"pitch: {pitch[:90]}")
     check(pg.inner_text("#c-min") == "58 min" and pg.inner_text("#c-km") == "22.4 km" and pg.inner_text("#c-jn") == "11", f"corridor card: {pg.inner_text('#c-min')}, {pg.inner_text('#c-km')}, {pg.inner_text('#c-jn')} junctions")
-    check(pg.eval_on_selector_all("#c-legs span", "els => els.length") == 12 and "REAL" in pg.inner_text("#card-corridor") and "Typical July day" in pg.inner_text("#c-src"),
-          "12 coloured legs, REAL, labelled from the API")
+    src = pg.inner_text("#c-src")
+    check(pg.eval_on_selector_all("#c-legs span", "els => els.length") == 12 and "REAL" in pg.inner_text("#card-corridor") and "Typical day (06-23)" in src and "Real data" in src,
+          f"12 coloured legs, REAL, labelled from the API in plain words: {src!r}")
     check(pg.get_attribute("#card-corridor", "href") == "corridor.html" and pg.get_attribute("#card-ymca", "href") == "ymca.html" and pg.get_attribute("#card-decisions", "href") == "decisions.html", "card links")
-    check(pg.get_attribute("#live-map", "href") == "corridor.html#mode=live" and pg.is_visible("#live-map"), "live strip links to the corridor's Live now")
+    check(pg.get_attribute("#live-map", "href") == "corridor.html" and pg.is_visible("#live-map"), "live strip links to the corridor (live junctions always on its map)")
     lv = pg.inner_text("#live")
-    check("REAL" in lv and "3 TomTom junctions reporting" in lv and "1 not updated for 15+ min" in lv and "updated 17:17" in lv, f"live strip: {lv[:140]!r}")
+    check("REAL" in lv and "3 junctions reporting live" in lv and "1 not updated for 15+ min" in lv and "updated 17:17" in lv, f"live strip: {lv[:140]!r}")
     check("178 s" in pg.inner_text("#lv-worst") and "Mandela Gudem Road North Bound at Rethibowli jn" in pg.inner_text("#lv-worst") and "usually 131 s" in pg.inner_text("#lv-worst"),
           f"worst delay now: {pg.inner_text('#lv-worst')}")
     check(pg.inner_text("#c-live") == "3", "corridor card: 3 with live data")
@@ -311,6 +331,8 @@ with sync_playwright() as p:
     wx = pg.inner_text("#wx-now") if pg.is_visible("#wx-now") else ""
     check("Weather now: Clear sky · 27°C" in wx and "modelled" in wx and "not a rain gauge" in (pg.get_attribute("#wx-now", "title") or "") and pg.locator("#wx-now svg").count() == 1,
           f"weather now in the live strip (GET /weather/now), modelled: {wx!r}")
+    check("typical-day trip, real data" in pg.inner_text("#viz") if pg.is_visible("#viz") else True, "hero: typical-day trip, real data")
+    no_brand(pg, "home, loaded")
     pg.screenshot(path=str(OUT / "app_C_home.png"), full_page=True)
     pg.close()
     pg = open_page(b, "index.html", Backend(wx_now=None))
@@ -339,12 +361,12 @@ with sync_playwright() as p:
     tl = pg.eval_on_selector_all("#timeline .tl > li", "els => els.map(e => [e.dataset.kind, e.innerText])")
     check([t[0] for t in tl] == ["proposed", "review", "decision"], f"timeline proposed -> review -> decision: {[t[0] for t in tl]}")
     check("PROPOSED" in tl[0][1].upper() and "engineer" in tl[0][1] and "Sent for review: Flyover at Tolichowki with 2 runs as evidence and brief b_1" in tl[0][1], f"proposed: {tl[0][1][:120]!r}")
-    check("Asha (traffic police)" in tl[1][1] and "Re-tested every option at 120% traffic" in tl[1][1] and "peak +20%" in tl[1][1] and "−3.8 min vs today's roads" in tl[1][1], f"review: {tl[1][1][:160]!r}")
+    check("Asha (traffic police)" in tl[1][1] and "Re-tested every option at 110% traffic" in tl[1][1] and "peak +10%" in tl[1][1] and "−3.8 min vs today's roads" in tl[1][1], f"review: {tl[1][1][:160]!r}")
     check("Commissioner R." in tl[2][1] and "Approved: “Retime first" in tl[2][1] and "9 Oct 2026" in tl[2][1], f"decision: {tl[2][1][:120]!r}")
     check(pg.locator("#timeline .chain-ok").count() == 2 and "first event" in tl[0][1], "each event follows the previous one (✓)")
     runs = pg.eval_on_selector_all("#runs tr[data-run]", "els => els.map(e => [...e.cells].map(c => c.innerText.replace(/\\s+/g, ' ').trim()))")
     check(len(runs) == 4 and runs[1][0].startswith("Flyover at Tolichowki (2 lanes, 600 m)") and "proposed option" in runs[1][0], f"runs in words: {[r[0][:40] for r in runs]}")
-    check([r[1] for r in runs] == ["100%", "100%", "120%", "120%"], f"traffic levels (the review's 120% for its re-runs): {[r[1] for r in runs]}")
+    check([r[1] for r in runs] == ["100%", "100%", "110%", "110%"], f"traffic levels (the review's 110% for its re-runs): {[r[1] for r in runs]}")
     check([r[2] for r in runs] == ["97.5 min", "93.8 min", "117.0 min", "113.2 min"] and runs[1][3] == "−3.7 min" and runs[3][3] == "−3.8 min" and runs[0][3] == "–", f"trip minutes and change vs today: {[(r[2], r[3]) for r in runs]}")
     check("SAMPLE DATA" in runs[0][0] and "SAMPLE DATA" not in runs[2][0] and "reviewer's re-test" in runs[2][0], "sample runs tagged, re-tests named")
     fps = pg.eval_on_selector_all("#runs .fp", "els => els.map(e => [e.textContent, e.title])")
@@ -357,6 +379,10 @@ with sync_playwright() as p:
     check(bb.locator(".md-h").first.inner_text() == "Decision brief: Tolichowki" and bb.locator("b").first.inner_text() == "Recommendation:" and bb.locator("ol li").count() == 2
           and bb.locator("table tr").count() == 2, "brief markdown: heading, bold, list, table")
     check(bb.locator("img, script").count() == 0 and pg.evaluate("() => window.__xss") is None and "<img src=x" in bb.inner_text(), "HTML in the brief shown as text, not run")
+    check("Evidence one: real data" in bb.inner_text(), f"brief: the data provider's name shown as 'real data': {bb.locator('ol li').first.inner_text()!r}")
+    pg.evaluate("() => document.querySelectorAll('#runs details').forEach(d => d.open = true)")
+    check("2 of 13 real data points not used" in pg.inner_text("#runs"), "simulation warnings in plain words")
+    no_brand(pg, "decisions: case detail")
     check(pg.is_visible("#brief-print"), "Print brief button")
     pg.click("#brief-print")
     check(pg.evaluate("() => [window.__printed, window.__printClass.split(' ').includes('print-brief')]") == [1, True], "Print brief prints with only the brief selected")
@@ -389,10 +415,12 @@ with sync_playwright() as p:
     pg = open_page(b, "corridor.html", Backend(), hash_="#case=c_3", wait=2500)
     check(wait_for(pg, "() => !document.getElementById('case').hidden && /Flyover at Tolichowki/.test(document.querySelector('#case .case-hd').innerText)"), "corridor.html#case=c_3 opens the case in step 4")
     check(pg.inner_text("#case .stages li.now") == "Decided" and pg.locator("#case .tl li").count() == 3, "with its stage and record")
-    check(pg.get_attribute("#mode-july", "aria-selected") == "true" and pg.is_visible("#dec"), "a case link opens in July typical day (where decisions are)")
+    check(pg.is_visible("#dec"), "the step 4 decision panel is shown")
     pg.close()
+    n_err = len(errors)
     pg = open_page(b, "corridor.html", Backend(), hash_="#mode=live", wait=2500)
-    check(pg.get_attribute("#mode-live", "aria-selected") == "true" and pg.is_visible("#live-box") and pg.is_hidden("#journey"), "corridor.html#mode=live opens Live now")
+    check(len(errors) == n_err and pg.is_visible("#live-box") and pg.is_visible("#journey"),
+          f"corridor.html#mode=live (old link) opens the corridor normally: live junctions box and journey shown, no errors ({errors[n_err:] or 'none'})")
     pg.close()
 
     # ---------------- F: about the data, mocked ----------------
@@ -462,6 +490,7 @@ with sync_playwright() as p:
         n = len([j for j in lv.get("junctions", []) if any(a.get("delay_s") is not None for a in j.get("approaches", []))]) if lv else 0
         check(wait_for(pg, "() => document.getElementById('lv-count')") and pg.inner_text("#lv-count").startswith(str(n)), f"live junctions reporting: {pg.inner_text('#live-body')[:80]!r} (API: {n})")
         check((pg.inner_text("#d-count") == str(len(cl))) if cl else "No cases" in pg.inner_text("#d-line"), f"cases: {pg.inner_text('#d-line')[:60]!r} (API: {len(cl or [])})")
+        no_brand(pg, "home, real API")
         pg.screenshot(path=str(OUT / "app_G_home.png"), full_page=True)
         pg.close()
         pg = open_page(b, "decisions.html", None, wait=2000)
@@ -469,6 +498,8 @@ with sync_playwright() as p:
         if cl:
             pg.click("#cases .case-row >> nth=0")
             check(wait_for(pg, "() => document.getElementById('d-title')") and pg.locator("#runs tr[data-run]").count() >= 1 and pg.locator("#timeline .tl > li").count() >= 1, "first case opens with runs and its record")
+            pg.wait_for_timeout(1500)
+            no_brand(pg, "decisions, real API, first case")
         pg.close()
         pg = open_page(b, "data.html", None, wait=3000)
         if cst == 200:
@@ -486,7 +517,8 @@ with sync_playwright() as p:
         pg = open_page(b, page, be, wait=2500 if pid in ("corridor", "ymca") else 1200)
         check(pg.get_attribute("#cr-nav .crn-pill", "data-state") == "offline", f"{pid}: pill says offline")
         if pid == "home":
-            check(pg.inner_text("#c-min") == "58 min" and "saved copy" in pg.inner_text("#c-src") and pg.locator("#c-legs span").count() == 12, "home: saved TomTom numbers")
+            check(pg.inner_text("#c-min") == "58 min" and "saved copy" in pg.inner_text("#c-src") and pg.locator("#c-legs span").count() == 12, "home: saved real-data numbers")
+            no_brand(pg, "home offline")
             check("not answering" in pg.inner_text("#live-body") and "not answering" in pg.inner_text("#d-line"), f"home: live and decisions explain: {pg.inner_text('#d-line')[:70]!r}")
             pg.screenshot(path=str(OUT / "app_H_home.png"))
         if pid == "decisions":
@@ -497,6 +529,7 @@ with sync_playwright() as p:
             check("API not running" in pg.inner_text("#status") and pg.locator("#strips .strip[data-strip]").count() == 1, f"corridor: {pg.inner_text('#status')[:60]!r}")
         if pid == "ymca":
             check("API not running" in pg.inner_text("#status"), f"ymca: {pg.inner_text('#status')[:60]!r}")
+            no_brand(pg, "ymca offline")
         pg.close()
 
     # ---------------- N: phone ----------------

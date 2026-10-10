@@ -26,29 +26,44 @@ A real commute of about **22.4 km**, split at **11 junctions** (among them Gachi
 Rethibowli and Masab Tank; full list in `data/corridor/corridor.json`). TomTom measured it at **58.2 minutes** on an average July 2026 day.
 The slowest stretch is Nallagandla to the ISB Rd / DLF junction (13.8 min). The main road already crosses five flyovers
 (Gachibowli, Bio-Diversity Park, Shaikpet, Tolichowki, Masab Tank) and meets signals at five junctions (Nallagandla,
-ISB Rd / DLF, Khajaguda, Nanal Nagar, Rethibowli). The calibrated simulation gives **55.4 min** against TomTom's
-**56.2 min** on the same 21.6 km, with every stretch within about 5% (`sim/corridor/calibration.json`). Its traffic
-(1,500 vehicles an hour each way, plus half of TomTom's evening cross-road volumes) is lighter than TomTom's evening
-estimates: it is calibrated to the all-day trip time.
+ISB Rd / DLF, Khajaguda, Nanal Nagar, Rethibowli). The calibrated simulation gives **56.6 min** against TomTom's
+**56.2 min** on the same 21.6 km, with every stretch within about 6% (`sim/corridor/calibration.json`). Every arm of
+every junction carries traffic, including the roads under the flyovers, with Indian driver behaviour
+(`docs/driver-behaviour.md`; what is built: `sim/README.md`). Its traffic (1,215 vehicles an hour each way end to end,
+plus 40% of TomTom's junction volumes on every arm) is lighter than TomTom's evening estimates: it is calibrated to
+the all-day trip time.
 
-On the corridor screen you can:
-1. See the trip split by stretch: **measured** by TomTom (REAL) next to our **simulation** (SIMULATED).
-2. See **live** delay and queues at 10 of the 11 junctions (TomTom Junction Analytics; all except Masab Tank).
-3. Add a change at any junction (flyover, underpass, signal retime, widening, one-way side road) and see how many
-   minutes the trip gains or loses, and which junction gets worse (ripple).
-4. Watch it in 3D, with simulated vehicles driving over the new flyover.
-5. Try the quick demos (about 2 s each once the cache is warm, 1-2 min each the first time; warm-up steps in
-   `docs/demo-script.md`). Simulated, ± about 0.9 min run to run:
+On the corridor screen (one screen, branded **Terascope AI**; on screen every number is labelled **real data** or
+**simulated**, never a vendor name) you can:
+1. See the trip split by stretch: **measured** (REAL, "Real data · typical day", 58.2 min) next to the
+   **simulation with your changes** (SIMULATED), and the live weather in the header.
+2. See **live** delay and queues at 10 of the 11 junctions (all except Masab Tank; expand one to fly there), the
+   **live trip** estimate against the typical day at the same hour, and **Simulate now**: a now-cast of the whole
+   corridor tuned to the live traffic (about 20 s once warm).
+3. Add a change at any junction (flyover, underpass, signal retime, widening, one-way side road), or press
+   **✦ Advise me** for the pre-computed verdict, and see how many minutes the trip gains or loses and which junction
+   gets worse (ripple).
+4. Slide the weather from Dry to Heavy rain; the reported water-logging points are drawn on the map.
+5. Watch it in 3D, with simulated vehicles driving over the new flyover (playback at 3×; **Follow a car** rides a
+   test car's whole trip from Lingampally).
+6. Try the quick actions (about 2 s each once the cache is warm, 1-2 min each the first time; warm-up steps in
+   `docs/demo-script.md`). Simulated, typical day; noise about ±0.5 min for a one-junction change, ±1.5 min
+   corridor-wide; every change is measured against the simulation of today's roads:
 
-| Quick demo | Trip | Change | At 120% traffic |
-|---|---|---|---|
-| Today's roads | 55.4 min | - | trip 57.0 min |
-| Flyover at Nallagandla (2 lanes, 600 m) | 53.5 min | −1.9 | −1.5 |
-| Flyover at ISB Rd / DLF (2 lanes, 600 m) | 53.8 min | −1.7 | −1.4 |
-| One flyover over Nanal Nagar + Rethibowli (1.2 km) | 53.4 min | −2.1 | −2.0 |
-| Give DLF's side roads more green (30% to the main road) | 58.0 min | +2.6 (the stretch before DLF +2.7) | - |
+| Quick action / what-if | Trip | Change |
+|---|---|---|
+| Today's roads (**Start engine**) | 56.6 min | real data 56.2 on the same 21.6 km |
+| Flyover at Nallagandla (2 lanes, 600 m) | 54.6 min | −2.0 |
+| Flyover at ISB Rd / DLF (2 lanes, 600 m) | 54.7 min | −1.9 |
+| One flyover over Nanal Nagar + Rethibowli (1.2 km) | 53.5 min | −3.1 (still saves at 110% traffic) |
+| Give DLF's side roads more green (30% to the main road) | 57.3 min | +0.7 (ripple: the queue before DLF) |
+| Light rain / heavy rain, today's roads | 58.1 / 63.8 min | +1.5 / +7.2 (about 2.7 of it at reported water-logging points) |
+| Heavy rain + the Nanal Nagar + Rethibowli flyover | 61.2 min | −2.6 vs today's roads in heavy rain |
 
-Asking for a flyover at Tolichowki answers "already has a flyover; nothing built".
+Asking for a flyover at Tolichowki answers "already has a flyover; nothing built". The advisor's pre-computed
+verdicts: Nanal Nagar and Nallagandla build the underpass (the Nanal Nagar signal retime, −0.3, is inside the noise);
+ISB Rd / DLF build the flyover; Rethibowli one-way side road first; Khajaguda nothing tested beats the noise; the six
+junctions the main road already crosses on a flyover get no build.
 
 Two more places back up the model:
 - **YMCA Circle, Narayanaguda** (Hyderabad): the deep-dive junction. The model's speeds match TomTom within about
@@ -79,6 +94,8 @@ cd frontend && python3 -m http.server 5174      # screens
 | API health (`mock: true` means sample data) | http://localhost:8000/health |
 
 Any free port works for the screens (the team uses 5174 because 5173 is often taken). Without the API running, the corridor page still opens and shows sample data, tagged SAMPLE DATA.
+
+Corridor screen, one view (no tabs): the header shows the route and the weather now (real data, live). Left: **Quick actions**, **Start engine** (simulate today's roads) and **Run with changes**, then **Simulated**: pick a junction (**✦ Advise me** for the pre-computed verdict), a modification (flyover, underpass, signal retime, widening, one-way) and the weather (slider Dry · As measured · Light rain · Heavy rain, with the reported water-logging points under it and on the map), then the junction results and the **Decision** step (send for review, re-test at 80% or 110% traffic, approve with a reason). The simulated A → B trip is drawn on the map, coloured by simulated speed per stretch (today and with changes side by side); the playback pill at the top of the map has one timeline at 3× and **Follow a car**. Right: the live trip with **Simulate now**, and the live junctions accordion (open one to fly there, close it to fly back), then the layers. **Ask Terascope AI** sits above the **Reset view** pill (R). Simulations always use the typical day (all-day average). Labels on screen say only **real data** or **simulated data**.
 
 ## Data sources and labels
 Every traffic input is labelled **counted** (or **measured**), **estimated** or **assumed**, and every number on screen
@@ -113,22 +130,28 @@ Each workstream owns one folder (see `CLAUDE.md`). Team members are listed at th
 
 **The proposed solution.** CityRehearsal is a virtual environment where cities simulate proposed decisions, compare alternatives, identify unintended consequences and record an evidence-based approval process before construction begins.
 
-**What the team actually built** (status Fri 9 Oct, 21:30; the 24-hour build is the roads and traffic module):
+**What the team actually built** (status Sat 10 Oct, 05:40; the 24-hour build is the roads and traffic module):
 - Lingampally to Lakdikapul corridor: road network from OpenStreetMap routed over the five existing flyovers, TomTom
-  stretch times, live data at 10 junctions, the corridor API and the 3D corridor screen with quick demos.
-- Corridor calibrated to TomTom: 55.4 min simulated vs 56.2 min measured on the same roads, every stretch within about 5%.
+  stretch times, live data at 10 junctions, a live trip estimate and a "Simulate now" now-cast tuned to it, the
+  corridor API and the one-screen 3D corridor page with quick actions.
+- Indian driver behaviour (`docs/driver-behaviour.md`: amber and red running, box blocking, free left, protected
+  right turn, U-turns, seven vehicle types with fast riders) and traffic on all 42 junction arms, each input labelled
+  measured, estimated or assumed.
+- Corridor calibrated to TomTom: 56.6 min simulated vs 56.2 min measured on the same roads, every stretch within about 6%; every hour 06-23 within 3%.
 - Five kinds of fixes as templates, each with design checks (for example a warning when flyover lanes squeeze into
   fewer lanes).
+- Weather: the hour's weather in the header, a rain what-if (light rain +1.5 min, heavy rain +7.2 min on the typical
+  day) with reported water-logging points that slow the lanes around them (about 2.7 of the 7.2 min).
 - YMCA Circle: calibrated simulation (within about 3 km/h of TomTom), 3D view, simulate any moment since 8 Oct
   from TomTom junction data, or live.
 - Case workflow in the API: options, runs, submit with a SHA-256 fingerprint, reviewer must re-run before
   recommending, commissioner decides with a reason (checked by `make smoke`).
-- AI planning assistant (chat on the corridor screen): tests the cheap fix first and writes a decision brief. In a
-  real run on ISB Rd / DLF it tried a signal retime (−0.2 min), then a flyover (−0.9 min), and advised against
-  building (about 7 US cents).
-- Review and decision in the corridor screen (re-test at 80% or 120% traffic, approve with a reason) and a Decisions log.
+- Terascope AI advisor (chat and **✦ Advise me** on the corridor screen): tests the cheap fix first, re-tests the best
+  options in heavy rain and at 110% traffic, writes a decision brief, and has a pre-computed verdict for every
+  junction (for example Nanal Nagar: the signal retime is inside the noise, build the underpass).
+- Review and decision in the corridor screen (re-test at 80% or 110% traffic, approve with a reason) and a Decisions log.
 - Gariahat backtest (`sim/gariahat/README.md`): delay at Gariahat down 59% (study: 75%).
-- In progress: polish, demo recording and dry runs.
+- In progress: demo recording, screenshots and dry runs (`docs/demo-script.md`).
 
 ## Business case
 Full version: [docs/business-case.md](docs/business-case.md).
@@ -144,11 +167,11 @@ Full version: [docs/business-case.md](docs/business-case.md).
   predicted before and measured after), data must be affordable, and engineers must trust it enough to act.
 
 ## Key features
-- [x] Corridor screen: TomTom trip strip, live junction panel, add fixes, 3D view with vehicles (Predict, Build)
+- [x] Corridor screen: trip strip (real data vs simulated), live junctions and live trip, Simulate now, weather and rain what-if, add fixes, 3D view with vehicles (Predict, Build)
 - [x] Corridor fix templates: flyover, underpass, signal retime, widening, one-way side road
 - [x] 3D view of YMCA Circle with calibrated mixed traffic (Predict)
 - [x] Review and sign-off API with logged decisions and evidence fingerprints
-- [x] Corridor calibrated against TomTom trip times (55.4 vs 56.2 min)
+- [x] Corridor calibrated against TomTom trip times (56.6 vs 56.2 min), Indian driver behaviour, traffic on every junction arm
 - [x] AI agent testing low-cost fixes first, with a decision brief (Mitigate)
 - [x] Review and sign-off screens
 - [x] Gariahat backtest (`sim/gariahat/README.md`)
@@ -217,6 +240,8 @@ A chat assistant (Claude, tool use) that finds where the corridor loses time, te
 - `POST /agent/chat` `{session_id?, message}` -> `{session_id, turn_id, reply (markdown), steps: [{tool, input, summary, run_id?}], run_ids, brief_id, usage}`. With real simulations a message can take several minutes: use `POST /agent/chat?async=1` -> `{session_id, turn_id}` and poll `GET /agent/turns/{turn_id}` (`status` running/done/failed, `steps` so far, `reply`). History: `GET /agent/sessions/{id}`. Briefs: `GET /briefs/{brief_id}` -> `{markdown, run_ids, fingerprints, fingerprint}`.
 - Corridor decision workflow: `POST /corridor/cases` `{title, run_ids, brief_id?}` (stage `proposed`) -> `POST /corridor/cases/{id}/review` `{reviewer, volume_scale?, note?}` re-runs every option and the baseline at that volume (stage `in_review`) -> `POST /corridor/cases/{id}/decide` `{decider, decision: approve|reject|revise, reason}` (stage `decided`; `revise` reopens it for another review). `GET /corridor/cases` (each row with its latest `decision` and `decided_at`), `GET /corridor/cases/{id}`. Append-only; each event is SHA-256 fingerprinted over its evidence and chained to the previous one; `GET /corridor/cases/{id}/verify` recomputes every event's hash and the run/brief fingerprints on the server -> `{ok, events: [{seq, fingerprint, recomputed, matches, prev_ok}], evidence}`.
 - Cost: about 1-4 US cents per message with Sonnet (prompt caching on; `usage.cost_usd` in each reply gives the estimate). `make smoke` mocks the Claude client and costs nothing.
+- **Advisor** ("can we build a flyover here, and if not, what else?"; `backend/app/agent/advisor.py`). The tool `advise_junction {junction_id, weather?, fresh?}` gathers the measured data (TomTom leg in/out, live delay vs usual, rain sensitivity of the stretch), then simulates the option set cheapest-first against the no-change baseline under identical conditions: signal retime (corridor green 0.7 and 0.5), one-way side road, widening (+1 lane), underpass, flyover (2 lanes, 600 m; 1200 m at Nanal Nagar), and re-tests the two best in heavy rain and at 1.1x traffic. Ranking: minutes saved beyond the comparison noise (+-0.5 min for a one-junction change, +-1.5 min corridor-wide), ripple at neighbouring junctions, robustness, and an **assumed** cost ladder (retime << one-way < widening < underpass ~ flyover). Verdicts: `build` / `build_underpass` / `widen` / `cheap_first` ("signal change first, build nothing yet") / `one_way_first` / `nothing` / `elevated` ("already has a flyover": j03, j04, j06, j07, j10, j11 get an alternative, no runs). Up to 14 new simulations for this tool (`CR_AGENT_ADVISE_RUNS`); cached runs are free. Every answer writes a decision brief with the ranked table and evidence fingerprints. Chat starters: `GET /agent/suggestions` ("What should we do at Nanal Nagar?", "Can we build a flyover at ISB Rd / DLF? If not, what else?").
+- Advice endpoints (pre-computation, SQLite `agent_advice`, append-only, `model_version` = hash of the sim code + calibration so old rows are `stale`): `POST /agent/advise/{jid}[?async=1&weather=heavy_rain&fresh=1]` (fresh advice is returned as is; `async=1` -> 202 `{advice_id, status: running}`, poll `GET /agent/advice/id/{advice_id}`), `GET /agent/advice` -> `{model_version, junctions: [row]}`, `GET /agent/advice/{jid}` -> row. Row: `{advice_id, junction, weather, status, model_version, stale, brief_id, run_ids, fingerprint, advice}`; `advice`: `{junction, name, verdict, verdict_code, headline, options: [{rank, kind, params, trip_change_min, noise_min, beyond_noise, ripple: {worse, better, slower_legs, worse_delay_min}, rain_change_min, at_110_change_min, robust, cost_class, cost_rank, run_id, warnings, applicable, not_applicable_reason}], baseline: {run_id, trip_min, tomtom_measured_min}, reasons[], caveats[], data: {leg_in, leg_out, live, rain, waterlogging, labels}, brief_id, run_ids, model_version}` (elevated rows add `alternatives[]`, `simulated: false`). Pre-compute all junctions on a running API with `cd backend && CR_DB=$PWD/cityrehearsal.db python -m app.agent.advise_all` (runs go through the API's queue, so nothing runs twice; ~10-15 new runs per ground junction).
 
 Deployed URL: _(add if deployed)_
 

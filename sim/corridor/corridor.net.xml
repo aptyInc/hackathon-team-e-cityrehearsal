@@ -8319,16 +8319,16 @@
         <phase duration="4"  state="rrryyy"/>
     </tlLogic>
     <tlLogic id="cluster_12323904989_12336657974_2177264514_308971465" type="static" programID="0" offset="0">
-        <phase duration="67" state="GGGGGGrrr"/>
-        <phase duration="4" state="yyyyyyrrr"/>
-        <phase duration="45" state="rrrrrrGgg"/>
-        <phase duration="4" state="rrrrrryyy"/>
+        <phase duration="73" state="GGGGGGgrr"/>
+        <phase duration="4" state="yyyyyygrr"/>
+        <phase duration="39" state="rrrrrrGgg"/>
+        <phase duration="4" state="rrrrrrGyy"/>
     </tlLogic>
     <tlLogic id="cluster_13922425883_307096050_308528067_3966164034" type="static" programID="0" offset="0">
-        <phase duration="67" state="GGGGGGrrrrr"/>
-        <phase duration="4" state="yyyyyyrrrrr"/>
-        <phase duration="45" state="rrrrrrGggGG"/>
-        <phase duration="4" state="rrrrrryyyyy"/>
+        <phase duration="73" state="GGGGGGgrrrr"/>
+        <phase duration="4" state="yyyyyygrrrr"/>
+        <phase duration="39" state="rrrrrrGggGG"/>
+        <phase duration="4" state="rrrrrrGyyyy"/>
     </tlLogic>
     <tlLogic id="cluster_308971452_3220003333_3224407314_4659011192" type="static" programID="0" offset="0">
         <phase duration="37" state="GGGGGrrrGrr"/>
@@ -8367,10 +8367,10 @@
         <phase duration="3"  state="yGGrrry"/>
     </tlLogic>
     <tlLogic id="joinedS_10600434125_10600434129_cluster_353678163_3817562675_3817562677_3817562686" type="static" programID="0" offset="0">
-        <phase duration="67" state="GGGGGGggrrrGGGggg"/>
-        <phase duration="4" state="yyyyGGggrrryyyggg"/>
-        <phase duration="45" state="rrrrggGGGGgrrrGGG"/>
-        <phase duration="4" state="rrrrggGGyyyrrrGGG"/>
+        <phase duration="73" state="GGGGGGggrrrGGGggg"/>
+        <phase duration="4" state="yyyyGGggrrrGyyggg"/>
+        <phase duration="39" state="rrrrggGGGGggrrGGG"/>
+        <phase duration="4" state="rrrrggGGyyygrrGGG"/>
     </tlLogic>
     <tlLogic id="joinedS_11801247549_11801247555_11810966985_12618756887_#6more" type="static" programID="0" offset="0">
         <phase duration="16" state="GgGGrrrGGgGgGrrrGGGrrrGGGGGgGgGrrGGGGGGGGGrrrGGGrrrGGGGG"/>
@@ -8385,16 +8385,18 @@
         <phase duration="8"  state="rrrryyyGGgGgGrrrGGGrrrGGGGGgGgGrrGGGGGGGGGrrrrrryyyGGGGG"/>
     </tlLogic>
     <tlLogic id="joinedS_1314246678_1314246679_1314246684_307096052_#2more" type="static" programID="0" offset="0">
-        <phase duration="67" state="GGggggGGGGgGGGGGgGGGgGGGGggggGGGGrrrGGGGGG"/>
+        <phase duration="73" state="GGggggGGGGgGGGGGgGGGgGGGGggggGGGGrrrGGGGGG"/>
         <phase duration="4" state="yyggggGGGGgGGGGGgGGGgGyyyggggGGGGrrrGGGGGG"/>
-        <phase duration="45" state="rrGGGGggggggggggggggggrrrGGGGggggGGGgggggg"/>
+        <phase duration="39" state="rrGGGGggggggggggggggggrrrGGGGggggGGGgggggg"/>
         <phase duration="4" state="rrGGGGggggggggggggggggrrrGGGGggggyyygggggg"/>
     </tlLogic>
     <tlLogic id="joinedS_4663630996_cluster_11521112899_1707132513_701228111_7122854144" type="static" programID="0" offset="0">
-        <phase duration="67" state="rGGGGgGGGggrrr"/>
-        <phase duration="4" state="rGGyyyyyyyyrrr"/>
-        <phase duration="45" state="GggrrrrrrrrGgg"/>
-        <phase duration="4" state="yggrrrrrrrryyy"/>
+        <phase duration="58" state="rGGGGgGGGggrrr"/>
+        <phase duration="4" state="rGGGyyyyyggrrr"/>
+        <phase duration="12" state="rgggrrrrrGGrrr"/>
+        <phase duration="4" state="rgggrrrrryyrrr"/>
+        <phase duration="38" state="GgggrrrrrrrGgg"/>
+        <phase duration="4" state="ygggrrrrrrryyy"/>
     </tlLogic>
 
     <junction id="10001129379" type="priority" x="9559.67" y="3487.81" z="1.29" incLanes="1240964152#1_0 1240964152#1_1 1240964152#1_2 1092006409_0 1092006409_1" intLanes=":10001129379_0_0 :10001129379_0_1 :10001129379_0_2 :10001129379_3_0 :10001129379_3_1" shape="9563.51,3480.04,1.29 9568.32,3488.35,1.29 9557.82,3494.80,1.29 9552.51,3486.80,1.29 9553.82,3485.37,1.29 9554.12,3484.45,1.29 9554.18,3483.41,1.29 9554.02,3482.24,1.29 9553.61,3480.95,1.29 9559.59,3478.65,1.29 9560.53,3480.14,1.29 9561.14,3480.50,1.29 9561.84,3480.60,1.29 9562.63,3480.45,1.29">

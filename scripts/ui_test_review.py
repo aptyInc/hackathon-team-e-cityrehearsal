@@ -13,7 +13,7 @@ Cases
      from the same answer, no new simulation started
   D  Brief: modal with the markdown, evidence fingerprints, Print / save as PDF, Escape closes
   E  Case: Send for review (baseline + changes runs + brief), stage Proposed, short SHA-256 fingerprints (full on hover)
-  F  Review: name required, re-test at 120% (busy note with a clock), stage In review, new runs, timeline entry
+  F  Review: name required, re-test at 110% (busy note with a clock), stage In review, new runs, timeline entry
   G  Decide: reason required, approve, stage Decided, final/append-only note, timeline with who/when/what
   H  Fallbacks: /agent/chat and /corridor/cases answering 404 hide the features with a short note; a missing run or brief
      says so; chat answered synchronously (no turn_id) still works; sample results made in the browser cannot be sent
@@ -85,6 +85,8 @@ The trip takes **98 min** in the model; the flyover saves *3.7 min* but moves th
 |---|---|---|
 | Retime j07 | 96 min | low |
 | Flyover j07 | 94 min | high |
+
+Live junction data (TomTom live flow) agrees with the model at Tolichowki.
 
 <img src=x onerror="window.__xss=1"><script>window.__xss=2</script>"""
 BRIEF = {"brief_id": "b_1", "markdown": "# Decision brief: Tolichowki\n\n**Recommendation:** retime first.\n\n1. Evidence one\n2. Evidence two",
@@ -273,6 +275,7 @@ with sync_playwright() as p:
     check(rep.locator(".md-h").first.inner_text() == "Where to start at Tolichowki" and rep.locator("b").first.inner_text() == "98 min", "heading and bold rendered")
     check(rep.locator("ul li").count() == 2 and rep.locator("table tr").count() == 3 and rep.locator("th").first.inner_text() == "Option", "list and table rendered")
     check(rep.locator("img, script").count() == 0 and pg.evaluate("() => window.__xss") is None and "<img src=x" in rep.inner_text(), "HTML in the reply is shown as text, not run")
+    check("Live junction data (real data · live) agrees" in rep.inner_text() and "TomTom" not in rep.inner_text(), "the data provider's name in the reply is shown as 'real data'")
     btns = pg.eval_on_selector_all("#chat-log .show-run", "els => els.map(e => e.dataset.run)")
     check(btns == ["r_agent_base", "r_agent_retime", "r_agent_fly"], f"a Show-on-map button per run: {btns}")
     labels = pg.eval_on_selector_all("#chat-log .rrow span", "els => els.map(e => e.textContent)")
@@ -287,22 +290,28 @@ with sync_playwright() as p:
     pg.screenshot(path=str(OUT / "review_B.png"))
 
     case = "C show on map"; print(case)
+    check([s[0] for s in strips(pg)] == ["tomtom"] and strips(pg)[0][1] == "58.2 min", f"before any change run: only the real-data bar: {strips(pg)}")
     n_runs = len(be.posts("/corridor/runs"))
     pg.click("#chat-log .show-run[data-run=r_agent_fly]")
-    check(wait_for(pg, "() => document.querySelectorAll('#strips .strip[data-strip]').length === 3", 10), "three strips")
-    check([s[0] for s in strips(pg)] == ["base", "tomtom", "changed"] and "98 → 94 min" in pg.inner_text("#deltas .headline"), f"agent's run is the 'with changes' result, baseline from the same answer: {strips(pg)}")
+    check(wait_for(pg, "() => document.querySelector('#strips .strip[data-strip=changed]')", 10), "the 'with your changes' bar appears")
+    hl = pg.inner_text("#deltas .headline")
+    check([s[0] for s in strips(pg)] == ["tomtom", "changed"] and [s[1] for s in strips(pg)] == ["58.2 min", "93.8 min"]
+          and "With your changes: 93.8 min" in hl and "−3.7 min vs the simulation of today's roads (97.5)" in hl,
+          f"two bars (real data, with changes); the agent's run is the 'with changes' result, compared with today's roads from the same answer: {strips(pg)}; {hl[:110]!r}")
     check(pg.eval_on_selector_all("#iv-list .iv span", "els => els.map(e => e.textContent)") == ["7 · Tolichowki: Flyover, 2 lanes, 600 m"] and "edited after" not in pg.inner_text("#deltas"),
           "list of changes matches the run")
     check(len(be.posts("/corridor/runs")) == n_runs and "SIMULATED" in pg.inner_text("#strips") and "Loaded from the assistant" in pg.inner_text("#run-note"), "no new simulation, labels kept")
     names = pg.eval_on_selector_all("#strips .strip[data-strip] .name", "els => els.map(e => e.textContent)")
-    check(names[0].startswith("Simulated typical July day, roads as they are") and names[2].startswith("Simulated typical July day, with your changes"),
-          f"trip rows say what is simulated: {names}")
-    check(be.hour_probes == 1 and pg.get_attribute("#hour-box", "title") in ("hourly TomTom data arriving tonight", "The hour sets the measured (TomTom) row; the simulation is still the typical July day"),
-          f"hour picker asked the API once (422 now): the simulation stays the typical July day ({be.hour_probes} probe; {pg.get_attribute('#hour-box', 'title')})")
+    check(len(names) == 2 and names[0].startswith("Real data · typical day") and names[1].startswith("Simulated with your changes")
+          and pg.locator("#strips .strip[data-strip=tomtom] .tag.real").count() == 1 and pg.locator("#strips .strip[data-strip=changed] .tag.sim").count() == 1,
+          f"bars say what is real and what is simulated: {names}")
+    check(be.hour_probes == 0 and pg.locator("#when, #hour, #hour-box").count() == 0, f"no day / hour pickers, no hour probe ({be.hour_probes} probes)")
     check(pg.eval_on_selector("#jt tr[data-id=j07]", "e => e.classList.contains('has')") and "85 → 120 s" in pg.inner_text("#jt tr[data-id=j08]"), "junction table before → after")
     check(pg.eval_on_selector("#chat-log .show-run[data-run=r_agent_fly]", "e => e.classList.contains('on')"), "button marks what is shown")
     pg.click("#chat-log .show-run[data-run=r_agent_retime]"); pg.wait_for_timeout(600)
-    check("Signal timing, 120 s cycle, 65% green" in pg.inner_text("#iv-list") and "98 → 96 min" in pg.inner_text("#deltas .headline"), f"retime run shown: {pg.inner_text('#deltas .headline')[:60]}")
+    hl = pg.inner_text("#deltas .headline")
+    check("Signal timing, 120 s cycle, 65% green" in pg.inner_text("#iv-list") and "With your changes: 95.5 min" in hl and "−2.0 min vs the simulation of today's roads (97.5)" in hl,
+          f"retime run shown: {hl[:100]!r}")
     pg.click("#chat-log .show-run[data-run=r_agent_fly]"); pg.wait_for_timeout(600)
 
     case = "D brief"; print(case)
@@ -337,23 +346,27 @@ with sync_playwright() as p:
     check(wait_for(pg, "() => !document.getElementById('case-list-box').hidden && /Flyover, 2 lanes/.test(document.getElementById('case-list').textContent)", 5), "earlier cases list updated")
 
     case = "F review"; print(case)
-    pg.click("#rv-120"); pg.wait_for_timeout(200)
+    check(pg.inner_text("#rv-80") == "Re-test at 80% traffic" and pg.inner_text("#rv-110") == "Re-test at 110% traffic" and pg.locator("#rv-120").count() == 0,
+          "reviewer re-tests at 80% or 110% traffic")
+    pg.click("#rv-110"); pg.wait_for_timeout(200)
     check("reviewer's name" in pg.inner_text("#case-msg") and not be.posts("/corridor/cases/c_1/review"), "name required before a re-test")
     pg.fill("#rv-name", "Asha (traffic police)"); pg.fill("#rv-note", "Check the Nanal Nagar queue")
     pg.evaluate("() => { window.__delayReview = 2300; }")
-    pg.click("#rv-120"); pg.wait_for_timeout(300)
-    check(pg.is_visible("#case-busy") and "Re-testing both options at 120% traffic" in pg.inner_text("#case-busy") and pg.is_disabled("#rv-80"), f"busy: {pg.inner_text('#case-busy')}")
+    pg.click("#rv-110"); pg.wait_for_timeout(300)
+    check(pg.is_visible("#case-busy") and "Re-testing both options at 110% traffic" in pg.inner_text("#case-busy") and pg.is_disabled("#rv-80"), f"busy: {pg.inner_text('#case-busy')}")
     c1 = pg.inner_text("#case-busy .el"); pg.wait_for_timeout(1100)
     check(pg.inner_text("#case-busy .el") != c1, "busy clock ticks")
     check(wait_for(pg, "() => document.getElementById('case-busy').hidden", 10), "re-test done")
     pg.evaluate("() => { window.__delayReview = 0; }")
-    check(be.posts("/corridor/cases/c_1/review") == [{"reviewer": "Asha (traffic police)", "volume_scale": 1.2, "note": "Check the Nanal Nagar queue"}], f"review body: {be.posts('/corridor/cases/c_1/review')}")
+    check(be.posts("/corridor/cases/c_1/review") == [{"reviewer": "Asha (traffic police)", "volume_scale": 1.1, "note": "Check the Nanal Nagar queue"}], f"review body: {be.posts('/corridor/cases/c_1/review')}")
     check(pg.inner_text("#case .stages li.now") == "In review" and pg.locator("#case .stages li.done").count() == 1, "stage In review")
-    check(pg.locator("#case .caseruns tr[data-run]").count() == 4 and "At 120% traffic: 117 → 113 min" in pg.inner_text("#case .sums"), f"new runs at 120%: {pg.inner_text('#case .sums')}")
+    check(pg.locator("#case .caseruns tr[data-run]").count() == 4 and "At 110% traffic: 107 → 103 min" in pg.inner_text("#case .sums"), f"new runs at 110%: {pg.inner_text('#case .sums')}")
     tl = pg.eval_on_selector_all("#case .tl li", "els => els.map(e => e.innerText)")
-    check(len(tl) == 2 and "Asha (traffic police)" in tl[1] and "Re-tested at 120% traffic: Check the Nanal Nagar queue" in tl[1] and sha(10)[:10] in tl[1], f"timeline: {tl[1:]}")
-    pg.click("#case .case-show[data-run='r_rv_fly_1.2']"); pg.wait_for_timeout(800)
-    check("at 120% traffic" in pg.inner_text("#run-note") and "117 → 113 min" in pg.inner_text("#deltas .headline"), f"re-test run on the map with its 120% baseline: {pg.inner_text('#deltas .headline')[:50]}")
+    check(len(tl) == 2 and "Asha (traffic police)" in tl[1] and "Re-tested at 110% traffic: Check the Nanal Nagar queue" in tl[1] and sha(10)[:10] in tl[1], f"timeline: {tl[1:]}")
+    pg.click("#case .case-show[data-run='r_rv_fly_1.1']"); pg.wait_for_timeout(800)
+    hl = pg.inner_text("#deltas .headline")
+    check("at 110% traffic" in pg.inner_text("#run-note") and "With your changes: 103.2 min" in hl and "−4.1 min vs the simulation of today's roads (107.3)" in hl,
+          f"re-test run on the map with its 110% baseline: {hl[:100]!r}")
 
     pg.click("#case-another"); pg.wait_for_timeout(200)
     check(pg.is_hidden("#case") and pg.is_visible("#dec-new") and not pg.is_disabled("#case-send"), "start another case: the form comes back, this one stays in Earlier cases")
@@ -363,10 +376,10 @@ with sync_playwright() as p:
     case = "G decide"; print(case)
     pg.fill("#dc-name", "Commissioner R."); pg.click("#dc-approve"); pg.wait_for_timeout(200)
     check("reason is required" in pg.inner_text("#case-msg") and not be.posts("/corridor/cases/c_1/decide"), "reason required")
-    pg.fill("#dc-reason", "Retime first; build the flyover only if the queue persists at 120%.")
+    pg.fill("#dc-reason", "Retime first; build the flyover only if the queue persists at 110%.")
     pg.click("#dc-approve")
     check(wait_for(pg, "() => document.querySelector('#case .stages li.now')?.textContent === 'Decided'", 5), "stage Decided")
-    check(be.posts("/corridor/cases/c_1/decide") == [{"decider": "Commissioner R.", "decision": "approve", "reason": "Retime first; build the flyover only if the queue persists at 120%."}], "decide body")
+    check(be.posts("/corridor/cases/c_1/decide") == [{"decider": "Commissioner R.", "decision": "approve", "reason": "Retime first; build the flyover only if the queue persists at 110%."}], "decide body")
     tl = pg.eval_on_selector_all("#case .tl li", "els => els.map(e => e.innerText)")
     check(len(tl) == 3 and "Commissioner R." in tl[2] and "Approved: Retime first" in tl[2] and "9 Oct" in tl[2] and sha(11)[:10] in tl[2], f"timeline: {tl[2]!r}")
     check("Approved by Commissioner R., 9 Oct, 19:30." in pg.inner_text("#case .note.info"), f"verdict: {pg.inner_text('#case .note.info')[:60]}")
@@ -390,6 +403,12 @@ with sync_playwright() as p:
     pg.evaluate("() => planner.openBrief('nope')"); pg.wait_for_timeout(400)
     check("not on this server" in pg.inner_text("#brief-body"), "missing brief says so")
     pg.click("#brief-close")
+    check(pg.inner_text("#sim-today").strip() == "Start engine", f"today's roads button: {pg.inner_text('#sim-today')!r}")
+    pg.click("#sim-today")
+    check(wait_for(pg, "() => document.querySelector('#deltas .headline#sim-today')", 15), "Start engine: one headline for today's roads")
+    hl = pg.inner_text("#deltas .headline#sim-today")
+    check(hl.startswith("Simulated today: 97.5 min") and "(real data " in hl and "SIMULATED" in hl and [s[0] for s in strips(pg)] == ["tomtom"],
+          f"today's roads only: no second bar, simulated minutes beside the real ones: {hl[:90]!r}; {strips(pg)}")
     pg.close()
 
     # ---------------- phone, chat answered synchronously, browser-made sample results ----------------
@@ -397,7 +416,7 @@ with sync_playwright() as p:
     be = Backend(off=("corridor_runs",), sync_chat=True)   # POST /corridor/runs 404: the page falls back to its built-in sample
     pg = open_page(b, {"width": 390, "height": 844}, be)
     pg.click("#p-dlf")
-    check(wait_for(pg, "() => document.querySelectorAll('#strips .strip[data-strip]').length === 3", 15), "preset works (sample fallback)")
+    check(wait_for(pg, "() => document.querySelector('#strips .strip[data-strip=changed]')", 15) and [s[0] for s in strips(pg)] == ["tomtom", "changed"], f"preset works (sample fallback): {strips(pg)}")
     check(pg.is_disabled("#case-send") and "sample results made in the browser" in pg.inner_text("#case-why"), f"sample results cannot be sent: {pg.inner_text('#case-why')}")
     pg.evaluate("() => window.scrollTo(0, document.body.scrollHeight)"); pg.wait_for_timeout(200)
     check(pg.is_visible("#ask-open") and pg.evaluate("() => { const r = $('ask-open').getBoundingClientRect(); return r.bottom <= innerHeight && r.top >= 0; }"),

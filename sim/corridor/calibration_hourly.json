@@ -4,8 +4,8 @@
    "volume_scale": 1.0,
    "cap_scale": 1.0,
    "tomtom_total_s": 3429,
-   "sim_total_s": 3326,
-   "ratio": 0.97,
+   "sim_total_s": 3396,
+   "ratio": 0.99,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3523.0,
@@ -20,90 +20,90 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 437,
+     "sim_s": 436,
      "tomtom_s": 561
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 779,
+     "sim_s": 800,
      "tomtom_s": 971
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 236,
+     "sim_s": 232,
      "tomtom_s": 296
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 181,
+     "sim_s": 175,
      "tomtom_s": 172
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 133,
+     "sim_s": 137,
      "tomtom_s": 118
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 163,
+     "sim_s": 172,
      "tomtom_s": 152
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 272,
+     "sim_s": 281,
      "tomtom_s": 223
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 224,
+     "sim_s": 247,
      "tomtom_s": 139
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 56,
+     "sim_s": 61,
      "tomtom_s": 41
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 453,
+     "sim_s": 445,
      "tomtom_s": 399
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 134,
+     "sim_s": 140,
      "tomtom_s": 130
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 258,
+     "sim_s": 270,
      "tomtom_s": 228
     }
    ]
   },
   "8": {
    "volume_scale": 0.5,
-   "cap_scale": 1.0,
+   "cap_scale": 1.137,
    "tomtom_total_s": 2997,
-   "sim_total_s": 3081,
-   "ratio": 1.028,
+   "sim_total_s": 2910,
+   "ratio": 0.971,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3068.1,
    "period": "2026-07-01..2026-07-31 08:00-09:00",
    "job": "10053357",
    "label": "July typical 08:00-09:00",
-   "rounds": 1,
+   "rounds": 2,
    "jammed": false,
    "warnings": [],
    "slope_s_per_volume": null,
@@ -111,61 +111,61 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 399,
+     "sim_s": 383,
      "tomtom_s": 583
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 712,
+     "sim_s": 702,
      "tomtom_s": 868
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 206,
+     "sim_s": 194,
      "tomtom_s": 187
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 165,
+     "sim_s": 149,
      "tomtom_s": 136
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 135,
+     "sim_s": 124,
      "tomtom_s": 99
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 161,
+     "sim_s": 157,
      "tomtom_s": 142
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 263,
+     "sim_s": 258,
      "tomtom_s": 223
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 214,
+     "sim_s": 163,
      "tomtom_s": 135
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 51,
+     "sim_s": 46,
      "tomtom_s": 36
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 402,
+     "sim_s": 382,
      "tomtom_s": 286
     },
     {
@@ -177,115 +177,117 @@
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 250,
+     "sim_s": 229,
      "tomtom_s": 195
     }
    ]
   },
   "10": {
-   "volume_scale": 1.305,
+   "volume_scale": 1.109,
    "cap_scale": 1.0,
    "tomtom_total_s": 3596,
-   "sim_total_s": 3565,
-   "ratio": 0.991,
+   "sim_total_s": 3580,
+   "ratio": 0.996,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3711.2,
    "period": "2026-07-01..2026-07-31 10:00-11:00",
    "job": "10053357",
    "label": "July typical 10:00-11:00",
-   "rounds": 1,
+   "rounds": 2,
    "jammed": false,
-   "warnings": [],
+   "warnings": [
+    "in some sections only 29 of 30 probe cars got through in time"
+   ],
    "slope_s_per_volume": null,
    "legs": [
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 485,
+     "sim_s": 441,
      "tomtom_s": 518
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 811,
+     "sim_s": 808,
      "tomtom_s": 961
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 246,
+     "sim_s": 231,
      "tomtom_s": 322
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 181,
+     "sim_s": 176,
      "tomtom_s": 180
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 145,
+     "sim_s": 137,
      "tomtom_s": 144
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 171,
+     "sim_s": 173,
      "tomtom_s": 166
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 283,
+     "sim_s": 282,
      "tomtom_s": 233
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 297,
+     "sim_s": 428,
      "tomtom_s": 145
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 70,
+     "sim_s": 65,
      "tomtom_s": 52
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 463,
+     "sim_s": 433,
      "tomtom_s": 461
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 155,
+     "sim_s": 141,
      "tomtom_s": 140
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 258,
+     "sim_s": 265,
      "tomtom_s": 272
     }
    ]
   },
   "7": {
    "volume_scale": 0.5,
-   "cap_scale": 1.3,
+   "cap_scale": 1.452,
    "tomtom_total_s": 2336,
-   "sim_total_s": 2368,
-   "ratio": 1.014,
+   "sim_total_s": 2289,
+   "ratio": 0.98,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 2411.3,
    "period": "2026-07-01..2026-07-31 07:00-08:00",
    "job": "10053357",
    "label": "July typical 07:00-08:00",
-   "rounds": 3,
+   "rounds": 2,
    "jammed": false,
    "warnings": [],
    "slope_s_per_volume": null,
@@ -293,83 +295,83 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 302,
+     "sim_s": 301,
      "tomtom_s": 326
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 549,
+     "sim_s": 550,
      "tomtom_s": 617
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 163,
+     "sim_s": 152,
      "tomtom_s": 150
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 129,
+     "sim_s": 117,
      "tomtom_s": 124
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 104,
+     "sim_s": 96,
      "tomtom_s": 94
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 121,
+     "sim_s": 124,
      "tomtom_s": 136
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 201,
+     "sim_s": 202,
      "tomtom_s": 216
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 163,
+     "sim_s": 133,
      "tomtom_s": 116
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 41,
+     "sim_s": 36,
      "tomtom_s": 32
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 311,
+     "sim_s": 300,
      "tomtom_s": 246
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 93,
+     "sim_s": 101,
      "tomtom_s": 96
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 191,
+     "sim_s": 177,
      "tomtom_s": 182
     }
    ]
   },
   "11": {
-   "volume_scale": 1.249,
+   "volume_scale": 1.062,
    "cap_scale": 1.0,
    "tomtom_total_s": 3481,
-   "sim_total_s": 3466,
-   "ratio": 0.996,
+   "sim_total_s": 3508,
+   "ratio": 1.008,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3604.5,
@@ -379,95 +381,95 @@
    "rounds": 2,
    "jammed": false,
    "warnings": [],
-   "slope_s_per_volume": 827.6,
+   "slope_s_per_volume": null,
    "legs": [
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 471,
+     "sim_s": 444,
      "tomtom_s": 464
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 832,
+     "sim_s": 803,
      "tomtom_s": 815
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 234,
+     "sim_s": 230,
      "tomtom_s": 294
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 178,
+     "sim_s": 175,
      "tomtom_s": 185
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 140,
+     "sim_s": 135,
      "tomtom_s": 156
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 172,
+     "sim_s": 170,
      "tomtom_s": 189
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 283,
+     "sim_s": 279,
      "tomtom_s": 254
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 250,
+     "sim_s": 345,
      "tomtom_s": 161
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 64,
+     "sim_s": 62,
      "tomtom_s": 53
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 445,
+     "sim_s": 451,
      "tomtom_s": 478
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 138,
+     "sim_s": 146,
      "tomtom_s": 144
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 259,
+     "sim_s": 268,
      "tomtom_s": 287
     }
    ]
   },
   "6": {
    "volume_scale": 0.5,
-   "cap_scale": 1.462,
+   "cap_scale": 1.592,
    "tomtom_total_s": 2129,
-   "sim_total_s": 2141,
-   "ratio": 1.006,
+   "sim_total_s": 2099,
+   "ratio": 0.986,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 2203.3,
    "period": "2026-07-01..2026-07-31 06:00-07:00",
    "job": "10053357",
    "label": "July typical 06:00-07:00",
-   "rounds": 1,
+   "rounds": 2,
    "jammed": false,
    "warnings": [],
    "slope_s_per_volume": null,
@@ -475,25 +477,25 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 271,
+     "sim_s": 277,
      "tomtom_s": 264
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 491,
+     "sim_s": 503,
      "tomtom_s": 535
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 147,
+     "sim_s": 140,
      "tomtom_s": 141
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 114,
+     "sim_s": 107,
      "tomtom_s": 121
     },
     {
@@ -505,19 +507,19 @@
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 114,
+     "sim_s": 113,
      "tomtom_s": 133
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 189,
+     "sim_s": 186,
      "tomtom_s": 213
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 149,
+     "sim_s": 118,
      "tomtom_s": 110
     },
     {
@@ -535,80 +537,80 @@
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 88,
+     "sim_s": 91,
      "tomtom_s": 90
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 176,
+     "sim_s": 162,
      "tomtom_s": 174
     }
    ]
   },
   "12": {
-   "volume_scale": 1.03,
+   "volume_scale": 0.937,
    "cap_scale": 1.0,
    "tomtom_total_s": 3299,
-   "sim_total_s": 3290,
-   "ratio": 0.997,
+   "sim_total_s": 3358,
+   "ratio": 1.018,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3416.8,
    "period": "2026-07-01..2026-07-31 12:00-13:00",
    "job": "10053357",
    "label": "July typical 12:00-13:00",
-   "rounds": 1,
+   "rounds": 2,
    "jammed": false,
    "warnings": [],
-   "slope_s_per_volume": null,
+   "slope_s_per_volume": 494.6,
    "legs": [
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 427,
+     "sim_s": 439,
      "tomtom_s": 413
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 769,
+     "sim_s": 817,
      "tomtom_s": 798
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 223,
+     "sim_s": 232,
      "tomtom_s": 233
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 178,
+     "sim_s": 177,
      "tomtom_s": 167
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 142,
+     "sim_s": 133,
      "tomtom_s": 146
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 163,
+     "sim_s": 174,
      "tomtom_s": 192
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 269,
+     "sim_s": 285,
      "tomtom_s": 271
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 241,
+     "sim_s": 204,
      "tomtom_s": 176
     },
     {
@@ -620,29 +622,29 @@
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 444,
+     "sim_s": 439,
      "tomtom_s": 418
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 126,
+     "sim_s": 139,
      "tomtom_s": 146
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 254,
+     "sim_s": 265,
      "tomtom_s": 279
     }
    ]
   },
   "13": {
-   "volume_scale": 0.792,
+   "volume_scale": 0.719,
    "cap_scale": 1.0,
    "tomtom_total_s": 3201,
-   "sim_total_s": 3287,
-   "ratio": 1.027,
+   "sim_total_s": 3296,
+   "ratio": 1.03,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3316.7,
@@ -652,95 +654,95 @@
    "rounds": 2,
    "jammed": false,
    "warnings": [],
-   "slope_s_per_volume": 194.8,
+   "slope_s_per_volume": 137.0,
    "legs": [
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 428,
+     "sim_s": 438,
      "tomtom_s": 387
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 773,
+     "sim_s": 787,
      "tomtom_s": 812
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 223,
+     "sim_s": 224,
      "tomtom_s": 218
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 171,
+     "sim_s": 173,
      "tomtom_s": 152
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 136,
+     "sim_s": 138,
      "tomtom_s": 137
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 163,
+     "sim_s": 175,
      "tomtom_s": 176
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 268,
+     "sim_s": 289,
      "tomtom_s": 265
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 226,
+     "sim_s": 187,
      "tomtom_s": 187
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 54,
+     "sim_s": 56,
      "tomtom_s": 53
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 433,
+     "sim_s": 432,
      "tomtom_s": 395
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 142,
+     "sim_s": 138,
      "tomtom_s": 144
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 270,
+     "sim_s": 259,
      "tomtom_s": 276
     }
    ]
   },
   "14": {
    "volume_scale": 0.5,
-   "cap_scale": 1.0,
+   "cap_scale": 1.085,
    "tomtom_total_s": 3105,
-   "sim_total_s": 3081,
-   "ratio": 0.992,
+   "sim_total_s": 3044,
+   "ratio": 0.98,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3223.1,
    "period": "2026-07-01..2026-07-31 14:00-15:00",
    "job": "10053357",
    "label": "July typical 14:00-15:00",
-   "rounds": 1,
+   "rounds": 2,
    "jammed": false,
    "warnings": [],
    "slope_s_per_volume": null,
@@ -748,73 +750,73 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 399,
+     "sim_s": 400,
      "tomtom_s": 352
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 712,
+     "sim_s": 736,
      "tomtom_s": 785
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 206,
+     "sim_s": 203,
      "tomtom_s": 204
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 165,
+     "sim_s": 157,
      "tomtom_s": 150
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 135,
+     "sim_s": 127,
      "tomtom_s": 122
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 161,
+     "sim_s": 165,
      "tomtom_s": 166
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 263,
+     "sim_s": 271,
      "tomtom_s": 268
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 214,
+     "sim_s": 170,
      "tomtom_s": 219
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 51,
+     "sim_s": 49,
      "tomtom_s": 55
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 402,
+     "sim_s": 401,
      "tomtom_s": 367
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 123,
+     "sim_s": 127,
      "tomtom_s": 141
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 250,
+     "sim_s": 238,
      "tomtom_s": 276
     }
    ]
@@ -823,8 +825,8 @@
    "volume_scale": 0.834,
    "cap_scale": 1.0,
    "tomtom_total_s": 3309,
-   "sim_total_s": 3318,
-   "ratio": 1.003,
+   "sim_total_s": 3305,
+   "ratio": 0.999,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3431.3,
@@ -839,13 +841,13 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 424,
+     "sim_s": 451,
      "tomtom_s": 387
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 800,
+     "sim_s": 792,
      "tomtom_s": 785
     },
     {
@@ -857,72 +859,72 @@
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 178,
+     "sim_s": 172,
      "tomtom_s": 188
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 138,
+     "sim_s": 139,
      "tomtom_s": 131
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 164,
+     "sim_s": 177,
      "tomtom_s": 159
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 278,
+     "sim_s": 293,
      "tomtom_s": 276
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 230,
+     "sim_s": 196,
      "tomtom_s": 275
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 46,
+     "sim_s": 55,
      "tomtom_s": 69
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 435,
+     "sim_s": 422,
      "tomtom_s": 431
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 131,
+     "sim_s": 127,
      "tomtom_s": 146
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 270,
+     "sim_s": 257,
      "tomtom_s": 266
     }
    ]
   },
   "16": {
-   "volume_scale": 1.313,
+   "volume_scale": 1.116,
    "cap_scale": 1.0,
    "tomtom_total_s": 3600,
-   "sim_total_s": 3623,
-   "ratio": 1.006,
+   "sim_total_s": 3514,
+   "ratio": 0.976,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3729.2,
    "period": "2026-07-01..2026-07-31 16:00-17:00",
    "job": "10053357",
    "label": "July typical 16:00-17:00",
-   "rounds": 1,
+   "rounds": 2,
    "jammed": false,
    "warnings": [],
    "slope_s_per_volume": null,
@@ -930,37 +932,37 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 478,
+     "sim_s": 452,
      "tomtom_s": 494
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 831,
+     "sim_s": 782,
      "tomtom_s": 772
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 243,
+     "sim_s": 227,
      "tomtom_s": 200
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 181,
+     "sim_s": 171,
      "tomtom_s": 191
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 143,
+     "sim_s": 131,
      "tomtom_s": 135
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 169,
+     "sim_s": 171,
      "tomtom_s": 167
     },
     {
@@ -972,25 +974,25 @@
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 332,
+     "sim_s": 401,
      "tomtom_s": 310
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 74,
+     "sim_s": 67,
      "tomtom_s": 96
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 470,
+     "sim_s": 431,
      "tomtom_s": 512
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 157,
+     "sim_s": 136,
      "tomtom_s": 150
     },
     {
@@ -1002,379 +1004,102 @@
    ]
   },
   "17": {
-   "volume_scale": 1.36,
-   "cap_scale": 0.944,
+   "volume_scale": 1.037,
+   "cap_scale": 0.888,
    "tomtom_total_s": 3791,
-   "sim_total_s": 3869,
-   "ratio": 1.021,
+   "sim_total_s": 3814,
+   "ratio": 1.006,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3927.2,
    "period": "2026-07-01..2026-07-31 17:00-18:00",
    "job": "10053357",
    "label": "July typical 17:00-18:00",
-   "rounds": 3,
+   "rounds": 4,
    "jammed": false,
-   "warnings": [
-    "in some sections only 29 of 30 probe cars got through in time"
-   ],
+   "warnings": [],
    "slope_s_per_volume": null,
    "legs": [
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 504,
+     "sim_s": 505,
      "tomtom_s": 482
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 878,
+     "sim_s": 918,
      "tomtom_s": 819
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 260,
+     "sim_s": 259,
      "tomtom_s": 210
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 195,
+     "sim_s": 197,
      "tomtom_s": 194
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 148,
+     "sim_s": 153,
      "tomtom_s": 158
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 183,
+     "sim_s": 198,
      "tomtom_s": 171
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 300,
+     "sim_s": 322,
      "tomtom_s": 284
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 423,
+     "sim_s": 261,
      "tomtom_s": 336
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 65,
+     "sim_s": 74,
      "tomtom_s": 70
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 467,
+     "sim_s": 487,
      "tomtom_s": 616
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 166,
+     "sim_s": 147,
      "tomtom_s": 151
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 280,
+     "sim_s": 293,
      "tomtom_s": 299
     }
    ]
   },
-  "18": {
-   "volume_scale": 1.236,
-   "cap_scale": 0.929,
-   "tomtom_total_s": 3851,
-   "sim_total_s": 3738,
-   "ratio": 0.971,
-   "within_tolerance": true,
-   "target_basis": "leg speeds",
-   "tomtom_trip_total_s": 3985.7,
-   "period": "2026-07-01..2026-07-31 18:00-19:00",
-   "job": "10053357",
-   "label": "July typical 18:00-19:00",
-   "rounds": 4,
-   "jammed": false,
-   "warnings": [],
-   "slope_s_per_volume": null,
-   "legs": [
-    {
-     "leg": "A_lingampally->j01",
-     "distance_m": 2074,
-     "sim_s": 496,
-     "tomtom_s": 458
-    },
-    {
-     "leg": "j01->j02",
-     "distance_m": 5231,
-     "sim_s": 896,
-     "tomtom_s": 808
-    },
-    {
-     "leg": "j02->j03",
-     "distance_m": 1341,
-     "sim_s": 256,
-     "tomtom_s": 245
-    },
-    {
-     "leg": "j03->j04",
-     "distance_m": 1499,
-     "sim_s": 197,
-     "tomtom_s": 203
-    },
-    {
-     "leg": "j04->j05",
-     "distance_m": 986,
-     "sim_s": 147,
-     "tomtom_s": 160
-    },
-    {
-     "leg": "j05->j06",
-     "distance_m": 1591,
-     "sim_s": 181,
-     "tomtom_s": 183
-    },
-    {
-     "leg": "j06->j07",
-     "distance_m": 2805,
-     "sim_s": 298,
-     "tomtom_s": 319
-    },
-    {
-     "leg": "j07->j08",
-     "distance_m": 1308,
-     "sim_s": 279,
-     "tomtom_s": 323
-    },
-    {
-     "leg": "j08->j09",
-     "distance_m": 336,
-     "sim_s": 74,
-     "tomtom_s": 68
-    },
-    {
-     "leg": "j09->j10",
-     "distance_m": 2192,
-     "sim_s": 478,
-     "tomtom_s": 616
-    },
-    {
-     "leg": "j10->j11",
-     "distance_m": 878,
-     "sim_s": 146,
-     "tomtom_s": 159
-    },
-    {
-     "leg": "j11->B_lakdikapul",
-     "distance_m": 1403,
-     "sim_s": 290,
-     "tomtom_s": 310
-    }
-   ]
-  },
-  "19": {
-   "volume_scale": 1.206,
-   "cap_scale": 0.9,
-   "tomtom_total_s": 3956,
-   "sim_total_s": 3892,
-   "ratio": 0.984,
-   "within_tolerance": true,
-   "target_basis": "leg speeds",
-   "tomtom_trip_total_s": 4099.1,
-   "period": "2026-07-01..2026-07-31 19:00-20:00",
-   "job": "10053357",
-   "label": "July typical 19:00-20:00",
-   "rounds": 6,
-   "jammed": false,
-   "warnings": [
-    "in some sections only 29 of 30 probe cars got through in time"
-   ],
-   "slope_s_per_volume": null,
-   "legs": [
-    {
-     "leg": "A_lingampally->j01",
-     "distance_m": 2074,
-     "sim_s": 504,
-     "tomtom_s": 467
-    },
-    {
-     "leg": "j01->j02",
-     "distance_m": 5231,
-     "sim_s": 942,
-     "tomtom_s": 805
-    },
-    {
-     "leg": "j02->j03",
-     "distance_m": 1341,
-     "sim_s": 259,
-     "tomtom_s": 254
-    },
-    {
-     "leg": "j03->j04",
-     "distance_m": 1499,
-     "sim_s": 201,
-     "tomtom_s": 211
-    },
-    {
-     "leg": "j04->j05",
-     "distance_m": 986,
-     "sim_s": 151,
-     "tomtom_s": 167
-    },
-    {
-     "leg": "j05->j06",
-     "distance_m": 1591,
-     "sim_s": 190,
-     "tomtom_s": 193
-    },
-    {
-     "leg": "j06->j07",
-     "distance_m": 2805,
-     "sim_s": 315,
-     "tomtom_s": 339
-    },
-    {
-     "leg": "j07->j08",
-     "distance_m": 1308,
-     "sim_s": 283,
-     "tomtom_s": 346
-    },
-    {
-     "leg": "j08->j09",
-     "distance_m": 336,
-     "sim_s": 68,
-     "tomtom_s": 76
-    },
-    {
-     "leg": "j09->j10",
-     "distance_m": 2192,
-     "sim_s": 520,
-     "tomtom_s": 636
-    },
-    {
-     "leg": "j10->j11",
-     "distance_m": 878,
-     "sim_s": 162,
-     "tomtom_s": 162
-    },
-    {
-     "leg": "j11->B_lakdikapul",
-     "distance_m": 1403,
-     "sim_s": 297,
-     "tomtom_s": 301
-    }
-   ]
-  },
-  "20": {
-   "volume_scale": 1.36,
-   "cap_scale": 1.0,
-   "tomtom_total_s": 3671,
-   "sim_total_s": 3626,
-   "ratio": 0.988,
-   "within_tolerance": true,
-   "target_basis": "leg speeds",
-   "tomtom_trip_total_s": 3798.4,
-   "period": "2026-07-01..2026-07-31 20:00-21:00",
-   "job": "10053357",
-   "label": "July typical 20:00-21:00",
-   "rounds": 4,
-   "jammed": false,
-   "warnings": [],
-   "slope_s_per_volume": 1039.7,
-   "legs": [
-    {
-     "leg": "A_lingampally->j01",
-     "distance_m": 2074,
-     "sim_s": 476,
-     "tomtom_s": 453
-    },
-    {
-     "leg": "j01->j02",
-     "distance_m": 5231,
-     "sim_s": 827,
-     "tomtom_s": 756
-    },
-    {
-     "leg": "j02->j03",
-     "distance_m": 1341,
-     "sim_s": 240,
-     "tomtom_s": 231
-    },
-    {
-     "leg": "j03->j04",
-     "distance_m": 1499,
-     "sim_s": 181,
-     "tomtom_s": 198
-    },
-    {
-     "leg": "j04->j05",
-     "distance_m": 986,
-     "sim_s": 139,
-     "tomtom_s": 139
-    },
-    {
-     "leg": "j05->j06",
-     "distance_m": 1591,
-     "sim_s": 169,
-     "tomtom_s": 181
-    },
-    {
-     "leg": "j06->j07",
-     "distance_m": 2805,
-     "sim_s": 279,
-     "tomtom_s": 340
-    },
-    {
-     "leg": "j07->j08",
-     "distance_m": 1308,
-     "sim_s": 385,
-     "tomtom_s": 314
-    },
-    {
-     "leg": "j08->j09",
-     "distance_m": 336,
-     "sim_s": 71,
-     "tomtom_s": 59
-    },
-    {
-     "leg": "j09->j10",
-     "distance_m": 2192,
-     "sim_s": 457,
-     "tomtom_s": 564
-    },
-    {
-     "leg": "j10->j11",
-     "distance_m": 878,
-     "sim_s": 142,
-     "tomtom_s": 159
-    },
-    {
-     "leg": "j11->B_lakdikapul",
-     "distance_m": 1403,
-     "sim_s": 260,
-     "tomtom_s": 278
-    }
-   ]
-  },
   "21": {
-   "volume_scale": 0.974,
+   "volume_scale": 0.5,
    "cap_scale": 1.0,
    "tomtom_total_s": 3263,
-   "sim_total_s": 3294,
-   "ratio": 1.01,
+   "sim_total_s": 3307,
+   "ratio": 1.014,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 3383.3,
@@ -1389,25 +1114,25 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 434,
+     "sim_s": 430,
      "tomtom_s": 368
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 765,
+     "sim_s": 800,
      "tomtom_s": 719
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 233,
+     "sim_s": 222,
      "tomtom_s": 214
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 175,
+     "sim_s": 171,
      "tomtom_s": 174
     },
     {
@@ -1419,19 +1144,19 @@
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 166,
+     "sim_s": 178,
      "tomtom_s": 173
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 272,
+     "sim_s": 293,
      "tomtom_s": 327
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 223,
+     "sim_s": 190,
      "tomtom_s": 256
     },
     {
@@ -1443,36 +1168,36 @@
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 440,
+     "sim_s": 434,
      "tomtom_s": 420
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 128,
+     "sim_s": 143,
      "tomtom_s": 153
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 270,
+     "sim_s": 258,
      "tomtom_s": 278
     }
    ]
   },
-  "22": {
-   "volume_scale": 0.55,
-   "cap_scale": 1.0,
-   "tomtom_total_s": 3000,
-   "sim_total_s": 3069,
-   "ratio": 1.023,
+  "20": {
+   "volume_scale": 0.992,
+   "cap_scale": 0.888,
+   "tomtom_total_s": 3671,
+   "sim_total_s": 3778,
+   "ratio": 1.029,
    "within_tolerance": true,
    "target_basis": "leg speeds",
-   "tomtom_trip_total_s": 3119.3,
-   "period": "2026-07-01..2026-07-31 22:00-23:00",
+   "tomtom_trip_total_s": 3798.4,
+   "period": "2026-07-01..2026-07-31 20:00-21:00",
    "job": "10053357",
-   "label": "July typical 22:00-23:00",
-   "rounds": 1,
+   "label": "July typical 20:00-21:00",
+   "rounds": 3,
    "jammed": false,
    "warnings": [],
    "slope_s_per_volume": null,
@@ -1480,83 +1205,265 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 400,
+     "sim_s": 510,
+     "tomtom_s": 453
+    },
+    {
+     "leg": "j01->j02",
+     "distance_m": 5231,
+     "sim_s": 890,
+     "tomtom_s": 756
+    },
+    {
+     "leg": "j02->j03",
+     "distance_m": 1341,
+     "sim_s": 266,
+     "tomtom_s": 231
+    },
+    {
+     "leg": "j03->j04",
+     "distance_m": 1499,
+     "sim_s": 202,
+     "tomtom_s": 198
+    },
+    {
+     "leg": "j04->j05",
+     "distance_m": 986,
+     "sim_s": 149,
+     "tomtom_s": 139
+    },
+    {
+     "leg": "j05->j06",
+     "distance_m": 1591,
+     "sim_s": 195,
+     "tomtom_s": 181
+    },
+    {
+     "leg": "j06->j07",
+     "distance_m": 2805,
+     "sim_s": 320,
+     "tomtom_s": 340
+    },
+    {
+     "leg": "j07->j08",
+     "distance_m": 1308,
+     "sim_s": 244,
+     "tomtom_s": 314
+    },
+    {
+     "leg": "j08->j09",
+     "distance_m": 336,
+     "sim_s": 68,
+     "tomtom_s": 59
+    },
+    {
+     "leg": "j09->j10",
+     "distance_m": 2192,
+     "sim_s": 491,
+     "tomtom_s": 564
+    },
+    {
+     "leg": "j10->j11",
+     "distance_m": 878,
+     "sim_s": 153,
+     "tomtom_s": 159
+    },
+    {
+     "leg": "j11->B_lakdikapul",
+     "distance_m": 1403,
+     "sim_s": 290,
+     "tomtom_s": 278
+    }
+   ]
+  },
+  "22": {
+   "volume_scale": 0.5,
+   "cap_scale": 1.135,
+   "tomtom_total_s": 3000,
+   "sim_total_s": 2912,
+   "ratio": 0.971,
+   "within_tolerance": true,
+   "target_basis": "leg speeds",
+   "tomtom_trip_total_s": 3119.3,
+   "period": "2026-07-01..2026-07-31 22:00-23:00",
+   "job": "10053357",
+   "label": "July typical 22:00-23:00",
+   "rounds": 2,
+   "jammed": false,
+   "warnings": [],
+   "slope_s_per_volume": null,
+   "legs": [
+    {
+     "leg": "A_lingampally->j01",
+     "distance_m": 2074,
+     "sim_s": 383,
      "tomtom_s": 316
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 713,
+     "sim_s": 702,
      "tomtom_s": 682
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 208,
+     "sim_s": 195,
      "tomtom_s": 199
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 170,
+     "sim_s": 149,
      "tomtom_s": 168
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 135,
+     "sim_s": 124,
      "tomtom_s": 125
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 156,
+     "sim_s": 157,
      "tomtom_s": 167
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 261,
+     "sim_s": 258,
      "tomtom_s": 303
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 211,
+     "sim_s": 165,
      "tomtom_s": 259
     },
     {
      "leg": "j08->j09",
      "distance_m": 336,
-     "sim_s": 42,
+     "sim_s": 46,
      "tomtom_s": 48
     },
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 402,
+     "sim_s": 382,
      "tomtom_s": 316
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 123,
+     "sim_s": 122,
      "tomtom_s": 135
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 248,
+     "sim_s": 229,
      "tomtom_s": 282
+    }
+   ]
+  },
+  "19": {
+   "volume_scale": 1.067,
+   "cap_scale": 0.874,
+   "tomtom_total_s": 3956,
+   "sim_total_s": 4002,
+   "ratio": 1.012,
+   "within_tolerance": true,
+   "target_basis": "leg speeds",
+   "tomtom_trip_total_s": 4099.1,
+   "period": "2026-07-01..2026-07-31 19:00-20:00",
+   "job": "10053357",
+   "label": "July typical 19:00-20:00",
+   "rounds": 5,
+   "jammed": false,
+   "warnings": [],
+   "slope_s_per_volume": null,
+   "legs": [
+    {
+     "leg": "A_lingampally->j01",
+     "distance_m": 2074,
+     "sim_s": 513,
+     "tomtom_s": 467
+    },
+    {
+     "leg": "j01->j02",
+     "distance_m": 5231,
+     "sim_s": 915,
+     "tomtom_s": 805
+    },
+    {
+     "leg": "j02->j03",
+     "distance_m": 1341,
+     "sim_s": 269,
+     "tomtom_s": 254
+    },
+    {
+     "leg": "j03->j04",
+     "distance_m": 1499,
+     "sim_s": 197,
+     "tomtom_s": 211
+    },
+    {
+     "leg": "j04->j05",
+     "distance_m": 986,
+     "sim_s": 153,
+     "tomtom_s": 167
+    },
+    {
+     "leg": "j05->j06",
+     "distance_m": 1591,
+     "sim_s": 198,
+     "tomtom_s": 193
+    },
+    {
+     "leg": "j06->j07",
+     "distance_m": 2805,
+     "sim_s": 324,
+     "tomtom_s": 339
+    },
+    {
+     "leg": "j07->j08",
+     "distance_m": 1308,
+     "sim_s": 393,
+     "tomtom_s": 346
+    },
+    {
+     "leg": "j08->j09",
+     "distance_m": 336,
+     "sim_s": 71,
+     "tomtom_s": 76
+    },
+    {
+     "leg": "j09->j10",
+     "distance_m": 2192,
+     "sim_s": 503,
+     "tomtom_s": 636
+    },
+    {
+     "leg": "j10->j11",
+     "distance_m": 878,
+     "sim_s": 163,
+     "tomtom_s": 162
+    },
+    {
+     "leg": "j11->B_lakdikapul",
+     "distance_m": 1403,
+     "sim_s": 303,
+     "tomtom_s": 301
     }
    ]
   },
   "23": {
    "volume_scale": 0.5,
-   "cap_scale": 1.161,
+   "cap_scale": 1.184,
    "tomtom_total_s": 2747,
-   "sim_total_s": 2672,
-   "ratio": 0.973,
+   "sim_total_s": 2803,
+   "ratio": 1.021,
    "within_tolerance": true,
    "target_basis": "leg speeds",
    "tomtom_trip_total_s": 2845.0,
@@ -1571,49 +1478,49 @@
     {
      "leg": "A_lingampally->j01",
      "distance_m": 2074,
-     "sim_s": 337,
+     "sim_s": 365,
      "tomtom_s": 322
     },
     {
      "leg": "j01->j02",
      "distance_m": 5231,
-     "sim_s": 649,
+     "sim_s": 680,
      "tomtom_s": 641
     },
     {
      "leg": "j02->j03",
      "distance_m": 1341,
-     "sim_s": 181,
+     "sim_s": 186,
      "tomtom_s": 186
     },
     {
      "leg": "j03->j04",
      "distance_m": 1499,
-     "sim_s": 141,
+     "sim_s": 143,
      "tomtom_s": 182
     },
     {
      "leg": "j04->j05",
      "distance_m": 986,
-     "sim_s": 111,
+     "sim_s": 121,
      "tomtom_s": 110
     },
     {
      "leg": "j05->j06",
      "distance_m": 1591,
-     "sim_s": 135,
+     "sim_s": 151,
      "tomtom_s": 159
     },
     {
      "leg": "j06->j07",
      "distance_m": 2805,
-     "sim_s": 224,
+     "sim_s": 248,
      "tomtom_s": 277
     },
     {
      "leg": "j07->j08",
      "distance_m": 1308,
-     "sim_s": 183,
+     "sim_s": 161,
      "tomtom_s": 195
     },
     {
@@ -1625,30 +1532,121 @@
     {
      "leg": "j09->j10",
      "distance_m": 2192,
-     "sim_s": 344,
+     "sim_s": 368,
      "tomtom_s": 287
     },
     {
      "leg": "j10->j11",
      "distance_m": 878,
-     "sim_s": 108,
+     "sim_s": 120,
      "tomtom_s": 124
     },
     {
      "leg": "j11->B_lakdikapul",
      "distance_m": 1403,
-     "sim_s": 217,
+     "sim_s": 218,
      "tomtom_s": 224
+    }
+   ]
+  },
+  "18": {
+   "volume_scale": 1.051,
+   "cap_scale": 0.871,
+   "tomtom_total_s": 3851,
+   "sim_total_s": 3961,
+   "ratio": 1.028,
+   "within_tolerance": true,
+   "target_basis": "leg speeds",
+   "tomtom_trip_total_s": 3985.7,
+   "period": "2026-07-01..2026-07-31 18:00-19:00",
+   "job": "10053357",
+   "label": "July typical 18:00-19:00",
+   "rounds": 4,
+   "jammed": false,
+   "warnings": [],
+   "slope_s_per_volume": null,
+   "legs": [
+    {
+     "leg": "A_lingampally->j01",
+     "distance_m": 2074,
+     "sim_s": 518,
+     "tomtom_s": 458
+    },
+    {
+     "leg": "j01->j02",
+     "distance_m": 5231,
+     "sim_s": 920,
+     "tomtom_s": 808
+    },
+    {
+     "leg": "j02->j03",
+     "distance_m": 1341,
+     "sim_s": 266,
+     "tomtom_s": 245
+    },
+    {
+     "leg": "j03->j04",
+     "distance_m": 1499,
+     "sim_s": 197,
+     "tomtom_s": 203
+    },
+    {
+     "leg": "j04->j05",
+     "distance_m": 986,
+     "sim_s": 156,
+     "tomtom_s": 160
+    },
+    {
+     "leg": "j05->j06",
+     "distance_m": 1591,
+     "sim_s": 200,
+     "tomtom_s": 183
+    },
+    {
+     "leg": "j06->j07",
+     "distance_m": 2805,
+     "sim_s": 328,
+     "tomtom_s": 319
+    },
+    {
+     "leg": "j07->j08",
+     "distance_m": 1308,
+     "sim_s": 352,
+     "tomtom_s": 323
+    },
+    {
+     "leg": "j08->j09",
+     "distance_m": 336,
+     "sim_s": 77,
+     "tomtom_s": 68
+    },
+    {
+     "leg": "j09->j10",
+     "distance_m": 2192,
+     "sim_s": 492,
+     "tomtom_s": 616
+    },
+    {
+     "leg": "j10->j11",
+     "distance_m": 878,
+     "sim_s": 157,
+     "tomtom_s": 159
+    },
+    {
+     "leg": "j11->B_lakdikapul",
+     "distance_m": 1403,
+     "sim_s": 298,
+     "tomtom_s": 310
     }
    ]
   }
  },
  "target": "TomTom Traffic Stats hourly leg times (rows of data/raw/corridor_legs_tomtom.csv covering one hour), July 2026",
- "base_calibration": "2026-10-09T20:36:27+0530",
+ "base_calibration": "2026-10-10T02:53:36+0530",
  "method": "per hour: volume scale on the all-day traffic (through and cross), then, only if the volume is at its limits (0.5, 1.6) or the network jams, a scale on the legs' speed caps (0.6, 2.2); target within 3% of TomTom's trip (calibrate_hourly)",
  "knobs": {
   "volume_scale": "calibrated: multiplies all traffic of the all-day calibration for this hour",
   "cap_scale": "calibrated: multiplies every leg's speed cap (side friction) for this hour; 1 = unchanged"
  },
- "calibrated_at": "2026-10-09T22:25:58+0530"
+ "calibrated_at": "2026-10-10T03:37:10+0530"
 }
