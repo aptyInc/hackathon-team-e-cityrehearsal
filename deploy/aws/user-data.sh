@@ -10,7 +10,9 @@ REGION="__REGION__"
 APP=/opt/terascope
 
 apt-get update -y
-apt-get install -y python3.12 python3.12-venv python3-pip nginx git curl unzip sqlite3
+apt-get install -y python3.12 python3.12-venv python3-pip nginx git curl unzip sqlite3 \
+  libxrender1 libxext6 libxft2 libfontconfig1 libgl1 libglu1-mesa libxrandr2 libxcursor1 libxinerama1 libxi6 \
+  libxfixes3 libxcomposite1 libxdamage1 libxkbcommon0 libx11-6 libice6 libsm6 libxcb1     # the eclipse-sumo wheel links X11
 
 cd /tmp && curl -sS https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip && unzip -q -o awscliv2.zip \
   && ./aws/install --update && rm -rf /tmp/aws /tmp/awscliv2.zip

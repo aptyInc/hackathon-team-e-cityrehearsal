@@ -9,6 +9,11 @@ BUCKET="${BUCKET:-$(cat /etc/terascope/bucket 2>/dev/null || true)}"
 REGION="${REGION:-ap-southeast-2}"
 echo "$BUCKET" > /etc/terascope/bucket
 
+echo "== system libraries the eclipse-sumo wheel links (X11, OpenGL), nginx, sqlite3"
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q nginx sqlite3 curl python3.12-venv \
+  libxrender1 libxext6 libxft2 libfontconfig1 libgl1 libglu1-mesa libxrandr2 libxcursor1 libxinerama1 libxi6 \
+  libxfixes3 libxcomposite1 libxdamage1 libxkbcommon0 libx11-6 libice6 libsm6 libxcb1 >/dev/null
+
 echo "== venv + backend and sim dependencies"
 [ -x "$APP/.venv/bin/python" ] || sudo -u ubuntu python3.12 -m venv "$APP/.venv"
 sudo -u ubuntu "$APP/.venv/bin/pip" install -q --upgrade pip
