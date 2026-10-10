@@ -376,6 +376,44 @@ def decide(case_id: str, body: DecideIn):
     return get_case(case_id)
 
 
+# ---------- /files: the data behind the screens as downloadable files (CSV, JSON, cached runs; no database, no secrets) ----------
+from fastapi.responses import FileResponse, HTMLResponse  # noqa: E402
+
+FILE_GLOBS = ("data/raw/*.csv", "data/corridor/*.json", "data/weather/*.json", "data/weather/*.md",
+              "data/tomtom/corridor/*.gz", "data/tomtom/corridor/*.csv", "data/rain/*",
+              "sim/out/corridor/rc_*/result.json", "sim/out/corridor/rc_*/frames.jsonl")
+
+
+def shared_files() -> list[Path]:
+    """The files /files/ may serve: an allow-list of patterns under the repo root (never the SQLite log or .env)."""
+    return sorted({p.resolve() for g in FILE_GLOBS for p in ROOT.glob(g) if p.is_file()})
+
+
+@app.get("/files", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/files/", response_class=HTMLResponse)
+def files_index():
+    rows = []
+    for p in shared_files():
+        rel, st = p.relative_to(ROOT).as_posix(), p.stat()
+        rows.append(f'<tr><td><a href="/files/{rel}">{rel}</a></td><td style="text-align:right">{st.st_size / 1e6:,.1f} MB</td>'
+                    f'<td>{time.strftime("%Y-%m-%d %H:%M", time.localtime(st.st_mtime))}</td></tr>')
+    return ("<!doctype html><meta charset=utf-8><title>Terascope AI · Data files</title>"
+            "<body style='font:14px/1.5 system-ui,sans-serif;margin:24px;max-width:960px'><h1>Data files</h1>"
+            "<p>The measured inputs (TomTom CSVs), the corridor and weather definitions and the cached simulation runs "
+            "(<code>result.json</code> numbers, <code>frames.jsonl</code> vehicle positions). The decision log and the keys "
+            "are not here. <a href='/data.html'>About the data</a></p>"
+            "<table cellpadding=4><tr><th align=left>File</th><th>Size</th><th align=left>Updated</th></tr>"
+            f"{''.join(rows)}</table>")
+
+
+@app.get("/files/{rel:path}")
+def files_get(rel: str):
+    p = (ROOT / rel).resolve()
+    if p not in shared_files():     # anything outside the allow-list (or a ../ path) is a 404
+        raise HTTPException(404, "not a shared file")
+    return FileResponse(p, filename=p.name)
+
+
 from .corridor import router as corridor_router  # noqa: E402  (corridor endpoints)
 from .corridor_cases import router as corridor_cases_router  # noqa: E402  (corridor decision workflow)
 from .agent.api import router as agent_router  # noqa: E402  (planning assistant, briefs)
