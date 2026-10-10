@@ -110,6 +110,44 @@ aws iam delete-role --role-name terascope-ec2-role
 For comparison c7i.2xlarge (paid plan) is USD 0.4662 / h (~USD 11.4 / day running). The USD 100 credit covers the
 m7i-flex.large demo server for about a month; stop it when nobody is demoing.
 
-## Verification (Sat 10 Oct 2026)
+## Verification (Sat 10 Oct 2026, 06:15-06:40 IST)
 
-_filled in below after the checks_
+- `/health` answered 156 s after launch with `{"status":"ok","mock":false}` (first boot needed the X11 libraries
+  and the cached-run path fix, both now in `server_setup.sh`). `04_redeploy.sh` tested end to end at 06:36 IST (~4 min).
+- `GET /corridor` 200 (183 kB, 2.5 s), `/corridor/junctions/live` 200 (94 kB, live rows at 06:18 IST from the
+  server's own collector), `/weather/now` 200 ("Clear sky, 23 C"), `/agent/suggestions` 200, `/agent/advice` 200,
+  `/files/` 200 (index), `/files/sim/out/corridor/<run>/result.json` 200, `frames.jsonl` 200 (28 MB in 31 s).
+- `/corridor.html` in headless Chromium (Playwright, 1440x900): loaded in 17 s, **0 JS errors, 0 failed requests**;
+  map, live trip (33.5 min, confidence high), live junctions, weather chip, quick actions, "API: ok (real SUMO runs)".
+  The API address in the served HTML/JS is `http://13.237.4.166` (nginx rewrite), no `localhost` left.
+- WebSocket `ws://13.237.4.166/stream/<run_id>` through nginx: frames of ~3,760 vehicles every 4 s of sim time.
+- Services: `terascope-api`, `terascope-collector`, `terascope-sync.timer`, `nginx` all active; the first sync put
+  1,496 objects (741 MB) under `s3://terascope-demo-034456343762/data/`.
+- Warm-up (the demo-script block against the server; `cached` = served from the shipped decision log + run folders,
+  `NEW RUN` = simulated on the server, 2 in parallel):
+
+  | Request | Result | Time |
+  |---|---|---|
+  | today 100% | cached 56.6 min | 1.4 s |
+  | today 80% | NEW RUN 55.2 min | 80 s |
+  | today 110% | cached 59.0 min | 1.3 s |
+  | flyover Nallagandla | cached 54.5 min | 1.1 s |
+  | flyover ISB Rd / DLF | NEW RUN 54.6 min | 106 s |
+  | one flyover Nanal Nagar + Rethibowli | cached 53.5 min | 1.3 s |
+  | DLF side roads signal retime | NEW RUN 57.3 min | 115 s |
+  | heavy rain, today | NEW RUN 65.3 min | 125 s |
+  | heavy rain + the Nanal Nagar flyover | NEW RUN 61.9 min | 117 s |
+  | 110% + the Nanal Nagar flyover | NEW RUN 54.1 min | 121 s |
+
+  A second pass answers every line `cached` in 1.2-1.7 s, also after a redeploy. Note: the two heavy-rain numbers
+  (65.3, 61.9) differ from the demo script's laptop values (63.8, 61.2): the laptop's rain runs were not in the
+  shipped decision log, so the server simulated them fresh. Read the numbers off the server on stage, or update the cue card.
+- Known gaps: the decision log was copied at 06:01 IST while the laptop's `advise_all` was still running, so
+  `GET /agent/advice` shows j05 `running` and j03-j11 `stale` on the server exactly as on the laptop at that moment.
+  Fix before the demo: once the laptop's advice is fresh, `bash deploy/aws/02_bundle.sh` then
+  `bash deploy/aws/04_redeploy.sh --data` (copies the laptop's DB and run folders over; the server's own new runs
+  stay on disk but their cache rows are replaced), then run the warm-up block against the server again. Or run
+  `cd backend && CR_DB=$PWD/cityrehearsal.db python -m app.agent.advise_all` on the server (2 cores: slow).
+- The live trip spends the TomTom Flow key's daily budget on both machines (laptop cap 2000, server cap 1200,
+  TomTom free tier 2500/day): if judges keep the public page open for hours, lower `CR_LIVE_DAILY_CAP` in
+  `/etc/terascope/env` and `systemctl restart terascope-api`.
